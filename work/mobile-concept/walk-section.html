@@ -1,0 +1,15 @@
+    <section data-screen="walk" aria-label="조이스틱으로 걷는 도트 보호소" hidden>
+      <div class="pw-stage">
+        <canvas id="pw-canvas" width="256" height="448" role="img" aria-label="도트 보호소 마당. 왼쪽 아래 조이스틱으로 걸어가면 오른쪽 아래에 강아지와 상호작용하는 버튼이 나타나요."></canvas>
+        <div class="pw-location"><i data-lucide="house-heart" aria-hidden="true"></i><span id="pw-shelter-title">온기 보호소 · 앞마당</span></div>
+        <button type="button" id="pw-list" class="pw-list" aria-label="보호소 목록으로 돌아가기"><i data-lucide="list" aria-hidden="true"></i>목록</button>
+        <div class="pw-hud">
+          <button type="button" id="pw-stick" class="pw-stick" aria-label="이동 조이스틱. 조금 밀면 걷고, 끝까지 밀면 달려요. 손을 떼면 멈춰요. 방향키와 Shift로도 이동할 수 있어요."><span class="pw-ring" aria-hidden="true"></span><span class="pw-stick-cross" aria-hidden="true">＋</span><span id="pw-knob" class="pw-knob" aria-hidden="true"></span></button>
+          <div class="pw-actions" role="group" aria-label="가까운 강아지와 상호작용">
+            <button type="button" id="pw-ball" class="pw-action pw-ball" hidden disabled><i data-lucide="circle-dot" aria-hidden="true"></i><span id="pw-ball-label">공 받기</span></button>
+            <button type="button" id="pw-talk" class="pw-action pw-talk" hidden disabled><i data-lucide="message-circle" aria-hidden="true"></i><span id="pw-talk-label">대화하기</span></button>
+          </div>
+        </div>
+        <p id="pw-nearby" class="pw-accessible" aria-live="polite" aria-atomic="true"></p>
+      </div>
+    </section>

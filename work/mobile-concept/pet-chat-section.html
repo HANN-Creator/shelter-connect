@@ -1,0 +1,50 @@
+    <section data-screen="chat" aria-label="강아지와 대화하기" hidden>
+      <div id="pm-no-chat" class="pm-blank">
+        <img class="pm-sprite" alt="도트 강아지">
+        <h2>먼저 말을 걸어볼래?</h2>
+        <p>궁금한 친구를 선택하면<br>둘만의 대화가 시작돼요.</p>
+        <button type="button" class="pm-primary" data-home>친구 만나러 가기</button>
+      </div>
+      <div id="pm-has-chat" class="pc-device" aria-label="강아지 대화 게임기" hidden>
+        <div class="pc-top">
+          <button type="button" class="pc-back" id="pc-back" aria-label="만나던 곳으로 돌아가기"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+          <span class="pc-wordmark">PUPPY CONNECT</span>
+          <button type="button" class="pc-shelter" data-dog-shelter aria-label="이 강아지의 보호소 보기"><i data-lucide="house" aria-hidden="true"></i></button>
+        </div>
+        <div class="pc-heading"><span aria-hidden="true">✦</span><h2 id="pc-title">우리 둘의 이야기</h2><span aria-hidden="true">✦</span></div>
+        <div class="pc-bezel">
+          <div class="pc-display">
+            <div class="pc-garden">
+              <img class="pc-garden-art" src="__CHATROOM__" alt="">
+              <div class="pc-nameplate"><span id="pm-stage-name"></span><span class="pc-chat-status"><i data-lucide="messages-square" aria-hidden="true"></i>대화 중</span></div>
+              <img class="pm-sprite pc-pet" id="pm-chat-avatar" alt="선택한 강아지의 외형을 담은 도트 캐릭터">
+            </div>
+            <div class="pc-dialogue" aria-live="polite" aria-atomic="true" aria-label="강아지의 이야기">
+              <p class="pc-last-question" id="pc-last-question" hidden></p>
+              <p id="pc-answer"></p>
+              <span class="pc-dialogue-mark" aria-hidden="true">♥</span>
+            </div>
+          </div>
+        </div>
+        <div class="pc-controls" aria-label="궁금한 이야기 고르기">
+          <button type="button" class="pc-topic" data-ask="산책은 어때?" aria-label="산책은 어때?"><span class="pc-round"><i data-lucide="footprints" aria-hidden="true"></i></span><span>산책</span></button>
+          <button type="button" class="pc-topic" data-ask="혼자 있어도 괜찮아?" aria-label="혼자 있어도 괜찮아?"><span class="pc-round"><i data-lucide="house" aria-hidden="true"></i></span><span>혼자 있을 때</span></button>
+          <button type="button" class="pc-topic" data-ask="낯선 사람은 어때?" aria-label="낯선 사람은 어때?"><span class="pc-round"><i data-lucide="hand" aria-hidden="true"></i></span><span>처음 만날 때</span></button>
+        </div>
+        <div class="pc-composer">
+          <label class="pm-sr" for="pm-message">강아지에게 할 말</label>
+          <input id="pm-message" maxlength="300" placeholder="궁금한 걸 직접 물어봐" autocomplete="off" enterkeyhint="send">
+          <button type="button" id="pm-send" aria-label="말 걸기"><i data-lucide="arrow-up" aria-hidden="true"></i></button>
+        </div>
+        <button type="button" class="pc-save-question" id="pc-save-question" hidden>보호소에 확인할 질문으로 담기</button>
+        <div class="pc-photo-invite" id="pm-reveal-invite" hidden>
+          <p>이제 내 모습도 만나볼래?</p>
+          <button type="button" id="pm-reveal-button"><i data-lucide="image" aria-hidden="true"></i><span id="pc-photo-label">사진으로 만나기</span><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+        </div>
+        <details class="pc-notebook" id="pm-earlier" hidden>
+          <summary><span><i data-lucide="notebook-pen" aria-hidden="true"></i>대화 수첩</span><span id="pc-history-count"></span></summary>
+          <div class="pc-notebook-pages"><p class="pc-record-note">보호소의 관찰 기록을 바탕으로 나눈 이야기예요.</p><div id="pm-earlier-log"></div></div>
+        </details>
+        <div class="pc-bottom"><span class="pc-speaker" aria-hidden="true"><i></i><i></i><i></i></span><span id="ps-chat-shelter"></span><span class="pc-screw" aria-hidden="true">+</span></div>
+      </div>
+    </section>

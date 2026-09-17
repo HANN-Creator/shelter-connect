@@ -1,0 +1,52 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const read=name=>fs.readFileSync(__dirname+'/'+name,'utf8');
+const walk=read('walk-logic.js');
+const state={x:216,y:264,flipX:false,action:'idle',actionTime:0,gaitPhase:0,stride:0,near:1,moving:false,dogs:[]};
+const settings={speed:42,dogMotion:true};
+const context=vm.createContext({Math,walkSettings:settings,walkReducedMotion:{matches:false},walkAxis:{x:0,y:0},walkKeys:new Set(),screenName:'walk',currentWalk:()=>state,updateEncounter(){},drawWalk(){},runWalk(){},stopWalking(){state.moving=false;},dogs:[{name:'보리'},{name:'봄이'},{name:'호두'}]});
+const clips=walk.slice(walk.indexOf(' const playerClips='),walk.indexOf(' const walkStates='));
+const bounds=walk.slice(walk.indexOf(' const walkBounds='),walk.indexOf(' const walkSlots='));
+const dogCollision=walk.match(/ function canDogStand\(d,x,y\)\{[\s\S]*?\n \}/)[0];
+const movement=walk.slice(walk.indexOf(' function circleHitsBox'),walk.indexOf(' function updateEncounter'));
+vm.runInContext(clips+bounds+dogCollision+movement+read('natural-dogs.js')+read('ball-play.js'),context);
+state.dogs=[['sniff',171,246],['play',280,247],['rest',249,343]].map(([kind,x,y],i)=>context.initNaturalDog({i,kind,x,y,homeX:x,homeY:y,time:0,stride:0,engaged:false,nearTime:0,moving:false}));
+const play=state.dogs[1];
+assert.equal(context.ballInteraction(state,state.dogs[0]).enabled,false);
+assert.equal(context.ballInteraction(state,state.dogs[2]).enabled,false);
+for(let i=0;i<900&&play.phase!=='offer';i++)context.updateDogs(1/60);
+assert.equal(context.ballInteraction(state,play).enabled,true,'The offered ball must be receivable nearby.');
+const phases=[],gestures={pull:new Set(),push:new Set()};let maxBallStep=0,maxDogStep=0;
+function tick(){
+ const prev={x:play.x,y:play.y,bx:play.ballX,by:play.ballY};
+ context.advancePlayer(1/60,context.walkInput());context.updateBallPlay(1/60);context.updateDogs(1/60);
+ if(gestures[state.action])gestures[state.action].add(context.playerFrame(state).frame);
+ if(phases.at(-1)!==state.ballGame.phase)phases.push(state.ballGame.phase);
+ maxBallStep=Math.max(maxBallStep,Math.hypot(play.ballX-prev.bx,play.ballY-prev.by));
+ maxDogStep=Math.max(maxDogStep,Math.hypot(play.x-prev.x,play.y-prev.y));
+ assert.ok(Math.hypot(play.x-state.x,play.y-state.y)>=19.99,'Fetch must not pass through the visitor.');
+}
+context.interactWithBall();assert.equal(state.action,'pull');
+for(let i=0;i<60;i++)tick();assert.equal(state.ballGame.phase,'ready');
+context.interactWithBall();assert.equal(state.action,'push');
+for(let i=0;i<35;i++)tick();assert.equal(state.ballGame.phase,'flight');
+const round=state.ballGame.round;context.interactWithBall();assert.equal(state.ballGame.round,round,'Repeated input must not create another ball.');
+settings.dogMotion=false;const paused=JSON.stringify([state.ballGame,play]);for(let i=0;i<60;i++)tick();assert.equal(JSON.stringify([state.ballGame,play]),paused);settings.dogMotion=true;
+for(let i=0;i<1200&&state.ballGame.phase!=='offered';i++)tick();
+assert.equal(state.ballGame.phase,'offered','A throw must finish with the dog offering the same ball.');
+assert.ok(maxBallStep<5,'The ball must travel continuously.');assert.ok(maxDogStep<=26/60+.001,'Fetch must not teleport the dog.');
+assert.deepEqual([...gestures.pull].sort(),[0,1,2,3]);assert.deepEqual([...gestures.push].sort(),[0,1,2,3]);
+assert.equal(context.ballInteraction(state,play).enabled,true);
+context.interactWithBall();for(let i=0;i<60;i++)tick();context.interactWithBall();for(let i=0;i<45;i++)tick();
+// The visitor walks to another clear part of the garden during the second throw.
+for(let i=0;i<56;i++)context.walkStep(0,-1);
+for(let i=0;i<116;i++)context.walkStep(-1,0);
+assert.ok(state.x<120&&state.y<215);
+for(let i=0;i<1800&&state.ballGame.phase!=='offered';i++)tick();
+assert.equal(state.ballGame.phase,'offered','The dog must find a route back after the visitor moves.');
+assert.equal(state.dogs[2].x,249);assert.equal(state.dogs[2].y,343);
+const routingDog={...play,x:250,y:230};state.dogs[1]=routingDog;
+const aroundHouse=context.planBallRoute(routingDog,{x:100,y:120});
+assert.ok(aroundHouse.length>1,'A route across the shelter building must take a detour.');
+let previous=routingDog;for(const point of aroundHouse){assert.ok(context.ballRouteClear(routingDog,previous,point));previous=point;}
+assert.equal(previous.x,100);assert.equal(previous.y,120);
+console.log(JSON.stringify({phases,maxBallStep:+maxBallStep.toFixed(3),maxDogStep:+maxDogStep.toFixed(3),movedVisitorReturn:'passed',shelterBuildingDetour:'passed',pauseAndDuplicateInput:'passed',recordGating:'passed'}));
