@@ -1,6 +1,8 @@
 .DS_Store
 .env
 .env.*
+!/backend/.env.example
+!/backend/.env.supabase.example
 __pycache__/
 *.pyc
 node_modules/
