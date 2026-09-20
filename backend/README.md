@@ -2,7 +2,7 @@
 
 Spring Boot 4.1.1, Java 21, Gradle Wrapper로 시작했어. DB는 Supabase의 PostgreSQL을 쓰고, 로컬에서는 Docker로 PostgreSQL을 띄우면 돼.
 
-서버 실행 설정과 상태 확인, 데이터 구조를 만드는 Flyway 마이그레이션이 들어 있어. [데이터 관계도와 필드 설명](../docs/data-model.md)을 같이 보면 돼. [가상 보호소 2곳·강아지 5마리 샘플](sample-data/README.md)도 준비했어. 보호소·강아지·대화 API와 인증은 다음 작업이야. 현재 웹 시안에는 아직 연결하지 않았어.
+서버 실행 설정과 상태 확인, 데이터 구조를 만드는 Flyway 마이그레이션이 들어 있어. [데이터 관계도와 필드 설명](../docs/data-model.md)을 같이 보면 돼. [가상 보호소 2곳·강아지 5마리 샘플](sample-data/README.md)과 [보호소·강아지 조회 API](../docs/read-api.md)도 준비했어. 인증·등록·대화·사진 API는 다음 작업이야. 현재 웹 시안에는 아직 연결하지 않았어.
 
 ## 먼저 테스트해보기
 
@@ -14,7 +14,7 @@ Java 21을 설치하고 이 폴더에서 실행해봐. Gradle은 따로 설치�
 
 Windows에서는 `gradlew.bat clean build`를 쓰면 돼. 테스트는 잠깐 쓰고 버리는 메모리 DB(H2)로 실행돼서 Docker나 Supabase 계정이 없어도 돼. 실제 앱에는 H2가 포함되지 않아.
 
-GitHub PR에서는 PostgreSQL 17로 서버 검사와 별도의 `integrationTest`를 실행해. 마이그레이션, 데이터 관계, 중복 저장 차단, 대화 근거의 강아지 일치, 클라이언트 DB 접근 차단을 확인하고, 빌드한 JAR도 직접 실행해. H2 검사에는 PostgreSQL 마이그레이션이 포함되지 않아.
+GitHub PR에서는 PostgreSQL 17로 서버 검사와 별도의 `integrationTest`를 실행해. 마이그레이션, 데이터 관계, 중복 저장 차단, 대화 근거의 강아지 일치, 클라이언트 DB 접근 차단과 조회 API의 공개 조건·페이지 이동을 확인해. 빌드한 JAR도 직접 실행해서 HTTP 조회를 검사해. H2 검사에는 PostgreSQL 마이그레이션이 포함되지 않아.
 
 ## 로컬 서버 켜기
 
@@ -99,4 +99,4 @@ TEST_DB_USERNAME="$DB_USERNAME" TEST_DB_PASSWORD="$DB_PASSWORD" \
 ./gradlew integrationTest
 ```
 
-진행 순서와 PR 기록 방식은 [백엔드 진행 규칙](../docs/backend-workflow.md)에 있어. B-02의 샘플 로딩까지 준비했고, 다음은 C-03의 응답 합의를 맞춰 B-03 조회 API를 만드는 순서야.
+진행 순서와 PR 기록 방식은 [백엔드 진행 규칙](../docs/backend-workflow.md)에 있어. B-03의 조회 API까지 구현했어. C-03의 프론트 검토와 실제 앱 연결은 따로 확인하고, 다음 백엔드 작업은 B-04 인증·보호소 권한이야.
