@@ -11,6 +11,7 @@ public class AccountRepository {
 	public record Account(UUID id, String displayName, String role, boolean disabled) {}
 	public record ShelterMembership(UUID shelterId, String name, String memberRole) {}
 	public record ManagementAccess(UUID shelterId, UUID dogId, String memberRole) {}
+	public record ManagementWriter(UUID userId, UUID shelterId, String memberRole) {}
 	private final JdbcClient jdbc;
 	private final String provider;
 
@@ -59,6 +60,20 @@ public class AccountRepository {
 				.param("provider", provider).param("subject", subject.toString()).param("id", dogId)
 				.query((rs, row) -> new ManagementAccess(rs.getObject("id", UUID.class),
 						rs.getObject("dog_id", UUID.class), rs.getString("role"))).optional();
+	}
+
+	public Optional<ManagementWriter> lockShelterAccess(UUID subject, UUID shelterId) {
+		// Shared row locks keep the account, membership and approval valid until the write commits.
+		return jdbc.sql("SELECT u.id AS user_id, s.id, m.role FROM shelter.shelters s " + membershipJoin()
+				+ " WHERE " + allowed() + " AND s.id = :id FOR SHARE OF u, m, s")
+				.param("provider", provider).param("subject", subject.toString()).param("id", shelterId)
+				.query((rs, row) -> new ManagementWriter(rs.getObject("user_id", UUID.class),
+						rs.getObject("id", UUID.class), rs.getString("role"))).optional();
+	}
+
+	public boolean lockDogInShelter(UUID dogId, UUID shelterId) {
+		return jdbc.sql("SELECT id FROM shelter.dogs WHERE id = :dog AND shelter_id = :shelter FOR UPDATE")
+				.param("dog", dogId).param("shelter", shelterId).query(UUID.class).optional().isPresent();
 	}
 
 	private String membershipJoin() {

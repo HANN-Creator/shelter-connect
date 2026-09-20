@@ -36,7 +36,7 @@ python3 -m http.server 8000 --bind 127.0.0.1
 
 보호소랑 강아지 정보는 전부 흐름을 보여주기 위한 가상 예시야. 대화도 실제 AI가 답하는 건 아니고, 질문을 미리 넣어둔 관찰 기록과 연결해서 답하도록 해뒀어. 기록에 없는 내용은 모른다고 답하고 보호소에 확인할 질문으로 남기는 방식이야.
 
-등록은 서비스와 연결된 보호소만 할 수 있게 만들 계획이야. 시안은 계정에 따라 화면을 다르게 보여주는 정도이고, 별도로 만든 서버에는 로그인 검증과 보호소 권한 확인이 들어 있어. 화면 연결과 실제 동물 등록·수정은 다음 작업이야.
+등록은 서비스와 연결된 보호소만 할 수 있게 만들 계획이야. 시안은 계정에 따라 화면을 다르게 보여주는 정도이고, 별도로 만든 서버에는 로그인 검증과 보호소 권한 확인이 들어 있어. 서버의 동물 등록·수정과 관찰 기록 API도 준비됐고, 시안 화면 연결은 다음 작업이야.
 
 대화 내용이나 입양 준비 메모는 새로고침하면 초기화돼. 체크하거나 메모를 적어도 실제 입양 신청이나 서류 제출이 되는 건 아니야.
 
@@ -61,7 +61,7 @@ PNG 이미지들은 이미 넣어뒀어. 이미지를 다시 만들고 싶을 �
 
 ## 백엔드 작업
 
-`backend/`에 Spring Boot와 Supabase PostgreSQL을 쓰는 서버 구성을 넣었어. Java 21로 실행하고, 자세한 설정은 [백엔드 실행 안내](backend/README.md)를 보면 돼. 서버 상태 확인과 [데이터 구조·마이그레이션](docs/data-model.md), [가상 보호소 2곳·강아지 5마리 샘플](backend/sample-data/README.md), [보호소·강아지 조회 API](docs/read-api.md), [Supabase 인증·보호소 권한](docs/auth-and-permissions.md)이 들어 있어.
+`backend/`에 Spring Boot와 Supabase PostgreSQL을 쓰는 서버 구성을 넣었어. Java 21로 실행하고, 자세한 설정은 [백엔드 실행 안내](backend/README.md)를 보면 돼. 서버 상태 확인과 [데이터 구조·마이그레이션](docs/data-model.md), [가상 보호소 2곳·강아지 5마리 샘플](backend/sample-data/README.md), [보호소·강아지 조회 API](docs/read-api.md), [Supabase 인증·보호소 권한](docs/auth-and-permissions.md), [강아지·관찰 관리 API](docs/dog-management-api.md)가 들어 있어.
 
 [구현 순서와 브랜치 규칙](docs/backend-workflow.md)에 따라 작업별 PR을 만들고, 노션 카드에 진행 상태와 병합 결과를 같이 남겨.
 

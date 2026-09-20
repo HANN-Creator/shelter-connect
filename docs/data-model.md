@@ -110,7 +110,7 @@ B-04·B-05는 **로그인 사용자 + ACTIVE 소속 + APPROVED 보호소 + 대�
 
 YEAR의 1월 1일, MONTH의 1일은 정렬과 저장을 위한 기준값이다. **그 날짜를 실제 생일로 표시하지 않는다.** 알 수 없는 생일에는 날짜나 추정 여부를 채울 수 없고, 정밀도와 날짜가 맞지 않으면 DB가 거절한다. 미래 생일 등 입력값 검사는 등록 API에서 추가한다.
 
-태그는 확인된 관찰을 요약한 문구다. B-05에서 기록과 대조해 저장하고, 품종 일반론을 특정 강아지의 사실처럼 넣지 않는다. `avatar_key`의 실제 에셋 매핑도 프론트와 확인한다.
+태그는 보호소 담당자가 확인된 관찰과 대조해 작성하는 요약 문구다. B-05는 개수·길이·형식을 검사하며 의미 일치를 자동 판정하지 않는다. 품종 일반론을 특정 강아지의 사실처럼 넣지 않는다. `avatar_key`의 실제 에셋 매핑도 프론트와 확인한다.
 
 공개 조회는 승인·공개 보호소와 `dogs.is_public = true`, `archived_at IS NULL`을 함께 검사한다. B-03 목록·상세·공개 마릿수는 `AVAILABLE`, `IN_PROGRESS`만 포함한다. DB에서 강아지의 공개 여부와 보호소 승인을 자동으로 동기화하지 않는다.
 
@@ -121,6 +121,8 @@ YEAR의 1월 1일, MONTH의 1일은 정렬과 저장을 위한 기준값이다. 
 - 분류: TEMPERAMENT / ROUTINE / PEOPLE / DOGS / PLAY / CARE / HEALTH / OTHER.
 - 상태: DRAFT → CONFIRMED, 철회하면 RETRACTED.
 - CONFIRMED에는 `confirmed_by`, `confirmed_at`이 필요하다.
+- B-05는 DRAFT 내용만 수정한다. CONFIRMED는 철회만 허용하고 내용·작성자·확인 이력을 유지한다. RETRACTED는 다시 수정하지 않는다. 정정은 철회 후 새 기록으로 작성한다.
+- 강아지·관찰 PATCH는 `expectedUpdatedAt`과 DB의 `updated_at`을 비교한다. 자세한 입력·상태 규칙은 [관리 API](dog-management-api.md)를 따른다.
 - B-07의 답변 근거 조회는 해당 강아지의 **CONFIRMED 기록만** 사용한다. 상태와 작성자의 소속 검사는 서버에서 수행한다.
 
 ### `dog_photos`

@@ -16,6 +16,13 @@ checks = [
     ("/v1/dogs", "POST", {}),
     ("/actuator/env", "GET", {}),
     ("/v1/shelters", "GET", {"Authorization": "Bearer invalid"}),
+    ("/v1/shelter-admin/dogs", "POST", {}),
+    ("/v1/shelter-admin/dogs/02200000-0000-4000-8000-000000000001", "GET", {}),
+    ("/v1/shelter-admin/dogs/02200000-0000-4000-8000-000000000001", "PATCH", {}),
+    ("/v1/shelter-admin/shelters/02100000-0000-4000-8000-000000000001/dogs", "GET", {}),
+    ("/v1/shelter-admin/dogs/02200000-0000-4000-8000-000000000001/observations", "GET", {}),
+    ("/v1/shelter-admin/dogs/02200000-0000-4000-8000-000000000001/observations", "POST", {}),
+    ("/v1/shelter-admin/dogs/02200000-0000-4000-8000-000000000001/observations/00000000-0000-4000-8000-000000000001", "PATCH", {}),
 ]
 for path, method, headers in checks:
     try:
