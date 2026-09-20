@@ -52,11 +52,11 @@ class AiReplyPostgresTest {
 		token=tokens.token(subject);otherToken=tokens.token(otherSubject);
 		session=UUID.fromString(body(auth(post("/v1/dogs/"+dog+"/chat-sessions"),token),201).at("/data/id").asText());
 		message=addMessage("q1","무슨 놀이를 좋아해?");
-		when(provider.generate(any())).thenAnswer(call->{
+		doAnswer(call->{
 			assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isFalse();
 			Context context=call.getArgument(0);
 			return new Generated("난 공을 천천히 따라가는 걸 좋아해!",false,List.of(context.observations().getFirst().id()),"resp_test");
-		});
+		}).when(provider).generate(any());
 	}
 	@AfterEach void cleanup() {
 		if(executor!=null) executor.close();
@@ -87,7 +87,7 @@ class AiReplyPostgresTest {
 		assertThat(reply(message,false,200).get("data")).isEqualTo(result);
 	}
 	@Test void missingRecordsOrUnknownCitationsProduceConfirmationInsteadOfInventedFacts() throws Exception {
-		when(provider.generate(any())).thenReturn(new Generated("입질이 절대 없어!",false,List.of(UUID.randomUUID()),"resp_bad"));
+		doReturn(new Generated("입질이 절대 없어!",false,List.of(UUID.randomUUID()),"resp_bad")).when(provider).generate(any());
 		var result=reply(message,false,201).get("data");
 		assertThat(result.at("/reply/needsShelterConfirmation").asBoolean()).isTrue();
 		assertThat(result.at("/reply/text").asText()).isEqualTo(AiTypes.unknown().text());
@@ -103,7 +103,7 @@ class AiReplyPostgresTest {
 		verifyNoInteractions(provider);
 	}
 	@Test void failuresRequireExplicitRetryAndAttemptsAreBounded() throws Exception {
-		when(provider.generate(any())).thenThrow(new AiFailure("AI_RATE_LIMITED"));
+		doThrow(new AiFailure("AI_RATE_LIMITED")).when(provider).generate(any());
 		var failed=reply(message,false,200).get("data");
 		assertThat(failed.get("failureCode").asText()).isEqualTo("AI_RATE_LIMITED");assertThat(failed.get("retryable").asBoolean()).isTrue();
 		reply(message,false,200);verify(provider,times(1)).generate(any());
@@ -112,7 +112,7 @@ class AiReplyPostgresTest {
 		assertThat(count("chat_messages")).isEqualTo(1);assertThat(count("chat_message_observations")).isZero();
 	}
 	@Test void successfulExplicitRetryUsesOriginalMessageAndCreatesOnlyOneAnswer() throws Exception {
-		when(provider.generate(any())).thenThrow(new AiFailure("AI_TIMEOUT")).thenReturn(new Generated("난 공을 따라가!",false,List.of(observation),"resp_retry"));
+		doThrow(new AiFailure("AI_TIMEOUT")).doReturn(new Generated("난 공을 따라가!",false,List.of(observation),"resp_retry")).when(provider).generate(any());
 		reply(message,false,200);reply(message,true,201);reply(message,true,200);
 		assertThat(count("chat_messages")).isEqualTo(2);verify(provider,times(2)).generate(any());
 	}
@@ -128,7 +128,7 @@ class AiReplyPostgresTest {
 	}
 	@Test void providerCallsReleaseDbLocksAndConcurrentRetriesOnlyObservePending() throws Exception {
 		var entered=new CountDownLatch(1);var release=new CountDownLatch(1);
-		when(provider.generate(any())).thenAnswer(call->{entered.countDown();assertThat(release.await(10,TimeUnit.SECONDS)).isTrue();return new Generated("난 공을 따라가!",false,List.of(observation),"resp_first");});
+		doAnswer(call->{entered.countDown();assertThat(release.await(10,TimeUnit.SECONDS)).isTrue();return new Generated("난 공을 따라가!",false,List.of(observation),"resp_first");}).when(provider).generate(any());
 		Future<JsonNode> running=executor.submit(()->reply(message,false,201));
 		try {
 			assertThat(entered.await(5,TimeUnit.SECONDS)).isTrue();
@@ -141,10 +141,10 @@ class AiReplyPostgresTest {
 	}
 	@Test void expiredLeaseRequiresRetryAndOldWorkerCannotOverwriteNewAnswer() throws Exception {
 		var entered=new CountDownLatch(1);var release=new CountDownLatch(1);var attempts=new AtomicInteger();
-		when(provider.generate(any())).thenAnswer(call->{
+		doAnswer(call->{
 			int n=attempts.incrementAndGet();if(n==1){entered.countDown();assertThat(release.await(10,TimeUnit.SECONDS)).isTrue();}
 			return new Generated(n==1?"오래된 응답":"새 시도의 응답",false,List.of(observation),"resp_"+n);
-		});
+		}).when(provider).generate(any());
 		Future<JsonNode> first=executor.submit(()->reply(message,false,200));
 		try {
 			assertThat(entered.await(5,TimeUnit.SECONDS)).isTrue();
@@ -157,7 +157,7 @@ class AiReplyPostgresTest {
 	}
 	@ParameterizedTest @ValueSource(strings={"dog","shelter","session","account"})
 	void contextIsCheckedAgainBeforePublishing(String changed) throws Exception {
-		when(provider.generate(any())).thenAnswer(call->{
+		doAnswer(call->{
 			assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isFalse();
 			switch(changed){
 				case "dog" -> jdbc.update("UPDATE shelter.dogs SET is_public=false WHERE id=?",dog);
@@ -166,13 +166,13 @@ class AiReplyPostgresTest {
 				case "account" -> jdbc.update("UPDATE shelter.app_users SET disabled_at=now() WHERE id=?",user);
 			}
 			return new Generated("공을 따라가!",false,List.of(observation),"resp_old");
-		});
+		}).when(provider).generate(any());
 		reply(message,false,changed.equals("account")?403:200);
 		assertThat(count("chat_messages")).isEqualTo(1);assertThat(count("chat_message_observations")).isZero();
 		assertThat(jdbc.queryForObject("SELECT processing_status FROM shelter.chat_messages WHERE id=?",String.class,message)).isEqualTo("FAILED");
 	}
 	@Test void retractedEvidenceCannotBePublishedOrCitedAfterGeneration() throws Exception {
-		when(provider.generate(any())).thenAnswer(call->{jdbc.update("UPDATE shelter.dog_observations SET status='RETRACTED' WHERE id=?",observation);return new Generated("공을 따라가!",false,List.of(observation),"resp_stale");});
+		doAnswer(call->{jdbc.update("UPDATE shelter.dog_observations SET status='RETRACTED' WHERE id=?",observation);return new Generated("공을 따라가!",false,List.of(observation),"resp_stale");}).when(provider).generate(any());
 		assertThat(reply(message,false,201).at("/data/reply/needsShelterConfirmation").asBoolean()).isTrue();assertThat(count("chat_message_observations")).isZero();
 	}
 	@Test void failedCitationInsertRollsBackAnswerAndRequestCompletionTogether() throws Exception {
