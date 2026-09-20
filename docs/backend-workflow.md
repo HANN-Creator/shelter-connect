@@ -6,9 +6,10 @@ Spring Boot와 Supabase PostgreSQL로 개발한다. 구현 기준은 Java 21, Gr
 
 ## 브랜치와 병합
 
-`main` → `codex/backend/<작업-ID>-<설명>` → PR → 검증 → squash merge
+`main` → `backend/<작업-ID>-<설명>` → PR → 검증 → squash merge
 
-- 예: `codex/backend/b-03-read-api`, `codex/backend/b-06-chat-storage`
+- 예: `backend/b-03-read-api`, `backend/b-06-chat-storage`
+- PR 본문, 병합 코멘트, 노션에도 같은 브랜치 이름을 적는다.
 - 새 작업은 최신 `origin/main`에서 시작한다. 한 카드에 한 PR을 대응시킨다.
 - PR 제목에 작업 ID를 넣는다. 예: `[B-03] 보호소·강아지 조회 API 추가`
 - 작업 중에는 Draft PR을 사용할 수 있다. 확인할 준비가 되면 Draft를 해제하고 노션을 `확인 요청`으로 바꾼다.
