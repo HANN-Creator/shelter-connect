@@ -101,7 +101,7 @@ class SchemaMigrationTest {
 	@Test
 	void migrationCanRunAgainWithoutChangingTheSchema() {
 		assertThat(flyway.migrate().migrationsExecuted).isZero();
-		assertThat(flyway.info().current().getVersion().toString()).isEqualTo("1");
+		assertThat(flyway.info().current().getVersion().toString()).isEqualTo("2");
 	}
 
 	@Test
@@ -217,6 +217,16 @@ class SchemaMigrationTest {
 	@Test
 	void retryIdentityCannotBeRewritten() {
 		reject("23514", "UPDATE shelter.chat_messages SET client_message_id = 'replacement' WHERE id = ?", QUESTION);
+	}
+
+	@Test
+	void generationLeaseRequiresPendingUserAndPairedFields() {
+		reject("23514", "UPDATE shelter.chat_messages SET generation_token = ? WHERE id = ?", id(71), QUESTION);
+	}
+
+	@Test
+	void completedAnswersCannotOwnAGenerationLease() {
+		reject("23514", "UPDATE shelter.chat_messages SET generation_token = ?, generation_expires_at = now(), generation_attempts = 1 WHERE id = ?", id(71), ANSWER);
 	}
 
 	@Test

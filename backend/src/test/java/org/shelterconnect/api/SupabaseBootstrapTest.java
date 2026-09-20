@@ -52,9 +52,11 @@ class SupabaseBootstrapTest {
 				var flyway = Flyway.configure().dataSource(isolatedUrl, username, password)
 						.schemas("shelter").defaultSchema("shelter").cleanDisabled(true)
 						.baselineOnMigrate(false).validateMigrationNaming(true).load();
+				assertThat(flyway.info().current().getVersion().toString()).isEqualTo("1");
+				assertThat(flyway.migrate().migrationsExecuted).isEqualTo(1);
 				flyway.validate();
 				assertThat(flyway.migrate().migrationsExecuted).isZero();
-				assertThat(flyway.info().current().getVersion().toString()).isEqualTo("1");
+				assertThat(flyway.info().current().getVersion().toString()).isEqualTo("2");
 			} finally {
 				// Only the uniquely named database created by this test is removed.
 				statement.execute("DROP DATABASE " + database);
