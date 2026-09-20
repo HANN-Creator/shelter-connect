@@ -61,7 +61,7 @@ PNG 이미지들은 이미 넣어뒀어. 이미지를 다시 만들고 싶을 �
 
 ## 백엔드 작업
 
-`backend/`에 Spring Boot와 Supabase PostgreSQL을 쓰는 서버 기본 구성을 넣었어. Java 21로 실행하고, 자세한 설정은 [백엔드 실행 안내](backend/README.md)를 보면 돼. 지금은 서버 상태 확인까지만 구현했고, 보호소·강아지 API와 로그인은 다음 작업이야.
+`backend/`에 Spring Boot와 Supabase PostgreSQL을 쓰는 서버 구성을 넣었어. Java 21로 실행하고, 자세한 설정은 [백엔드 실행 안내](backend/README.md)를 보면 돼. 서버 상태 확인과 [데이터 구조·마이그레이션](docs/data-model.md)이 들어 있고, 보호소·강아지 API와 로그인은 다음 작업이야.
 
 [구현 순서와 브랜치 규칙](docs/backend-workflow.md)에 따라 작업별 PR을 만들고, 노션 카드에 진행 상태와 병합 결과를 같이 남겨.
 
