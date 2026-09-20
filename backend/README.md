@@ -2,7 +2,7 @@
 
 Spring Boot 4.1.1, Java 21, Gradle Wrapper로 시작했어. DB는 Supabase의 PostgreSQL을 쓰고, 로컬에서는 Docker로 PostgreSQL을 띄우면 돼.
 
-서버 실행 설정과 상태 확인, 데이터 구조를 만드는 Flyway 마이그레이션이 들어 있어. [데이터 관계도와 필드 설명](../docs/data-model.md)을 같이 보면 돼. 보호소·강아지·대화 API와 인증은 다음 작업이야. 현재 웹 시안에는 아직 연결하지 않았어.
+서버 실행 설정과 상태 확인, 데이터 구조를 만드는 Flyway 마이그레이션이 들어 있어. [데이터 관계도와 필드 설명](../docs/data-model.md)을 같이 보면 돼. [가상 보호소 2곳·강아지 5마리 샘플](sample-data/README.md)도 준비했어. 보호소·강아지·대화 API와 인증은 다음 작업이야. 현재 웹 시안에는 아직 연결하지 않았어.
 
 ## 먼저 테스트해보기
 
@@ -76,6 +76,8 @@ Hibernate의 자동 테이블 수정은 꺼져 있어(`ddl-auto=validate`). 테�
 - `src/main/java/org/shelterconnect/api`: 서버 시작 코드. 기능 코드는 여기에 추가할 예정이야.
 - `src/main/resources/application.properties`: 공통 서버·DB·상태 확인 설정.
 - `src/test`: HTTP 상태 확인, 내부 관리 API 비공개, 준비 상태 전환, DB 조회 검사.
+- `sample-data`: 가상 보호소·강아지·관찰 기록 원본 JSON과 화면 확인 예시.
+- `src/sample`: `./gradlew loadSampleData`로만 실행하는 로컬 샘플 로더. 서버 JAR에는 포함하지 않아.
 - `src/main/resources/db/migration`: 버전별 PostgreSQL 구조. 적용한 파일은 수정하지 않고 다음 버전을 추가해.
 - `compose.yaml`: 로컬 PostgreSQL. 포트는 `15432`, 데이터는 전용 볼륨에 보관해.
 - `../.github/workflows/backend.yml`: PR과 main의 자동 테스트·빌드·JAR 실행 검사.
@@ -93,4 +95,4 @@ TEST_DB_USERNAME="$DB_USERNAME" TEST_DB_PASSWORD="$DB_PASSWORD" \
 ./gradlew integrationTest
 ```
 
-진행 순서와 PR 기록 방식은 [백엔드 진행 규칙](../docs/backend-workflow.md)에 있어. 다음 B-02에서 이 구조에 가상 보호소와 강아지 데이터를 넣고, C-03의 응답 합의를 맞춰 B-03 조회 API를 만들 예정이야.
+진행 순서와 PR 기록 방식은 [백엔드 진행 규칙](../docs/backend-workflow.md)에 있어. B-02의 샘플 로딩까지 준비했고, 다음은 C-03의 응답 합의를 맞춰 B-03 조회 API를 만드는 순서야.

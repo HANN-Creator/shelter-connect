@@ -56,6 +56,23 @@ jobs:
       - uses: gradle/actions/setup-gradle@67621b124fd2e251c5e8a0e6e3b91318f2287669 # v6.3.0
       - name: Test and build against PostgreSQL
         run: ./gradlew --no-daemon clean build integrationTest
+      - name: Check sample loading and package separation
+        env:
+          DB_URL: jdbc:postgresql://127.0.0.1:5432/shelter_test
+          DB_USERNAME: shelter_ci
+          DB_PASSWORD: disposable-ci-only
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          ./gradlew --no-daemon loadSampleData
+          ./gradlew --no-daemon loadSampleData
+          counts=$(docker exec "$POSTGRES_CONTAINER" psql -U shelter_ci -d shelter_test -Atc \
+            'SELECT (SELECT count(*) FROM shelter.shelters), (SELECT count(*) FROM shelter.dogs), (SELECT count(*) FROM shelter.dog_observations)')
+          test "$counts" = '2|5|25'
+          python3 - <<'PY'
+          import zipfile
+          with zipfile.ZipFile('build/libs/shelter-connect-api.jar') as jar:
+              assert not any('/sample/' in name or name.endswith('dataset.json') for name in jar.namelist())
+          PY
       - name: Check packaged server
         env:
           DB_URL: jdbc:postgresql://127.0.0.1:5432/shelter_test
