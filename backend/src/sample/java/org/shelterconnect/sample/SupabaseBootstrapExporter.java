@@ -55,6 +55,7 @@ public final class SupabaseBootstrapExporter {
 				    CONSTRAINT flyway_schema_history_pk PRIMARY KEY (installed_rank)
 				);
 				CREATE INDEX flyway_schema_history_s_idx ON shelter.flyway_schema_history(success);
+				ALTER TABLE shelter.flyway_schema_history ENABLE ROW LEVEL SECURITY;
 				""");
 		sql.append(Files.readString(migration)).append('\n');
 		sql.append("""

@@ -41,6 +41,10 @@ class SupabaseBootstrapTest {
 						assertThat(rows.getInt(2)).isEqualTo(5);
 						assertThat(rows.getInt(3)).isEqualTo(25);
 					}
+					try (var rows = bootstrap.executeQuery("SELECT count(*) FROM pg_tables WHERE schemaname = 'shelter' AND rowsecurity")) {
+						rows.next();
+						assertThat(rows.getInt(1)).isEqualTo(12);
+					}
 					assertThatThrownBy(() -> bootstrap.execute(sql)).isInstanceOf(SQLException.class)
 							.satisfies(error -> assertThat(((SQLException) error).getSQLState()).isEqualTo("42P06"));
 					bootstrap.execute("ROLLBACK");
