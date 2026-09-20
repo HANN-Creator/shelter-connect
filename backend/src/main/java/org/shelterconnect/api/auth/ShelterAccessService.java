@@ -3,7 +3,9 @@ package org.shelterconnect.api.auth;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 import static org.shelterconnect.api.auth.AccountRepository.ManagementAccess;
+import static org.shelterconnect.api.auth.AccountRepository.ManagementWriter;
 
 @Service
 @Transactional(readOnly = true)
@@ -16,8 +18,7 @@ public class ShelterAccessService {
 		this.accounts = accounts;
 	}
 
-	// Future mutation services must call these guards with the verified JWT subject inside their transaction.
-	// An earlier /access response must never be accepted as permission for a later write.
+	// Read checks do not grant permission to a later write; mutation services use the locked guards below.
 	public ManagementAccess requireShelter(UUID subject, UUID shelterId) {
 		accounts.profile(subject);
 		return repository.shelterAccess(subject, shelterId).orElseThrow(ShelterAccessService::forbidden);
@@ -26,6 +27,21 @@ public class ShelterAccessService {
 	public ManagementAccess requireDog(UUID subject, UUID dogId) {
 		accounts.profile(subject);
 		return repository.dogAccess(subject, dogId).orElseThrow(ShelterAccessService::forbidden);
+	}
+
+	@Transactional(propagation = Propagation.MANDATORY)
+	public ManagementWriter requireShelterForWrite(UUID subject, UUID shelterId) {
+		accounts.profile(subject);
+		return repository.lockShelterAccess(subject, shelterId).orElseThrow(ShelterAccessService::forbidden);
+	}
+
+	@Transactional(propagation = Propagation.MANDATORY)
+	public ManagementWriter requireDogForWrite(UUID subject, UUID dogId) {
+		var current = requireDog(subject, dogId);
+		var writer = requireShelterForWrite(subject, current.shelterId());
+		// Ownership may have changed before we obtained the dog lock. Recheck it after waiting.
+		if (!repository.lockDogInShelter(dogId, writer.shelterId())) throw forbidden();
+		return writer;
 	}
 
 	private static AccountAccessException forbidden() {
