@@ -78,3 +78,5 @@ node work/mobile-concept/check-ball-play.cjs
 이동 속도랑 애니메이션, 10초 뒤 앉기, 공을 주고받는 순서, 장애물 돌아가기, 관찰 기록에 맞는 행동이 유지되는지 확인하는 검사야.
 
 이미지 출처랑 수정 내역은 [CREDITS.md](CREDITS.md)에 따로 적어뒀으니까, 에셋 쪽을 만질 때 같이 보면 돼.
+
+사진 조회 API와 프론트 연결 방법은 [사진 조회 문서](docs/photo-read-api.md)에 정리했어. 실제 사진 파일과 Supabase Storage 설정은 별도로 준비해야 해.

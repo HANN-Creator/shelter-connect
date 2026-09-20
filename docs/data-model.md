@@ -131,7 +131,7 @@ YEAR의 1월 1일, MONTH의 1일은 정렬과 저장을 위한 기준값이다. 
 
 `rights_status`는 UNKNOWN / GRANTED / REVOKED. GRANTED에는 사용 범위인 `rights_note`와 `rights_confirmed_by`, `rights_confirmed_at`이 필요하다. 만료되는 서명 URL 대신 원본 저장 위치를 보관한다.
 
-B-08에서 사용자 공개 조건과 사용 허가를 확인한 뒤 사진 응답을 만든다. 테이블을 분리하는 것만으로 사진이 숨겨지는 것은 아니다. 실제 파일을 저장할 때는 비공개 버킷과 접근 방식도 함께 설정해야 한다.
+[B-08 사진 조회](photo-read-api.md)는 활성 사용자의 해당 강아지 완료 답변 1회, 현재 공개 조건과 GRANTED 사용 허가를 확인한 뒤 60초 서명 URL을 반환한다. 테이블을 분리하는 것만으로 사진이 숨겨지는 것은 아니다. 실제 파일을 저장할 때는 비공개 버킷과 접근 방식도 함께 설정해야 한다.
 
 ### `dog_behavior_profiles`
 
