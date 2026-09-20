@@ -1,6 +1,7 @@
 package org.shelterconnect.api.catalog;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.shelterconnect.api.web.ApiRequestFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -28,6 +29,6 @@ public class CatalogErrorHandler {
 	}
 
 	private String requestId(HttpServletRequest request) {
-		return (String) request.getAttribute(CatalogRequestFilter.REQUEST_ID);
+		return ApiRequestFilter.requestId(request);
 	}
 }

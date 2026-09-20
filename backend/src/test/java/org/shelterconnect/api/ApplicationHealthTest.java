@@ -56,7 +56,7 @@ class ApplicationHealthTest {
 	@ParameterizedTest
 	@ValueSource(strings = {"env", "configprops", "beans"})
 	void internalManagementEndpointsAreNotExposed(String endpoint) throws Exception {
-		assertThat(get("/actuator/" + endpoint).statusCode()).isEqualTo(404);
+		assertThat(get("/actuator/" + endpoint).statusCode()).isEqualTo(401);
 	}
 
 	@Test

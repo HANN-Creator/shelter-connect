@@ -79,6 +79,7 @@ jobs:
           DB_USERNAME: shelter_ci
           DB_PASSWORD: disposable-ci-only
           DB_MIGRATE: 'true'
+          SUPABASE_URL: https://auth.example.invalid
         run: |
           java -jar build/libs/shelter-connect-api.jar > /tmp/shelter-api.log 2>&1 &
           api_pid=$!
@@ -87,6 +88,7 @@ jobs:
             if curl -fsS http://127.0.0.1:8080/actuator/health/readiness > /tmp/shelter-health.json; then
               python3 -c 'import json; assert json.load(open("/tmp/shelter-health.json")) == {"status": "UP"}'
               python3 scripts/check_read_api.py
+              python3 scripts/check_auth_api.py
               exit 0
             fi
             if ! kill -0 "$api_pid" 2>/dev/null; then

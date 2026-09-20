@@ -5,6 +5,10 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.shelterconnect.api.web.ApiRequestFilter;
+import org.shelterconnect.api.auth.SecurityConfiguration;
+import org.shelterconnect.api.auth.SecurityErrors;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -25,13 +29,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.shelterconnect.api.catalog.CatalogResponses.*;
 
 @WebMvcTest(PublicCatalogController.class)
-@Import({CatalogService.class, CatalogRequestFilter.class, CatalogErrorHandler.class})
+@Import({CatalogService.class, ApiRequestFilter.class, CatalogErrorHandler.class,
+		SecurityConfiguration.class, SecurityErrors.class})
 class PublicCatalogHttpTest {
 	private static final UUID FIRST = UUID.fromString("02100000-0000-4000-8000-000000000001");
 	private static final UUID SECOND = UUID.fromString("02100000-0000-4000-8000-000000000002");
 	@Autowired MockMvc mvc;
 	@Autowired JsonMapper json;
 	@MockitoBean CatalogRepository repository;
+	@MockitoBean JwtDecoder jwtDecoder;
 
 	@ParameterizedTest
 	@ValueSource(strings = {"", "0", "-1", "51", "9999999999999", "1.5", "hello"})

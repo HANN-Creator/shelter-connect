@@ -1,4 +1,4 @@
-package org.shelterconnect.api.catalog;
+package org.shelterconnect.api.web;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -8,15 +8,17 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
-public class CatalogRequestFilter extends OncePerRequestFilter {
-	static final String REQUEST_ID = CatalogRequestFilter.class.getName() + ".requestId";
+@Order(Ordered.HIGHEST_PRECEDENCE)
+public class ApiRequestFilter extends OncePerRequestFilter {
+	private static final String REQUEST_ID = ApiRequestFilter.class.getName() + ".requestId";
 
-	@Override
-	protected boolean shouldNotFilter(HttpServletRequest request) {
-		return !request.getRequestURI().startsWith(request.getContextPath() + "/v1/");
+	public static String requestId(HttpServletRequest request) {
+		return (String) request.getAttribute(REQUEST_ID);
 	}
 
 	@Override
