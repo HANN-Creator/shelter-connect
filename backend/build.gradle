@@ -53,6 +53,16 @@ tasks.register('loadSampleData', JavaExec) {
 	args layout.projectDirectory.file('sample-data/dataset.json').asFile.absolutePath
 }
 
+tasks.register('exportSupabaseBootstrap', JavaExec) {
+	description = 'Exports a one-time SQL script for an empty Supabase development project; does not connect.'
+	group = 'application'
+	classpath = sourceSets.sample.runtimeClasspath
+	mainClass = 'org.shelterconnect.sample.SupabaseBootstrapExporter'
+	args layout.projectDirectory.file('src/main/resources/db/migration/V1__create_shelter_domain.sql').asFile.absolutePath,
+		layout.projectDirectory.file('sample-data/dataset.json').asFile.absolutePath,
+		layout.buildDirectory.file('supabase-bootstrap.sql').get().asFile.absolutePath
+}
+
 tasks.named('test') {
 	useJUnitPlatform { excludeTags 'postgres' }
 }

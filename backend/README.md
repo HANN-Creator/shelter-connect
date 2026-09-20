@@ -71,6 +71,8 @@ Supabase 프로젝트의 **Connect → Session pooler**에서 호스트·DB 사�
 
 Hibernate의 자동 테이블 수정은 꺼져 있어(`ddl-auto=validate`). 테이블 변경은 Flyway로 관리하고, `DB_MIGRATE=true`일 때만 적용해. V1은 `shelter` 스키마에 테이블 11개를 만들어. 실제 Supabase 프로젝트 접속과 운영 DB 적용은 아직 확인하지 않았어. Supabase의 `auth`, `storage`, `public` 테이블은 수정하지 않아.
 
+비어 있는 Supabase 개발 프로젝트에 SQL 편집기로 먼저 구조와 샘플을 넣는 방법도 [샘플 사용 안내](sample-data/README.md#새-supabase-프로젝트에-처음-넣을-때)에 있어. Flyway 이력을 함께 기록하므로 다음 서버 실행에서 V1을 중복 적용하지 않아.
+
 ## 폴더와 검사 범위
 
 - `src/main/java/org/shelterconnect/api`: 서버 시작 코드. 기능 코드는 여기에 추가할 예정이야.
