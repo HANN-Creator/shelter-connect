@@ -1,0 +1,19 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: shelter_connect
+      POSTGRES_USER: ${DB_USERNAME:?Copy .env.example to .env first}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set the local database password in .env}
+    ports:
+      - "127.0.0.1:15432:5432"
+    volumes:
+      - shelter-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d shelter_connect"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  shelter-postgres:

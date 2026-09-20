@@ -1,0 +1,79 @@
+name: Backend
+
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Java 21 / PostgreSQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: shelter_test
+          POSTGRES_USER: shelter_ci
+          POSTGRES_PASSWORD: disposable-ci-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U shelter_ci -d shelter_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      TEST_DB_URL: jdbc:postgresql://127.0.0.1:5432/shelter_test
+      TEST_DB_USERNAME: shelter_ci
+      TEST_DB_PASSWORD: disposable-ci-only
+      TEST_DB_DRIVER: org.postgresql.Driver
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@67621b124fd2e251c5e8a0e6e3b91318f2287669 # v6.3.0
+      - name: Test and build against PostgreSQL
+        run: ./gradlew --no-daemon clean build
+      - name: Check packaged server
+        env:
+          DB_URL: jdbc:postgresql://127.0.0.1:5432/shelter_test
+          DB_USERNAME: shelter_ci
+          DB_PASSWORD: disposable-ci-only
+        run: |
+          java -jar build/libs/shelter-connect-api.jar > /tmp/shelter-api.log 2>&1 &
+          api_pid=$!
+          trap 'kill "$api_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8080/actuator/health/readiness > /tmp/shelter-health.json; then
+              python3 -c 'import json; assert json.load(open("/tmp/shelter-health.json")) == {"status": "UP"}'
+              exit 0
+            fi
+            if ! kill -0 "$api_pid" 2>/dev/null; then
+              break
+            fi
+            sleep 2
+          done
+          cat /tmp/shelter-api.log
+          exit 1
