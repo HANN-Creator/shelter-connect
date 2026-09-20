@@ -2,7 +2,7 @@
 
 Spring Boot 4.1.1, Java 21, Gradle Wrapper로 시작했어. DB는 Supabase의 PostgreSQL을 쓰고, 로컬에서는 Docker로 PostgreSQL을 띄우면 돼.
 
-서버 실행 설정과 상태 확인, 데이터 구조를 만드는 Flyway 마이그레이션이 들어 있어. [데이터 관계도와 필드 설명](../docs/data-model.md)을 같이 보면 돼. [가상 보호소 2곳·강아지 5마리 샘플](sample-data/README.md), [보호소·강아지 조회 API](../docs/read-api.md), [Supabase 인증과 보호소 권한](../docs/auth-and-permissions.md)도 준비했어. [강아지 등록·수정과 관찰 기록](../docs/dog-management-api.md)도 사용할 수 있어. 행동 설정·대화·사진 API는 다음 작업이야. 현재 웹 시안에는 아직 연결하지 않았어.
+서버 실행 설정과 상태 확인, 데이터 구조를 만드는 Flyway 마이그레이션이 들어 있어. [데이터 관계도와 필드 설명](../docs/data-model.md)을 같이 보면 돼. [가상 보호소 2곳·강아지 5마리 샘플](sample-data/README.md), [보호소·강아지 조회 API](../docs/read-api.md), [Supabase 인증과 보호소 권한](../docs/auth-and-permissions.md)도 준비했어. [강아지 등록·수정과 관찰 기록](../docs/dog-management-api.md)도 사용할 수 있어. [대화방·메시지 저장 API](../docs/chat-storage-api.md)도 준비했어. AI 답변 생성과 행동 설정·사진 API는 다음 작업이야. 현재 웹 시안에는 아직 연결하지 않았어.
 
 ## 먼저 테스트해보기
 
@@ -78,7 +78,7 @@ Hibernate의 자동 테이블 수정은 꺼져 있어(`ddl-auto=validate`). 테�
 
 ## 폴더와 검사 범위
 
-- `src/main/java/org/shelterconnect/api`: 서버 시작 코드와 `catalog` 조회, `auth` 인증·권한, `management` 강아지·관찰 관리, `web` 공통 요청 처리.
+- `src/main/java/org/shelterconnect/api`: 서버 시작 코드와 `catalog` 조회, `auth` 인증·권한, `management` 강아지·관찰 관리, `chat` 본인 대화 저장, `web` 공통 요청 처리.
 - `src/main/resources/application.properties`: 공통 서버·DB·상태 확인 설정.
 - `src/test`: HTTP 상태 확인, 내부 관리 API 비공개, 준비 상태 전환, DB 조회 검사.
 - `sample-data`: 가상 보호소·강아지·관찰 기록 원본 JSON과 화면 확인 예시.
@@ -100,4 +100,4 @@ TEST_DB_USERNAME="$DB_USERNAME" TEST_DB_PASSWORD="$DB_PASSWORD" \
 ./gradlew integrationTest
 ```
 
-진행 순서와 PR 기록 방식은 [백엔드 진행 규칙](../docs/backend-workflow.md)에 있어. B-05의 동물 등록·수정까지 구현했어. 수정에는 조회 응답의 updatedAt을 함께 보내고, 권한과 입력·동시 수정 충돌을 서버에서 검사해. C-02의 로그인 화면 흐름과 C-03의 프론트 검토, 실제 앱 연결은 따로 확인하고, 다음 백엔드 작업은 B-10 강아지 행동 설정이야.
+진행 순서와 PR 기록 방식은 [백엔드 진행 규칙](../docs/backend-workflow.md)에 있어. B-06의 대화방·메시지 저장까지 구현했어. 본인의 대화만 조회하고, 같은 메시지 ID를 다시 보내면 중복 저장하지 않아. AI 답변은 B-07에서 연결해. C-02의 로그인 화면 흐름과 C-03의 프론트 검토, 실제 앱 연결은 따로 확인하고, 다음 백엔드 작업은 B-10 강아지 행동 설정이야.

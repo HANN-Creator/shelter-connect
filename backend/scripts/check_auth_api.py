@@ -6,6 +6,11 @@ from uuid import UUID
 
 BASE = "http://127.0.0.1:8080"
 checks = [
+    ("/v1/dogs/02200000-0000-4000-8000-000000000001/chat-sessions", "POST", {}),
+    ("/v1/me/chat-sessions", "GET", {}),
+    ("/v1/chat-sessions/00000000-0000-4000-8000-000000000001", "GET", {}),
+    ("/v1/chat-sessions/00000000-0000-4000-8000-000000000001/messages", "GET", {}),
+    ("/v1/chat-sessions/00000000-0000-4000-8000-000000000001/messages", "POST", {}),
     ("/v1/me", "GET", {}),
     ("/v1/me", "POST", {}),
     ("/v1/me/shelters", "GET", {}),
