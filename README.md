@@ -59,6 +59,10 @@ python3 scripts/build.py
 
 PNG 이미지들은 이미 넣어뒀어. 이미지를 다시 만들고 싶을 때만 `make-*.py`나 `prepare-player-sheet.py`를 실행하면 되고, 그때는 Pillow가 필요해.
 
+## 백엔드 작업
+
+백엔드는 Spring Boot와 Supabase PostgreSQL로 만들 예정이야. [구현 순서와 브랜치 규칙](docs/backend-workflow.md)에 따라 작업별 PR을 만들고, 노션 카드에 진행 상태와 병합 결과를 같이 남겨두려고 해.
+
 ## 움직임을 수정했다면 확인해봐
 
 이동이나 공놀이 코드를 바꿨으면 아래 검사도 한 번 돌려봐. 이쪽은 Node.js가 설치돼 있어야 해.
