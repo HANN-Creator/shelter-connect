@@ -18,6 +18,16 @@ repositories {
 	mavenCentral()
 }
 
+// Sample loading is a development tool and is not included in the server JAR.
+sourceSets {
+	sample
+}
+
+configurations {
+	sampleImplementation.extendsFrom implementation
+	sampleRuntimeOnly.extendsFrom runtimeOnly
+}
+
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -32,6 +42,15 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testRuntimeOnly 'com.h2database:h2'
+	testImplementation sourceSets.sample.output
+}
+
+tasks.register('loadSampleData', JavaExec) {
+	description = 'Adds fictional data to a local development database without overwriting existing rows.'
+	group = 'application'
+	classpath = sourceSets.sample.runtimeClasspath
+	mainClass = 'org.shelterconnect.sample.SampleDataLoader'
+	args layout.projectDirectory.file('sample-data/dataset.json').asFile.absolutePath
 }
 
 tasks.named('test') {
