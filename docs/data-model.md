@@ -63,7 +63,7 @@ erDiagram
 | `auth_provider`, `auth_subject` | varchar(40), varchar(255), 선택 | 외부 인증 제공자와 해당 제공자의 사용자 ID. 둘 다 입력하거나 둘 다 비움 |
 | `disabled_at` | timestamptz, 선택 | 계정 비활성화 시각 |
 
-비밀번호·개인 이메일은 이 단계에서 저장하지 않는다. `(auth_provider, auth_subject)`는 중복되지 않는다. 인증 방식은 B-04에서 정하고, 인증 정보가 비어 있는 행은 샘플·초기 구성용으로만 사용한다. 클라이언트가 보낸 userId를 그대로 로그인된 사용자로 인정하지 않는다.
+비밀번호·개인 이메일은 저장하지 않는다. `(auth_provider, auth_subject)`는 중복되지 않는다. B-04는 Supabase Auth의 검증된 issuer와 subject로 사용자를 연결한다. `auth_provider`는 `sb:` + issuer의 SHA-256 앞 16바이트를 32자리 16진수로 표현한 값, `auth_subject`는 표준 소문자 UUID다. 인증 정보가 비어 있는 행은 샘플·초기 구성용으로만 사용하고 자동으로 기존 담당자와 연결하지 않는다. 클라이언트가 보낸 userId는 로그인 증명이 아니다. [인증·권한 기준](auth-and-permissions.md)을 참고한다.
 
 ### `shelters`와 `shelter_memberships`
 
@@ -181,7 +181,7 @@ B-07은 ASSISTANT 메시지에 그 시점의 CONFIRMED 관찰만 연결해야 �
 - 동일 시각의 행도 ID로 순서를 고정할 수 있다. 정확한 커서 규격은 B-03·B-06에서 문서화한다.
 - 모든 업무 테이블은 `public` 대신 **`shelter` 스키마**에 둔다. 앱은 Spring API를 호출하고 DB에 직접 접근하지 않는다.
 - `PUBLIC`, Supabase의 `anon`·`authenticated` 역할에는 스키마·테이블 권한을 주지 않는다. 업무 테이블 11개에 RLS를 켜고 클라이언트 허용 정책은 만들지 않는다.
-- 테이블 소유자는 RLS를 우회하므로 Spring의 사용자·보호소 권한 검사가 반드시 필요하다. 실제 운영 DB의 실행 역할은 B-04·배포 준비에서 정한다.
+- 테이블 소유자는 RLS를 우회하므로 Spring의 사용자·보호소 권한 검사가 반드시 필요하다. B-04에 서버 검사를 구현했고, 실제 운영 DB의 실행 역할은 배포 준비에서 정한다.
 - Supabase 프로젝트에서 `shelter`를 Data API의 Exposed schemas에 추가하지 않는다. 실제 Supabase 설정과 연결은 아직 확인 전이다.
 
 관련 근거: [Supabase의 스키마 노출 방식](https://supabase.com/docs/guides/api/using-custom-schemas), [PostgreSQL 제약](https://www.postgresql.org/docs/17/ddl-constraints.html).

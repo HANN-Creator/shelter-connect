@@ -2,7 +2,7 @@
 
 Spring Boot 4.1.1, Java 21, Gradle Wrapper로 시작했어. DB는 Supabase의 PostgreSQL을 쓰고, 로컬에서는 Docker로 PostgreSQL을 띄우면 돼.
 
-서버 실행 설정과 상태 확인, 데이터 구조를 만드는 Flyway 마이그레이션이 들어 있어. [데이터 관계도와 필드 설명](../docs/data-model.md)을 같이 보면 돼. [가상 보호소 2곳·강아지 5마리 샘플](sample-data/README.md)과 [보호소·강아지 조회 API](../docs/read-api.md)도 준비했어. 인증·등록·대화·사진 API는 다음 작업이야. 현재 웹 시안에는 아직 연결하지 않았어.
+서버 실행 설정과 상태 확인, 데이터 구조를 만드는 Flyway 마이그레이션이 들어 있어. [데이터 관계도와 필드 설명](../docs/data-model.md)을 같이 보면 돼. [가상 보호소 2곳·강아지 5마리 샘플](sample-data/README.md), [보호소·강아지 조회 API](../docs/read-api.md), [Supabase 인증과 보호소 권한](../docs/auth-and-permissions.md)도 준비했어. 동물 등록·수정·대화·사진 API는 다음 작업이야. 현재 웹 시안에는 아직 연결하지 않았어.
 
 ## 먼저 테스트해보기
 
@@ -14,7 +14,7 @@ Java 21을 설치하고 이 폴더에서 실행해봐. Gradle은 따로 설치�
 
 Windows에서는 `gradlew.bat clean build`를 쓰면 돼. 테스트는 잠깐 쓰고 버리는 메모리 DB(H2)로 실행돼서 Docker나 Supabase 계정이 없어도 돼. 실제 앱에는 H2가 포함되지 않아.
 
-GitHub PR에서는 PostgreSQL 17로 서버 검사와 별도의 `integrationTest`를 실행해. 마이그레이션, 데이터 관계, 중복 저장 차단, 대화 근거의 강아지 일치, 클라이언트 DB 접근 차단과 조회 API의 공개 조건·페이지 이동을 확인해. 빌드한 JAR도 직접 실행해서 HTTP 조회를 검사해. H2 검사에는 PostgreSQL 마이그레이션이 포함되지 않아.
+GitHub PR에서는 PostgreSQL 17로 서버 검사와 별도의 `integrationTest`를 실행해. 마이그레이션, 데이터 관계, 중복 저장 차단, 대화 근거의 강아지 일치, 클라이언트 DB 접근 차단과 조회 API의 공개 조건·페이지 이동을 확인해. 인증 검사는 임시 키로 서명한 JWT와 테스트 DB 소속으로 실행하므로 실제 Supabase 계정이 필요하지 않아. 빌드한 JAR도 직접 실행해서 공개 조회와 미인증 요청 차단을 검사해. H2 검사에는 PostgreSQL 마이그레이션이 포함되지 않아.
 
 ## 로컬 서버 켜기
 
@@ -57,6 +57,7 @@ Supabase 프로젝트의 **Connect → Session pooler**에서 호스트·DB 사�
 
 | 이름 | 용도 |
 | --- | --- |
+| `SUPABASE_URL` | 필수. 로그인 토큰을 발급하는 프로젝트의 HTTPS 주소. `.env.example`에는 개발 프로젝트의 공개 주소가 들어 있음 |
 | `DB_URL` | `jdbc:postgresql://호스트:5432/postgres?sslmode=require` |
 | `DB_USERNAME` | Connect 화면의 사용자 이름. 보통 `postgres.프로젝트참조값` |
 | `DB_PASSWORD` | DB 비밀번호. Supabase API 키가 아님 |
@@ -77,7 +78,7 @@ Hibernate의 자동 테이블 수정은 꺼져 있어(`ddl-auto=validate`). 테�
 
 ## 폴더와 검사 범위
 
-- `src/main/java/org/shelterconnect/api`: 서버 시작 코드. 기능 코드는 여기에 추가할 예정이야.
+- `src/main/java/org/shelterconnect/api`: 서버 시작 코드와 `catalog` 조회, `auth` 인증·권한, `web` 공통 요청 처리.
 - `src/main/resources/application.properties`: 공통 서버·DB·상태 확인 설정.
 - `src/test`: HTTP 상태 확인, 내부 관리 API 비공개, 준비 상태 전환, DB 조회 검사.
 - `sample-data`: 가상 보호소·강아지·관찰 기록 원본 JSON과 화면 확인 예시.
@@ -99,4 +100,4 @@ TEST_DB_USERNAME="$DB_USERNAME" TEST_DB_PASSWORD="$DB_PASSWORD" \
 ./gradlew integrationTest
 ```
 
-진행 순서와 PR 기록 방식은 [백엔드 진행 규칙](../docs/backend-workflow.md)에 있어. B-03의 조회 API까지 구현했어. C-03의 프론트 검토와 실제 앱 연결은 따로 확인하고, 다음 백엔드 작업은 B-04 인증·보호소 권한이야.
+진행 순서와 PR 기록 방식은 [백엔드 진행 규칙](../docs/backend-workflow.md)에 있어. B-04의 인증·보호소 권한까지 구현했어. C-02의 로그인 화면 흐름과 C-03의 프론트 검토, 실제 앱 연결은 따로 확인하고, 다음 백엔드 작업은 B-05 동물 등록·수정이야.
