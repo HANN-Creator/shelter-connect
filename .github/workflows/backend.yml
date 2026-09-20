@@ -86,6 +86,7 @@ jobs:
           for attempt in $(seq 1 30); do
             if curl -fsS http://127.0.0.1:8080/actuator/health/readiness > /tmp/shelter-health.json; then
               python3 -c 'import json; assert json.load(open("/tmp/shelter-health.json")) == {"status": "UP"}'
+              python3 scripts/check_read_api.py
               exit 0
             fi
             if ! kill -0 "$api_pid" 2>/dev/null; then

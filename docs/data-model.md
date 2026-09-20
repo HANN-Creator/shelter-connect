@@ -4,7 +4,7 @@
 
 이 문서는 PostgreSQL 저장 구조의 기준이다. 현재 노션 API 초안의 용어를 따르되, **C-03의 프론트 응답 필드 합의까지 완료된 것은 아니다.** 로그인 방식, 사진 공개 조건, 행동 설정의 세부 수치는 각각 C-02·B-04·B-08·B-10에서 정한다.
 
-실제 테이블 정의는 [V1 마이그레이션](../backend/src/main/resources/db/migration/V1__create_shelter_domain.sql)에 있다. 현재는 저장 구조와 검증만 추가하며, JPA 엔티티·조회 API·등록 권한 검사는 각 기능 PR에서 구현한다.
+실제 테이블 정의는 [V1 마이그레이션](../backend/src/main/resources/db/migration/V1__create_shelter_domain.sql)에 있다. B-03의 [조회 API](read-api.md)는 필요한 필드만 JDBC로 조회한다. 등록·수정과 권한 검사는 후속 PR에서 구현한다.
 
 ## 한눈에 보는 관계
 
@@ -112,7 +112,7 @@ YEAR의 1월 1일, MONTH의 1일은 정렬과 저장을 위한 기준값이다. 
 
 태그는 확인된 관찰을 요약한 문구다. B-05에서 기록과 대조해 저장하고, 품종 일반론을 특정 강아지의 사실처럼 넣지 않는다. `avatar_key`의 실제 에셋 매핑도 프론트와 확인한다.
 
-공개 목록 조회는 승인·공개 보호소와 `dogs.is_public = true`, `archived_at IS NULL`을 함께 검사해야 한다. 입양 상태별 표시·제외 범위는 B-03에서 정한다. DB에서 강아지의 공개 여부와 보호소 승인을 자동으로 동기화하지 않는다.
+공개 조회는 승인·공개 보호소와 `dogs.is_public = true`, `archived_at IS NULL`을 함께 검사한다. B-03 목록·상세·공개 마릿수는 `AVAILABLE`, `IN_PROGRESS`만 포함한다. DB에서 강아지의 공개 여부와 보호소 승인을 자동으로 동기화하지 않는다.
 
 ### `dog_observations`
 
