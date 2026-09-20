@@ -29,10 +29,18 @@ public class AccountRepository {
 	}
 
 	public Optional<Account> account(UUID subject) {
+		return account(subject, "");
+	}
+
+	public Optional<Account> lockAccount(UUID subject, boolean serialize) {
+		return account(subject, serialize ? " FOR UPDATE" : " FOR SHARE");
+	}
+
+	private Optional<Account> account(UUID subject, String lock) {
 		return jdbc.sql("""
 				SELECT id, display_name, role, disabled_at IS NOT NULL AS disabled
 				FROM shelter.app_users WHERE auth_provider = :provider AND auth_subject = :subject
-				""").param("provider", provider).param("subject", subject.toString())
+				""" + lock).param("provider", provider).param("subject", subject.toString())
 				.query((rs, row) -> new Account(rs.getObject("id", UUID.class), rs.getString("display_name"),
 						rs.getString("role"), rs.getBoolean("disabled"))).optional();
 	}

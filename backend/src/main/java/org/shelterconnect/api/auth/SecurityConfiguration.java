@@ -31,6 +31,10 @@ public class SecurityConfiguration {
 						.requestMatchers(HttpMethod.GET, PUBLIC_READS).permitAll()
 						.requestMatchers(HttpMethod.HEAD, PUBLIC_READS).permitAll()
 						.requestMatchers(HttpMethod.POST, "/v1/me").authenticated()
+						.requestMatchers(HttpMethod.POST, "/v1/dogs/{dogId}/chat-sessions",
+								"/v1/chat-sessions/{sessionId}/messages").authenticated()
+						.requestMatchers(HttpMethod.GET, "/v1/me/chat-sessions", "/v1/chat-sessions/{sessionId}",
+								"/v1/chat-sessions/{sessionId}/messages").authenticated()
 						.requestMatchers(HttpMethod.POST, "/v1/shelter-admin/dogs",
 								"/v1/shelter-admin/dogs/{dogId}/observations").authenticated()
 						.requestMatchers(HttpMethod.PATCH, "/v1/shelter-admin/dogs/{dogId}",
