@@ -93,7 +93,7 @@ DB 비밀번호를 로컬에 설정하기 전이라면, 로그인된 Supabase SQ
 
 기존 V1 파일을 그대로 포함하고 샘플 JSON을 INSERT로 바꿔서, 테이블·기록·샘플을 한 트랜잭션으로 넣어. 이미 `shelter`가 있으면 중단하므로 반복 실행하거나 기존 DB를 초기화하는 용도로 쓰면 안 돼. 마지막 결과가 보호소 2·강아지 5·관찰 25인지 확인해줘.
 
-SQL 편집기에서 직접 실행한 V1의 파일명·체크섬도 같은 트랜잭션의 Flyway 이력에 남겨. 사용 중인 Flyway 12.4의 PostgreSQL 이력 형식을 사용하고, 체크섬은 Flyway 계산기로 구해. CI에서는 별도 임시 PostgreSQL DB에 생성 SQL을 적용한 뒤 실제 Flyway `validate`와 `migrate`를 실행해서, 검증이 통과하고 V1을 다시 실행하지 않는지 확인해.
+SQL 편집기에서 직접 실행한 V1의 파일명·체크섬도 같은 트랜잭션의 Flyway 이력에 남겨. 사용 중인 Flyway 12.4의 PostgreSQL 이력 형식을 사용하고, 체크섬은 Flyway 계산기로 구해. CI에서는 별도 임시 PostgreSQL DB에 생성 SQL을 적용한 뒤 실제 Flyway `validate`와 `migrate`를 실행해서, 검증이 통과하고 V1을 다시 실행하지 않고 V2로 이행하는지 확인해. 내보내기 파일은 V1만 포함하므로 AI 답변을 켜기 전에는 Flyway로 V2까지 적용해야 해.
 
 이 방법도 `shelter`의 RLS와 비공개 권한을 유지해. Supabase 기본 스키마나 Data API 공개 설정은 바꾸지 않아. 이후 서버 연결에는 기존 안내대로 DB 환경변수가 필요해.
 

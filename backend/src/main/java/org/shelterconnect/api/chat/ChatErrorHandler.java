@@ -13,7 +13,7 @@ import org.shelterconnect.api.auth.AccountAccessException;
 import org.shelterconnect.api.auth.SecurityErrors;
 import org.shelterconnect.api.web.ApiRequestFilter;
 
-@RestControllerAdvice(assignableTypes = ChatController.class)
+@RestControllerAdvice(assignableTypes = {ChatController.class, AiReplyController.class})
 public class ChatErrorHandler {
 	private static final Logger log = LoggerFactory.getLogger(ChatErrorHandler.class);
 	@ExceptionHandler(ChatException.class)

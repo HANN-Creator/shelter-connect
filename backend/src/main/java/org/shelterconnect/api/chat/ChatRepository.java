@@ -16,7 +16,7 @@ public class ChatRepository {
 	private static final String SESSIONS="SELECT c.*, (c.status='OPEN' AND "+AVAILABLE+") AS can_send"
 			+" FROM shelter.chat_sessions c JOIN shelter.dogs d ON d.id=c.dog_id JOIN shelter.shelters s ON s.id=d.shelter_id";
 	private static final RowMapper<Session> SESSION=(rs,n)->new Session(uuid(rs,"id"),uuid(rs,"dog_id"),rs.getString("status"),rs.getBoolean("can_send"),time(rs,"created_at"),time(rs,"updated_at"));
-	private static final RowMapper<Message> MESSAGE=(rs,n)->new Message(uuid(rs,"id"),uuid(rs,"session_id"),uuid(rs,"dog_id"),rs.getString("role"),rs.getString("content"),rs.getString("client_message_id"),uuid(rs,"reply_to_message_id"),rs.getString("processing_status"),rs.getString("failure_code"),rs.getBoolean("needs_shelter_confirmation"),time(rs,"created_at"),time(rs,"updated_at"));
+	static final RowMapper<Message> MESSAGE=(rs,n)->new Message(uuid(rs,"id"),uuid(rs,"session_id"),uuid(rs,"dog_id"),rs.getString("role"),rs.getString("content"),rs.getString("client_message_id"),uuid(rs,"reply_to_message_id"),rs.getString("processing_status"),rs.getString("failure_code"),rs.getBoolean("needs_shelter_confirmation"),time(rs,"created_at"),time(rs,"updated_at"));
 	private final JdbcClient jdbc;
 	public ChatRepository(JdbcClient jdbc) { this.jdbc=jdbc; }
 
