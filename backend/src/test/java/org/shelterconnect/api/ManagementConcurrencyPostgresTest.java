@@ -75,7 +75,8 @@ class ManagementConcurrencyPostgresTest {
 			long deadline=System.nanoTime()+TimeUnit.SECONDS.toNanos(5);
 			boolean waiting=false;
 			while(System.nanoTime()<deadline) {
-				waiting=jdbc.queryForObject("SELECT count(*) > 0 FROM pg_stat_activity WHERE ? = ANY(pg_blocking_pids(pid))",Boolean.class,blocker);
+				// pg_locks is live; pg_stat_activity can retain a transaction's earlier process snapshot.
+				waiting=jdbc.queryForObject("SELECT EXISTS (SELECT 1 FROM pg_locks WHERE NOT granted AND ? = ANY(pg_blocking_pids(pid)))",Boolean.class,blocker);
 				if(waiting) break;
 				try { Thread.sleep(10); } catch(InterruptedException ex) { Thread.currentThread().interrupt(); throw new IllegalStateException(ex); }
 			}
