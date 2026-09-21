@@ -61,7 +61,7 @@
 | `bami` | `work/mobile-concept/bami-avatar.png` |
 | `kongi` / `haeri` | 아직 전용 이미지 없음. 준비 전에는 기본 도트 캐릭터 사용 |
 
-`mapKey`는 온기 `sunny`, 다온 `forest`로 구분했어. 각각 햇살 운동장과 숲속 산책길에 연결할 논리 이름이고, 실제 프론트 파일 매핑은 아직 하지 않았어. 8개 행동의 속도·빈도·거리 설정은 B-10에서 정하므로 지금은 `dog_behavior_profiles`를 비워뒀어.
+`mapKey`는 온기 `sunny`, 다온 `forest`로 구분했어. 각각 햇살 운동장과 숲속 산책길에 연결할 논리 이름이고, 실제 프론트 파일 매핑은 아직 하지 않았어. `dog_behavior_profiles`는 비워뒀어. [B-10 행동 설정 API](../../docs/dog-behavior-api.md) 조회는 DEFAULT로 시작하고, 보호소가 관찰에 맞게 저장·확인한 뒤 개별 설정을 사용해. 샘플에 확인된 행동 설정을 자동 등록하지는 않아.
 
 ## 로컬 DB에 넣기
 

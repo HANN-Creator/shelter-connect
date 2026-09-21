@@ -48,15 +48,24 @@ class SupabaseBootstrapTest {
 					assertThatThrownBy(() -> bootstrap.execute(sql)).isInstanceOf(SQLException.class)
 							.satisfies(error -> assertThat(((SQLException) error).getSQLState()).isEqualTo("42P06"));
 					bootstrap.execute("ROLLBACK");
+					bootstrap.execute("INSERT INTO shelter.dog_behavior_profiles(dog_id,source) VALUES ('02200000-0000-4000-8000-000000000001','AI_SUGGESTED')");
 				}
 				var flyway = Flyway.configure().dataSource(isolatedUrl, username, password)
 						.schemas("shelter").defaultSchema("shelter").cleanDisabled(true)
 						.baselineOnMigrate(false).validateMigrationNaming(true).load();
 				assertThat(flyway.info().current().getVersion().toString()).isEqualTo("1");
-				assertThat(flyway.migrate().migrationsExecuted).isEqualTo(1);
+				assertThat(flyway.migrate().migrationsExecuted).isEqualTo(2);
 				flyway.validate();
 				assertThat(flyway.migrate().migrationsExecuted).isZero();
-				assertThat(flyway.info().current().getVersion().toString()).isEqualTo("2");
+				assertThat(flyway.info().current().getVersion().toString()).isEqualTo("3");
+				try (var connection = DriverManager.getConnection(isolatedUrl, username, password);
+						var check = connection.createStatement();
+						var rows = check.executeQuery("SELECT revision,status,settings::text FROM shelter.dog_behavior_profiles")) {
+					rows.next();
+					assertThat(rows.getInt(1)).isEqualTo(1);
+					assertThat(rows.getString(2)).isEqualTo("DRAFT");
+					assertThat(rows.getString(3)).isEqualTo("{}");
+				}
 			} finally {
 				// Only the uniquely named database created by this test is removed.
 				statement.execute("DROP DATABASE " + database);

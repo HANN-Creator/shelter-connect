@@ -16,7 +16,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfiguration {
 	private static final String[] PUBLIC_READS = {"/actuator/health", "/actuator/health/liveness",
 			"/actuator/health/readiness", "/v1/shelters", "/v1/shelters/{shelterId}",
-			"/v1/shelters/{shelterId}/dogs", "/v1/dogs/{dogId}"};
+			"/v1/shelters/{shelterId}/dogs", "/v1/dogs/{dogId}", "/v1/dogs/{dogId}/behavior"};
 
 	@Bean
 	SecurityFilterChain securityFilterChain(HttpSecurity http, JwtDecoder decoder, SecurityErrors errors) {
@@ -31,6 +31,9 @@ public class SecurityConfiguration {
 						.requestMatchers(HttpMethod.GET, PUBLIC_READS).permitAll()
 						.requestMatchers(HttpMethod.HEAD, PUBLIC_READS).permitAll()
 						.requestMatchers(HttpMethod.POST, "/v1/me").authenticated()
+						.requestMatchers(HttpMethod.GET, "/v1/shelter-admin/dogs/{dogId}/behavior").authenticated()
+						.requestMatchers(HttpMethod.PUT, "/v1/shelter-admin/dogs/{dogId}/behavior").authenticated()
+						.requestMatchers(HttpMethod.POST, "/v1/shelter-admin/dogs/{dogId}/behavior/confirmation").authenticated()
 						.requestMatchers(HttpMethod.GET, "/v1/dogs/{dogId}/photos").authenticated()
 						.requestMatchers(HttpMethod.POST, "/v1/dogs/{dogId}/chat-sessions",
 								"/v1/chat-sessions/{sessionId}/messages",

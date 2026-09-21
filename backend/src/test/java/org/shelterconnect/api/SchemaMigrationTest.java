@@ -101,13 +101,13 @@ class SchemaMigrationTest {
 	@Test
 	void migrationCanRunAgainWithoutChangingTheSchema() {
 		assertThat(flyway.migrate().migrationsExecuted).isZero();
-		assertThat(flyway.info().current().getVersion().toString()).isEqualTo("2");
+		assertThat(flyway.info().current().getVersion().toString()).isEqualTo("3");
 	}
 
 	@Test
 	void allBusinessTablesHaveRowSecurityEnabled() throws Exception {
 		assertThat(number("SELECT count(*) FROM pg_tables WHERE schemaname = 'shelter' AND tablename <> 'flyway_schema_history' AND rowsecurity"))
-				.isEqualTo(11);
+				.isEqualTo(12);
 	}
 
 	@ParameterizedTest
@@ -181,6 +181,24 @@ class SchemaMigrationTest {
 		execute("INSERT INTO shelter.dog_behavior_profiles(dog_id, source) VALUES (?, 'AI_SUGGESTED')", DOG);
 		assertThat(number("SELECT count(*) FROM shelter.dog_behavior_profiles WHERE dog_id = ? AND status = 'DRAFT'", DOG)).isEqualTo(1);
 		reject("23514", "UPDATE shelter.dog_behavior_profiles SET settings = '[]'::jsonb WHERE dog_id = ?", DOG);
+	}
+
+	@Test
+	void behaviorEvidenceCannotReferenceAnotherDog() throws Exception {
+		execute("INSERT INTO shelter.dog_behavior_profiles(dog_id) VALUES (?)", DOG);
+		execute("INSERT INTO shelter.dog_behavior_evidence(dog_id, observation_id) VALUES (?, ?)", DOG, OBSERVATION);
+		reject("23503", "INSERT INTO shelter.dog_behavior_evidence(dog_id, observation_id) VALUES (?, ?)", DOG, OTHER_OBSERVATION);
+	}
+
+	@Test
+	void behaviorEvidenceRemainsProtectedAfterAccidentalGrant() throws Exception {
+		execute("INSERT INTO shelter.dog_behavior_profiles(dog_id) VALUES (?)", DOG);
+		execute("INSERT INTO shelter.dog_behavior_evidence(dog_id, observation_id) VALUES (?, ?)", DOG, OBSERVATION);
+		execute("GRANT USAGE ON SCHEMA shelter TO authenticated");
+		execute("GRANT SELECT, INSERT ON shelter.dog_behavior_evidence TO authenticated");
+		execute("SET LOCAL ROLE authenticated");
+		assertThat(number("SELECT count(*) FROM shelter.dog_behavior_evidence")).isZero();
+		reject("42501", "INSERT INTO shelter.dog_behavior_evidence(dog_id, observation_id) VALUES (?, ?)", DOG, OTHER_OBSERVATION);
 	}
 
 	@Test

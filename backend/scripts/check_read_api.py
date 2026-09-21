@@ -45,4 +45,11 @@ assert profile["name"] == "봄이"
 assert not any(key in profile for key in ("photos", "photoUrl", "storageKey", "observations"))
 assert get("/v1/dogs/" + HAERI, 404)["code"] == "RESOURCE_NOT_FOUND"
 assert get("/v1/shelters", 400, limit=0)["code"] == "INVALID_REQUEST"
+behavior = get("/v1/dogs/" + BOMI + "/behavior")["data"]
+assert behavior["basis"] == "DEFAULT" and behavior["revision"] is None
+assert len(behavior["settings"]["actions"]) == 8
+assert behavior["settings"]["actions"]["WALK"]["weight"] == 30
+assert not behavior["settings"]["ballPlay"]["chaseEnabled"]
+assert "evidenceObservationIds" not in behavior and "confirmedBy" not in behavior
+assert get("/v1/dogs/" + HAERI + "/behavior", 404)["code"] == "DOG_NOT_FOUND"
 print("Packaged read API: shelter/dog pages, profiles, filters and errors passed.")

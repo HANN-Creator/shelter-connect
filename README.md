@@ -80,3 +80,5 @@ node work/mobile-concept/check-ball-play.cjs
 이미지 출처랑 수정 내역은 [CREDITS.md](CREDITS.md)에 따로 적어뒀으니까, 에셋 쪽을 만질 때 같이 보면 돼.
 
 사진 조회 API와 프론트 연결 방법은 [사진 조회 문서](docs/photo-read-api.md)에 정리했어. 실제 사진 파일과 Supabase Storage 설정은 별도로 준비해야 해.
+
+강아지 움직임은 [8종 행동 설정 API](docs/dog-behavior-api.md)로 연결해. 설정을 저장하고 보호소가 확인하면 앱에서 조회할 수 있어. V3 적용과 RN의 실제 동작 재생은 별도야.

@@ -2,7 +2,7 @@
 
 보호소가 관리하는 강아지 정보와 사용자의 대화·메모를 분리한다. 도트로 처음 만나고, 대화한 뒤 사진을 보는 흐름에 맞춰 사진은 별도 테이블에 둔다.
 
-이 문서는 PostgreSQL 저장 구조의 기준이다. 현재 노션 API 초안의 용어를 따르되, **C-03의 프론트 응답 필드 합의까지 완료된 것은 아니다.** 로그인 방식, 사진 공개 조건, 행동 설정의 세부 수치는 각각 C-02·B-04·B-08·B-10에서 정한다.
+이 문서는 PostgreSQL 저장 구조의 기준이다. 현재 노션 API 초안의 용어를 따르되, **C-03의 프론트 응답 필드 합의까지 완료된 것은 아니다.** 로그인 방식, 사진 공개 조건, 행동 설정은 각각의 기능 문서에서 구현 기준을 확인한다. B-10의 단위와 범위는 [행동 설정 API](dog-behavior-api.md)에 정리했다.
 
 실제 테이블 정의는 [V1 마이그레이션](../backend/src/main/resources/db/migration/V1__create_shelter_domain.sql)에 있다. B-03의 [조회 API](read-api.md)는 필요한 필드만 JDBC로 조회한다. 등록·수정과 권한 검사는 후속 PR에서 구현한다.
 
@@ -16,6 +16,8 @@ erDiagram
     dogs ||--o{ dog_observations : observed
     dogs ||--o{ dog_photos : photographed
     dogs ||--o| dog_behavior_profiles : configured
+    dog_behavior_profiles ||--o{ dog_behavior_evidence : grounded
+    dog_observations ||--o{ dog_behavior_evidence : supports
     app_users ||--o{ chat_sessions : owns
     dogs ||--o{ chat_sessions : talks_as
     chat_sessions ||--o{ chat_messages : contains
@@ -36,7 +38,8 @@ erDiagram
 | `dogs` | 도트 프로필, 기본 정보, 입양 상태 | 보호소 1곳에 소속 |
 | `dog_observations` | 실제 관찰 기록과 확인 이력 | 강아지별 여러 기록 |
 | `dog_photos` | 사진 저장 경로·순서·사용 허가 | 강아지별 여러 사진 |
-| `dog_behavior_profiles` | 8종 동작에 매칭할 설정과 승인 | 강아지당 0~1개 |
+| `dog_behavior_profiles` | 8종 동작에 매칭할 설정과 승인·수정 버전 | 강아지당 0~1개 |
+| `dog_behavior_evidence` | 행동 설정의 관찰 근거 | 같은 강아지의 관찰과 연결 |
 | `chat_sessions` | 사용자와 강아지의 대화방 | 생성 후 사용자·강아지 고정 |
 | `chat_messages` | 질문·답변·재시도 식별자·처리 상태 | 대화방별 여러 메시지 |
 | `chat_message_observations` | 답변 근거와 당시 기록 내용 | 같은 강아지 기록만 연결 |
@@ -139,7 +142,7 @@ YEAR의 1월 1일, MONTH의 1일은 정렬과 저장을 위한 기준값이다. 
 
 미리 만든 IDLE / WALK / RUN / SNIFF / TAIL_WAG / BACK_OFF / SIT / LIE_DOWN에 매칭할 데이터다. AI가 제안해도 기본 상태는 DRAFT이며 확인 기록이 있어야 CONFIRMED로 바뀐다.
 
-B-01에서는 저장 위치·버전·확인 상태만 정의한다. 속도·확률·거리의 단위와 범위, 8개 동작의 키, 근거 기록 연결·유효성 검사는 **B-10에서 확정**한다. 현재 `{}`는 빈 설정이며 실행용 설정이 아니다. 프론트에 전달하기 전 B-10의 검증이 필요하다.
+[B-10 행동 설정 API](dog-behavior-api.md)에서 8개 키·타일/초·선택 비중·밀리초 단위를 정의한다. V3의 `revision`으로 동시 수정을 검사하며 저장하면 항상 DRAFT로 되돌린다. 같은 강아지의 CONFIRMED 관찰을 `dog_behavior_evidence`에 연결하고 보호소가 확인해야 앱에 공개된다. `{}`·초안·지원하지 않는 형식·철회된 근거는 기본 IDLE/WALK 설정으로 조회된다. AI 초안 자동 생성은 별도다.
 
 ## 대화와 입양 준비
 
@@ -182,7 +185,7 @@ B-07은 생성 입력에 같은 강아지의 CONFIRMED 관찰만 넣고, 저장 
 - 관찰: 강아지+확인 상태+관찰 시각. 대화방: 사용자+수정 시각. 메시지: 대화방+생성 시각+ID.
 - 동일 시각의 행도 ID로 순서를 고정할 수 있다. 커서와 정렬 규격은 [B-03 조회](read-api.md)와 [B-06 대화 저장](chat-storage-api.md)에 있다.
 - 모든 업무 테이블은 `public` 대신 **`shelter` 스키마**에 둔다. 앱은 Spring API를 호출하고 DB에 직접 접근하지 않는다.
-- `PUBLIC`, Supabase의 `anon`·`authenticated` 역할에는 스키마·테이블 권한을 주지 않는다. 업무 테이블 11개에 RLS를 켜고 클라이언트 허용 정책은 만들지 않는다.
+- `PUBLIC`, Supabase의 `anon`·`authenticated` 역할에는 스키마·테이블 권한을 주지 않는다. V3 기준 업무 테이블 12개에 RLS를 켜고 클라이언트 허용 정책은 만들지 않는다.
 - 테이블 소유자는 RLS를 우회하므로 Spring의 사용자·보호소 권한 검사가 반드시 필요하다. B-04에 서버 검사를 구현했고, 실제 운영 DB의 실행 역할은 배포 준비에서 정한다.
 - Supabase 프로젝트에서 `shelter`를 Data API의 Exposed schemas에 추가하지 않는다. 실제 Supabase 설정과 연결은 아직 확인 전이다.
 
