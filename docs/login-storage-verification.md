@@ -31,7 +31,7 @@ python3 scripts/check_login_storage.py --project-ref <개발-프로젝트-ref>
 
 사용자 UUID와 실행별 표식이 일치하는 이번 실행의 계정만 대상으로 해. 앱 기록은 `auth_provider`·`auth_subject`로 해당 사용자를 찾고 트랜잭션으로 정리해. 역할이 USER가 아니거나 보호소 소속이 생겼다면 정리를 멈춰. 예상 밖 참조는 DB 제약으로 차단하고, 넓은 이메일 패턴이나 전체 삭제는 사용하지 않아.
 
-검사 중 오류가 나도 서버 종료와 정리를 시도해. 프로세스 강제 종료·네트워크 장애로 정리가 끝나지 않으면 `backend/build/login-check-*/created-users.txt`의 정확한 테스트 UUID와 실행 표식을 확인해야 해. 비밀번호와 토큰은 파일·출력에 남기지 않아. 기록 폴더는 본인만 열 수 있고 Git·서버 JAR에도 포함되지 않아. `cleanup-complete.txt`는 정리와 원래 행 수 확인까지 끝난 경우에만 생성돼.
+검사 중 오류가 나도 서버 종료와 정리를 시도해. 프로세스 강제 종료·네트워크 장애로 정리가 끝나지 않으면 `backend/build/login-check-*/created-users.txt`의 정확한 테스트 UUID와 실행 표식을 확인해야 해. Auth 계정 생성 응답이 유실돼 생성 여부를 모르는 경우에도 정리 완료로 표시하지 않아. 비밀번호와 토큰은 파일·출력에 남기지 않아. 기록 폴더는 본인만 열 수 있고 Git·서버 JAR에도 포함되지 않아. `cleanup-complete.txt`는 정리와 원래 행 수 확인까지 끝난 경우에만 생성돼.
 
 ## 이번 결과
 

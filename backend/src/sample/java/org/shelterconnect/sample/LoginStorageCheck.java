@@ -31,6 +31,7 @@ public final class LoginStorageCheck {
     private Process server;
     private String base;
     private int checks;
+    private boolean creationInFlight;
     private record TestUser(String id, String email, String password) {}
     private static final class Failure extends RuntimeException {
         Failure(String message) { super(message); }
@@ -108,6 +109,7 @@ public final class LoginStorageCheck {
                 try { cleanUser(user); }
                 catch (Exception failure) { clean = false; }
             }
+            require(!creationInFlight, "Auth creation result was interrupted; check this run's private pending identity before marking cleanup complete.");
             require(clean, "Test cleanup incomplete; use this run's private created-users.txt. Never delete by a broad email pattern.");
             equal(counts(), before, "Original app table counts after cleanup");
             Files.writeString(work.resolve("cleanup-complete.txt"), "Only this run's users and records were removed. Original app row counts restored.\n");
@@ -121,12 +123,14 @@ public final class LoginStorageCheck {
         String password = UUID.randomUUID() + "aA9!" + UUID.randomUUID().toString().substring(0, 16);
         // Record the generated identity before the request so an interrupted response can be recovered manually.
         Files.writeString(work.resolve("created-users.txt"), "pending " + email + "\n", StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+        creationInFlight = true;
         var result = auth("POST", "/admin/users", Map.of("email", email, "password", password,
                 "email_confirm", true, "app_metadata", Map.of("verification_run", marker)), 200, 201);
         String id = result.path("id").asText();
         UUID.fromString(id);
         TestUser user = new TestUser(id, email, password);
         users.add(user);
+        creationInFlight = false;
         Files.writeString(work.resolve("created-users.txt"), "created " + id + " " + email + "\n", StandardOpenOption.APPEND);
         return user;
     }
