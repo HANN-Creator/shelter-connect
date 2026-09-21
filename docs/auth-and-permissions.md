@@ -105,18 +105,18 @@ B-04에서는 Supabase Auth의 로그인 정보를 확인하고, 그 사용자�
 
 Supabase 로그아웃이나 Auth 쪽 계정 상태 변경이 이미 발급된 JWT를 즉시 무효화하는 것은 아니야. 해당 토큰은 만료 전까지 검증을 통과할 수 있어. 서비스에서 즉시 차단해야 할 때는 `app_users.disabled_at`, 소속 `REVOKED`, 보호소 `SUSPENDED`를 사용해. 이 상태는 요청마다 DB에서 다시 확인해.
 
-V1 마이그레이션과 RLS는 변경하지 않았어. 실제 Supabase 계정 생성, 샘플 계정 연결, 담당자 권한 부여, 로그인 제공자 설정, 운영 DB 권한 변경도 이번 작업에서는 하지 않았어.
+B-04 구현 때 V1 마이그레이션과 RLS, 실제 계정·권한은 변경하지 않았어. 이후 B-13에서는 임시 일반 계정만 생성·로그인·삭제하며 실제 인증과 저장을 확인했어. 샘플 계정 연결, 담당자 권한 부여와 로그인 제공자 설정은 바꾸지 않았어.
 
 ## 다음 작업에서 지켜야 할 점
 
 B-05 등록·수정 서비스는 변경 트랜잭션 안에서 검증된 JWT subject로 `ShelterAccessService.requireShelterForWrite` 또는 `requireDogForWrite`를 호출해. 계정·소속·승인 행과 수정 대상에 잠금을 걸고, 대기 중 바뀐 동물 소속과 수정 시각도 확인해. 후속 쓰기 API도 이 방식을 사용해야 해. 앞서 받았던 `/access` 응답을 수정 권한의 증명으로 받으면 안 돼.
 
-[B-06 대화 저장](chat-storage-api.md)은 `app_users.id`로 본인의 대화만 읽고 쓸 수 있게 구현했어. 운영자나 보호소 담당자도 다른 사용자의 대화를 볼 수 없어. B-09 메모는 아직 구현 전이고 같은 소유권 검사가 필요해.
+[B-06 대화 저장](chat-storage-api.md)은 `app_users.id`로 본인의 대화만 읽고 쓸 수 있게 구현했어. 운영자나 보호소 담당자도 다른 사용자의 대화를 볼 수 없어. [B-09 입양 준비 메모](adoption-notes-api.md)도 같은 소유권 검사와 수정 버전 검사를 사용해.
 
 ## 검증 범위
 
 테스트는 실행할 때 만든 임시 ES256 키로 실제 JWT를 서명하고, JWKS HTTP 응답만 로컬에서 대체해. 서명 검증을 건너뛰는 가짜 로그인으로 통과시키지 않아. 위조 서명·다른 알고리즘·만료·issuer/audience 오류·익명 사용자 차단, 등록 중복 방지, 실제 PostgreSQL의 소속·승인·타 보호소 차단을 확인해. CI에서는 빌드한 JAR의 공개 조회와 미인증 차단도 별도로 확인해.
 
-실제 Supabase 로그인 계정으로 받은 토큰과 원격 DB를 연결한 전체 실행, 앱 연결·배포는 아직 확인하지 않았어. C-02의 소셜 로그인·사진 공개 조건과 C-03의 프론트 합의도 별도로 남아 있어.
+[B-13 실제 로그인·저장 검사](login-storage-verification.md)에서 지정 개발 프로젝트의 실제 이메일·비밀번호 로그인과 사용자 등록·대화·메모 저장, 서버 재시작 후 보존, 타인 접근 차단까지 확인했어. 테스트 계정·기록은 정리했어. 회원가입 메일·소셜 로그인·앱의 토큰 갱신과 로그아웃·배포, C-02와 C-03의 프론트 합의는 별도로 남아 있어.
 
 구현 기준은 [Supabase JWT 안내](https://supabase.com/docs/guides/auth/jwts)와 [Spring Security JWT Resource Server](https://docs.spring.io/spring-security/reference/servlet/oauth2/resource-server/jwt.html)를 참고했어.

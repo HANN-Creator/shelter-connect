@@ -83,6 +83,15 @@ tasks.register('checkPhotoStorage', JavaExec) {
 	mainClass = 'org.shelterconnect.sample.PhotoStorageConnectionCheck'
 }
 
+// Opt-in live check. Uses temporary Auth users and restarts only its own local API process.
+tasks.register('checkLoginStorage', JavaExec) {
+	description = 'Checks real development login and persistence, then removes only this run\'s test data.'
+	group = 'verification'
+	dependsOn tasks.named('bootJar')
+	classpath = sourceSets.sample.runtimeClasspath
+	mainClass = 'org.shelterconnect.sample.LoginStorageCheck'
+}
+
 tasks.named('test') {
 	useJUnitPlatform { excludeTags 'postgres' }
 }
