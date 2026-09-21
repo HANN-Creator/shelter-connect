@@ -13,7 +13,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 /** Explicit development check only. Creates ordinary test users, then removes only its own data. */
-public final class LoginStorageCheck {
+public class LoginStorageCheck {
     private static final String BOMI = "02200000-0000-4000-8000-000000000001";
     private static final String DUBU = "02200000-0000-4000-8000-000000000002";
     private static final String HAERI = "02200000-0000-4000-8000-000000000005";
@@ -21,24 +21,28 @@ public final class LoginStorageCheck {
     private static final List<String> TABLES = List.of("app_users", "shelters", "shelter_memberships", "dogs",
             "dog_observations", "dog_photos", "dog_behavior_profiles", "dog_behavior_evidence",
             "chat_sessions", "chat_messages", "chat_message_observations", "adoption_notes");
-    private final Map<String, String> env;
-    private final JsonMapper json = JsonMapper.builder().build();
+    protected final Map<String, String> env;
+    protected final JsonMapper json = JsonMapper.builder().build();
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10))
             .followRedirects(HttpClient.Redirect.NEVER).build();
-    private final String project, key, marker = "b13-" + UUID.randomUUID();
+    private final String project, key;
+    protected final String marker;
     private final List<TestUser> users = new ArrayList<>();
-    private Path work;
+    protected Path work;
     private Process server;
     private String base;
     private int checks;
     private boolean creationInFlight;
-    private record TestUser(String id, String email, String password) {}
+    protected record TestUser(String id, String email, String password) {}
     private static final class Failure extends RuntimeException {
         Failure(String message) { super(message); }
     }
 
-    LoginStorageCheck(Map<String, String> env) {
+    LoginStorageCheck(Map<String, String> env) { this(env, "b13"); }
+
+    protected LoginStorageCheck(Map<String, String> env, String name) {
         validateTarget(env);
+        marker = name + "-" + UUID.randomUUID();
         this.env = env;
         project = env.get("SUPABASE_URL");
         key = env.get("SUPABASE_SECRET_KEY");
@@ -69,13 +73,31 @@ public final class LoginStorageCheck {
         }
     }
 
-    private void run() throws Exception {
+    protected final void run() throws Exception {
         require(Files.isRegularFile(Path.of("build/libs/shelter-connect-api.jar")), "Build the API JAR first.");
         work = Files.createTempDirectory(Path.of("build"), "login-check-",
                 PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwx------")));
         System.out.println("Private recovery record: " + work.resolve("created-users.txt"));
         Map<String, Long> before = counts();
         try {
+            verify();
+        } finally {
+            stopServer();
+            boolean clean = true;
+            for (TestUser user : users) {
+                try { cleanUser(user); }
+                catch (Exception failure) { clean = false; }
+            }
+            require(!creationInFlight, "Auth creation result was interrupted; check this run's private pending identity before marking cleanup complete.");
+            require(clean, "Test cleanup incomplete; use this run's private created-users.txt. Never delete by a broad email pattern.");
+            equal(counts(), before, "Original app table counts after cleanup");
+            Files.writeString(work.resolve("cleanup-complete.txt"), "Only this run's users and records were removed. Original app row counts restored.\n");
+            System.out.println("PASS temporary Auth users and owned app rows removed; all 12 original app table counts restored.");
+        }
+        System.out.println("PASS " + checks + " HTTP expectations; temporary users/data cleaned. No photos, role grants, schema/RLS changes or deployment.");
+    }
+
+    protected void verify() throws Exception {
             startServer();
             TestUser a = createUser("a"), b = createUser("b");
             String tokenA = login(a), tokenB = login(b);
@@ -102,23 +124,9 @@ public final class LoginStorageCheck {
             equal(api("GET", "/v1/me/adoption-notes/" + BOMI, tokenB, null, 200).path("data").path("questions").asText(),
                     marker + " B의 질문", "Second user's own note");
             System.out.println("PASS server restart + fresh logins: same accounts, messages, notes, timestamps and ownership.");
-        } finally {
-            stopServer();
-            boolean clean = true;
-            for (TestUser user : users) {
-                try { cleanUser(user); }
-                catch (Exception failure) { clean = false; }
-            }
-            require(!creationInFlight, "Auth creation result was interrupted; check this run's private pending identity before marking cleanup complete.");
-            require(clean, "Test cleanup incomplete; use this run's private created-users.txt. Never delete by a broad email pattern.");
-            equal(counts(), before, "Original app table counts after cleanup");
-            Files.writeString(work.resolve("cleanup-complete.txt"), "Only this run's users and records were removed. Original app row counts restored.\n");
-            System.out.println("PASS temporary Auth users and owned app rows removed; all 12 original app table counts restored.");
-        }
-        System.out.println("PASS " + checks + " HTTP expectations. No AI calls, photos, role grants, schema/RLS changes or deployment.");
     }
 
-    private TestUser createUser(String label) throws Exception {
+    protected TestUser createUser(String label) throws Exception {
         String email = marker + "-" + label + "@example.invalid";
         String password = UUID.randomUUID() + "aA9!" + UUID.randomUUID().toString().substring(0, 16);
         // Record the generated identity before the request so an interrupted response can be recovered manually.
@@ -135,7 +143,7 @@ public final class LoginStorageCheck {
         return user;
     }
 
-    private String login(TestUser user) throws Exception {
+    protected String login(TestUser user) throws Exception {
         var result = auth("POST", "/token?grant_type=password", Map.of("email", user.email(), "password", user.password()), 200);
         equal(result.path("user").path("id").asText(), user.id(), "Supabase password login identity");
         String token = result.path("access_token").asText();
@@ -146,7 +154,7 @@ public final class LoginStorageCheck {
         return token;
     }
 
-    private String register(String token) throws Exception {
+    protected String register(String token) throws Exception {
         error("GET", "/v1/me", token, null, 403, "ACCOUNT_NOT_REGISTERED");
         var me = api("POST", "/v1/me", token, null, 200).path("data");
         equal(me.path("role").asText(), "USER", "Default app role");
@@ -225,16 +233,16 @@ public final class LoginStorageCheck {
         return request(method, project + "/auth/v1" + path, body, Map.of("apikey", key), false, statuses);
     }
 
-    private JsonNode api(String method, String path, String token, Object body, int status) throws Exception {
+    protected JsonNode api(String method, String path, String token, Object body, int... status) throws Exception {
         return request(method, base + path, body, token == null ? Map.of() : Map.of("Authorization", "Bearer " + token), true, status);
     }
 
-    private void error(String method, String path, String token, Object body, int status, String code) throws Exception {
+    protected void error(String method, String path, String token, Object body, int status, String code) throws Exception {
         equal(api(method, path, token, body, status).path("code").asText(), code, "Expected API error code");
     }
 
     private JsonNode request(String method, String url, Object body, Map<String, String> headers, boolean app, int... statuses) throws Exception {
-        var request = HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(20));
+        var request = HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(75));
         headers.forEach(request::header);
         if (body != null) request.header("Content-Type", "application/json");
         request.method(method, body == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofByteArray(json.writeValueAsBytes(body)));
@@ -257,18 +265,22 @@ public final class LoginStorageCheck {
         return result;
     }
 
-    private void startServer() throws Exception {
+    protected void startServer() throws Exception { startServer(Map.of()); }
+
+    protected void startServer(Map<String, String> ai) throws Exception {
+        require(ai.isEmpty() || ai.keySet().equals(Set.of("OPENAI_API_KEY", "OPENAI_MODEL", "AI_TIMEOUT_SECONDS")), "Unexpected AI settings.");
         int port;
         try (var socket = new ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"))) { port = socket.getLocalPort(); }
         base = "http://127.0.0.1:" + port;
         var process = new ProcessBuilder(Path.of(System.getProperty("java.home"), "bin", "java").toString(),
                 "-jar", "build/libs/shelter-connect-api.jar", "--spring.config.location=classpath:/application.properties",
                 "--spring.flyway.enabled=false", "--spring.sql.init.mode=never", "--spring.jpa.hibernate.ddl-auto=validate",
-                "--server.address=127.0.0.1", "--server.port=" + port, "--app.ai.enabled=false", "--app.photos.enabled=false");
+                "--server.address=127.0.0.1", "--server.port=" + port, "--app.ai.enabled=" + !ai.isEmpty(), "--app.photos.enabled=false");
         process.environment().clear();
         for (String name : List.of("PATH", "JAVA_HOME", "DB_URL", "DB_USERNAME", "DB_PASSWORD", "DB_POOL_SIZE", "SUPABASE_URL"))
             if (env.containsKey(name)) process.environment().put(name, env.get(name));
         process.environment().put("DB_MIGRATE", "false");
+        process.environment().putAll(ai);
         server = process.redirectErrorStream(true).redirectOutput(ProcessBuilder.Redirect.appendTo(work.resolve("server.log").toFile())).start();
         long deadline = System.nanoTime() + Duration.ofSeconds(60).toNanos();
         while (server.isAlive() && System.nanoTime() < deadline) {
@@ -282,7 +294,7 @@ public final class LoginStorageCheck {
         throw new Failure("Local API did not become ready; inspect the private server.log.");
     }
 
-    private void stopServer() throws InterruptedException {
+    protected void stopServer() throws InterruptedException {
         if (server == null) return;
         server.destroy();
         if (!server.waitFor(15, TimeUnit.SECONDS)) { server.destroyForcibly(); server.waitFor(10, TimeUnit.SECONDS); }
@@ -290,7 +302,7 @@ public final class LoginStorageCheck {
         server = null;
     }
 
-    private Connection connection() throws SQLException {
+    protected Connection connection() throws SQLException {
         var properties = new Properties();
         properties.setProperty("user", env.get("DB_USERNAME")); properties.setProperty("password", env.get("DB_PASSWORD"));
         properties.setProperty("connectTimeout", "10"); properties.setProperty("socketTimeout", "20");
@@ -327,7 +339,10 @@ public final class LoginStorageCheck {
                             members.setObject(1, id);
                             try (var result = members.executeQuery()) { result.next(); require(result.getInt(1) == 0, "Cleanup refuses a shelter member."); }
                         }
-                        // Restrictive FKs reject any unexpected role/evidence data rather than cascading into it.
+                        // Only evidence and replies owned by this run's exact temporary account.
+                        execute(db, "DELETE FROM shelter.chat_message_observations WHERE message_id IN (SELECT m.id FROM shelter.chat_messages m JOIN shelter.chat_sessions s ON s.id=m.session_id WHERE s.user_id=?)", id);
+                        execute(db, "DELETE FROM shelter.chat_messages WHERE role='ASSISTANT' AND session_id IN (SELECT id FROM shelter.chat_sessions WHERE user_id=?)", id);
+                        // Restrictive FKs reject any unexpected references rather than cascading into them.
                         execute(db, "DELETE FROM shelter.chat_messages WHERE session_id IN (SELECT id FROM shelter.chat_sessions WHERE user_id=?)", id);
                         execute(db, "DELETE FROM shelter.chat_sessions WHERE user_id=?", id);
                         execute(db, "DELETE FROM shelter.adoption_notes WHERE user_id=?", id);
@@ -346,6 +361,6 @@ public final class LoginStorageCheck {
     }
     private static boolean containsId(JsonNode rows, String id) { for (var row : rows) if (row.path("id").asText().equals(id)) return true; return false; }
     private static String encode(String value) { return java.net.URLEncoder.encode(value, java.nio.charset.StandardCharsets.UTF_8); }
-    private static void equal(Object actual, Object expected, String label) { require(Objects.equals(actual, expected), label + " mismatch."); }
-    private static void require(boolean ok, String message) { if (!ok) throw new Failure(message); }
+    protected static void equal(Object actual, Object expected, String label) { require(Objects.equals(actual, expected), label + " mismatch."); }
+    protected static void require(boolean ok, String message) { if (!ok) throw new Failure(message); }
 }

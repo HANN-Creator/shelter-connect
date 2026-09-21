@@ -9,6 +9,7 @@ from urllib.parse import parse_qs, urlsplit
 
 BACKEND = Path(__file__).resolve().parents[1]
 KEYS = {"DB_URL", "DB_USERNAME", "DB_PASSWORD", "SUPABASE_URL", "DB_POOL_SIZE", "PORT"}
+AI_KEYS = {"OPENAI_API_KEY", "OPENAI_MODEL", "AI_TIMEOUT_SECONDS"}
 STORAGE_KEYS = {"SUPABASE_SECRET_KEY", "PHOTO_STORAGE_BUCKET", "PHOTO_STORAGE_TIMEOUT_SECONDS"}
 
 
@@ -49,6 +50,20 @@ def load_storage_settings(path):
     return values
 
 
+def load_ai_settings(path):
+    values = read_values(path, AI_KEYS)
+    key = values.get("OPENAI_API_KEY", "")
+    if not re.fullmatch(r"sk-[A-Za-z0-9_-]+", key):
+        raise ConfigurationError("OPENAI_API_KEY를 로컬 AI 설정 파일에 넣어 주세요. 값은 출력하지 않았어요.")
+    model = values.setdefault("OPENAI_MODEL", "gpt-5.6-luna")
+    timeout = values.setdefault("AI_TIMEOUT_SECONDS", "30")
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,99}", model):
+        raise ConfigurationError("OPENAI_MODEL 이름을 확인해 주세요.")
+    if not timeout.isascii() or not timeout.isdecimal() or not 5 <= int(timeout) <= 60:
+        raise ConfigurationError("AI_TIMEOUT_SECONDS는 5~60초로 설정해 주세요.")
+    return values
+
+
 def load_settings(path):
     values = read_values(path, KEYS)
     for key in ("DB_URL", "DB_USERNAME", "DB_PASSWORD", "SUPABASE_URL"):
@@ -82,7 +97,7 @@ def load_settings(path):
     return values
 
 
-def launch_settings(values, inherited, read_only=False, storage=None):
+def launch_settings(values, inherited, read_only=False, storage=None, ai=None):
     # Prevent unrelated local Spring/AI settings from overriding the selected development target.
     prefixes = ("SPRING_", "DB_", "SERVER_", "SUPABASE_", "AI_", "OPENAI_", "PHOTO_")
     env = {key: value for key, value in inherited.items() if not key.startswith(prefixes)
@@ -92,9 +107,12 @@ def launch_settings(values, inherited, read_only=False, storage=None):
     if storage is not None:
         env.update(storage)
         env["PHOTO_STORAGE_ENABLED"] = "true"
+    if ai is not None:
+        env.update(ai)
+        env["AI_ENABLED"] = "true"
     args = ["--spring.config.location=classpath:/application.properties", "--spring.flyway.enabled=false",
             "--spring.sql.init.mode=never", "--spring.jpa.hibernate.ddl-auto=validate",
-            "--server.address=127.0.0.1", "--app.ai.enabled=false",
+            "--server.address=127.0.0.1", "--app.ai.enabled=" + env["AI_ENABLED"],
             "--app.photos.enabled=" + env["PHOTO_STORAGE_ENABLED"]]
     if read_only:
         args.append("--spring.datasource.hikari.read-only=true")
@@ -108,10 +126,13 @@ def main():
     parser.add_argument("--read-only", action="store_true", help="make JDBC transactions read-only for connection verification")
     parser.add_argument("--with-photos", action="store_true", help="enable private photos with the separate local server key")
     parser.add_argument("--storage-env-file", type=Path, default=BACKEND / ".env.storage")
+    parser.add_argument("--with-ai", action="store_true", help="enable real paid AI calls with the separate local AI key")
+    parser.add_argument("--ai-env-file", type=Path, default=BACKEND / ".env.ai")
     args = parser.parse_args()
     try:
         values = load_settings(args.env_file)
         storage = load_storage_settings(args.storage_env_file) if args.with_photos else None
+        ai = load_ai_settings(args.ai_env_file) if args.with_ai else None
         if args.check_config:
             print("로컬 연결 설정 형식 확인 완료. 비밀번호·키는 출력하지 않았고 외부에 접속하지 않았어요.")
             return 0
@@ -121,8 +142,8 @@ def main():
         java = str(Path(os.environ["JAVA_HOME"]) / "bin/java") if os.environ.get("JAVA_HOME") else shutil.which("java")
         if not java or not Path(java).is_file():
             raise ConfigurationError("Java 21 경로를 JAVA_HOME에 설정해 주세요.")
-        env, flags = launch_settings(values, os.environ, args.read_only, storage)
-        print(f"Supabase 개발 연결로 로컬 서버 시작: http://127.0.0.1:{values['PORT']} (읽기 전용: {args.read_only}, 사진: {storage is not None})", flush=True)
+        env, flags = launch_settings(values, os.environ, args.read_only, storage, ai)
+        print(f"Supabase 개발 연결로 로컬 서버 시작: http://127.0.0.1:{values['PORT']} (읽기 전용: {args.read_only}, 사진: {storage is not None}, AI: {ai is not None})", flush=True)
         os.chdir(BACKEND)
         os.execve(java, [java, "-jar", str(jar), *flags], env)
     except ConfigurationError as error:

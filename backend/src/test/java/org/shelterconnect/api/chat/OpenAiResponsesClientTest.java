@@ -78,6 +78,23 @@ class OpenAiResponsesClientTest {
 		assertThatThrownBy(()->client.generate(context)).isInstanceOf(AiFailure.class).hasMessageMatching("AI_TIMEOUT|AI_UNAVAILABLE");
 		assertThat(calls.get()).isEqualTo(1);
 	}
+    @Test void usageLogsContainOnlyNumericMetricsAndNotProviderTextOrCredentials() {
+        var logger = (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(OpenAiResponsesClient.class);
+        var captured = new ch.qos.logback.core.read.ListAppender<ch.qos.logback.classic.spi.ILoggingEvent>();
+        captured.start(); logger.addAppender(captured);
+        try {
+            String output=json.createObjectNode().put("text","private-answer-text").put("needsShelterConfirmation",false)
+                    .set("observationIds",json.createArrayNode().add(observation.id().toString())).toString();
+            var body=(tools.jackson.databind.node.ObjectNode)json.readTree(response("completed",output));
+            body.set("usage",json.readTree("{\"input_tokens\":1200,\"output_tokens\":150,\"input_tokens_details\":{\"cached_tokens\":1000},\"output_tokens_details\":{\"reasoning_tokens\":100}}"));
+            serve(200,body.toString(),0);
+            assertThat(client.generate(context).text()).isEqualTo("private-answer-text");
+            String logs=captured.list.stream().map(e->e.getFormattedMessage()).collect(java.util.stream.Collectors.joining("\n"));
+            assertThat(logs).contains("AI_CALL status=200", "input_tokens=1200 cached_input_tokens=1000 output_tokens=150 reasoning_tokens=100")
+                    .doesNotContain("test-key", "private-answer-text", context.question(), observation.id().toString(), "resp_test");
+        } finally { logger.detachAppender(captured); captured.stop(); }
+    }
+
 	private String response(String status,String output) {
 		return json.writeValueAsString(Map.of("id","resp_test","status",status,"output",List.of(Map.of("type","message","content",List.of(Map.of("type","output_text","text",output))))));
 	}

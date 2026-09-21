@@ -48,3 +48,5 @@ python3 scripts/check_login_storage.py --project-ref <개발-프로젝트-ref>
 실제 보호소 강아지 사진 등록은 사용 허가를 받을 때까지 보류해. 이번 검사에는 가상 강아지와 직접 작성한 테스트 문장만 사용해.
 
 계정 준비와 로그인 방식은 Supabase의 [서버에서 사용자 생성](https://supabase.com/docs/reference/javascript/auth-admin-createuser), [이메일·비밀번호 로그인](https://supabase.com/docs/reference/javascript/auth-signinwithpassword), [서버 키 사용](https://supabase.com/docs/guides/api/api-keys)을 기준으로 했어.
+
+이후 실제 AI 호출·가상 질문 답변 검토는 [Q-02](live-ai-verification.md)에서 확인했어. 이 문서의 로그인 검사는 계속 AI를 끈 상태로 실행해.

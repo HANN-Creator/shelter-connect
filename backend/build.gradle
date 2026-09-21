@@ -92,6 +92,15 @@ tasks.register('checkLoginStorage', JavaExec) {
 	mainClass = 'org.shelterconnect.sample.LoginStorageCheck'
 }
 
+// Explicit paid development check; never depends on test/build/CI.
+tasks.register('checkAiLive', JavaExec) {
+	description = 'Checks real Luna replies using reviewed fictional records and temporary users.'
+	group = 'verification'
+	dependsOn tasks.named('bootJar')
+	classpath = sourceSets.sample.runtimeClasspath
+	mainClass = 'org.shelterconnect.sample.AiLiveCheck'
+}
+
 tasks.named('test') {
 	useJUnitPlatform { excludeTags 'postgres' }
 }
