@@ -76,6 +76,10 @@ Hibernate의 자동 테이블 수정은 꺼져 있어(`ddl-auto=validate`). 테�
 
 2026.09.21에 지정한 `shelter-connect-dev` 프로젝트에는 구조와 샘플을 적용했고, [실제 DB 확인 결과](../docs/supabase-development-db.md)를 남겼어. B-11에서 Spring Boot의 실제 원격 연결과 readiness·공개 API·미인증 차단을 검증했어. [서버 연결 결과](../docs/supabase-server-connection.md)에 실행 방법을 남겼어. 실제 로그인 저장과 외부 배포는 다음 작업이야.
 
+## 사진 저장소 켜기
+
+사진은 [Supabase Storage 연결 안내](../docs/photo-storage-connection.md)에 따라 `.env.storage`에 서버 키를 넣고 `python3 scripts/run_supabase.py --with-photos`로 켤 수 있어. 처음 저장소 준비와 실제 이미지 다운로드 검사는 문서의 별도 명령을 사용해. 테스트 이미지와 실제 강아지 사진 등록은 구분해뒀어.
+
 ## AI 답변 켜기
 
 서버에만 `OPENAI_API_KEY`를 설정하고 `AI_ENABLED=true`로 켜. 기본 모델은 `OPENAI_MODEL=gpt-5.6-luna`, 호출 제한은 `AI_TIMEOUT_SECONDS=30`이야. V2 이상 DB가 필요하고 지정 Supabase 개발 프로젝트는 V3까지 적용했어. [답변 생성·재시도·배포 전 확인](../docs/grounded-chat-api.md)을 먼저 읽어줘.
