@@ -61,7 +61,7 @@ PNG 이미지들은 이미 넣어뒀어. 이미지를 다시 만들고 싶을 �
 
 ## 백엔드 작업
 
-`backend/`에 Spring Boot와 Supabase PostgreSQL을 쓰는 서버 구성을 넣었어. Java 21로 실행하고, 자세한 설정은 [백엔드 실행 안내](backend/README.md)를 보면 돼. 서버 상태 확인과 [데이터 구조·마이그레이션](docs/data-model.md), [가상 보호소 2곳·강아지 5마리 샘플](backend/sample-data/README.md), [보호소·강아지 조회 API](docs/read-api.md), [Supabase 인증·보호소 권한](docs/auth-and-permissions.md), [강아지·관찰 관리 API](docs/dog-management-api.md), [대화방·메시지 저장](docs/chat-storage-api.md), [기록 기반 AI 답변](docs/grounded-chat-api.md)이 들어 있어. AI는 서버 키 설정과 V2 적용 뒤 켜야 하고, 실제 응답 검증과 시안 연결은 아직이야.
+`backend/`에 Spring Boot와 Supabase PostgreSQL을 쓰는 서버 구성을 넣었어. Java 21로 실행하고, 자세한 설정은 [백엔드 실행 안내](backend/README.md)를 보면 돼. 서버 상태 확인과 [데이터 구조·마이그레이션](docs/data-model.md), [가상 보호소 2곳·강아지 5마리 샘플](backend/sample-data/README.md), [보호소·강아지 조회 API](docs/read-api.md), [Supabase 인증·보호소 권한](docs/auth-and-permissions.md), [강아지·관찰 관리 API](docs/dog-management-api.md), [대화방·메시지 저장](docs/chat-storage-api.md), [기록 기반 AI 답변](docs/grounded-chat-api.md)이 들어 있어. 지정 개발 DB는 V3까지 적용했고 AI는 서버 키 설정 뒤 켜야 해. 실제 응답 검증과 시안 연결은 아직이야.
 
 [구현 순서와 브랜치 규칙](docs/backend-workflow.md)에 따라 작업별 PR을 만들고, 노션 카드에 진행 상태와 병합 결과를 같이 남겨.
 
@@ -81,4 +81,4 @@ node work/mobile-concept/check-ball-play.cjs
 
 사진 조회 API와 프론트 연결 방법은 [사진 조회 문서](docs/photo-read-api.md)에 정리했어. 실제 사진 파일과 Supabase Storage 설정은 별도로 준비해야 해.
 
-강아지 움직임은 [8종 행동 설정 API](docs/dog-behavior-api.md)로 연결해. 설정을 저장하고 보호소가 확인하면 앱에서 조회할 수 있어. V3 적용과 RN의 실제 동작 재생은 별도야.
+강아지 움직임은 [8종 행동 설정 API](docs/dog-behavior-api.md)로 연결해. 설정을 저장하고 보호소가 확인하면 앱에서 조회할 수 있어. 지정 개발 DB에는 V3까지 적용했어. RN의 실제 동작 재생은 프론트가 준비된 뒤 연결해.

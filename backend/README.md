@@ -2,7 +2,7 @@
 
 Spring Boot 4.1.1, Java 21, Gradle Wrapper로 시작했어. DB는 Supabase의 PostgreSQL을 쓰고, 로컬에서는 Docker로 PostgreSQL을 띄우면 돼.
 
-서버 실행 설정과 상태 확인, 데이터 구조를 만드는 Flyway 마이그레이션이 들어 있어. [데이터 관계도와 필드 설명](../docs/data-model.md)을 같이 보면 돼. [가상 보호소 2곳·강아지 5마리 샘플](sample-data/README.md), [보호소·강아지 조회 API](../docs/read-api.md), [Supabase 인증과 보호소 권한](../docs/auth-and-permissions.md)도 준비했어. [강아지 등록·수정과 관찰 기록](../docs/dog-management-api.md)도 사용할 수 있어. [대화방·메시지 저장 API](../docs/chat-storage-api.md)도 준비했어. [기록 기반 AI 답변](../docs/grounded-chat-api.md)도 연결했어. AI는 기본 비활성이고 서버 키 설정과 V2 적용이 필요해. [사진 조회](../docs/photo-read-api.md)와 [8종 행동 설정](../docs/dog-behavior-api.md)도 구현했어. 현재 웹 시안에는 아직 연결하지 않았어.
+서버 실행 설정과 상태 확인, 데이터 구조를 만드는 Flyway 마이그레이션이 들어 있어. [데이터 관계도와 필드 설명](../docs/data-model.md)을 같이 보면 돼. [가상 보호소 2곳·강아지 5마리 샘플](sample-data/README.md), [보호소·강아지 조회 API](../docs/read-api.md), [Supabase 인증과 보호소 권한](../docs/auth-and-permissions.md)도 준비했어. [강아지 등록·수정과 관찰 기록](../docs/dog-management-api.md)도 사용할 수 있어. [대화방·메시지 저장 API](../docs/chat-storage-api.md)도 준비했어. [기록 기반 AI 답변](../docs/grounded-chat-api.md)도 연결했어. AI는 기본 비활성이고 서버 키 설정이 필요해. 지정 개발 DB는 V3까지 적용했어. [사진 조회](../docs/photo-read-api.md)와 [8종 행동 설정](../docs/dog-behavior-api.md)도 구현했어. 현재 웹 시안에는 아직 연결하지 않았어.
 
 ## 먼저 테스트해보기
 
@@ -78,7 +78,7 @@ Hibernate의 자동 테이블 수정은 꺼져 있어(`ddl-auto=validate`). 테�
 
 ## AI 답변 켜기
 
-서버에만 `OPENAI_API_KEY`를 설정하고 `AI_ENABLED=true`로 켜. 기본 모델은 `OPENAI_MODEL=gpt-5.6-luna`, 호출 제한은 `AI_TIMEOUT_SECONDS=30`이야. V2 마이그레이션을 적용한 DB가 필요하고 실제 Supabase에는 아직 적용하지 않았어. [답변 생성·재시도·배포 전 확인](../docs/grounded-chat-api.md)을 먼저 읽어줘.
+서버에만 `OPENAI_API_KEY`를 설정하고 `AI_ENABLED=true`로 켜. 기본 모델은 `OPENAI_MODEL=gpt-5.6-luna`, 호출 제한은 `AI_TIMEOUT_SECONDS=30`이야. V2 이상 DB가 필요하고 지정 Supabase 개발 프로젝트는 V3까지 적용했어. [답변 생성·재시도·배포 전 확인](../docs/grounded-chat-api.md)을 먼저 읽어줘.
 
 ## 폴더와 검사 범위
 
@@ -104,8 +104,10 @@ TEST_DB_USERNAME="$DB_USERNAME" TEST_DB_PASSWORD="$DB_PASSWORD" \
 ./gradlew integrationTest
 ```
 
-진행 순서와 PR 기록 방식은 [백엔드 진행 규칙](../docs/backend-workflow.md)에 있어. B-07 기록 기반 AI 연결까지 구현했어. 저장한 사용자 메시지에 답변을 요청하면 확인된 관찰을 바탕으로 생성하고, 근거와 처리 상태를 함께 저장해. 실제 키 호출·답변 품질·원격 V2 적용은 아직 확인 전이야. C-02의 로그인 화면 흐름과 C-03의 프론트 검토, 실제 앱 연결은 따로 확인하고, B-10 강아지 행동 설정도 구현했어. 구현 상태와 실제 DB 적용·앱 연결 상태는 각 문서에서 구분해 두었어.
+진행 순서와 PR 기록 방식은 [백엔드 진행 규칙](../docs/backend-workflow.md)에 있어. B-07 기록 기반 AI 연결까지 구현했어. 저장한 사용자 메시지에 답변을 요청하면 확인된 관찰을 바탕으로 생성하고, 근거와 처리 상태를 함께 저장해. 실제 키 호출·답변 품질은 아직 확인 전이고, 지정 개발 DB의 V2/V3는 적용했어. C-02의 로그인 화면 흐름과 C-03의 프론트 검토, 실제 앱 연결은 따로 확인하고, B-10 강아지 행동 설정도 구현했어. 구현 상태와 실제 DB 적용·앱 연결 상태는 각 문서에서 구분해 두었어.
 
 사진은 [B-08 사진 조회](../docs/photo-read-api.md)를 참고해. 본인의 해당 강아지 답변 1회 후 허가된 사진을 조회하고, 비공개 Storage URL은 60초 동안 유효해. 실제 파일·버킷·서버 키 설정은 아직 진행 전이야.
 
-행동 설정은 [B-10 연결 문서](../docs/dog-behavior-api.md)를 보면 돼. GET으로 읽고 PUT으로 초안을 저장한 뒤 confirmation으로 확인해. V3에 수정 버전과 관찰 근거 테이블이 추가됐고 실제 Supabase 적용은 아직이야. AI 호출 없이 설정을 읽을 수 있고, 미확인 설정은 기본 대기·걷기를 반환해.
+행동 설정은 [B-10 연결 문서](../docs/dog-behavior-api.md)를 보면 돼. GET으로 읽고 PUT으로 초안을 저장한 뒤 confirmation으로 확인해. V3의 수정 버전과 관찰 근거 테이블은 지정 Supabase 개발 DB에도 적용했어. AI 호출 없이 설정을 읽을 수 있고, 미확인 설정은 기본 대기·걷기를 반환해.
+
+2026.09.21 V2/V3 원격 적용과 사후 검증을 마쳤어. [적용 결과와 일회성 내보내기](../docs/supabase-development-db.md)를 참고해. RN 애니메이션 연결은 프론트의 캐릭터·동작 재생 구조가 준비된 뒤 진행하면 돼.

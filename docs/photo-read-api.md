@@ -86,7 +86,7 @@ PHOTO_STORAGE_TIMEOUT_SECONDS=5
 
 ## 적용·검증 범위
 
-기존 `dog_photos`와 대화 테이블을 사용하고 새 마이그레이션은 없어. B-07의 V2는 기존대로 별도 적용이 필요해. 이번 작업에서 실제 Supabase DB·Storage·사용 권한은 변경하지 않았어.
+기존 `dog_photos`와 대화 테이블을 사용하고 새 마이그레이션은 없어. B-08 당시에는 실제 Supabase DB·Storage·사용 권한을 변경하지 않았어. 이후 B-10A에서 개발 DB의 V2·V3를 적용했으며 [적용 기록](supabase-development-db.md)에 정리했어. 실제 사진 Storage 설정은 여전히 별도야.
 
 현재 샘플에는 실제 사진이 없고 작업 환경에 Storage 서버 키도 없어. 실제 사진 업로드, 사진 행·사용 허가 등록, 버킷 생성·정책 설정, 실제 파일 조회와 RN 화면 연결·배포는 남아 있어. 이 API는 조회만 구현하며 사진 등록·업로드 API는 포함하지 않아.
 

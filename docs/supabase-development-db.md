@@ -24,6 +24,40 @@ CI에서는 별도 임시 PostgreSQL에 생성 SQL을 넣고 실제 Flyway 검�
 
 현재 확인한 것은 실제 DB 저장까지야. Spring Boot 원격 JDBC 연결, 서버 배포, RN 화면·API·AI 연결은 아직 하지 않았어. 기존 프론트 시안도 자동으로 이 DB를 읽지는 않아.
 
-## B-07 이후 적용 상태
+## V2·V3 적용 완료 · 2026.09.21
 
-서버 코드에는 V2(AI 답변 선점·재시도 필드)가 추가됐지만 이 Supabase 프로젝트에는 아직 적용하지 않았어. 위 기록은 V1+샘플 적용 결과야. 실제 연결 대상과 배포 범위를 확인한 뒤 Flyway로 V2를 적용해야 해.
+사용자 요청으로 같은 `shelter-connect-dev` 프로젝트(`gwimdiwrqfcqulefshoz`)에 V2와 V3를 적용했어. 대시보드의 main에는 PRODUCTION 표시가 있지만, 이번 대상은 사용자가 지정한 개발 프로젝트야. 다른 프로젝트는 변경하지 않았어.
+
+적용 직전 V1 이력·체크섬과 데이터 건수를 확인했어. `exportSupabaseUpgrade`로 만든 SQL을 로그인된 SQL 편집기에서 실행했고, 원본 V2/V3와 Flyway 이력을 한 트랜잭션에 넣었어. 기존 11개 업무 테이블의 건수와 내용 지문을 비교한 뒤 일치할 때만 커밋했어. 추가되는 컬럼은 비교에서 제외했어.
+
+| 확인 항목 | 실제 결과 |
+| --- | --- |
+| V1 | 성공 · 체크섬 `2097257438` |
+| V2 | 성공 · 체크섬 `1587014355` |
+| V3 | 성공 · 체크섬 `1820963059` |
+| V2 컬럼 | generation_token, generation_expires_at, generation_attempts, generation_model, generation_response_id 추가 |
+| V2 기본값·제약 | generation_attempts는 NOT NULL·기본 0. 생성 선점 조건 제약 확인 |
+| V3 버전 | dog_behavior_profiles.revision은 NOT NULL·기본 1·양수 제약 |
+| V3 근거 | dog_behavior_evidence 생성. 복합 기본 키와 같은 강아지 관찰 외래 키 확인 |
+| 새 인덱스 | messages_active_generation_idx, behavior_evidence_observation_idx 확인 |
+| 기존 데이터 | 사용자 4·보호소 2·강아지 5·관찰 25 유지. 강아지·관찰의 별도 전후 지문도 일치 |
+| 대화·행동 설정 | 대화방·메시지·행동 설정·행동 근거 모두 0. 샘플을 새로 넣지 않음 |
+| RLS | 업무 테이블 12개 + Flyway 이력, 총 13개 활성화 |
+| anon / authenticated | schema USAGE 없음, 읽기·쓰기 등 테이블 접근 권한 0개 |
+
+원격에서는 커밋 뒤 별도 읽기 쿼리로 이력·컬럼·기본값·제약·인덱스·RLS·권한·샘플을 다시 확인했어. DB 비밀번호나 API 키는 가져오거나 저장하지 않았어.
+
+적용 도구는 CI의 임시 PostgreSQL에서 먼저 실행해 실제 Flyway `validate`와 추가 마이그레이션 0건을 확인했어. 이미 적용된 DB의 재실행 거절, 잘못된 이력 차단, V3 실패 시 앞서 실행한 V2와 이력까지 롤백되는 것도 검사했어. 원격 JDBC로 Flyway를 직접 실행한 것은 아니야.
+
+## 다음에 연결할 것
+
+DB는 이제 V3까지 준비됐어. Spring Boot 원격 JDBC 연결과 서버 배포, 실제 AI·사진 Storage 설정 및 전체 API 호출 검증은 별도야. **RN 애니메이션 연결은 프론트의 캐릭터·동작 재생 구조가 준비된 뒤 진행해.** 백엔드는 8종 행동 설정 API와 연결 문서를 제공하는 단계까지 완료했어.
+
+## 같은 V1 개발 환경에 사용할 적용 SQL
+
+```sh
+cd backend
+./gradlew exportSupabaseUpgrade
+```
+
+`build/supabase-v2-v3-upgrade.sql`을 만들며 DB에 자동 접속하지 않아. 정확한 V1 이력만 허용하고, 테이블 잠금·짧은 시간 제한·전후 내용 비교·원자적 커밋을 사용해. 실행 전 대상 프로젝트와 현재 상태를 반드시 확인해. 이번 프로젝트는 이미 완료됐으므로 **다시 실행하지 않아도 돼**. V2만 적용된 환경이나 다음 버전은 이 일회성 도구의 대상이 아니야.

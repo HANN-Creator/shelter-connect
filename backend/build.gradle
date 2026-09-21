@@ -65,6 +65,15 @@ tasks.register('exportSupabaseBootstrap', JavaExec) {
 		layout.buildDirectory.file('supabase-bootstrap.sql').get().asFile.absolutePath
 }
 
+tasks.register('exportSupabaseUpgrade', JavaExec) {
+	description = 'Exports a guarded one-time V1 to V3 SQL Editor upgrade; never connects.'
+	group = 'application'
+	classpath = sourceSets.sample.runtimeClasspath
+	mainClass = 'org.shelterconnect.sample.SupabaseUpgradeExporter'
+	args layout.projectDirectory.dir('src/main/resources/db/migration').asFile.absolutePath,
+		layout.buildDirectory.file('supabase-v2-v3-upgrade.sql').get().asFile.absolutePath
+}
+
 tasks.named('test') {
 	useJUnitPlatform { excludeTags 'postgres' }
 }

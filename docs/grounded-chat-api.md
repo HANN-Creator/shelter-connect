@@ -121,8 +121,8 @@ AI_TIMEOUT_SECONDS=30
 
 `AI_ENABLED=true`인데 키가 없으면 서버 시작을 중단해. 호출 대상은 `https://api.openai.com/v1/responses`로 고정하고 리다이렉트를 따라가지 않아. `store=false`, `reasoning.effort=low`, 출력 최대 2,000토큰을 사용해. 변경 모델도 이 요청 형식을 지원해야 해. `store=false`를 모든 제공자 보관 정책이 해제된다는 뜻으로 해석하면 안 돼. [공식 데이터 정책](https://developers.openai.com/api/docs/guides/your-data)을 참고해.
 
-V2 마이그레이션은 `chat_messages`에 선점 토큰·만료 시각·시도 횟수·모델·응답 ID와 인덱스를 추가해. V1 파일과 기존 RLS·클라이언트 권한은 바꾸지 않았어. 지정한 DB를 확인한 다음 기존 Flyway 설정으로 V2를 적용해야 해. 서버를 처음 배포할 때도 V2까지 적용된 DB가 필요해.
+V2 마이그레이션은 `chat_messages`에 선점 토큰·만료 시각·시도 횟수·모델·응답 ID와 인덱스를 추가해. V1 파일과 기존 RLS·클라이언트 권한은 바꾸지 않았어. 서버에는 V2 이상 DB가 필요해. 지정 개발 프로젝트는 B-10A에서 V3까지 적용했어.
 
-**실제 Supabase에는 아직 V2를 적용하지 않았어.** 현재 원격 DB 기록은 V1+샘플이야. SQL 편집기 초기화 내보내기는 계속 V1만 만들므로 그 뒤 Flyway로 V2를 적용해야 해. 기존 Supabase DB에 초기화 SQL을 다시 실행하면 안 돼.
+**2026.09.21 지정 Supabase 개발 프로젝트에 V2·V3를 적용했어.** [실제 확인 결과](supabase-development-db.md)를 참고해. 새 프로젝트용 초기화 SQL은 여전히 V1만 만들므로 후속 버전을 별도로 적용해야 해. 기존 DB에 초기화 SQL을 다시 실행하면 안 돼.
 
-로컬 빌드·모의 OpenAI HTTP 검사, CI의 V1→V2 이행·PostgreSQL 저장·동시 생성·오류/재시도 검사를 사용해. 실제 키 호출, 답변 품질 확인, 원격 JDBC 연결·V2 적용, RN 연결과 배포는 별도로 남아 있어.
+로컬 빌드·모의 OpenAI HTTP 검사, CI의 V1→V2 이행·PostgreSQL 저장·동시 생성·오류/재시도 검사를 사용해. 실제 키 호출, 답변 품질 확인, 원격 JDBC 연결, RN 연결과 배포는 별도로 남아 있어.
