@@ -30,7 +30,7 @@ public class LoginStorageCheck {
     private final List<TestUser> users = new ArrayList<>();
     protected Path work;
     private Process server;
-    private String base;
+    protected String base;
     private int checks;
     private boolean creationInFlight;
     protected record TestUser(String id, String email, String password) {}
@@ -165,10 +165,11 @@ public class LoginStorageCheck {
         return me.path("id").asText();
     }
 
-    private Map<String, String> exercise(String a, String b) throws Exception {
+    protected Map<String, String> exercise(String a, String b) throws Exception {
         api("GET", "/v1/me", null, null, 401);
         api("GET", "/v1/me", "invalid", null, 401);
-        api("GET", "/v1/me", key, null, 401);
+        // A malformed non-JWT is enough; never transmit the real admin key to an API under test.
+        api("GET", "/v1/me", "sb_secret_invalid_test_only", null, 401);
         error("POST", "/v1/dogs/" + HAERI + "/chat-sessions", a, null, 404, "DOG_NOT_FOUND");
         String session = api("POST", "/v1/dogs/" + BOMI + "/chat-sessions", a, null, 201).path("data").path("id").asText();
         equal(api("POST", "/v1/dogs/" + BOMI + "/chat-sessions", a, null, 200).path("data").path("id").asText(), session, "Open session reuse");

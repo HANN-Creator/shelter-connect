@@ -1,10 +1,11 @@
 """Checks packaged authentication boundaries without a real Supabase user or private key."""
 import json
+import os
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 from uuid import UUID
 
-BASE = "http://127.0.0.1:8080"
+BASE = os.environ.get("API_BASE_URL", "http://127.0.0.1:8080").rstrip("/")
 checks = [
     ("/v1/me/adoption-notes", "GET", {}),
     ("/v1/me/adoption-notes/02200000-0000-4000-8000-000000000001", "GET", {}),

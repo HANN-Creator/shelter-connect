@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: shelter-connect-dev
+    runtime: docker
+    plan: free
+    region: singapore
+    branch: main
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    autoDeployTrigger: "off"
+    healthCheckPath: /actuator/health/readiness
+    maxShutdownDelaySeconds: 30
+    envVars:
+      - key: SERVER_ADDRESS
+        value: 0.0.0.0
+      - key: DB_POOL_SIZE
+        value: "3"
+      - key: DB_MIGRATE
+        value: "false"
+      - key: SUPABASE_URL
+        sync: false
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      # Enable integrations explicitly after the first healthy deploy.
+      - key: AI_ENABLED
+        value: "false"
+      - key: PHOTO_STORAGE_ENABLED
+        value: "false"
