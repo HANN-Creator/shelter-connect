@@ -53,7 +53,7 @@ curl http://127.0.0.1:8080/actuator/health/readiness
 
 ## Supabase 연결할 때
 
-Supabase 프로젝트의 **Connect → Session pooler**에서 호스트·DB 사용자·비밀번호를 확인해줘. `.env.supabase.example`을 참고해서 별도 로컬 환경 파일이나 IDE 실행 환경에 넣으면 돼. 로컬 DB용 `.env`와 구분하면 실수하기 어려워.
+Supabase 프로젝트의 **Connect → Direct → Session pooler**에서 호스트·DB 사용자명을 확인해줘. `.env.supabase.example`을 Git에서 제외되는 `.env.supabase`로 복사하고 기존 DB 비밀번호를 넣어. 파일은 셸로 실행하지 않고 `python3 scripts/run_supabase.py`로 읽어. [설정·실행·실제 검증 결과](../docs/supabase-server-connection.md)를 참고해. 로컬 PostgreSQL용 `.env`와는 다른 파일이야.
 
 | 이름 | 용도 |
 | --- | --- |
@@ -74,7 +74,7 @@ Hibernate의 자동 테이블 수정은 꺼져 있어(`ddl-auto=validate`). 테�
 
 비어 있는 Supabase 개발 프로젝트에 SQL 편집기로 먼저 구조와 샘플을 넣는 방법도 [샘플 사용 안내](sample-data/README.md#새-supabase-프로젝트에-처음-넣을-때)에 있어. Flyway 이력을 함께 기록하므로 다음 서버 실행에서 V1을 중복 적용하지 않아.
 
-2026.09.21에 지정한 `shelter-connect-dev` 프로젝트에는 구조와 샘플을 적용했고, [실제 DB 확인 결과](../docs/supabase-development-db.md)를 남겼어. Spring Boot에서 이 원격 DB로 접속하는 환경변수 설정과 서버 실행 검증은 아직 별도 작업이야.
+2026.09.21에 지정한 `shelter-connect-dev` 프로젝트에는 구조와 샘플을 적용했고, [실제 DB 확인 결과](../docs/supabase-development-db.md)를 남겼어. B-11에서 Spring Boot의 실제 원격 연결과 readiness·공개 API·미인증 차단을 검증했어. [서버 연결 결과](../docs/supabase-server-connection.md)에 실행 방법을 남겼어. 실제 로그인 저장과 외부 배포는 다음 작업이야.
 
 ## AI 답변 켜기
 
@@ -113,3 +113,5 @@ TEST_DB_USERNAME="$DB_USERNAME" TEST_DB_PASSWORD="$DB_PASSWORD" \
 2026.09.21 V2/V3 원격 적용과 사후 검증을 마쳤어. [적용 결과와 일회성 내보내기](../docs/supabase-development-db.md)를 참고해. RN 애니메이션 연결은 프론트의 캐릭터·동작 재생 구조가 준비된 뒤 진행하면 돼.
 
 입양 준비 메모는 [B-09 연결 문서](../docs/adoption-notes-api.md)를 참고해. 사용자·강아지별로 질문, 돌봄 계획, 준비 체크를 저장하고 본인만 조회·수정해. 수정할 때는 응답의 `updatedAt`을 그대로 보내 오래된 내용의 덮어쓰기를 막아. 기존 V1 테이블을 사용하므로 추가 DB 적용이나 새 환경변수는 없어.
+
+로컬에서 Supabase 연결만 확인할 때는 `python3 scripts/run_supabase.py --read-only`를 사용해. 이 도구는 마이그레이션·AI·Storage를 끄고 로컬 주소에서 서버를 실행해. 비밀번호가 담긴 `.env.supabase`는 Git에서 제외되고 명령행 인자로 전달되지 않아.
