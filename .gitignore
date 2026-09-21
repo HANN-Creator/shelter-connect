@@ -4,6 +4,7 @@
 !/backend/.env.example
 !/backend/.env.supabase.example
 !/backend/.env.storage.example
+!/backend/.env.ai.example
 __pycache__/
 *.pyc
 node_modules/

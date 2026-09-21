@@ -88,7 +88,7 @@ B-12에서 지정 개발 프로젝트에 비공개 `dog-photos`를 만들고 서
 
 ## AI 답변 켜기
 
-서버에만 `OPENAI_API_KEY`를 설정하고 `AI_ENABLED=true`로 켜. 기본 모델은 `OPENAI_MODEL=gpt-5.6-luna`, 호출 제한은 `AI_TIMEOUT_SECONDS=30`이야. V2 이상 DB가 필요하고 지정 Supabase 개발 프로젝트는 V3까지 적용했어. [답변 생성·재시도·배포 전 확인](../docs/grounded-chat-api.md)을 먼저 읽어줘.
+로컬에서는 `.env.ai.example`을 Git에서 제외되는 `.env.ai`로 복사하고 키를 넣은 다음 `python3 scripts/run_supabase.py --with-ai`로 켜. 옵션이 없으면 AI는 꺼져 있어. 배포 환경에서는 서버에만 `OPENAI_API_KEY`와 `AI_ENABLED=true`를 설정해. 기본 모델은 `OPENAI_MODEL=gpt-5.6-luna`, 호출 제한은 `AI_TIMEOUT_SECONDS=30`이야. V2 이상 DB가 필요하고 지정 Supabase 개발 프로젝트는 V3까지 적용했어. [답변 생성·재시도](../docs/grounded-chat-api.md)와 [실제 호출 검증 방법](../docs/live-ai-verification.md)을 같이 읽어줘.
 
 ## 폴더와 검사 범위
 
@@ -114,7 +114,7 @@ TEST_DB_USERNAME="$DB_USERNAME" TEST_DB_PASSWORD="$DB_PASSWORD" \
 ./gradlew integrationTest
 ```
 
-진행 순서와 PR 기록 방식은 [백엔드 진행 규칙](../docs/backend-workflow.md)에 있어. B-07 기록 기반 AI 연결까지 구현했어. 저장한 사용자 메시지에 답변을 요청하면 확인된 관찰을 바탕으로 생성하고, 근거와 처리 상태를 함께 저장해. 실제 키 호출·답변 품질은 아직 확인 전이고, 지정 개발 DB의 V2/V3는 적용했어. C-02의 로그인 화면 흐름과 C-03의 프론트 검토, 실제 앱 연결은 따로 확인하고, B-10 강아지 행동 설정도 구현했어. 구현 상태와 실제 DB 적용·앱 연결 상태는 각 문서에서 구분해 두었어.
+진행 순서와 PR 기록 방식은 [백엔드 진행 규칙](../docs/backend-workflow.md)에 있어. B-07 기록 기반 AI 연결까지 구현했어. 저장한 사용자 메시지에 답변을 요청하면 확인된 관찰을 바탕으로 생성하고, 근거와 처리 상태를 함께 저장해. 실제 키 호출·가상 질문 11개의 답변·근거 검토는 [Q-02](../docs/live-ai-verification.md)에서 확인했고, 지정 개발 DB의 V2/V3는 적용했어. C-02의 로그인 화면 흐름과 C-03의 프론트 검토, 실제 앱 연결은 따로 확인하고, B-10 강아지 행동 설정도 구현했어. 구현 상태와 실제 DB 적용·앱 연결 상태는 각 문서에서 구분해 두었어.
 
 사진은 [B-08 사진 조회](../docs/photo-read-api.md)를 참고해. 본인의 해당 강아지 답변 1회 후 허가된 사진을 조회하고, 비공개 Storage URL은 60초 동안 유효해. 비공개 버킷·서버 키와 실제 서명 URL 다운로드는 B-12에서 확인했어. 실제 보호소 사진 등록은 사용 허가를 받을 때까지 보류해.
 
