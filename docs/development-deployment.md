@@ -1,6 +1,23 @@
 # 개발 서버 배포
 
-B-14에서는 Render Free 웹 서버 한 개와 기존 Supabase 개발 DB를 연결해. 새 DB를 만들거나 유료 서버로 바꾸지 않아. 배포 주소와 실제 확인 결과는 [B-14 작업 카드](https://app.notion.com/p/3e25b2d1a55f808b8d14d514e6191d76)에 기록해. 설정 병합과 외부 배포 완료는 구분해서 봐줘.
+B-14에서 Render Free 웹 서버 한 개를 기존 Supabase 개발 DB에 연결했어. 개발 API 주소는 **https://shelter-connect-dev.onrender.com**이야. 앱 화면이 아니라 서버 API 주소이므로, 브라우저에서는 [상태 확인](https://shelter-connect-dev.onrender.com/actuator/health/readiness)으로 연결을 확인해줘. 배포 SHA와 최종 결과는 [B-14 작업 카드](https://app.notion.com/p/3e25b2d1a55f808b8d14d514e6191d76)와 [PR #20](https://github.com/HANN-Creator/shelter-connect/pull/20)에 남겨.
+
+## 실제 확인한 결과 · 2026.09.21
+
+첫 배포는 작업 브랜치의 `278dcba612885c85787833b03f0b9c050de7f46e`로 확인했어. PR 병합 뒤에는 검사한 `main` 커밋을 수동 배포하고, 실행 SHA와 상태 확인 결과를 작업 카드에 기록해.
+
+| 확인한 내용 | 결과 |
+| --- | --- |
+| HTTPS와 Supabase DB 연결 | readiness `200`, `UP` |
+| 공개 조회 | 가상 보호소·강아지, 필터·페이지·오류·비공개 제외 통과 |
+| 로그인하지 않은 요청 | 인증 경계 30개 통과 |
+| 실제 로그인과 저장 | 임시 일반 계정 2개로 HTTP 기대 결과 64개 통과 |
+| 저장 검사 범위 | 사용자 등록·대화·입양 메모, 다시 로그인해 읽기, 타인 접근 차단, 중복 요청·수정 충돌 |
+| 검사 후 정리 | 이번 검사 계정·기록 삭제, 기존 12개 테이블 건수 복원 확인 |
+| 빌드·자동 검사 | Java 273개·Python 15개, PostgreSQL·Docker CI 통과 |
+| 무료 서버 조건 점검 | 로컬 Docker 512MB·0.1 CPU에서 시작·DB 연결·조회 통과, 메모리 약 199MiB |
+
+AI와 사진 저장소 기능은 꺼둔 상태야. Render에서 실제 AI 호출·사진 발급이나 서버 재시작 전후 저장 보존을 검증한 것은 아니야. 실제 사진 등록은 사용 허가 후 진행해.
 
 ## 서버 구성
 
@@ -45,17 +62,17 @@ AI를 켤 때는 서버에 `OPENAI_API_KEY`, `OPENAI_MODEL=gpt-5.6-luna`, `AI_TI
 
 ## 배포 후 확인
 
-Render에서 배포가 Live이고, 실행 중인 커밋이 검사한 `main` SHA와 일치하는지 먼저 봐줘. 첫 요청은 서버가 깨어나는 시간을 포함할 수 있어. 아래의 `실제-서비스-주소`는 Render에 표시된 주소로 바꿔.
+Render에서 배포가 Live이고, 실행 중인 커밋이 검사한 `main` SHA와 일치하는지 먼저 봐줘. 첫 요청은 서버가 깨어나는 시간을 포함할 수 있어.
 
 ```sh
-curl --fail https://실제-서비스-주소.onrender.com/actuator/health/readiness
+curl --fail https://shelter-connect-dev.onrender.com/actuator/health/readiness
 ```
 
 `{"status":"UP"}`을 확인한 뒤, `backend/`에서 가상 데이터 조회와 미인증 차단을 검사해. 이 두 명령은 실제 로그인 토큰을 사용하지 않고 데이터를 저장하지 않아.
 
 ```sh
-API_BASE_URL=https://실제-서비스-주소.onrender.com python3 scripts/check_read_api.py
-API_BASE_URL=https://실제-서비스-주소.onrender.com python3 scripts/check_auth_api.py
+API_BASE_URL=https://shelter-connect-dev.onrender.com python3 scripts/check_read_api.py
+API_BASE_URL=https://shelter-connect-dev.onrender.com python3 scripts/check_auth_api.py
 ```
 
 실제 로그인·대화·입양 준비 메모는 다음의 별도 검사로 확인해. 지정한 개발 Supabase 프로젝트에 임시 일반 계정 2개를 만들고, 새 로그인 후 저장 내용·타인 접근 차단·중복 요청·수정 충돌을 확인해. 마지막에 이번 실행의 계정과 기록만 지우고 기존 12개 테이블 건수를 비교해. 실행 중에는 다른 개발자가 같은 DB에 쓰는 작업을 잠시 피하면 좋아.
@@ -63,7 +80,7 @@ API_BASE_URL=https://실제-서비스-주소.onrender.com python3 scripts/check_
 ```sh
 python3 scripts/check_login_storage.py \
   --project-ref gwimdiwrqfcqulefshoz \
-  --api-origin https://실제-서비스-주소.onrender.com
+  --api-origin https://shelter-connect-dev.onrender.com
 ```
 
 설정 파일이 다른 폴더에 있으면 `--env-file`과 `--storage-env-file`로 경로를 넘겨. 원격 검사에는 HTTPS Render 기본 주소만 허용하고 리다이렉트를 따라가지 않아. Supabase 서버 키와 DB 비밀번호는 Supabase 연결에만 쓰고, 배포 서버에는 임시 일반 계정의 JWT만 보낸다. 이 명령은 배포 서버를 재시작하지 않고 AI나 사진 저장소를 호출하지 않아. 재배포 전후 보존이나 실제 AI 답변을 확인했다면 별도 결과로 적어줘.
