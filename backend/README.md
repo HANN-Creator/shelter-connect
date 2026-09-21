@@ -80,6 +80,8 @@ Hibernate의 자동 테이블 수정은 꺼져 있어(`ddl-auto=validate`). 테�
 
 사진은 [Supabase Storage 연결 안내](../docs/photo-storage-connection.md)에 따라 `.env.storage`에 서버 키를 넣고 `python3 scripts/run_supabase.py --with-photos`로 켤 수 있어. 처음 저장소 준비와 실제 이미지 다운로드 검사는 문서의 별도 명령을 사용해. 테스트 이미지와 실제 강아지 사진 등록은 구분해뒀어.
 
+B-12에서 지정 개발 프로젝트에 비공개 `dog-photos`를 만들고 서버 코드의 서명 URL 발급·실제 PNG 다운로드·공개 접근 차단까지 확인했어. 실제 보호소 사진과 로그인 사용자의 사진 조회 흐름은 다음 작업이야.
+
 ## AI 답변 켜기
 
 서버에만 `OPENAI_API_KEY`를 설정하고 `AI_ENABLED=true`로 켜. 기본 모델은 `OPENAI_MODEL=gpt-5.6-luna`, 호출 제한은 `AI_TIMEOUT_SECONDS=30`이야. V2 이상 DB가 필요하고 지정 Supabase 개발 프로젝트는 V3까지 적용했어. [답변 생성·재시도·배포 전 확인](../docs/grounded-chat-api.md)을 먼저 읽어줘.
