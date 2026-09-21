@@ -9,13 +9,14 @@ from urllib.parse import parse_qs, urlsplit
 
 BACKEND = Path(__file__).resolve().parents[1]
 KEYS = {"DB_URL", "DB_USERNAME", "DB_PASSWORD", "SUPABASE_URL", "DB_POOL_SIZE", "PORT"}
+STORAGE_KEYS = {"SUPABASE_SECRET_KEY", "PHOTO_STORAGE_BUCKET", "PHOTO_STORAGE_TIMEOUT_SECONDS"}
 
 
 class ConfigurationError(Exception):
     pass
 
 
-def load_settings(path):
+def read_values(path, allowed_keys):
     try:
         text = path.read_text(encoding="utf-8-sig")
     except (OSError, UnicodeError):
@@ -26,15 +27,33 @@ def load_settings(path):
             continue
         key, separator, value = line.partition("=")
         key = key.strip()
-        if not separator or key not in KEYS or key in values:
+        if not separator or key not in allowed_keys or key in values:
             raise ConfigurationError("설정 파일의 키와 중복 항목을 확인해 주세요.")
         # Passwords are literal. Never source this file or expand $(), quotes, or backticks.
         values[key] = value if key == "DB_PASSWORD" else value.strip()
+    if any("\x00" in value for value in values.values()):
+        raise ConfigurationError("설정 값에 NUL 문자를 넣을 수 없어요.")
+    return values
+
+
+def load_storage_settings(path):
+    values = read_values(path, STORAGE_KEYS)
+    if not re.fullmatch(r"sb_secret_[A-Za-z0-9_-]+", values.get("SUPABASE_SECRET_KEY", "")):
+        raise ConfigurationError("SUPABASE_SECRET_KEY에 기존 서버 키(sb_secret_)를 넣어 주세요. 값은 출력하지 않았어요.")
+    bucket = values.setdefault("PHOTO_STORAGE_BUCKET", "dog-photos")
+    timeout = values.setdefault("PHOTO_STORAGE_TIMEOUT_SECONDS", "5")
+    if not re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,62}", bucket):
+        raise ConfigurationError("PHOTO_STORAGE_BUCKET 이름을 확인해 주세요.")
+    if not timeout.isascii() or not timeout.isdecimal() or not 1 <= int(timeout) <= 10:
+        raise ConfigurationError("PHOTO_STORAGE_TIMEOUT_SECONDS는 1~10초로 설정해 주세요.")
+    return values
+
+
+def load_settings(path):
+    values = read_values(path, KEYS)
     for key in ("DB_URL", "DB_USERNAME", "DB_PASSWORD", "SUPABASE_URL"):
         if not values.get(key) or values[key].startswith("YOUR_"):
             raise ConfigurationError(f"{key} 설정이 필요해요. 값은 출력하지 않았어요.")
-    if any("\x00" in value for value in values.values()):
-        raise ConfigurationError("설정 값에 NUL 문자를 넣을 수 없어요.")
     try:
         project = urlsplit(values["SUPABASE_URL"])
         if not re.fullmatch(r"[a-z0-9]{20}\.supabase\.co", project.hostname or ""):
@@ -63,16 +82,20 @@ def load_settings(path):
     return values
 
 
-def launch_settings(values, inherited, read_only=False):
+def launch_settings(values, inherited, read_only=False, storage=None):
     # Prevent unrelated local Spring/AI settings from overriding the selected development target.
     prefixes = ("SPRING_", "DB_", "SERVER_", "SUPABASE_", "AI_", "OPENAI_", "PHOTO_")
     env = {key: value for key, value in inherited.items() if not key.startswith(prefixes)
            and key not in {"JAVA_TOOL_OPTIONS", "_JAVA_OPTIONS", "JDK_JAVA_OPTIONS"}}
     env.update(values)
     env.update(DB_MIGRATE="false", SERVER_ADDRESS="127.0.0.1", AI_ENABLED="false", PHOTO_STORAGE_ENABLED="false")
+    if storage is not None:
+        env.update(storage)
+        env["PHOTO_STORAGE_ENABLED"] = "true"
     args = ["--spring.config.location=classpath:/application.properties", "--spring.flyway.enabled=false",
             "--spring.sql.init.mode=never", "--spring.jpa.hibernate.ddl-auto=validate",
-            "--server.address=127.0.0.1", "--app.ai.enabled=false", "--app.photos.enabled=false"]
+            "--server.address=127.0.0.1", "--app.ai.enabled=false",
+            "--app.photos.enabled=" + env["PHOTO_STORAGE_ENABLED"]]
     if read_only:
         args.append("--spring.datasource.hikari.read-only=true")
     return env, args
@@ -83,11 +106,14 @@ def main():
     parser.add_argument("--env-file", type=Path, default=BACKEND / ".env.supabase")
     parser.add_argument("--check-config", action="store_true", help="validate local settings without connecting or printing values")
     parser.add_argument("--read-only", action="store_true", help="make JDBC transactions read-only for connection verification")
+    parser.add_argument("--with-photos", action="store_true", help="enable private photos with the separate local server key")
+    parser.add_argument("--storage-env-file", type=Path, default=BACKEND / ".env.storage")
     args = parser.parse_args()
     try:
         values = load_settings(args.env_file)
+        storage = load_storage_settings(args.storage_env_file) if args.with_photos else None
         if args.check_config:
-            print("로컬 연결 설정 형식 확인 완료. 비밀번호는 출력하지 않았고 DB에 접속하지 않았어요.")
+            print("로컬 연결 설정 형식 확인 완료. 비밀번호·키는 출력하지 않았고 외부에 접속하지 않았어요.")
             return 0
         jar = BACKEND / "build/libs/shelter-connect-api.jar"
         if not jar.is_file():
@@ -95,8 +121,8 @@ def main():
         java = str(Path(os.environ["JAVA_HOME"]) / "bin/java") if os.environ.get("JAVA_HOME") else shutil.which("java")
         if not java or not Path(java).is_file():
             raise ConfigurationError("Java 21 경로를 JAVA_HOME에 설정해 주세요.")
-        env, flags = launch_settings(values, os.environ, args.read_only)
-        print(f"Supabase 개발 연결로 로컬 서버 시작: http://127.0.0.1:{values['PORT']} (읽기 전용: {args.read_only})", flush=True)
+        env, flags = launch_settings(values, os.environ, args.read_only, storage)
+        print(f"Supabase 개발 연결로 로컬 서버 시작: http://127.0.0.1:{values['PORT']} (읽기 전용: {args.read_only}, 사진: {storage is not None})", flush=True)
         os.chdir(BACKEND)
         os.execve(java, [java, "-jar", str(jar), *flags], env)
     except ConfigurationError as error:
