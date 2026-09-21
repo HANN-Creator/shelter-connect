@@ -2,7 +2,7 @@
 
 Spring Boot 4.1.1, Java 21, Gradle Wrapper로 시작했어. DB는 Supabase의 PostgreSQL을 쓰고, 로컬에서는 Docker로 PostgreSQL을 띄우면 돼.
 
-서버 실행 설정과 상태 확인, 데이터 구조를 만드는 Flyway 마이그레이션이 들어 있어. [데이터 관계도와 필드 설명](../docs/data-model.md)을 같이 보면 돼. [가상 보호소 2곳·강아지 5마리 샘플](sample-data/README.md), [보호소·강아지 조회 API](../docs/read-api.md), [Supabase 인증과 보호소 권한](../docs/auth-and-permissions.md)도 준비했어. [강아지 등록·수정과 관찰 기록](../docs/dog-management-api.md)도 사용할 수 있어. [대화방·메시지 저장 API](../docs/chat-storage-api.md)도 준비했어. [기록 기반 AI 답변](../docs/grounded-chat-api.md)도 연결했어. AI는 기본 비활성이고 서버 키 설정이 필요해. 지정 개발 DB는 V3까지 적용했어. [사진 조회](../docs/photo-read-api.md)와 [8종 행동 설정](../docs/dog-behavior-api.md)도 구현했어. 현재 웹 시안에는 아직 연결하지 않았어.
+서버 실행 설정과 상태 확인, 데이터 구조를 만드는 Flyway 마이그레이션이 들어 있어. [데이터 관계도와 필드 설명](../docs/data-model.md)을 같이 보면 돼. [가상 보호소 2곳·강아지 5마리 샘플](sample-data/README.md), [보호소·강아지 조회 API](../docs/read-api.md), [Supabase 인증과 보호소 권한](../docs/auth-and-permissions.md)도 준비했어. [강아지 등록·수정과 관찰 기록](../docs/dog-management-api.md)도 사용할 수 있어. [대화방·메시지 저장 API](../docs/chat-storage-api.md)도 준비했어. [기록 기반 AI 답변](../docs/grounded-chat-api.md)도 연결했어. AI는 기본 비활성이고 서버 키 설정이 필요해. 지정 개발 DB는 V3까지 적용했어. [사진 조회](../docs/photo-read-api.md)와 [8종 행동 설정](../docs/dog-behavior-api.md)도 구현했어. [개인 입양 준비 메모](../docs/adoption-notes-api.md) 저장·수정·조회도 구현했어. 현재 웹 시안에는 아직 연결하지 않았어.
 
 ## 먼저 테스트해보기
 
@@ -111,3 +111,5 @@ TEST_DB_USERNAME="$DB_USERNAME" TEST_DB_PASSWORD="$DB_PASSWORD" \
 행동 설정은 [B-10 연결 문서](../docs/dog-behavior-api.md)를 보면 돼. GET으로 읽고 PUT으로 초안을 저장한 뒤 confirmation으로 확인해. V3의 수정 버전과 관찰 근거 테이블은 지정 Supabase 개발 DB에도 적용했어. AI 호출 없이 설정을 읽을 수 있고, 미확인 설정은 기본 대기·걷기를 반환해.
 
 2026.09.21 V2/V3 원격 적용과 사후 검증을 마쳤어. [적용 결과와 일회성 내보내기](../docs/supabase-development-db.md)를 참고해. RN 애니메이션 연결은 프론트의 캐릭터·동작 재생 구조가 준비된 뒤 진행하면 돼.
+
+입양 준비 메모는 [B-09 연결 문서](../docs/adoption-notes-api.md)를 참고해. 사용자·강아지별로 질문, 돌봄 계획, 준비 체크를 저장하고 본인만 조회·수정해. 수정할 때는 응답의 `updatedAt`을 그대로 보내 오래된 내용의 덮어쓰기를 막아. 기존 V1 테이블을 사용하므로 추가 DB 적용이나 새 환경변수는 없어.
