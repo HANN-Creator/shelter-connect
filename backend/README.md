@@ -74,7 +74,11 @@ Hibernate의 자동 테이블 수정은 꺼져 있어(`ddl-auto=validate`). 테�
 
 비어 있는 Supabase 개발 프로젝트에 SQL 편집기로 먼저 구조와 샘플을 넣는 방법도 [샘플 사용 안내](sample-data/README.md#새-supabase-프로젝트에-처음-넣을-때)에 있어. Flyway 이력을 함께 기록하므로 다음 서버 실행에서 V1을 중복 적용하지 않아.
 
-2026.09.21에 지정한 `shelter-connect-dev` 프로젝트에는 구조와 샘플을 적용했고, [실제 DB 확인 결과](../docs/supabase-development-db.md)를 남겼어. B-11에서 Spring Boot의 실제 원격 연결과 readiness·공개 API·미인증 차단을 검증했어. [서버 연결 결과](../docs/supabase-server-connection.md)에 실행 방법을 남겼어. 실제 로그인 저장과 외부 배포는 다음 작업이야.
+2026.09.21에 지정한 `shelter-connect-dev` 프로젝트에는 구조와 샘플을 적용했고, [실제 DB 확인 결과](../docs/supabase-development-db.md)를 남겼어. B-11에서 Spring Boot의 실제 원격 연결과 readiness·공개 API·미인증 차단을 검증했어. [서버 연결 결과](../docs/supabase-server-connection.md)에 실행 방법을 남겼어. 실제 로그인·개인 기록 저장과 재시작 후 보존은 [B-13](../docs/login-storage-verification.md)에서 확인했어. 외부 배포와 앱 로그인 화면 연결은 다음 작업이야.
+
+## 실제 로그인·저장 확인
+
+[B-13 검증 안내](../docs/login-storage-verification.md)의 별도 명령으로 실제 로그인·대화·메모 저장과 서버 재시작 후 보존을 확인할 수 있어. 지정 개발 프로젝트에 테스트 계정 두 개를 만들고 이번 검사에서 만든 기록만 정리해. 일반 빌드·CI에서는 원격 계정을 만들지 않아.
 
 ## 사진 저장소 켜기
 
@@ -112,7 +116,7 @@ TEST_DB_USERNAME="$DB_USERNAME" TEST_DB_PASSWORD="$DB_PASSWORD" \
 
 진행 순서와 PR 기록 방식은 [백엔드 진행 규칙](../docs/backend-workflow.md)에 있어. B-07 기록 기반 AI 연결까지 구현했어. 저장한 사용자 메시지에 답변을 요청하면 확인된 관찰을 바탕으로 생성하고, 근거와 처리 상태를 함께 저장해. 실제 키 호출·답변 품질은 아직 확인 전이고, 지정 개발 DB의 V2/V3는 적용했어. C-02의 로그인 화면 흐름과 C-03의 프론트 검토, 실제 앱 연결은 따로 확인하고, B-10 강아지 행동 설정도 구현했어. 구현 상태와 실제 DB 적용·앱 연결 상태는 각 문서에서 구분해 두었어.
 
-사진은 [B-08 사진 조회](../docs/photo-read-api.md)를 참고해. 본인의 해당 강아지 답변 1회 후 허가된 사진을 조회하고, 비공개 Storage URL은 60초 동안 유효해. 실제 파일·버킷·서버 키 설정은 아직 진행 전이야.
+사진은 [B-08 사진 조회](../docs/photo-read-api.md)를 참고해. 본인의 해당 강아지 답변 1회 후 허가된 사진을 조회하고, 비공개 Storage URL은 60초 동안 유효해. 비공개 버킷·서버 키와 실제 서명 URL 다운로드는 B-12에서 확인했어. 실제 보호소 사진 등록은 사용 허가를 받을 때까지 보류해.
 
 행동 설정은 [B-10 연결 문서](../docs/dog-behavior-api.md)를 보면 돼. GET으로 읽고 PUT으로 초안을 저장한 뒤 confirmation으로 확인해. V3의 수정 버전과 관찰 근거 테이블은 지정 Supabase 개발 DB에도 적용했어. AI 호출 없이 설정을 읽을 수 있고, 미확인 설정은 기본 대기·걷기를 반환해.
 
