@@ -76,6 +76,10 @@ Hibernate의 자동 테이블 수정은 꺼져 있어(`ddl-auto=validate`). 테�
 
 2026.09.21에 지정한 `shelter-connect-dev` 프로젝트에는 구조와 샘플을 적용했고, [실제 DB 확인 결과](../docs/supabase-development-db.md)를 남겼어. B-11에서 Spring Boot의 실제 원격 연결과 readiness·공개 API·미인증 차단을 검증했어. [서버 연결 결과](../docs/supabase-server-connection.md)에 실행 방법을 남겼어. 실제 로그인·개인 기록 저장과 재시작 후 보존은 [B-13](../docs/login-storage-verification.md)에서 확인했어. 외부 배포와 앱 로그인 화면 연결은 다음 작업이야.
 
+## 개발 서버 배포
+
+Render Free 배포 설정은 [개발 서버 배포 안내](../docs/development-deployment.md)에 정리했어. Docker 이미지로 올리고, 기존 Supabase 개발 DB를 연결해. 배포 주소와 실제 검증 결과는 B-14 노션 카드에서 확인해줘. 배포 이미지에는 로컬 비밀번호 파일과 테스트 도구가 들어가지 않아.
+
 ## 실제 로그인·저장 확인
 
 [B-13 검증 안내](../docs/login-storage-verification.md)의 별도 명령으로 실제 로그인·대화·메모 저장과 서버 재시작 후 보존을 확인할 수 있어. 지정 개발 프로젝트에 테스트 계정 두 개를 만들고 이번 검사에서 만든 기록만 정리해. 일반 빌드·CI에서는 원격 계정을 만들지 않아.

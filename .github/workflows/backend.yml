@@ -5,11 +5,13 @@ on:
     paths:
       - 'backend/**'
       - '.github/workflows/backend.yml'
+      - 'render.yaml'
   push:
     branches: [main]
     paths:
       - 'backend/**'
       - '.github/workflows/backend.yml'
+      - 'render.yaml'
 
 permissions:
   contents: read
@@ -22,7 +24,7 @@ jobs:
   build:
     name: Java 21 / PostgreSQL
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: backend
@@ -99,4 +101,36 @@ jobs:
             sleep 2
           done
           cat /tmp/shelter-api.log
+          exit 1
+      - name: Build deployment image
+        run: docker build --tag shelter-connect-api:ci .
+      - name: Check deployment image at 512 MB
+        env:
+          DB_URL: jdbc:postgresql://127.0.0.1:5432/shelter_test
+          DB_USERNAME: shelter_ci
+          DB_PASSWORD: disposable-ci-only
+          SUPABASE_URL: https://auth.example.invalid
+        run: |
+          container=$(docker run -d --memory=512m --memory-swap=512m --cpus=1 \
+            --network=host --env PORT=18080 --env DB_URL --env DB_USERNAME \
+            --env DB_PASSWORD --env SUPABASE_URL --env DB_POOL_SIZE=3 \
+            --read-only --tmpfs /tmp:rw,noexec,nosuid,size=64m \
+            --cap-drop=ALL --security-opt=no-new-privileges shelter-connect-api:ci)
+          trap 'docker rm -f "$container" > /dev/null' EXIT
+          test "$(docker exec "$container" id -u)" = 10001
+          for attempt in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:18080/actuator/health/readiness > /tmp/shelter-container-health.json; then
+              python3 -c 'import json; assert json.load(open("/tmp/shelter-container-health.json")) == {"status": "UP"}'
+              API_BASE_URL=http://127.0.0.1:18080 python3 scripts/check_read_api.py
+              API_BASE_URL=http://127.0.0.1:18080 python3 scripts/check_auth_api.py
+              test "$(docker inspect --format '{{.State.OOMKilled}}' "$container")" = false
+              docker stats --no-stream --format '{{.MemUsage}}' "$container"
+              exit 0
+            fi
+            if test "$(docker inspect --format '{{.State.Running}}' "$container")" != true; then
+              break
+            fi
+            sleep 2
+          done
+          docker logs "$container"
           exit 1

@@ -1,10 +1,11 @@
 """Checks the packaged server against the fictional dataset in a disposable local DB."""
 import json
+import os
 from urllib.error import HTTPError
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
-BASE = "http://127.0.0.1:8080"
+BASE = os.environ.get("API_BASE_URL", "http://127.0.0.1:8080").rstrip("/")
 ONGI = "02100000-0000-4000-8000-000000000001"
 DAON = "02100000-0000-4000-8000-000000000002"
 BOMI = "02200000-0000-4000-8000-000000000001"

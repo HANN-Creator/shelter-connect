@@ -1,0 +1,17 @@
+# Only server build inputs may reach the builder. In particular, no .env files,
+# local build output, sample tools, fixtures, logs, or frontend assets.
+**
+!Dockerfile
+!.dockerignore
+!gradlew
+!build.gradle
+!settings.gradle
+!gradle/
+!gradle/wrapper/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+!src/
+!src/main/
+!src/main/**
+**/.env
+**/.env.*

@@ -92,6 +92,15 @@ tasks.register('checkLoginStorage', JavaExec) {
 	mainClass = 'org.shelterconnect.sample.LoginStorageCheck'
 }
 
+// Manual HTTPS check only. Never deploys or restarts the remote service.
+tasks.register('checkDeployedStorage', JavaExec) {
+	description = 'Checks login and personal records through an explicit development Render origin, then cleans its own test users.'
+	group = 'verification'
+	dependsOn tasks.named('bootJar')
+	classpath = sourceSets.sample.runtimeClasspath
+	mainClass = 'org.shelterconnect.sample.DeployedStorageCheck'
+}
+
 // Explicit paid development check; never depends on test/build/CI.
 tasks.register('checkAiLive', JavaExec) {
 	description = 'Checks real Luna replies using reviewed fictional records and temporary users.'
