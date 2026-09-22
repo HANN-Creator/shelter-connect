@@ -5,10 +5,13 @@
 !/backend/.env.supabase.example
 !/backend/.env.storage.example
 !/backend/.env.ai.example
+!/backend/.env.assets.example
 __pycache__/
 *.pyc
 node_modules/
 /outputs/
+/output/imagegen/
+/tmp/imagegen/
 
 # Publish the current prototype sources; keep research and obsolete drafts local.
 /work/*

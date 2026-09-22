@@ -16,7 +16,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfiguration {
 	private static final String[] PUBLIC_READS = {"/actuator/health", "/actuator/health/liveness",
 			"/actuator/health/readiness", "/v1/shelters", "/v1/shelters/{shelterId}",
-			"/v1/shelters/{shelterId}/dogs", "/v1/dogs/{dogId}", "/v1/dogs/{dogId}/behavior"};
+			"/v1/shelters/{shelterId}/dogs", "/v1/dogs/{dogId}", "/v1/dogs/{dogId}/behavior", "/v1/dogs/{dogId}/assets"};
 
 	@Bean
 	SecurityFilterChain securityFilterChain(HttpSecurity http, JwtDecoder decoder, SecurityErrors errors) {
@@ -52,7 +52,13 @@ public class SecurityConfiguration {
 						.requestMatchers(HttpMethod.GET, "/v1/me", "/v1/me/shelters",
 								"/v1/shelter-admin/shelters/{shelterId}/access",
 								"/v1/shelter-admin/dogs/{dogId}/access").authenticated()
-						.anyRequest().denyAll())
+						.requestMatchers(HttpMethod.POST, "/v1/operations/asset-permissions", "/v1/operations/asset-imports",
+                                "/v1/operations/asset-jobs/{jobId}/reconcile", "/v1/operations/asset-jobs/{jobId}/retry",
+                                "/v1/shelter-admin/dogs/{dogId}/assets", "/v1/shelter-admin/dogs/{dogId}/assets/{jobId}/review").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/v1/operations/asset-permissions/{permissionId}").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/v1/shelter-admin/dogs/{dogId}/assets/{jobId}",
+                                "/v1/shelter-admin/dogs/{dogId}/assets/{jobId}/preview").authenticated()
+                        .anyRequest().denyAll())
 				.exceptionHandling(handling -> handling.authenticationEntryPoint(errors).accessDeniedHandler(errors))
 				.oauth2ResourceServer(resource -> resource
 						.authenticationEntryPoint(errors).accessDeniedHandler(errors)
