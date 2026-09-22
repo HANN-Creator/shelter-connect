@@ -19,7 +19,7 @@ class SupabaseUpgradePostgresTest {
 			assertThat(number(statement,"SELECT count(*) FROM shelter.dogs")).isEqualTo(5);
 			assertThat(number(statement,"SELECT count(*) FROM shelter.dog_observations")).isEqualTo(25);
 			assertThat(number(statement,"SELECT count(*) FROM shelter.dog_behavior_profiles WHERE revision=1 AND settings='{}'::jsonb AND status='DRAFT'")).isEqualTo(1);
-			var flyway=Flyway.configure().dataSource(url,user,password).schemas("shelter").defaultSchema("shelter").cleanDisabled(true).load();
+			var flyway=Flyway.configure().dataSource(url,user,password).schemas("shelter").defaultSchema("shelter").cleanDisabled(true).target("3").load();
 			flyway.validate();assertThat(flyway.info().current().getVersion().toString()).isEqualTo("3");
 			assertThat(flyway.migrate().migrationsExecuted).isZero();
 			assertThatThrownBy(()->statement.execute(sql)).isInstanceOf(SQLException.class)
