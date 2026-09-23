@@ -83,6 +83,8 @@ node work/mobile-concept/check-ball-play.cjs
 
 강아지 움직임은 [8종 행동 설정 API](docs/dog-behavior-api.md)로 연결해. 설정을 저장하고 보호소가 확인하면 앱에서 조회할 수 있어. 지정 개발 DB에는 V3까지 적용했어. RN의 실제 동작 재생은 프론트가 준비된 뒤 연결해.
 
+프론트가 행동 코드를 고정 규칙에 연결할 때는 [강아지 행동별 재생 명세서](docs/dog-action-playback-spec.md)를 먼저 보면 돼. 강아지마다 다른 행동 목록, 이동·종료 조건, 앉았다 일어나기, 공놀이 대체 행동과 오류 처리를 정리했어. API 계약과 RN 구현 초안을 구분해서 적어뒀어.
+
 Spring Boot 서버와 Supabase 개발 DB의 [실제 연결 확인](docs/supabase-server-connection.md)도 마쳤어. 로컬 서버에서 보호소·강아지 조회와 미인증 차단을 확인했고, 사진 저장소도 연결했어. 실제 로그인 저장·AI 호출·보호소 사진 등록과 외부 배포는 다음 단계야.
 
 사진에서 도트와 움직임을 만드는 서버는 [에셋 생성 API](docs/dog-asset-generation.md)와 [특성별 모션 하네스](docs/motion-harness-pipeline.md)를 보면 돼. 공통 대기·걷기에 대표 행동을 최대 두 개 더 만들고, 체형과 최종 결과를 확인한 뒤 앱에 보여주는 흐름이야.
