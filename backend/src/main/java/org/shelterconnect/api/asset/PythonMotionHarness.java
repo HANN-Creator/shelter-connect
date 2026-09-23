@@ -36,7 +36,7 @@ public final class PythonMotionHarness implements MotionHarness {
         Path dir=null;Process process=null;
         try {
             dir=Files.createTempDirectory("shelter-motion-");
-            for(String name:List.of("runner.py","render.py","motion-templates.json","canonical-profile.json")) {
+            for(String name:List.of("runner.py","render.py","outline.py","motion-templates.json","canonical-profile.json")) {
                 try(var in=getClass().getResourceAsStream("/motion-harness/"+name)) {
                     if(in==null) throw new IOException("Missing bundled renderer");
                     Files.copy(in,dir.resolve(name));

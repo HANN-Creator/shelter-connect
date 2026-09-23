@@ -6,7 +6,7 @@ from PIL import Image, ImageDraw
 with tempfile.TemporaryDirectory(prefix='harness-check-') as folder:
     root=Path(folder)
     with zipfile.ZipFile('/app/app.jar') as jar:
-        for name in ['runner.py','render.py','motion-templates.json','canonical-profile.json']:
+        for name in ['runner.py','render.py','outline.py','motion-templates.json','canonical-profile.json']:
             (root/name).write_bytes(jar.read('BOOT-INF/classes/motion-harness/'+name))
     # Fictional silhouette; no photo, provider credential or external call.
     im=Image.new('RGBA',(64,64));d=ImageDraw.Draw(im)
