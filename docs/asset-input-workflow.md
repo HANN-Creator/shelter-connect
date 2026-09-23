@@ -4,12 +4,14 @@ B-19 · [작업 카드](https://app.notion.com/p/3e45b2d1a55f8081a888cec58625f09
 
 사진은 외형을 만드는 데 쓰고, 특징은 보호소가 확인한 관찰 기록에서 가져온다. Luna가 특징을 분류하면 서버가 정해진 행동 프리셋에 매칭한다. PixelLab과 모션 하네스가 이미지를 만들고, 승인된 파일을 앱에 전달한다.
 
+B-25에서 사진 외형 분석도 연결했다. 등록 사진 한 장으로 Luna가 외형 설명과 얼굴 영역을 추출하고, 서버가 전체 사진·얼굴 사진을 PixelLab에 전달한다. 성격·행동 분석과는 별개이며 [외형 분석 명세](photo-appearance-generation.md)를 따른다.
+
 ## 연결 순서
 
 1. 승인된 보호소 계정으로 강아지와 관찰 기록을 등록하고 관찰을 `CONFIRMED`로 확인한다.
 2. 아래 행동 초안 API에 해당 관찰 ID를 보낸다. 결과의 근거와 설정을 검토하고 필요하면 기존 행동 수정 API로 고친다.
 3. `POST /v1/shelter-admin/dogs/{dogId}/behavior/confirmation`에 현재 `expectedRevision`을 보내 행동 설정을 확인한다.
-4. 운영자가 `sourceKind=SHELTER`, 이미지 가공·PixelLab 전송을 허용한 출처를 등록한다. 실제로 확인한 허가만 기록한다. 크롤링 허가는 필요 없다.
+4. 운영자가 `sourceKind=SHELTER`, 이미지 가공·OpenAI 외형 분석·PixelLab 전송을 허용한 출처를 등록한다. 실제로 확인한 범위를 허가 기록에 적는다. 크롤링 허가는 필요 없다.
 5. 사진을 업로드한다. 출처의 `autoGenerate`와 서버 자동 등록 설정이 켜져 있으면 생성 작업이 함께 반환된다. 꺼져 있으면 `REGISTERED`만 반환한다.
 6. 생성 작업을 조회한다. `RIG_REVIEW`에서 체형을 확인한 뒤 `rig/confirm`을 호출한다. `REVIEW`에서 동작을 확인한 뒤 `review`로 승인한다.
 7. 앱은 `GET /v1/dogs/{dogId}/behavior`와 `GET /v1/dogs/{dogId}/assets`를 연결한다. 이미지·프레임·이동 규칙은 [재생 명세서](dog-action-playback-spec.md)를 따른다.

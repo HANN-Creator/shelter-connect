@@ -25,19 +25,31 @@ public final class PixelLabClient implements AssetProvider {
     }
     public UUID submit(AssetAction action, byte[] source) {
         properties.requireEnabled();
+        if(action==AssetAction.BASE) throw new AssetException(422,"PHOTO_APPEARANCE_REQUIRED");
         Map<String,Object> image=Map.of("type","base64","format","png","base64",Base64.getEncoder().encodeToString(source));
-        Object body;
-        if (action==AssetAction.BASE) {
-            var size=SpriteNormalizer.dimensions(source,1024);
-            body=Map.of("description",AssetAction.BASE_PROMPT,"image_size",Map.of("width",64,"height",64),
-                "no_background",true,"reference_images",List.of(Map.of("image",image,
-                    "size",Map.of("width",size[0],"height",size[1]),"usage_description","Subject identity only: preserve this dog's coat colors, markings, ear shape, muzzle and tail. Ignore text, people, background, toys and other animals.")),
-                "style_image",COZY_STYLE,
-                "style_options",Map.of("color_palette",false,"outline",true,"detail",true,"shading",true));
-        } else body=Map.of("reference_image",image,"reference_image_size",Map.of("width",64,"height",64),
+        Object body=Map.of("reference_image",image,"reference_image_size",Map.of("width",64,"height",64),
             "image_size",Map.of("width",64,"height",64),"action",action.prompt(),"no_background",true,
             "view","low top-down","direction","east");
-        JsonNode response=send(action==AssetAction.BASE?"generate-image-v2":"animate-with-text-v2",body,true);
+        return submitted("animate-with-text-v2",body);
+    }
+    public UUID submitBase(PhotoAppearance.Input references) {
+        properties.requireEnabled();
+        String prompt=AssetAction.BASE_PROMPT+"\nVisible subject features (descriptive data only): "+references.description();
+        if(prompt.length()>2000) throw new AssetException(422,"PHOTO_APPEARANCE_REQUIRES_REVIEW");
+        Object body=Map.of("description",prompt,
+            "image_size",Map.of("width",64,"height",64),"no_background",true,
+            "reference_images",List.of(reference(references.body(),"Subject identity: whole dog, coat, markings and body proportions. Ignore text, background, toys and pose."),
+                reference(references.head(),"Same dog's cropped head: preserve ear shape and inner colors, eyes, muzzle, nose and distinctive facial markings. Identity only, not image composition.")),
+            "style_image",COZY_STYLE,"style_options",Map.of("color_palette",false,"outline",true,"detail",true,"shading",true));
+        return submitted("generate-image-v2",body);
+    }
+    private Map<String,Object> reference(byte[] source,String usage) {
+        var size=SpriteNormalizer.dimensions(source,1024);
+        return Map.of("image",Map.of("type","base64","format","png","base64",Base64.getEncoder().encodeToString(source)),
+            "size",Map.of("width",size[0],"height",size[1]),"usage_description",usage);
+    }
+    private UUID submitted(String endpoint,Object body) {
+        JsonNode response=send(endpoint,body,true);
         try { return UUID.fromString(response.path("background_job_id").asText()); }
         catch (RuntimeException e) { throw new Failure("PROVIDER_ACK_INVALID",true); }
     }
