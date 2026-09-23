@@ -54,7 +54,7 @@ final class BehaviorInput {
 		var motions=new EnumMap<Action,Motion>(Action.class);
 		for(var action:Action.values()) {
 			String speed=switch(action) {case WALK->"0.8";case RUN->"1.8";case BACK_OFF->"0.6";default->"0";};
-			motions.put(action,new Motion(action==Action.IDLE?70:action==Action.WALK?30:0,new BigDecimal(speed),2000,5000,2000));
+			motions.put(action,new Motion(action==Action.IDLE?60:action==Action.WALK?30:action==Action.SIT?10:0,new BigDecimal(speed),2000,5000,2000));
 		}
 		return new Settings(Collections.unmodifiableMap(motions),BigDecimal.ZERO,BigDecimal.ZERO,1000,new BallPlay(false,false,1000));
 	}

@@ -129,3 +129,5 @@ TEST_DB_USERNAME="$DB_USERNAME" TEST_DB_PASSWORD="$DB_PASSWORD" \
 입양 준비 메모는 [B-09 연결 문서](../docs/adoption-notes-api.md)를 참고해. 사용자·강아지별로 질문, 돌봄 계획, 준비 체크를 저장하고 본인만 조회·수정해. 수정할 때는 응답의 `updatedAt`을 그대로 보내 오래된 내용의 덮어쓰기를 막아. 기존 V1 테이블을 사용하므로 추가 DB 적용이나 새 환경변수는 없어.
 
 로컬에서 Supabase 연결만 확인할 때는 `python3 scripts/run_supabase.py --read-only`를 사용해. 이 도구는 마이그레이션·AI·Storage를 끄고 로컬 주소에서 서버를 실행해. 비밀번호가 담긴 `.env.supabase`는 Git에서 제외되고 명령행 인자로 전달되지 않아.
+
+사진과 특징 등록은 [입력 흐름 명세서](../docs/asset-input-workflow.md)를 따라 연결하면 돼.

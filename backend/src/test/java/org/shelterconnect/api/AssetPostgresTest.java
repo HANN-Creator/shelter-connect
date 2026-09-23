@@ -7,6 +7,8 @@ import java.util.concurrent.*;
 import javax.imageio.ImageIO;
 import org.junit.jupiter.api.*;
 import org.shelterconnect.api.asset.*;
+import org.shelterconnect.api.behavior.BehaviorSuggestionProvider;
+import org.springframework.mock.web.MockMultipartFile;
 import org.shelterconnect.api.auth.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,11 +26,12 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@Tag("postgres") @SpringBootTest(properties={"app.assets.enabled=true","app.assets.auto-import=true","app.assets.api-key=test-key","app.assets.storage-secret=sb_secret_testing"})
+@Tag("postgres") @SpringBootTest(properties={"app.ai.enabled=true","app.ai.api-key=test-key","app.assets.enabled=true","app.assets.auto-import=true","app.assets.api-key=test-key","app.assets.storage-secret=sb_secret_testing"})
 @AutoConfigureMockMvc @ActiveProfiles("test") @Import(JwtTestConfiguration.class)
 class AssetPostgresTest {
     @Autowired JdbcTemplate jdbc; @Autowired MockMvc mvc;@Autowired JsonMapper json;@Autowired JwtTestSupport tokens;
     @Autowired AssetWorker worker; @Autowired AssetStore store;
+    @MockitoBean BehaviorSuggestionProvider suggestions;
     @MockitoBean AssetProvider provider; @MockitoBean AssetStorage storage;
     UUID operator,user,opSubject,subject,outsiderSubject,shelter,dog,photo;
     Map<String,byte[]> objects=new ConcurrentHashMap<>();byte[] sprite;
@@ -51,13 +54,15 @@ class AssetPostgresTest {
         when(provider.poll(any())).thenAnswer(c->{noTransaction();return new AssetProvider.Poll("COMPLETED",Collections.nCopies(16,sprite));});
     }
     @AfterEach void cleanup() {
+        jdbc.update("DELETE FROM shelter.behavior_suggestions WHERE dog_id=?",dog);
+        jdbc.update("DELETE FROM shelter.photo_upload_requests WHERE dog_id=?",dog);
         jdbc.update("DELETE FROM shelter.asset_submissions WHERE job_id IN (SELECT id FROM shelter.asset_jobs WHERE dog_id=?)",dog);
         jdbc.update("DELETE FROM shelter.asset_steps WHERE job_id IN (SELECT id FROM shelter.asset_jobs WHERE dog_id=?)",dog);
         jdbc.update("DELETE FROM shelter.asset_jobs WHERE dog_id=?",dog);
         jdbc.update("DELETE FROM shelter.dog_behavior_evidence WHERE dog_id=?",dog);
         jdbc.update("DELETE FROM shelter.dog_behavior_profiles WHERE dog_id=?",dog);
         jdbc.update("DELETE FROM shelter.dog_observations WHERE dog_id=?",dog);
-        jdbc.update("DELETE FROM shelter.asset_photo_sources WHERE photo_id=?",photo);
+        jdbc.update("DELETE FROM shelter.asset_photo_sources WHERE photo_id IN (SELECT id FROM shelter.dog_photos WHERE dog_id=?)",dog);
         jdbc.update("DELETE FROM shelter.asset_source_permissions WHERE shelter_id=?",shelter);
         jdbc.update("DELETE FROM shelter.dog_photos WHERE dog_id=?",dog);
         jdbc.update("DELETE FROM shelter.dogs WHERE id=?",dog);
@@ -70,14 +75,14 @@ class AssetPostgresTest {
         assertThat(importPhoto(permission)).isEqualTo(job);
         finish(job);
         var draft=read(subject,job,200);assertThat(draft.at("/data/status").asText()).isEqualTo("REVIEW");
-        assertThat(draft.at("/data/steps").size()).isEqualTo(3);
-        verify(provider,times(2)).submit(any(),any());
+        assertThat(draft.at("/data/steps").size()).isEqualTo(4);
+        verify(provider,times(3)).submit(any(),any());
         verify(provider,never()).submit(eq(AssetAction.WALK),any());
         mvc.perform(get("/v1/dogs/"+dog+"/assets")).andExpect(status().isNotFound());
         postJson(subject,"/v1/shelter-admin/dogs/"+dog+"/assets/"+job+"/review",Map.of("decision","APPROVE"),200);
         var result=mvc.perform(get("/v1/dogs/"+dog+"/assets")).andExpect(status().isOk()).andExpect(header().string("Cache-Control","no-store")).andReturn();
         JsonNode published=json.readTree(result.getResponse().getContentAsString());
-        assertThat(published.at("/data/animations").size()).isEqualTo(2);
+        assertThat(published.at("/data/animations").size()).isEqualTo(3);
         assertThat(published.at("/data/animations/WALK/frameCount").asInt()).isEqualTo(24);
         assertThat(published.at("/data/fallbackAction").asText()).isEqualTo("IDLE");
         assertThat(published.toString()).doesNotContain("photoId","source.png","permissionNote","test-key");
@@ -105,10 +110,10 @@ class AssetPostgresTest {
         behavior(Map.of("RUN",90,"BACK_OFF",70,"SIT",70,"SNIFF",60),"CONFIRMED");
         UUID job=importPhoto(permission(true));
         var plan=read(subject,job,200).at("/data/actionPlan").valueStream().map(JsonNode::asText).toList();
-        assertThat(plan).containsExactly("BASE","IDLE","WALK","RUN","BACK_OFF");
-        finish(job);verify(provider,times(2)).submit(any(),any());
+        assertThat(plan).containsExactly("BASE","IDLE","WALK","SIT","RUN","BACK_OFF");
+        finish(job);verify(provider,times(3)).submit(any(),any());
         verify(provider,never()).submit(eq(AssetAction.RUN),any());verify(provider,never()).submit(eq(AssetAction.BACK_OFF),any());
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.asset_submissions WHERE job_id=?",Integer.class,job)).isEqualTo(2);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.asset_submissions WHERE job_id=?",Integer.class,job)).isEqualTo(3);
     }
     @Test void aNewConfirmedRevisionCreatesANewPlanWithoutChangingTheOldJob() throws Exception {
         behavior(Map.of("RUN",90),"CONFIRMED");UUID grant=permission(true),first=importPhoto(grant);
@@ -117,9 +122,9 @@ class AssetPostgresTest {
         assertThat(read(subject,first,200).at("/data/actionPlan").valueStream().map(JsonNode::asText).toList()).contains("RUN").doesNotContain("SNIFF");
         assertThat(read(subject,second,200).at("/data/actionPlan").valueStream().map(JsonNode::asText).toList()).contains("SNIFF").doesNotContain("RUN");
     }
-    @Test void draftSettingsAndRetractedEvidenceUseOnlyTheTwoCommonActions() throws Exception {
+    @Test void draftSettingsAndRetractedEvidenceUseThreeCommonActions() throws Exception {
         behavior(Map.of("RUN",90),"DRAFT");UUID grant=permission(true),first=importPhoto(grant);
-        assertThat(read(subject,first,200).at("/data/actionPlan").size()).isEqualTo(3);
+        assertThat(read(subject,first,200).at("/data/actionPlan").size()).isEqualTo(4);
         jdbc.update("UPDATE shelter.dog_behavior_profiles SET status='CONFIRMED',revision=revision+1 WHERE dog_id=?",dog);
         jdbc.update("UPDATE shelter.dog_observations SET status='RETRACTED' WHERE dog_id=?",dog);
         assertThat(importPhoto(grant)).isEqualTo(first);
@@ -145,8 +150,9 @@ class AssetPostgresTest {
         tick();tick();jdbc.update("UPDATE shelter.asset_jobs SET next_run_at=now() WHERE id=?",job);
         var work=store.claim();assertThat(work).isNotNull();assertThat(store.reserveLocal(work)).isTrue();
         jdbc.update("UPDATE shelter.asset_jobs SET lease_until=now()-interval '1 second' WHERE id=?",job);tick();
+        finish(job);
         assertThat(read(subject,job,200).at("/data/status").asText()).isEqualTo("REVIEW");
-        verify(provider,times(2)).submit(any(),any());
+        verify(provider,times(3)).submit(any(),any());
     }
     @Test void crawlConsentAndBothAutomaticFlagsAreRequired() throws Exception {
         var denied=new HashMap<>(permissionBody(true));denied.put("crawlAllowed",false);
@@ -212,6 +218,92 @@ class AssetPostgresTest {
         });
         var response=mvc.perform(get("/v1/dogs/"+dog+"/assets")).andExpect(status().isConflict()).andReturn().getResponse().getContentAsString();
         assertThat(response).doesNotContain("assets.example.invalid","spritesheetUrl");
+    }
+    @Test void confirmedBallPlayReservesRunAndSniffAlongsideTheThreeCommonActions() throws Exception {
+        behavior(Map.of("RUN",10,"SNIFF",10,"BACK_OFF",100),"CONFIRMED");
+        jdbc.update("UPDATE shelter.dog_behavior_profiles SET settings=jsonb_set(settings,'{ballPlay,chaseEnabled}','true') WHERE dog_id=?",dog);
+        var job=importPhoto(permission(true));
+        assertThat(read(subject,job,200).at("/data/actionPlan").valueStream().map(JsonNode::asText).toList()).containsExactly("BASE","IDLE","WALK","SIT","RUN","SNIFF");
+        mvc.perform(get("/v1/dogs/"+dog+"/behavior")).andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.interactions.BALL_CHASE.phases[2].preferredActions[0]").value("SNIFF"));
+    }
+    @Test void aiSuggestionSavesAnEvidenceBackedDraftAndRetriesNeverChargeAgain() throws Exception {
+        UUID evidence=observation("공을 따라 달렸어요.");
+        when(suggestions.suggest(anyList())).thenAnswer(c->{noTransaction();return json.valueToTree(Map.of("traits",List.of(Map.of("code","BALL_CHASER","observationId",evidence,"quote","공을 따라 달렸어요."))));});
+        var body=Map.of("clientRequestId",UUID.randomUUID(),"expectedRevision",0,"evidenceObservationIds",List.of(evidence));
+        String path="/v1/shelter-admin/dogs/"+dog+"/behavior/suggestions";
+        var result=postJson(subject,path,body,200);assertThat(result.at("/data/status").asText()).isEqualTo("COMPLETED");
+        assertThat(result.at("/data/result/profile/status").asText()).isEqualTo("DRAFT");
+        assertThat(result.at("/data/result/profile/source").asText()).isEqualTo("AI_SUGGESTED");
+        assertThat(result.at("/data/result/profile/settings/ballPlay/chaseEnabled").asBoolean()).isTrue();
+        postJson(subject,path,body,200);verify(suggestions,times(1)).suggest(anyList());
+        postJson(outsiderSubject,path,body,403);
+        mvc.perform(get("/v1/dogs/"+dog+"/behavior")).andExpect(jsonPath("$.data.basis").value("DEFAULT"));
+        postJson(subject,"/v1/shelter-admin/dogs/"+dog+"/behavior/confirmation",Map.of("expectedRevision",1),200);
+        assertThat(read(subject,importPhoto(permission(true)),200).at("/data/actionPlan").valueStream().map(JsonNode::asText).toList()).contains("SIT","RUN","SNIFF");
+    }
+    @Test void aiCompletionRechecksEvidenceAndRevisionAndDoesNotOverwriteShelterEdits() throws Exception {
+        UUID evidence=observation("공을 따라 달렸어요.");
+        when(suggestions.suggest(anyList())).thenAnswer(c->{jdbc.update("UPDATE shelter.dog_observations SET status='RETRACTED' WHERE id=?",evidence);return json.valueToTree(Map.of("traits",List.of()));});
+        var body=Map.of("clientRequestId",UUID.randomUUID(),"expectedRevision",0,"evidenceObservationIds",List.of(evidence));
+        postJson(subject,"/v1/shelter-admin/dogs/"+dog+"/behavior/suggestions",body,409);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.dog_behavior_profiles WHERE dog_id=?",Integer.class,dog)).isZero();
+        assertThat(jdbc.queryForObject("SELECT status FROM shelter.behavior_suggestions WHERE dog_id=?",String.class,dog)).isEqualTo("FAILED");
+        postJson(subject,"/v1/shelter-admin/dogs/"+dog+"/behavior/suggestions",body,200);verify(suggestions,times(1)).suggest(anyList());
+    }
+    @Test void uploadsUseImmutablePrivateKeysAndAutomaticallyEnterTheExistingQueue() throws Exception {
+        var consent=new HashMap<>(permissionBody(true));consent.put("sourceKind","SHELTER");consent.put("crawlAllowed",false);
+        UUID grant=UUID.fromString(postJson(opSubject,"/v1/operations/asset-permissions",consent,201).at("/data/id").asText());
+        var metadata=Map.of("clientUploadId",UUID.randomUUID(),"permissionId",grant,"rightsConfirmed",true,"rightsNote","직접 등록한 가상 사진의 가공·전송 허가");
+        doAnswer(c->{noTransaction();return null;}).when(storage).putPhoto(any(),anyString(),any());
+        String path="/v1/shelter-admin/dogs/"+dog+"/photos";
+        var a=upload(subject,path,metadata,sprite,200);var b=upload(subject,path,metadata,sprite,200);
+        assertThat(a.at("/data/photoId")).isEqualTo(b.at("/data/photoId"));assertThat(a.at("/data/job/id")).isEqualTo(b.at("/data/job/id"));
+        verify(storage,times(1)).putPhoto(eq(dog),matches(dog+"/uploads/.*\\.png"),any());
+        upload(outsiderSubject,path,metadata,sprite,403);
+        var altered=new HashMap<>(metadata);altered.put("rightsNote","다른 허가");upload(subject,path,altered,sprite,409);
+        upload(subject,path,Map.of("clientUploadId",UUID.randomUUID(),"permissionId",grant,"rightsConfirmed",false,"rightsNote","허가 없음"),sprite,409);
+        mvc.perform(get(path).header("Authorization",bearer(subject))).andExpect(status().isOk()).andExpect(jsonPath("$.data.length()").value(2));
+    }
+    @Test void concurrentSuggestionOnlyCallsAiOnceAndRejectsAnInterveningProfileEdit() throws Exception {
+        UUID evidence=observation("공을 따라 달렸어요.");
+        var entered=new CountDownLatch(1);var release=new CountDownLatch(1);
+        when(suggestions.suggest(anyList())).thenAnswer(c->{noTransaction();entered.countDown();assertThat(release.await(10,TimeUnit.SECONDS)).isTrue();return json.valueToTree(Map.of("traits",List.of()));});
+        var body=Map.of("clientRequestId",UUID.randomUUID(),"expectedRevision",0,"evidenceObservationIds",List.of(evidence));
+        String path="/v1/shelter-admin/dogs/"+dog+"/behavior/suggestions";
+        try(var pool=Executors.newSingleThreadExecutor()) {
+            var first=pool.submit(()->postJson(subject,path,body,409));
+            try {
+                assertThat(entered.await(10,TimeUnit.SECONDS)).isTrue();
+                assertThat(postJson(subject,path,body,200).at("/data/status").asText()).isEqualTo("PENDING");
+                behavior(Map.of("RUN",20),"DRAFT");
+            } finally { release.countDown(); }
+            first.get(10,TimeUnit.SECONDS);
+        }
+        verify(suggestions,times(1)).suggest(anyList());
+        assertThat(jdbc.queryForObject("SELECT revision FROM shelter.dog_behavior_profiles WHERE dog_id=?",Integer.class,dog)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT status FROM shelter.behavior_suggestions WHERE dog_id=?",String.class,dog)).isEqualTo("FAILED");
+    }
+    @Test void failedPhotoUploadCanResumeButRevokedPermissionCannotPublishIt() throws Exception {
+        var consent=new HashMap<>(permissionBody(true));consent.put("sourceKind","SHELTER");consent.put("crawlAllowed",false);
+        UUID grant=UUID.fromString(postJson(opSubject,"/v1/operations/asset-permissions",consent,201).at("/data/id").asText());
+        var metadata=Map.of("clientUploadId",UUID.randomUUID(),"permissionId",grant,"rightsConfirmed",true,"rightsNote","가상 허가");
+        String path="/v1/shelter-admin/dogs/"+dog+"/photos";
+        doThrow(new RuntimeException("storage unavailable")).doAnswer(c->{
+            noTransaction();jdbc.update("UPDATE shelter.asset_source_permissions SET revoked_at=now() WHERE id=?",grant);return null;
+        }).when(storage).putPhoto(any(),anyString(),any());
+        upload(subject,path,metadata,sprite,500);upload(subject,path,metadata,sprite,409);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.photo_upload_requests WHERE dog_id=?",Integer.class,dog)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT p.rights_status FROM shelter.dog_photos p JOIN shelter.photo_upload_requests u ON u.photo_id=p.id WHERE u.dog_id=?",String.class,dog)).isEqualTo("UNKNOWN");
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.asset_jobs WHERE dog_id=?",Integer.class,dog)).isZero();
+    }
+    private JsonNode upload(UUID who,String path,Object metadata,byte[] png,int code) throws Exception {
+        var response=mvc.perform(multipart(path).file(new MockMultipartFile("file","sample.png","image/png",png))
+            .file(new MockMultipartFile("metadata","","application/json",json.writeValueAsBytes(metadata))).header("Authorization",bearer(who)))
+            .andExpect(status().is(code)).andReturn().getResponse().getContentAsString();return json.readTree(response);
+    }
+    private UUID observation(String content) {
+        UUID id=UUID.randomUUID();jdbc.update("INSERT INTO shelter.dog_observations(id,dog_id,category,content,observed_at,recorded_by,status,confirmed_by,confirmed_at) VALUES (?,?,'PLAY',?,now(),?,'CONFIRMED',?,now())",id,dog,content,user,user);return id;
     }
     private void finish(UUID job) throws Exception {
         for(int i=0;i<20;i++) {

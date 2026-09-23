@@ -37,6 +37,12 @@ public final class SupabaseAssetStorage implements AssetStorage {
         privateBucket(properties.assetBucket);
         request("/object/"+properties.assetBucket+"/"+path(key),"POST",png,256*1024);
     }
+    public void putPhoto(UUID dogId,String key,byte[] png) {
+        if(!key.matches(dogId+"/uploads/[a-f0-9-]{36}/[a-f0-9]{64}\\.png")) throw AssetException.invalid();
+        privateBucket(properties.photoBucket);
+        // The immutable, server-selected content hash makes a repeated upload write the same bytes only.
+        request("/object/"+properties.photoBucket+"/"+path(key),"POST",png,65536);
+    }
     public Map<String,String> sign(List<String> keys) {
         privateBucket(properties.assetBucket);
         if(keys.isEmpty() || keys.size()>9) throw AssetException.invalid();

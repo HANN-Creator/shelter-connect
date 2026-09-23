@@ -16,6 +16,11 @@ public final class BehaviorTypes {
 			BigDecimal personalSpaceTiles, int reactionDelayMs, BallPlay ballPlay) {}
 	public record Profile(UUID dogId, int schemaVersion, int revision, JsonNode settings, String source, String status,
 			List<UUID> evidenceObservationIds, UUID confirmedBy, Instant confirmedAt, Instant updatedAt) {}
-	public record Playback(UUID dogId, int schemaVersion, String basis, Integer revision, Settings settings) {}
+	public record Playback(UUID dogId, int schemaVersion, String basis, Integer revision, Settings settings) {
+		@com.fasterxml.jackson.annotation.JsonProperty
+		public Map<String,BehaviorInteractions.BallChase> interactions() {
+			return Map.of("BALL_CHASE",BehaviorInteractions.ballChase(settings));
+		}
+	}
 	record Save(int expectedRevision, Settings settings, String source, List<UUID> evidence) {}
 }

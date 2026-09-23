@@ -9,5 +9,6 @@ public interface AssetStorage {
     byte[] photo(UUID dogId, String bucket, String key);
     byte[] asset(String key);
     void put(String key, byte[] png);
+    void putPhoto(UUID dogId,String key,byte[] png);
     Map<String,String> sign(List<String> keys);
 }

@@ -1,6 +1,6 @@
 # 강아지 행동별 재생 명세서
 
-문서 v1 · 2026-09-23 · [B-18 작업 카드](https://app.notion.com/p/3e45b2d1a55f80c0aa17c4040863a431)
+문서 v2 · 2026-09-23 · [B-18 작업 카드](https://app.notion.com/p/3e45b2d1a55f80c0aa17c4040863a431)
 
 **개발 API:** `https://shelter-connect-dev.onrender.com`
 
@@ -29,7 +29,7 @@
 | `/v1/dogs/{dogId}/behavior` | `dogId`, `schemaVersion`, `basis`, `revision`, `settings` |
 | `/v1/dogs/{dogId}/assets` | `id`, `schemaVersion`, `status`, `availableActions`, `fallbackAction`, `behaviorRevision`, `frameSize`, `anchorPixels`, `facing`, `baseUrl`, `expiresAt`, `animations` |
 
-행동 설정의 `settings.actions`에는 **8개 코드가 모두** 들어온다. 에셋의 `availableActions`는 **실제 생성·승인된 행동만** 담는다. 현재 신규 생성은 공통 IDLE/WALK와 대표 행동 최대 2개, 총 2~4개다. 이전 묶음이나 로컬 검토본에는 8개가 있을 수 있으므로 배열 길이를 고정하지 않는다. `BASE`는 기준 이미지이며 선택할 행동이 아니다.
+행동 설정의 `settings.actions`에는 **8개 코드가 모두** 들어온다. 에셋의 `availableActions`는 **실제 생성·승인된 행동만** 담는다. 현재 신규 생성은 공통 IDLE/WALK/SIT와 대표 행동 최대 2개, 총 3~5개다. 이전 묶음이나 로컬 검토본에는 8개가 있을 수 있으므로 배열 길이를 고정하지 않는다. `BASE`는 기준 이미지이며 선택할 행동이 아니다.
 
 ### 선택 가능한 행동 구하기
 
@@ -44,7 +44,7 @@
 
 가능한 후보 안에서 `weight / 후보 weight 합계`로 선택한다. 합계가 100일 필요는 없다. 후보가 없으면 로딩된 IDLE로 정지한다. 이 안전 대기는 IDLE의 cooldown에 막히지 않는다. IDLE까지 사용할 수 없으면 현재 유효한 manifest의 `baseUrl`을 정지 표시하고, 기준 이미지도 없으면 로딩/기본 도트 표시를 사용한다. 없는 IDLE 파일을 계속 호출하지 않는다.
 
-`behavior.revision`과 `assets.behaviorRevision`은 달라도 된다. 최신 설정으로 후보를 걸러 현재 승인된 에셋과 교집합을 사용한다. 버전이 다르다고 프론트에서 생성 API를 호출하지 않는다. `basis=DEFAULT`는 서버가 반환한 기본 설정이며, 에셋이 많아도 기본적으로 IDLE/WALK만 후보가 된다.
+`behavior.revision`과 `assets.behaviorRevision`은 달라도 된다. 최신 설정으로 후보를 걸러 현재 승인된 에셋과 교집합을 사용한다. 버전이 다르다고 프론트에서 생성 API를 호출하지 않는다. `basis=DEFAULT`는 서버가 반환한 기본 설정이며, 에셋이 많아도 기본적으로 IDLE/WALK/SIT만 후보가 된다.
 
 ## 3. 행동 코드별 규칙
 
@@ -127,14 +127,23 @@ TAIL_WAG가 재생됐다는 이유로 화면에 ‘항상 사람을 좋아함’
 
 `FETCH`, `CATCH`, `THROW`는 현재 강아지 에셋 코드가 아니다. 공 던지기는 방문자와 공의 상호작용이고, 강아지는 기존 WALK/RUN으로 이동한다. 공 이미지 부착·획득 판정·복귀 목적지는 프론트가 관리한다.
 
-1. `ballPlay.chaseEnabled=false`이면 공 추적을 시작하지 않는다.
-2. true이면 공 사건의 `ballPlay.reactionDelayMs`를 기다린다. 공이 사라졌거나 강아지가 다른 우선 상태로 바뀌면 취소한다.
-3. RUN이 에셋·비중·cooldown 조건을 만족하면 RUN, 아니면 같은 조건을 만족한 WALK로 추적한다. 둘 다 불가하면 추적을 취소하고 IDLE로 정지한다. 에셋 없는 RUN의 속도로 WALK 이미지만 재생하지 않는다.
-4. 공에 도착하면 이동을 멈추고 한 번만 획득 처리한다. 도착 전에 선택한 이동 유지 시간이 끝나면 공놀이를 취소하고 IDLE로 돌아간다. 같은 공 사건으로 자동 재시작하지 않는다. 이 시간 제한은 복귀 단계에도 적용하며 최종 놀이 길이는 RN에서 조정한다.
-5. `returnEnabled=true`이면 공을 입 근처에 붙여 던진 위치 쪽으로 돌아오는 단계를 실행한다. 복귀에도 동일한 RUN → WALK 후보 검사를 적용한다. 사용 가능한 이동이 없으면 공을 현재 위치에 내려놓고 취소한다.
-6. false이면 가져오기 단계 없이 끝낸다. 돌아오면 공을 놓고 IDLE로 전환한다. 경로가 없거나 공 소유권을 잃으면 현재 단계와 예약을 정리한다.
+공개 행동 API의 `interactions.BALL_CHASE`가 아래 값을 반환한다. `schemaVersion=1`을 지원하는 클라이언트는 이 레시피로 상태를 전환한다.
 
-입 위치·공 획득 반경·복귀 도착 반경·중단 시 공 표시 방식은 현재 manifest에 필드가 없다. 프론트가 공통 기본값을 두고 체형별 에셋을 보며 보정해야 한다. 이 수치를 서버가 이미 내려주는 것으로 구현하지 않는다. 위 흐름은 공놀이 구현 초안이며 최종 연출은 RN 연결 때 확인한다.
+| 단계 | 사용할 행동 우선순위 | 다음 단계 조건 |
+| --- | --- | --- |
+| CHASE | RUN → WALK | 공에서 `slowDistanceTiles=1.5` 이내 |
+| APPROACH | WALK | 공에서 `arrivalDistanceTiles=0.5` 이내 |
+| INSPECT | SNIFF → IDLE | 이동을 멈추고 `sniffDurationMs=1200` 경과 |
+| RETURN | WALK | 가져오기 허용 시 던진 위치로 복귀 |
+| FINISH | IDLE | 놀이 종료 |
+
+1. `enabled=false`이면 시작하지 않는다. true이면 `reactionDelayMs`를 기다린 뒤 공·경로·강아지 상태를 다시 확인한다.
+2. `preferredActions` 순서로 현재 에셋과 양수 비중을 확인한다. 첫 행동을 시작할 때 cooldown을 적용한다. 한 공놀이 안에서 계속 쓰는 WALK를 단계마다 새 선택으로 취급하거나 cooldown으로 중단하지 않는다.
+3. CHASE 시작부터 RETURN 종료까지 전체 `maxChaseDurationMs=15000`을 적용한다. 자유 배회의 개별 `minDurationMs/maxDurationMs` 대신 이 제한과 단계 조건으로 이동을 끝낸다. 별도의 공 사건 없이 자동 재시작하지 않는다.
+4. INSPECT가 끝나고 `returnEnabled=true`일 때만 공을 입 근처에 붙여 RETURN을 실행한다. 복귀 도착은 같은 0.5타일 반경을 사용한다. false이면 공을 그 자리에 두고 FINISH로 넘어간다.
+5. 이동 후보가 없거나 공이 사라짐·소유권 상실·경로 실패·시간 초과가 발생하면 공을 현재 위치에 놓고 `fallbackAction=IDLE`로 정지한다. 더 높은 우선순위의 상태는 즉시 놀이를 취소한다.
+
+SNIFF를 사용할 수 없으면 INSPECT 동안 IDLE로 대기한다. 입 부착 위치는 체형별 보정이 필요한 프론트 값이며 현재 manifest에는 없다. 공놀이 허용 시 서버는 RUN/SNIFF 비중이 양수인 경우 두 대표 행동으로 우선 생성한다. RN에서 이동·공 표시·상태 전환을 구현해야 실제 놀이가 보인다.
 
 ## 7. 로딩·버전·오류 처리
 
@@ -164,7 +173,7 @@ TAIL_WAG가 재생됐다는 이유로 화면에 ‘항상 사람을 좋아함’
 | 두부는 코를 킁킁 | 에셋 IDLE/WALK/SNIFF, SNIFF 비중 20 | 자유 행동에서 SNIFF를 선택할 수 있음 |
 | 봄이는 뛰는 모습이 있음 | 에셋 IDLE/WALK/RUN, RUN 비중 0 | RUN을 선택하지 않음. 공놀이도 WALK만 검토 |
 | 설정은 바뀌었지만 에셋은 이전 것 | RUN 비중 20, RUN 에셋 없음 | 자유 행동 후보에서 RUN 제외. 공놀이면 WALK 대체 검토 |
-| 공개 근거가 없어 기본 설정으로 돌아옴 | `basis=DEFAULT`, 에셋은 4종 | IDLE/WALK만 선택. 자발적 접근·공놀이 없음 |
+| 공개 근거가 없어 기본 설정으로 돌아옴 | `basis=DEFAULT`, 에셋은 4종 | IDLE/WALK/SIT만 선택. 자발적 접근·공놀이 없음 |
 | 앉는 도중 공이 던져짐 | SIT 진입 중, 공놀이 허용 | 현재 프레임부터 일어난 뒤 공이 여전히 유효한지 확인 |
 | 개인 거리 안인데 후진 에셋이 없음 | BACK_OFF 미제공 | IDLE로 멈춤. 달리기 에셋을 거꾸로 재생해 후진을 만들지 않음 |
 | 모든 이동 클립이 로딩 실패 | 유효한 IDLE만 있음 | 제자리 대기. 맵 위치만 미끄러지듯 움직이지 않음 |

@@ -2,7 +2,7 @@
 
 B-15 · [노션 카드](https://app.notion.com/p/3e35b2d1a55f803c9030e98a21d336e5)
 
-PixelLab을 사용한다. 사진을 참고해 기준 도트를 만들고, 공통 IDLE/WALK와 관찰 기록에 맞는 대표 행동을 최대 두 개 더 생성한다. 서버에서 한 번 만들어 저장한 PNG를 앱이 재생하는 구조다. 움직일 때마다 AI를 호출하지 않는다.
+PixelLab을 사용한다. 사진을 참고해 기준 도트를 만들고, 공통 IDLE/WALK/SIT와 관찰 기록에 맞는 대표 행동을 최대 두 개 더 생성한다. 서버에서 한 번 만들어 저장한 PNG를 앱이 재생하는 구조다. 움직일 때마다 AI를 호출하지 않는다.
 
 B-16에서 [특성별 행동 선택·모션 하네스·체형 검토](motion-harness-pipeline.md)를 연결했다. 생성 작업 저장, PixelLab 호출, 비공개 Storage 저장, 보호소 검토, 공개 조회를 제공한다. 기본 스위치는 OFF이며 실제 배포·DB 적용 결과는 해당 PR과 노션 카드에 기록한다. 크롤러는 포함하지 않는다.
 
@@ -24,6 +24,10 @@ B-16에서 [특성별 행동 선택·모션 하네스·체형 검토](motion-har
 앉기·눕기에서 일어나기는 같은 프레임을 역순으로 재생하는 `REVERSE_FRAMES`로 안내한다. 별도의 일어나기 이미지를 생성한 것은 아니다. 프레임마다 크기를 바꾸지 않고 발 기준점 `(32,60)`에 정렬한다. RUN의 공중 동작은 수직 이동을 보존한다. SIT·LIE_DOWN의 첫 장만 기준 도트로 고정하고, 반복 동작에는 멈춘 자세를 끼워 넣지 않는다.
 
 PixelLab 16장·하네스 24장으로 프레임 수가 맞는지, 투명도·64px 캔버스·잘린 외곽이 없는지 검사한다. 기계 검사는 해부학이나 자연스러운 걸음을 보장하지 않으므로 생성 결과는 `REVIEW`까지만 자동으로 진행된다. 보호소가 외형·동작을 확인해야 공개할 수 있다. 성격·행동 비중은 사진에서 추정하지 않고 기존 [행동 설정](dog-behavior-api.md)을 사용한다.
+
+## 보호소 직접 등록
+
+크롤링 없이 보호소가 사진과 확인된 특징을 넣는 API는 [사진·특징 입력 명세서](asset-input-workflow.md)에 있다. 행동 초안을 확인한 다음 사진을 업로드하면 최신 특성으로 생성 목록이 만들어진다.
 
 ## 허가받은 수집 데이터를 연결하는 순서
 
@@ -83,7 +87,7 @@ PixelLab 16장·하네스 24장으로 프레임 수가 맞는지, 투명도·64p
 
 `retry`는 요청 본문이 없다. `OUTCOME_UNKNOWN`은 재생성으로 넘길 수 없다. 운영자가 PixelLab 작업 내역과 요청 기록을 대조한 뒤 실제 작업 ID를 `reconcile`로 연결한다. 확인되지 않은 작업을 재시도하도록 자동 해제하지 않는다. `REJECTED` 결과는 공개하지 않으며, 외형 수정·일부 동작 편집 UI는 후속 작업이다.
 
-상태는 `QUEUED → RUNNING → RIG_REVIEW → QUEUED → RUNNING → REVIEW → APPROVED/REJECTED`다. 체형 조회·확정 API는 [하네스 문서](motion-harness-pipeline.md)에 있다. 오류 상태는 `FAILED`, `OUTCOME_UNKNOWN`, `CANCELLED`로 나뉜다. 조회에는 BASE와 선택된 2~4개 행동의 상태가 함께 들어간다. 사진 원본 주소나 생성 업체 키는 응답에 포함하지 않는다.
+상태는 `QUEUED → RUNNING → RIG_REVIEW → QUEUED → RUNNING → REVIEW → APPROVED/REJECTED`다. 체형 조회·확정 API는 [하네스 문서](motion-harness-pipeline.md)에 있다. 오류 상태는 `FAILED`, `OUTCOME_UNKNOWN`, `CANCELLED`로 나뉜다. 조회에는 BASE와 선택된 3~5개 행동의 상태가 함께 들어간다. 사진 원본 주소나 생성 업체 키는 응답에 포함하지 않는다.
 
 주요 오류는 400 `INVALID_ASSET_REQUEST`, 403 `FORBIDDEN`, 404 `ASSET_NOT_FOUND`, 409 `ASSET_PERMISSION_REQUIRED` / `ASSET_NOT_READY` / `ASSET_RETRY_NOT_ALLOWED`, 503 `ASSET_GENERATION_UNAVAILABLE`다. 동일 출처 키나 작업 ID 충돌은 409 `WRITE_CONFLICT`다.
 
@@ -120,7 +124,7 @@ PixelLab 16장·하네스 24장으로 프레임 수가 맞는지, 투명도·64p
 }
 ```
 
-예시의 배열은 한 프레임만 표시했다. 실제로는 선택된 2~4개 동작이 온다. PixelLab 시트는 1024×64(16프레임), 하네스 시트는 1536×64(24프레임)다. `availableActions`에 없는 행동은 `IDLE`로 대체한다. 앱은 64×64 영역을 잘라 재생하고 확대 시 nearest-neighbor를 사용한다. 서명 주소는 60초이므로 만료되면 manifest를 다시 조회한다. 이미 내려받은 파일 자체를 회수하는 기능은 아니다.
+예시의 배열은 한 프레임만 표시했다. 실제로는 선택된 3~5개 동작이 온다. PixelLab 시트는 1024×64(16프레임), 하네스 시트는 1536×64(24프레임)다. `availableActions`에 없는 행동은 `IDLE`로 대체한다. 앱은 64×64 영역을 잘라 재생하고 확대 시 nearest-neighbor를 사용한다. 서명 주소는 60초이므로 만료되면 manifest를 다시 조회한다. 이미 내려받은 파일 자체를 회수하는 기능은 아니다.
 
 공개 요청은 강아지·보호소 공개 상태, 입양 상태, 사진 권리와 출처 허가를 재확인한다. Storage 서명 발급 뒤에도 다시 확인한다. 초안 검토는 공개 앱의 실제 사진 열람 조건과 별도다. 이 API는 원본 사진을 노출하지 않으며 기존 대화 후 사진 공개 규칙도 바꾸지 않는다.
 

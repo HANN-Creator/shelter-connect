@@ -53,9 +53,33 @@ public class OpenAiResponsesClient implements AiProvider {
 		this.properties=properties;this.json=json;this.client=client;this.endpoint=endpoint;
 	}
 	@Override public Generated generate(Context context) {
+		return parse(send(payload(context)));
+	}
+	public JsonNode structured(String instructions,Object input,Map<String,Object> schema) {
+		var payload=json.writeValueAsString(Map.of("model",properties.model(),"store",false,"max_output_tokens",2000,
+			"reasoning",Map.of("effort","low"),"instructions",instructions,
+			"input",List.of(Map.of("role","user","content",json.writeValueAsString(input))),
+			"text",Map.of("format",Map.of("type","json_schema","name","behavior_traits","strict",true,"schema",schema))));
+		try {
+			var root=json.readTree(send(payload));
+			if(!"completed".equals(root.path("status").asText())) throw new AiFailure("AI_INCOMPLETE");
+			String output=null;
+			for(var item:root.path("output")) if("message".equals(item.path("type").asText())) for(var part:item.path("content")) {
+				if("refusal".equals(part.path("type").asText())) throw new AiFailure("AI_REFUSED");
+				if("output_text".equals(part.path("type").asText())) {
+					if(output!=null || !part.path("text").isString()) throw new AiFailure("AI_INVALID_RESPONSE");
+					output=part.path("text").asText();
+				}
+			}
+			if(output==null) throw new AiFailure("AI_INVALID_RESPONSE");
+			return json.readTree(output);
+		} catch(AiFailure e) { throw e; }
+		catch(RuntimeException e) { throw new AiFailure("AI_INVALID_RESPONSE"); }
+	}
+	private byte[] send(String payload) {
 		var request=HttpRequest.newBuilder(endpoint).timeout(Duration.ofSeconds(properties.timeoutSeconds()))
 				.header("Authorization","Bearer "+properties.apiKey()).header("Content-Type","application/json")
-				.POST(HttpRequest.BodyPublishers.ofString(payload(context))).build();
+				.POST(HttpRequest.BodyPublishers.ofString(payload)).build();
 		long started=System.nanoTime();
 		var future=client.sendAsync(request,info->new LimitedBody());
 		try {
@@ -65,7 +89,7 @@ public class OpenAiResponsesClient implements AiProvider {
 			if(response.statusCode()==401 || response.statusCode()==403) throw new AiFailure("AI_AUTH_FAILED");
 			if(response.statusCode()!=200) throw new AiFailure("AI_UNAVAILABLE");
 			logUsage(response.body(), TimeUnit.NANOSECONDS.toMillis(System.nanoTime()-started));
-			return parse(response.body());
+			return response.body();
 		} catch(TimeoutException ex) { future.cancel(true);throw new AiFailure("AI_TIMEOUT"); }
 		catch(InterruptedException ex) { future.cancel(true);Thread.currentThread().interrupt();throw new AiFailure("AI_INTERRUPTED"); }
 		catch(ExecutionException ex) { throw new AiFailure("AI_UNAVAILABLE"); }

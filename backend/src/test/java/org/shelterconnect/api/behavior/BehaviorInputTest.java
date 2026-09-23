@@ -16,10 +16,10 @@ class BehaviorInputTest {
 		var body=json.createObjectNode().put("expectedRevision",0).put("schemaVersion",1).put("source","SHELTER");
 		body.set("settings",settings());body.putArray("evidenceObservationIds");return body;
 	}
-	@Test void defaultHasExactlyEightActionsAndOnlyNeutralWandering() {
+	@Test void defaultHasEightActionsAndThreeCommonActions() {
 		var value=BehaviorInput.settings(settings());
 		assertThat(value.actions()).hasSize(8);
-		assertThat(value.actions().entrySet().stream().filter(e->e.getValue().weight()>0).map(e->e.getKey()).toList()).containsExactly(Action.IDLE,Action.WALK);
+		assertThat(value.actions().entrySet().stream().filter(e->e.getValue().weight()>0).map(e->e.getKey()).toList()).containsExactly(Action.IDLE,Action.WALK,Action.SIT);
 		assertThat(value.ballPlay().chaseEnabled()).isFalse();
 		assertThat(BehaviorInput.save(request()).evidence()).isEmpty();
 	}
