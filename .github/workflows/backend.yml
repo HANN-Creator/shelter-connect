@@ -56,13 +56,13 @@ jobs:
           distribution: temurin
           java-version: '21'
       - uses: gradle/actions/setup-gradle@67621b124fd2e251c5e8a0e6e3b91318f2287669 # v6.3.0
-      - name: Check local Supabase launcher
-        run: python3 -m unittest discover -s scripts -p 'test_*.py'
       - name: Install local motion renderer
         run: |
           python3 -m venv /tmp/shelter-motion-venv
           /tmp/shelter-motion-venv/bin/pip install -r motion-requirements.txt
           echo "ASSET_HARNESS_PYTHON=/tmp/shelter-motion-venv/bin/python" >> "$GITHUB_ENV"
+      - name: Check local launchers and live verifier offline
+        run: /tmp/shelter-motion-venv/bin/python -m unittest discover -s scripts -p 'test_*.py'
       - name: Test motion renderer
         run: /tmp/shelter-motion-venv/bin/python -m unittest discover -s motion-tests -p 'test_*.py'
       - name: Test and build against PostgreSQL
