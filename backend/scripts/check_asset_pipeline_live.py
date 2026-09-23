@@ -373,7 +373,8 @@ class LiveCheck:
     def publication(self):
         public_path = '/v1/dogs/' + self.dog + '/assets'
         dog = self.api('GET', self.dog_path)['data']
-        self.api('PATCH', self.dog_path, {'expectedUpdatedAt': dog['updatedAt'], 'isPublic': True})
+        self.api('PATCH', self.dog_path, {'expectedUpdatedAt': dog['updatedAt'],
+                                        'isPublic': True, 'adoptionStatus': 'AVAILABLE'})
         self.api('GET', public_path, expected=(404,), anonymous=True)
         approved = self.api('POST', self.job_path + '/review', {'decision': 'APPROVE'})['data']
         require(approved['status'] == 'APPROVED', 'Final review was not applied')
