@@ -1,5 +1,6 @@
 package org.shelterconnect.api.asset;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.*;
 import java.time.Duration;
@@ -11,6 +12,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 @Component
 public final class PixelLabClient implements AssetProvider {
+    private static final Map<String,Object> COZY_STYLE = loadStyle();
     private final AssetProperties properties;
     private final JsonMapper json;
     private final HttpClient client;
@@ -29,13 +31,27 @@ public final class PixelLabClient implements AssetProvider {
             var size=SpriteNormalizer.dimensions(source,1024);
             body=Map.of("description",AssetAction.BASE_PROMPT,"image_size",Map.of("width",64,"height",64),
                 "no_background",true,"reference_images",List.of(Map.of("image",image,
-                    "size",Map.of("width",size[0],"height",size[1]),"usage_description","Dog appearance only. Ignore text, people, background, toys and other animals.")));
+                    "size",Map.of("width",size[0],"height",size[1]),"usage_description","Subject identity only: preserve this dog's coat colors, markings, ear shape, muzzle and tail. Ignore text, people, background, toys and other animals.")),
+                "style_image",COZY_STYLE,
+                "style_options",Map.of("color_palette",false,"outline",true,"detail",true,"shading",true));
         } else body=Map.of("reference_image",image,"reference_image_size",Map.of("width",64,"height",64),
             "image_size",Map.of("width",64,"height",64),"action",action.prompt(),"no_background",true,
             "view","low top-down","direction","east");
         JsonNode response=send(action==AssetAction.BASE?"generate-image-v2":"animate-with-text-v2",body,true);
         try { return UUID.fromString(response.path("background_job_id").asText()); }
         catch (RuntimeException e) { throw new Failure("PROVIDER_ACK_INVALID",true); }
+    }
+    private static Map<String,Object> loadStyle() {
+        // The same generated art reference used for the approved Dubu sprite; never a subject photo.
+        try (var input=PixelLabClient.class.getResourceAsStream("/sprite-style/cozy-dog-v1.png")) {
+            if (input==null) throw new IllegalStateException("Bundled sprite style is missing");
+            byte[] bytes=input.readAllBytes();
+            if (!Arrays.equals(SpriteNormalizer.dimensions(bytes,64),new int[]{64,64}))
+                throw new IllegalStateException("Bundled sprite style must be 64x64");
+            return Map.of("image",Map.of("type","base64","format","png","base64",Base64.getEncoder().encodeToString(bytes)),
+                "size",Map.of("width",64,"height",64),
+                "usage_description","Pixel-art style only: crisp pixel clusters, outline thickness, detail and shading. Do not copy this dog's coat colors, muzzle markings, floppy ears or other identity features.");
+        } catch (IOException e) { throw new IllegalStateException("Cannot load bundled sprite style",e); }
     }
     public Poll poll(UUID id) {
         JsonNode data=send("background-jobs/"+id,null,false);
