@@ -29,12 +29,36 @@ class PixelLabClientTest {
         client.submit(AssetAction.BASE,SpriteNormalizerTest.frame(0,0));
         assertThat(submitted.get().at("/reference_images/0/size/width").asInt()).isEqualTo(64);
         for(var action:AssetAction.values())if(action!=AssetAction.BASE) {
-            client.submit(action,SpriteNormalizerTest.frame(0,0));
+            byte[] approvedBase=SpriteNormalizerTest.frame(0,0);
+            client.submit(action,approvedBase);
+            assertThat(Base64.getDecoder().decode(submitted.get().at("/reference_image/base64").asText())).isEqualTo(approvedBase);
+            assertThat(submitted.get().has("style_image")).isFalse();
+            assertThat(submitted.get().has("reference_images")).isFalse();
             assertThat(submitted.get().at("/image_size/width").asInt()).isEqualTo(64);
             assertThat(submitted.get().path("action").asText().length()).isLessThanOrEqualTo(500);
             assertThat(submitted.get().path("action").asText()).contains("Same puppy identity");
             assertThat(submitted.get().path("no_background").asBoolean()).isTrue();
         }
+    }
+    @Test void baseSeparatesSubjectIdentityFromTheApprovedArtStyle() throws Exception {
+        byte[] photo=SpriteNormalizerTest.frame(0,0);
+        client.submit(AssetAction.BASE,photo);
+        JsonNode request=submitted.get();
+        assertThat(request.path("reference_images").size()).isEqualTo(1);
+        assertThat(Base64.getDecoder().decode(request.at("/reference_images/0/image/base64").asText())).isEqualTo(photo);
+        byte[] style=Base64.getDecoder().decode(request.at("/style_image/image/base64").asText());
+        try(var expected=getClass().getResourceAsStream("/sprite-style/cozy-dog-v1.png")) {
+            assertThat(expected).isNotNull();
+            assertThat(style).isEqualTo(expected.readAllBytes()).isNotEqualTo(photo);
+        }
+        assertThat(SpriteNormalizer.dimensions(style,64)).containsExactly(64,64);
+        assertThat(request.at("/style_image/size/width").asInt()).isEqualTo(64);
+        assertThat(request.at("/style_image/size/height").asInt()).isEqualTo(64);
+        assertThat(request.at("/style_image/usage_description").asText()).contains("style only", "Do not copy");
+        assertThat(request.at("/style_options/color_palette").asBoolean(true)).isFalse();
+        for(String key:List.of("outline","detail","shading"))
+            assertThat(request.at("/style_options/"+key).asBoolean()).isTrue();
+        assertThat(request.path("description").asText()).contains("modestly enlarged head", "PHOTO reference", "STYLE reference");
     }
     @Test void ambiguousSubmissionIsNotMisreportedAsSafeToRetry() {
         status=503;

@@ -21,9 +21,12 @@ public enum AssetAction {
             + " Facing screen right in three-quarter view. Locked camera and scale, shared ground line."
             + " Transparent pixel art. No extra limbs, props, text, turning or zoom.";
     }
-    static final String BASE_PROMPT = "Create a complete 64x64 pixel-art dog sprite using only the dog's visual identity from the reference photo. "
+    static final String BASE_PROMPT = "Create one full-body dog sprite for a cozy pixel-art shelter game. The PHOTO reference defines the dog's visual identity. "
         + "Preserve coat colors, markings, ears, muzzle and tail. Ignore toys, other animals, people, room, pose and text in the photo. "
-        + "One quadruped dog standing naturally, facing screen right in a three-quarter view, all paws and tail visible. "
-        + "Crisp restrained pixel clusters, consistent dark outline, no anti-aliasing. Centered with at least 4 pixels of transparent padding. "
-        + "No background, props, text or personality claims.";
+        + "Standing naturally on FOUR planted paws, closed mouth, slightly elevated three-quarter view facing screen RIGHT. Head to the right, tail to the left. "
+        + "Cute readable proportions with a modestly enlarged head, compact but natural dog anatomy. "
+        + "The separate tan-dog STYLE reference is ONLY for crisp pixel clusters, outline thickness and game-art detail; NEVER copy its colors, floppy ears or muzzle markings. "
+        + "Native 64x64 pixel art, restrained palette derived from the subject photo, warm gray-brown outline, no anti-aliasing. "
+        + "Full silhouette within 6px side margins and 4px top margin; no cropped ears, tail or paws. Transparent background. "
+        + "No scenery, floor, cast shadow, clothing, collar, text, symbols, props, extra legs, duplicate dogs or personality claims.";
 }
