@@ -21,12 +21,10 @@ public enum AssetAction {
             + " Facing screen right in three-quarter view. Locked camera and scale, shared ground line."
             + " Transparent pixel art. No extra limbs, props, text, turning or zoom.";
     }
-    static final String BASE_PROMPT = "Create one full-body dog sprite for a cozy pixel-art shelter game. The PHOTO reference defines the dog's visual identity. "
-        + "Preserve coat colors, markings, ears, muzzle and tail. Ignore toys, other animals, people, room, pose and text in the photo. "
-        + "Standing naturally on FOUR planted paws, closed mouth, slightly elevated three-quarter view facing screen RIGHT. Head to the right, tail to the left. "
-        + "Cute readable proportions with a modestly enlarged head, compact but natural dog anatomy. "
-        + "The separate tan-dog STYLE reference is ONLY for crisp pixel clusters, outline thickness and game-art detail; NEVER copy its colors, floppy ears or muzzle markings. "
-        + "Native 64x64 pixel art, restrained palette derived from the subject photo, warm gray-brown outline, no anti-aliasing. "
-        + "Full silhouette within 6px side margins and 4px top margin; no cropped ears, tail or paws. Transparent background. "
-        + "No scenery, floor, cast shadow, clothing, collar, text, symbols, props, extra legs, duplicate dogs or personality claims.";
+    static final String BASE_PROMPT = "Create ONE full-body dog sprite for a cozy pixel-art shelter game. PHOTO reference images and visible features define identity; "
+        + "preserve coat, markings, ears, muzzle and tail, ignoring photo pose, poster text, people, background and props. "
+        + "Stand on FOUR planted paws, closed mouth, elevated three-quarter view facing RIGHT, head right and tail left. "
+        + "Cute natural proportions with a modestly enlarged head. STYLE reference defines crisp pixel clusters, outline and shading ONLY; never copy its colors or identity. "
+        + "Native 64x64, restrained subject-derived palette, warm gray-brown outline, no anti-aliasing. "
+        + "Keep 6px side and 4px top margins, transparent background. No cropped parts, floor, cast shadow, collar, text, extra legs or duplicate dogs.";
 }

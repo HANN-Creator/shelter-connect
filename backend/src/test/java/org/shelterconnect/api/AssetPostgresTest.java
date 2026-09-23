@@ -32,6 +32,7 @@ class AssetPostgresTest {
     @Autowired JdbcTemplate jdbc; @Autowired MockMvc mvc;@Autowired JsonMapper json;@Autowired JwtTestSupport tokens;
     @Autowired AssetWorker worker; @Autowired AssetStore store;
     @MockitoBean BehaviorSuggestionProvider suggestions;
+    @MockitoBean PhotoAppearanceProvider appearance;
     @MockitoBean AssetProvider provider; @MockitoBean AssetStorage storage;
     UUID operator,user,opSubject,subject,outsiderSubject,shelter,dog,photo;
     Map<String,byte[]> objects=new ConcurrentHashMap<>();byte[] sprite;
@@ -50,8 +51,15 @@ class AssetPostgresTest {
         when(storage.asset(anyString())).thenAnswer(c->{noTransaction();return objects.get(c.getArgument(0));});
         doAnswer(c->{noTransaction();objects.put(c.getArgument(0),c.getArgument(1));return null;}).when(storage).put(anyString(),any());
         when(storage.sign(anyList())).thenAnswer(c->{noTransaction();Map<String,String> out=new LinkedHashMap<>();for(String k:c.<List<String>>getArgument(0))out.put(k,"https://assets.example.invalid/"+k);return out;});
+        when(appearance.model()).thenReturn("gpt-5.6-luna");
+        when(appearance.analyze(any())).thenAnswer(c->{noTransaction();return appearanceFixture();});
+        when(provider.submitBase(any())).thenAnswer(c->{noTransaction();return UUID.randomUUID();});
         when(provider.submit(any(),any())).thenAnswer(c->{noTransaction();return UUID.randomUUID();});
         when(provider.poll(any())).thenAnswer(c->{noTransaction();return new AssetProvider.Poll("COMPLETED",Collections.nCopies(16,sprite));});
+    }
+    JsonNode appearanceFixture() {
+        return json.valueToTree(Map.of("dogCount",1,"headVisible",true,"headBox",Map.of("x",.25,"y",.15,"width",.5,"height",.5),
+            "features",Map.of("coat","brown", "markings","no visible patches", "ears","upright", "eyes","dark", "muzzle","short", "nose","black", "tail","curved", "build","compact")));
     }
     @AfterEach void cleanup() {
         jdbc.update("DELETE FROM shelter.behavior_suggestions WHERE dog_id=?",dog);
@@ -76,7 +84,7 @@ class AssetPostgresTest {
         finish(job);
         var draft=read(subject,job,200);assertThat(draft.at("/data/status").asText()).isEqualTo("REVIEW");
         assertThat(draft.at("/data/steps").size()).isEqualTo(4);
-        verify(provider,times(3)).submit(any(),any());
+        verify(provider,times(2)).submit(any(),any());verify(provider,times(1)).submitBase(any());
         verify(provider,never()).submit(eq(AssetAction.WALK),any());
         mvc.perform(get("/v1/dogs/"+dog+"/assets")).andExpect(status().isNotFound());
         postJson(subject,"/v1/shelter-admin/dogs/"+dog+"/assets/"+job+"/review",Map.of("decision","APPROVE"),200);
@@ -85,9 +93,52 @@ class AssetPostgresTest {
         assertThat(published.at("/data/animations").size()).isEqualTo(3);
         assertThat(published.at("/data/animations/WALK/frameCount").asInt()).isEqualTo(24);
         assertThat(published.at("/data/fallbackAction").asText()).isEqualTo("IDLE");
-        assertThat(published.toString()).doesNotContain("photoId","source.png","permissionNote","test-key");
+        assertThat(published.toString()).doesNotContain("photoId","source.png","permissionNote","test-key","preparation","headBox");
         mvc.perform(delete("/v1/operations/asset-permissions/"+permission).header("Authorization",bearer(opSubject))).andExpect(status().isNoContent());
         mvc.perform(get("/v1/dogs/"+dog+"/assets")).andExpect(status().isNotFound());
+    }
+    @Test void completedAppearanceIsStoredOnceAndReusedAfterAPixelLabRejection() throws Exception {
+        UUID job=importPhoto(permission(true));
+        when(provider.submitBase(any())).thenThrow(new AssetProvider.Failure("PIXELLAB_HTTP_429",false));
+        tick();tick();verify(appearance,times(1)).analyze(any());
+        var prepared=read(subject,job,200).at("/data/steps/0/result/preparation");
+        assertThat(prepared.path("status").asText()).isEqualTo("READY");
+        assertThat(prepared.path("model").asText()).isEqualTo("gpt-5.6-luna");
+        assertThat(prepared.path("photoSha256").asText()).hasSize(64);
+        postJson(opSubject,"/v1/operations/asset-jobs/"+job+"/retry",Map.of(),200);
+        doReturn(UUID.randomUUID()).when(provider).submitBase(any());tick();tick();
+        assertThat(read(subject,job,200).at("/data/status").asText()).isEqualTo("RIG_REVIEW");
+        verify(appearance,times(1)).analyze(any());verify(provider,times(2)).submitBase(any());
+        var request=org.mockito.ArgumentCaptor.forClass(PhotoAppearance.Input.class);
+        verify(provider,times(2)).submitBase(request.capture());
+        assertThat(request.getValue().body()).isNotEqualTo(request.getValue().head());
+        assertThat(request.getValue().description()).contains("coat: brown","nose: black");
+        assertThat(read(subject,job,200).at("/data/steps/0/result/preparation/status").asText()).isEqualTo("READY");
+    }
+    @Test void unusableAppearanceStopsBeforeAnyPixelLabCallAndOnlyExplicitRetryAnalyzesAgain() throws Exception {
+        UUID job=importPhoto(permission(true));
+        var invalid=(tools.jackson.databind.node.ObjectNode)appearanceFixture();invalid.put("headVisible",false);
+        when(appearance.analyze(any())).thenReturn(invalid);tick();tick();
+        assertThat(read(subject,job,200).at("/data/failureCode").asText()).isEqualTo("PHOTO_APPEARANCE_REQUIRES_REVIEW");
+        verifyNoInteractions(provider);verify(appearance,times(1)).analyze(any());
+        postJson(opSubject,"/v1/operations/asset-jobs/"+job+"/retry",Map.of(),200);
+        when(appearance.analyze(any())).thenReturn(appearanceFixture());tick();
+        verify(appearance,times(2)).analyze(any());verify(provider).submitBase(any());
+    }
+    @Test void interruptedAppearanceCannotBeResubmittedOnWorkerRestart() throws Exception {
+        UUID job=importPhoto(permission(true));var work=store.claim();
+        assertThat(store.beginPreparation(work,"gpt-5.6-luna")).isTrue();
+        jdbc.update("UPDATE shelter.asset_jobs SET lease_until=now()-interval '1 second' WHERE id=?",job);
+        tick();tick();
+        assertThat(read(subject,job,200).at("/data/failureCode").asText()).isEqualTo("APPEARANCE_INTERRUPTED");
+        verifyNoInteractions(provider);verify(appearance,never()).analyze(any());
+    }
+    @Test void revocationWhileAppearanceIsRunningPreventsTheSpriteRequest() throws Exception {
+        UUID job=importPhoto(permission(true));
+        when(appearance.analyze(any())).thenAnswer(c->{
+            jdbc.update("UPDATE shelter.dog_photos SET rights_status='REVOKED' WHERE id=?",photo);return appearanceFixture();});
+        tick();assertThat(read(subject,job,200).at("/data/status").asText()).isEqualTo("CANCELLED");
+        verifyNoInteractions(provider);
     }
     @Test void missingConsentOrdinaryUsersAndOtherSheltersCannotQueueOrRead() throws Exception {
         postJson(subject,"/v1/operations/asset-permissions",permissionBody(true),403);
@@ -104,14 +155,14 @@ class AssetPostgresTest {
         UUID grant=UUID.fromString(postJson(opSubject,"/v1/operations/asset-permissions",body,201).at("/data/id").asText());
         UUID job=importPhoto(grant);tick();tick();
         assertThat(read(subject,job,200).at("/data/status").asText()).isEqualTo("RIG_REVIEW");
-        tick();tick();verify(provider,times(1)).submit(any(),any());
+        tick();tick();verify(provider,times(1)).submitBase(any());
     }
     @Test void confirmedObservationsChooseOnlyTheTopTwoAdditionalActions() throws Exception {
         behavior(Map.of("RUN",90,"BACK_OFF",70,"SIT",70,"SNIFF",60),"CONFIRMED");
         UUID job=importPhoto(permission(true));
         var plan=read(subject,job,200).at("/data/actionPlan").valueStream().map(JsonNode::asText).toList();
         assertThat(plan).containsExactly("BASE","IDLE","WALK","SIT","RUN","BACK_OFF");
-        finish(job);verify(provider,times(3)).submit(any(),any());
+        finish(job);verify(provider,times(2)).submit(any(),any());verify(provider,times(1)).submitBase(any());
         verify(provider,never()).submit(eq(AssetAction.RUN),any());verify(provider,never()).submit(eq(AssetAction.BACK_OFF),any());
         assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.asset_submissions WHERE job_id=?",Integer.class,job)).isEqualTo(3);
     }
@@ -142,7 +193,7 @@ class AssetPostgresTest {
         postJson(subject,path+"/confirm",Map.of("expectedRevision",1,"profile",invalid),422);
         assertThat(read(subject,job,200).at("/data/status").asText()).isEqualTo("RIG_REVIEW");
         postJson(subject,path+"/confirm",body,200);postJson(subject,path+"/confirm",body,409);
-        verify(provider,times(1)).submit(any(),any());
+        verify(provider,times(1)).submitBase(any());
     }
     @Test void interruptedLocalRenderingResumesWithoutAnotherPaidSubmission() throws Exception {
         UUID job=importPhoto(permission(true));tick();tick();var state=read(subject,job,200).path("data");
@@ -152,7 +203,7 @@ class AssetPostgresTest {
         jdbc.update("UPDATE shelter.asset_jobs SET lease_until=now()-interval '1 second' WHERE id=?",job);tick();
         finish(job);
         assertThat(read(subject,job,200).at("/data/status").asText()).isEqualTo("REVIEW");
-        verify(provider,times(3)).submit(any(),any());
+        verify(provider,times(2)).submit(any(),any());verify(provider,times(1)).submitBase(any());
     }
     @Test void crawlConsentAndBothAutomaticFlagsAreRequired() throws Exception {
         var denied=new HashMap<>(permissionBody(true));denied.put("crawlAllowed",false);
@@ -162,16 +213,16 @@ class AssetPostgresTest {
         assertThat(result.at("/data/status").asText()).isEqualTo("REGISTERED");
         assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.asset_jobs WHERE dog_id=?",Integer.class,dog)).isZero();
         postJson(subject,"/v1/shelter-admin/dogs/"+dog+"/assets",Map.of("photoId",photo),202);
-        tick();verify(provider).submit(eq(AssetAction.BASE),any());
+        tick();verify(provider).submitBase(any());
     }
     @Test void ambiguousPaidRequestStopsUntilAnOperatorReconcilesItsExistingProviderId() throws Exception {
         UUID job=importPhoto(permission(true));
-        when(provider.submit(any(),any())).thenThrow(new AssetProvider.Failure("ACK_LOST",true));tick();tick();
+        when(provider.submitBase(any())).thenThrow(new AssetProvider.Failure("ACK_LOST",true));tick();tick();
         assertThat(read(subject,job,200).at("/data/status").asText()).isEqualTo("OUTCOME_UNKNOWN");
         postJson(opSubject,"/v1/operations/asset-jobs/"+job+"/retry",Map.of(),409);
-        verify(provider,times(1)).submit(any(),any());
+        verify(provider,times(1)).submitBase(any());
         postJson(opSubject,"/v1/operations/asset-jobs/"+job+"/reconcile",Map.of("providerJobId",UUID.randomUUID()),200);
-        tick();verify(provider,times(1)).submit(any(),any());
+        tick();verify(provider,times(1)).submitBase(any());
         assertThat(read(subject,job,200).at("/data/steps/0/status").asText()).isEqualTo("SUCCEEDED");
     }
     @Test void workerRestartDoesNotResubmitAnUnacknowledgedStepAndLeasesHaveSingleOwner() throws Exception {
@@ -187,7 +238,7 @@ class AssetPostgresTest {
         tick();
         assertThat(read(subject,job,200).at("/data/status").asText()).isEqualTo("RUNNING");
         tick(); assertThat(read(subject,job,200).at("/data/steps/0/status").asText()).isEqualTo("SUCCEEDED");
-        verify(provider,times(1)).submit(any(),any());
+        verify(provider,times(1)).submitBase(any());
     }
     @Test void concurrentImportsDeduplicateAndDailyLimitIncludesRetries() throws Exception {
         UUID grant=permission(true);

@@ -1907,7 +1907,7 @@
     "POST /v1/shelter-admin/dogs/{dogId}/photos": {
       "summary": "보호소 사진 직접 업로드",
       "tag": "04. 사진",
-      "description": "metadata 파트를 application/json으로 전송. 실제 허가를 확인한 SHELTER 출처 ID 필요. 같은 clientUploadId/사진/허가 내용은 중복 등록하지 않습니다. 생성·Storage 기능 활성화가 필요합니다.",
+      "description": "metadata 파트를 application/json으로 전송. 실제 허가를 확인한 SHELTER 출처 ID 필요. 같은 clientUploadId/사진/허가 내용은 중복 등록하지 않습니다. 생성·Storage·AI 기능 활성화가 필요합니다. 서버가 Luna로 보이는 외형과 얼굴 영역을 분석하고 전체 사진·얼굴 크롭·외형 설명을 PixelLab에 전달합니다. 얼굴을 확인할 수 없으면 작업이 FAILED로 멈추며 failureCode를 확인합니다. 기본 도트와 동작은 기존 검토 후 공개됩니다.",
       "success": [
         200
       ],

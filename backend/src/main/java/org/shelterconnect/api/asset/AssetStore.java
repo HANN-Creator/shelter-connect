@@ -133,6 +133,9 @@ public class AssetStore {
     public Job retry(UUID subject,UUID id) {
         operator(subject);properties.requireEnabled();lock(id);valid(id,true);
         if(!job(id).status().equals("FAILED")) throw new AssetException(409,"ASSET_RETRY_NOT_ALLOWED");
+        // Completed visual analysis survives PixelLab failures. Only explicit retries permit a new analysis call.
+        jdbc.sql("UPDATE shelter.asset_steps SET result=jsonb_set(result,'{preparation,status}','\"RETRY_READY\"') WHERE job_id=:id AND action='BASE' AND result->'preparation'->>'status' IN ('STARTED','RETRY_READY')")
+            .param("id",id).update();
         jdbc.sql("UPDATE shelter.asset_steps SET status='PENDING',provider_job_id=NULL WHERE job_id=:id AND status='FAILED'").param("id",id).update();
         // Submitted rows retain their timestamp for the daily quota; retries are counted in a separate ledger (see reserve).
         jdbc.sql("UPDATE shelter.asset_jobs SET status='QUEUED',failure_code=NULL,next_run_at=now(),lease_token=NULL,lease_until=NULL WHERE id=:id").param("id",id).update();
@@ -198,6 +201,33 @@ public class AssetStore {
         return true;
     }
     @Transactional
+    public JsonNode preparation(Work work) {
+        if(!authorized(work)) return null;
+        String result=jdbc.sql("SELECT coalesce(result->'preparation','null'::jsonb)::text AS preparation FROM shelter.asset_steps WHERE job_id=:id AND action='BASE'")
+            .param("id",work.id()).query((r,n)->r.getString("preparation")).single();
+        var parsed=json.readTree(result);return parsed.isNull()?null:parsed;
+    }
+    @Transactional
+    public boolean beginPreparation(Work work,String model) {
+        if(!authorized(work)) return false;
+        var old=preparation(work);
+        if(old!=null && !old.path("status").asText().equals("RETRY_READY")) return false;
+        var started=Map.of("status","STARTED","version",PhotoAppearance.VERSION,"model",model,
+            "attempts",old==null?1:old.path("attempts").asInt()+1,"startedAt",Instant.now().toString());
+        return jdbc.sql("UPDATE shelter.asset_steps SET result=CAST(:result AS jsonb) WHERE job_id=:id AND action='BASE' AND status='PENDING'")
+            .param("result",json.writeValueAsString(Map.of("preparation",started))).param("id",work.id()).update()==1;
+    }
+    @Transactional
+    public boolean prepared(Work work,JsonNode analysis,String photoHash) {
+        if(!authorized(work)) return false;
+        var old=preparation(work);
+        if(old==null || !old.path("status").asText().equals("STARTED")) return false;
+        var completed=(tools.jackson.databind.node.ObjectNode)old.deepCopy();
+        completed.put("status","READY").put("photoSha256",photoHash).put("completedAt",Instant.now().toString()).set("analysis",analysis);
+        return jdbc.sql("UPDATE shelter.asset_steps SET result=CAST(:result AS jsonb) WHERE job_id=:id AND action='BASE' AND status='PENDING'")
+            .param("result",json.writeValueAsString(Map.of("preparation",completed))).param("id",work.id()).update()==1;
+    }
+    @Transactional
     public void accepted(Work work,UUID provider) {
         if(!owned(work)) return;
         jdbc.sql("UPDATE shelter.asset_steps SET status='WAITING',provider_job_id=:p WHERE job_id=:id AND action=:a AND status='SUBMITTING'")
@@ -238,7 +268,7 @@ public class AssetStore {
     @Transactional
     public void baseReady(Work work,Map<String,Object> result,JsonNode proposed,String sha256) {
         if(!authorized(work)) return;
-        if(jdbc.sql("UPDATE shelter.asset_steps SET status='SUCCEEDED',result=CAST(:r AS jsonb) WHERE job_id=:id AND action='BASE' AND status='WAITING'")
+        if(jdbc.sql("UPDATE shelter.asset_steps SET status='SUCCEEDED',result=coalesce(result,'{}'::jsonb)||CAST(:r AS jsonb) WHERE job_id=:id AND action='BASE' AND status='WAITING'")
             .param("r",json.writeValueAsString(result)).param("id",work.id()).update()!=1) return;
         jdbc.sql("UPDATE shelter.asset_jobs SET status='RIG_REVIEW',rig_profile=CAST(:p AS jsonb),rig_revision=rig_revision+1,rig_base_sha256=:hash,lease_token=NULL,lease_until=NULL,failure_code=:failure WHERE id=:id")
             .param("id",work.id()).param("p",proposed==null?null:json.writeValueAsString(proposed)).param("hash",sha256)

@@ -26,7 +26,7 @@ class PixelLabClientTest {
     }
     @AfterEach void stop() { server.stop(0); }
     @Test void correctPhotoAndEightMotionRequestsUseNativeSprites() {
-        client.submit(AssetAction.BASE,SpriteNormalizerTest.frame(0,0));
+        client.submitBase(new PhotoAppearance.Input(SpriteNormalizerTest.frame(0,0),SpriteNormalizerTest.frame(1,0),"white fur and pink nose patch"));
         assertThat(submitted.get().at("/reference_images/0/size/width").asInt()).isEqualTo(64);
         for(var action:AssetAction.values())if(action!=AssetAction.BASE) {
             byte[] approvedBase=SpriteNormalizerTest.frame(0,0);
@@ -42,10 +42,14 @@ class PixelLabClientTest {
     }
     @Test void baseSeparatesSubjectIdentityFromTheApprovedArtStyle() throws Exception {
         byte[] photo=SpriteNormalizerTest.frame(0,0);
-        client.submit(AssetAction.BASE,photo);
+        byte[] head=SpriteNormalizerTest.frame(1,0);
+        client.submitBase(new PhotoAppearance.Input(photo,head,"coat: white ivory. nose: black with a pink patch"));
         JsonNode request=submitted.get();
-        assertThat(request.path("reference_images").size()).isEqualTo(1);
+        assertThat(request.path("reference_images").size()).isEqualTo(2);
         assertThat(Base64.getDecoder().decode(request.at("/reference_images/0/image/base64").asText())).isEqualTo(photo);
+        assertThat(Base64.getDecoder().decode(request.at("/reference_images/1/image/base64").asText())).isEqualTo(head);
+        assertThat(request.path("description").asText()).contains("white ivory", "pink patch");
+        assertThat(request.path("description").asText().length()).isLessThanOrEqualTo(2000);
         byte[] style=Base64.getDecoder().decode(request.at("/style_image/image/base64").asText());
         try(var expected=getClass().getResourceAsStream("/sprite-style/cozy-dog-v1.png")) {
             assertThat(expected).isNotNull();
@@ -67,6 +71,15 @@ class PixelLabClientTest {
         assertThatThrownBy(()->client.submit(AssetAction.WALK,SpriteNormalizerTest.frame(0,0))).isInstanceOfSatisfying(AssetProvider.Failure.class,e->assertThat(e.uncertain).isTrue());
         status=402;
         assertThatThrownBy(()->client.submit(AssetAction.WALK,SpriteNormalizerTest.frame(0,0))).isInstanceOfSatisfying(AssetProvider.Failure.class,e->assertThat(e.uncertain).isFalse());
+    }
+    @Test void baseCannotBypassAppearancePreparationAndLongestDescriptionsFitProviderLimit() {
+        assertThatThrownBy(()->client.submit(AssetAction.BASE,SpriteNormalizerTest.frame(0,0))).isInstanceOf(AssetException.class);
+        assertThat(submitted.get()).isNull();
+        StringJoiner description=new StringJoiner(". ");
+        for(String feature:PhotoAppearance.FEATURES)description.add(feature+": "+"x".repeat(120));
+        byte[] photo=SpriteNormalizerTest.frame(0,0);
+        client.submitBase(new PhotoAppearance.Input(photo,photo,description.toString()));
+        assertThat(submitted.get().path("description").asText().length()).isLessThanOrEqualTo(2000);
     }
     @Test void pollPreservesTheReturnedSeedPlusFrames() {
         status=200;String frame=Base64.getEncoder().encodeToString(SpriteNormalizerTest.frame(0,0));

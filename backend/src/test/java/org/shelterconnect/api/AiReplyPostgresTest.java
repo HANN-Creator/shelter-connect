@@ -32,6 +32,8 @@ import static org.shelterconnect.api.chat.AiTypes.*;
 @Tag("postgres") @SpringBootTest(properties={"app.ai.enabled=true","app.ai.api-key=test-only"})
 @AutoConfigureMockMvc @ActiveProfiles("test") @Import(JwtTestConfiguration.class)
 class AiReplyPostgresTest {
+    @org.springframework.test.context.bean.override.mockito.MockitoBean
+    org.shelterconnect.api.asset.PhotoAppearanceProvider appearance;
 	@Autowired JdbcTemplate jdbc; @Autowired MockMvc mvc; @Autowired JsonMapper json; @Autowired JwtTestSupport tokens;
 	@MockitoBean org.shelterconnect.api.behavior.BehaviorSuggestionProvider behaviorSuggestions;
 	@MockitoBean AiProvider provider; @MockitoSpyBean AiProperties properties;
