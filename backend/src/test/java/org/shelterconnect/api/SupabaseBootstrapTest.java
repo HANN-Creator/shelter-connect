@@ -54,10 +54,10 @@ class SupabaseBootstrapTest {
 						.schemas("shelter").defaultSchema("shelter").cleanDisabled(true)
 						.baselineOnMigrate(false).validateMigrationNaming(true).load();
 				assertThat(flyway.info().current().getVersion().toString()).isEqualTo("1");
-				assertThat(flyway.migrate().migrationsExecuted).isEqualTo(4);
+				assertThat(flyway.migrate().migrationsExecuted).isEqualTo(5);
 				flyway.validate();
 				assertThat(flyway.migrate().migrationsExecuted).isZero();
-				assertThat(flyway.info().current().getVersion().toString()).isEqualTo("5");
+				assertThat(flyway.info().current().getVersion().toString()).isEqualTo("6");
 				try (var connection = DriverManager.getConnection(isolatedUrl, username, password);
 						var check = connection.createStatement();
 						var rows = check.executeQuery("SELECT revision,status,settings::text FROM shelter.dog_behavior_profiles")) {

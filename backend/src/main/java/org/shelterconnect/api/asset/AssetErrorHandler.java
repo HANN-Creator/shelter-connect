@@ -13,9 +13,13 @@ import org.shelterconnect.api.auth.AccountAccessException;
 import org.shelterconnect.api.auth.SecurityErrors;
 import org.shelterconnect.api.web.ApiRequestFilter;
 
-@RestControllerAdvice(assignableTypes = AssetController.class)
+@RestControllerAdvice(assignableTypes = {AssetController.class,PhotoUploadController.class})
 public class AssetErrorHandler {
 	private static final Logger log = LoggerFactory.getLogger(AssetErrorHandler.class);
+	@ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+	ResponseEntity<SecurityErrors.Error> tooLarge(HttpServletRequest request) { return error(413,"PHOTO_TOO_LARGE","사진은 8MB 이하로 보내 주세요.",request); }
+	@ExceptionHandler({org.springframework.web.multipart.support.MissingServletRequestPartException.class,org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class})
+	ResponseEntity<SecurityErrors.Error> badPart(HttpServletRequest request) { return error(400,"INVALID_ASSET_REQUEST","파일과 입력 항목을 확인해 주세요.",request); }
 	@ExceptionHandler(AssetException.class)
 	ResponseEntity<SecurityErrors.Error> invalid(AssetException exception, HttpServletRequest request) {
 		return error(exception.status, exception.code, "에셋 상태와 요청 내용을 확인해 주세요.", request);
@@ -30,7 +34,7 @@ public class AssetErrorHandler {
 	}
 	@ExceptionHandler(HttpMediaTypeNotSupportedException.class)
 	ResponseEntity<SecurityErrors.Error> media(HttpServletRequest request) {
-		return error(415, "UNSUPPORTED_MEDIA_TYPE", "Content-Type은 application/json을 사용해 주세요.", request);
+		return error(415, "UNSUPPORTED_MEDIA_TYPE", "API에 지정된 Content-Type과 파일 형식을 확인해 주세요.", request);
 	}
 	@ExceptionHandler({ConcurrencyFailureException.class, QueryTimeoutException.class, org.springframework.dao.DataIntegrityViolationException.class})
 	ResponseEntity<SecurityErrors.Error> conflict(HttpServletRequest request) {

@@ -36,6 +36,8 @@ public class SecurityConfiguration {
 						.requestMatchers(HttpMethod.GET, "/v1/shelter-admin/dogs/{dogId}/behavior").authenticated()
 						.requestMatchers(HttpMethod.PUT, "/v1/shelter-admin/dogs/{dogId}/behavior").authenticated()
 						.requestMatchers(HttpMethod.POST, "/v1/shelter-admin/dogs/{dogId}/behavior/confirmation").authenticated()
+						.requestMatchers(HttpMethod.POST, "/v1/shelter-admin/dogs/{dogId}/behavior/suggestions", "/v1/shelter-admin/dogs/{dogId}/photos").authenticated()
+						.requestMatchers(HttpMethod.GET, "/v1/shelter-admin/dogs/{dogId}/behavior/suggestions/{suggestionId}", "/v1/shelter-admin/dogs/{dogId}/photos").authenticated()
 						.requestMatchers(HttpMethod.GET, "/v1/dogs/{dogId}/photos").authenticated()
 						.requestMatchers(HttpMethod.POST, "/v1/dogs/{dogId}/chat-sessions",
 								"/v1/chat-sessions/{sessionId}/messages",

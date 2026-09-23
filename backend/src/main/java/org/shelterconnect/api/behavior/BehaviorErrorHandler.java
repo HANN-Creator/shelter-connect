@@ -13,7 +13,7 @@ import org.shelterconnect.api.auth.AccountAccessException;
 import org.shelterconnect.api.auth.SecurityErrors;
 import org.shelterconnect.api.web.ApiRequestFilter;
 
-@RestControllerAdvice(assignableTypes = BehaviorController.class)
+@RestControllerAdvice(assignableTypes = {BehaviorController.class,BehaviorSuggestionController.class})
 public class BehaviorErrorHandler {
 	private static final Logger log = LoggerFactory.getLogger(BehaviorErrorHandler.class);
 	@ExceptionHandler(BehaviorException.class)

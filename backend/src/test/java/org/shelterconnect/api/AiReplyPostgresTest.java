@@ -33,6 +33,7 @@ import static org.shelterconnect.api.chat.AiTypes.*;
 @AutoConfigureMockMvc @ActiveProfiles("test") @Import(JwtTestConfiguration.class)
 class AiReplyPostgresTest {
 	@Autowired JdbcTemplate jdbc; @Autowired MockMvc mvc; @Autowired JsonMapper json; @Autowired JwtTestSupport tokens;
+	@MockitoBean org.shelterconnect.api.behavior.BehaviorSuggestionProvider behaviorSuggestions;
 	@MockitoBean AiProvider provider; @MockitoSpyBean AiProperties properties;
 	private UUID user,other,subject,otherSubject,shelter,dog,otherDog,session,message,observation;
 	private String token,otherToken;
