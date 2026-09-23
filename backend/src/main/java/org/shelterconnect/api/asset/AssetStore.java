@@ -13,7 +13,8 @@ import tools.jackson.databind.json.JsonMapper;
 
 @Service
 public class AssetStore {
-    public record Job(UUID id,UUID dogId,String status,String failureCode,Instant createdAt,List<Step> steps) {}
+    public record Job(UUID id,UUID dogId,String status,String failureCode,Instant createdAt,List<Step> steps,
+        List<String> actionPlan,Integer behaviorRevision,int rigRevision,JsonNode rigProfile,boolean rigConfirmed) {}
     public record Step(String action,String status,JsonNode result) {}
     record Work(UUID id,UUID dogId,UUID photoId,UUID token,AssetAction action,String stepStatus,UUID providerId,
                 String photoBucket,String photoKey,Instant submittedAt) {
@@ -24,8 +25,9 @@ public class AssetStore {
     private final ShelterAccessService access;
     private final AccountService accounts;
     private final AssetProperties properties;
-    public AssetStore(JdbcClient jdbc,JsonMapper json,ShelterAccessService access,AccountService accounts,AssetProperties properties) {
-        this.jdbc=jdbc;this.json=json;this.access=access;this.accounts=accounts;this.properties=properties;
+    private final org.shelterconnect.api.behavior.BehaviorService behaviors;
+    public AssetStore(JdbcClient jdbc,JsonMapper json,ShelterAccessService access,AccountService accounts,AssetProperties properties,org.shelterconnect.api.behavior.BehaviorService behaviors) {
+        this.jdbc=jdbc;this.json=json;this.access=access;this.accounts=accounts;this.properties=properties;this.behaviors=behaviors;
     }
     @Transactional
     public UUID permission(UUID subject,JsonNode body) {
@@ -90,13 +92,17 @@ public class AssetStore {
     }
     private Job enqueue(UUID photo) {
         validPhoto(photo,null,true);
+        UUID dog=jdbc.sql("SELECT dog_id FROM shelter.dog_photos WHERE id=:p").param("p",photo).query(UUID.class).single();
+        var plan=behaviors.assetSelection(dog);
+        String selectionKey=String.valueOf(plan.revision())+":"+String.join(",",plan.actions());
         UUID id=jdbc.sql("""
-            INSERT INTO shelter.asset_jobs(photo_id,dog_id,shelter_id,permission_id,pipeline_version)
-            SELECT p.id,p.dog_id,d.shelter_id,a.permission_id,:version FROM shelter.dog_photos p
+            INSERT INTO shelter.asset_jobs(photo_id,dog_id,shelter_id,permission_id,pipeline_version,action_plan,behavior_revision,selection_key)
+            SELECT p.id,p.dog_id,d.shelter_id,a.permission_id,:version,CAST(:plan AS jsonb),:revision,:selection FROM shelter.dog_photos p
               JOIN shelter.dogs d ON d.id=p.dog_id JOIN shelter.asset_photo_sources a ON a.photo_id=p.id WHERE p.id=:photo
-            ON CONFLICT (photo_id,pipeline_version) DO UPDATE SET photo_id=EXCLUDED.photo_id RETURNING id
-            """).param("version",AssetAction.VERSION).param("photo",photo).query(UUID.class).single();
-        for(AssetAction action:AssetAction.values()) jdbc.sql("""
+            ON CONFLICT (photo_id,pipeline_version,selection_key) DO UPDATE SET photo_id=EXCLUDED.photo_id RETURNING id
+            """).param("version",AssetAction.VERSION).param("photo",photo).param("plan",json.writeValueAsString(plan.actions()))
+            .param("revision",plan.revision()).param("selection",selectionKey).query(UUID.class).single();
+        for(AssetAction action:plan.actions().stream().map(AssetAction::valueOf).toList()) jdbc.sql("""
             INSERT INTO shelter.asset_steps(job_id,ordinal,action) VALUES (:id,:ordinal,:action) ON CONFLICT DO NOTHING
             """).param("id",id).param("ordinal",action.ordinal()).param("action",action.name()).update();
         return job(id);
@@ -111,7 +117,7 @@ public class AssetStore {
         String decision=AssetInput.text(body,"decision",16);
         if(!Set.of("APPROVE","REJECT").contains(decision)) throw AssetException.invalid();
         lock(id);Job job=job(id);if(!job.dogId().equals(dog)) throw missing();
-        if(!job.status().equals("REVIEW") || job.steps().size()!=9 || job.steps().stream().anyMatch(s->!s.status().equals("SUCCEEDED"))) throw new AssetException(409,"ASSET_NOT_READY");
+        if(!job.status().equals("REVIEW") || !stepsComplete(job) || job.steps().stream().anyMatch(s->!s.status().equals("SUCCEEDED"))) throw new AssetException(409,"ASSET_NOT_READY");
         valid(id,true);
         jdbc.sql("UPDATE shelter.asset_jobs SET status=:status,reviewed_by=:u,reviewed_at=now() WHERE id=:id")
             .param("status",decision.equals("APPROVE")?"APPROVED":"REJECTED").param("u",writer.userId()).param("id",id).update();
@@ -200,7 +206,7 @@ public class AssetStore {
     @Transactional
     public void success(Work work,Map<String,Object> result) {
         if(!authorized(work)) return;
-        jdbc.sql("UPDATE shelter.asset_steps SET status='SUCCEEDED',result=CAST(:r AS jsonb) WHERE job_id=:id AND action=:a AND status='WAITING'")
+        jdbc.sql("UPDATE shelter.asset_steps SET status='SUCCEEDED',result=CAST(:r AS jsonb) WHERE job_id=:id AND action=:a AND status IN ('WAITING','RENDERING')")
             .param("r",json.writeValueAsString(result)).param("id",work.id()).param("a",work.action().name()).update();
         long left=jdbc.sql("SELECT count(*) FROM shelter.asset_steps WHERE job_id=:id AND status<>'SUCCEEDED'").param("id",work.id()).query(Long.class).single();
         if(left==0) complete(work.id());else release(work,1);
@@ -218,6 +224,62 @@ public class AssetStore {
         jdbc.sql("UPDATE shelter.asset_jobs SET status=:status,failure_code=:c,lease_token=NULL,lease_until=NULL WHERE id=:id")
             .param("status",status).param("c",code).param("id",work.id()).update();
     }
+    static boolean stepsComplete(Job job) {
+        return job.steps().size()==job.actionPlan().size() && job.actionPlan().contains("BASE")
+            && job.actionPlan().contains("IDLE") && job.actionPlan().contains("WALK")
+            && new HashSet<>(job.actionPlan()).equals(job.steps().stream().map(Step::action).collect(java.util.stream.Collectors.toSet()));
+    }
+    @Transactional
+    public void baseReady(Work work,Map<String,Object> result,JsonNode proposed,String sha256) {
+        if(!authorized(work)) return;
+        if(jdbc.sql("UPDATE shelter.asset_steps SET status='SUCCEEDED',result=CAST(:r AS jsonb) WHERE job_id=:id AND action='BASE' AND status='WAITING'")
+            .param("r",json.writeValueAsString(result)).param("id",work.id()).update()!=1) return;
+        jdbc.sql("UPDATE shelter.asset_jobs SET status='RIG_REVIEW',rig_profile=CAST(:p AS jsonb),rig_revision=rig_revision+1,rig_base_sha256=:hash,lease_token=NULL,lease_until=NULL,failure_code=:failure WHERE id=:id")
+            .param("id",work.id()).param("p",proposed==null?null:json.writeValueAsString(proposed)).param("hash",sha256)
+            .param("failure",proposed==null?"RIG_PROFILE_REQUIRED":null).update();
+    }
+    @Transactional(readOnly=true)
+    public Job rigForReview(UUID subject,UUID dog,UUID id) {
+        var result=read(subject,dog,id);valid(id,false);
+        if(!result.status().equals("RIG_REVIEW")) throw new AssetException(409,"RIG_NOT_REVIEWABLE");
+        return result;
+    }
+    @Transactional
+    public Job rigForConfirmation(UUID subject,UUID dog,UUID id) {
+        access.requireDogForWrite(subject,dog);valid(id,true);return rigForReview(subject,dog,id);
+    }
+    @Transactional
+    public Job confirmRig(UUID subject,UUID dog,UUID id,int expected,JsonNode profile,String baseHash) {
+        var actor=access.requireDogForWrite(subject,dog);lock(id);
+        var current=rigForReview(subject,dog,id);valid(id,true);
+        if(current.rigRevision()!=expected) throw new AssetException(409,"RIG_CHANGED");
+        String actual=jdbc.sql("SELECT rig_base_sha256 FROM shelter.asset_jobs WHERE id=:id").param("id",id).query(String.class).single();
+        if(!Objects.equals(actual,baseHash)) throw new AssetException(409,"RIG_BASE_CHANGED");
+        jdbc.sql("UPDATE shelter.asset_jobs SET rig_profile=CAST(:p AS jsonb),rig_revision=rig_revision+1,rig_confirmed_by=:u,rig_confirmed_at=now(),status='QUEUED',failure_code=NULL,next_run_at=now() WHERE id=:id")
+            .param("id",id).param("p",json.writeValueAsString(profile)).param("u",actor.userId()).update();
+        return job(id);
+    }
+    @Transactional
+    public JsonNode localProfile(Work work) {
+        if(!authorized(work)) return null;
+        var current=job(work.id());
+        if(!current.rigConfirmed() || current.rigProfile()==null) throw new AssetException(409,"RIG_CONFIRMATION_REQUIRED");
+        return current.rigProfile();
+    }
+    @Transactional
+    public boolean reserveLocal(Work work) {
+        if(!authorized(work)) return false;
+        return jdbc.sql("UPDATE shelter.asset_steps SET status='RENDERING' WHERE job_id=:id AND action=:action AND status IN ('PENDING','RENDERING')")
+            .param("id",work.id()).param("action",work.action().name()).update()==1;
+    }
+    @Transactional
+    public void rigNeedsReview(Work work) {
+        if(!authorized(work)) return;
+        jdbc.sql("UPDATE shelter.asset_steps SET status='PENDING',result=NULL WHERE job_id=:id AND action IN ('WALK','RUN','BACK_OFF')")
+            .param("id",work.id()).update();
+        jdbc.sql("UPDATE shelter.asset_jobs SET status='RIG_REVIEW',rig_revision=rig_revision+1,rig_confirmed_by=NULL,rig_confirmed_at=NULL,lease_token=NULL,lease_until=NULL,failure_code='RIG_PROFILE_REQUIRES_REVIEW' WHERE id=:id")
+            .param("id",work.id()).update();
+    }
     private UUID operator(UUID subject) {
         var user=accounts.lockProfile(subject,false);
         if(!user.role().equals("OPERATOR")) throw new AssetException(403,"FORBIDDEN");
@@ -226,8 +288,11 @@ public class AssetStore {
     private Job job(UUID id) {
         var steps=jdbc.sql("SELECT action,status,result::text AS result FROM shelter.asset_steps WHERE job_id=:id ORDER BY ordinal")
             .param("id",id).query((rs,n)->new Step(rs.getString("action"),rs.getString("status"),rs.getString("result")==null?null:json.readTree(rs.getString("result")))).list();
-        return jdbc.sql("SELECT id,dog_id,status,failure_code,created_at FROM shelter.asset_jobs WHERE id=:id").param("id",id)
-            .query((rs,n)->new Job(id,rs.getObject("dog_id",UUID.class),rs.getString("status"),rs.getString("failure_code"),rs.getTimestamp("created_at").toInstant(),steps)).optional().orElseThrow(AssetStore::missing);
+        return jdbc.sql("SELECT id,dog_id,status,failure_code,created_at,action_plan::text,behavior_revision,rig_revision,rig_profile::text,rig_confirmed_at FROM shelter.asset_jobs WHERE id=:id").param("id",id)
+            .query((rs,n)->new Job(id,rs.getObject("dog_id",UUID.class),rs.getString("status"),rs.getString("failure_code"),rs.getTimestamp("created_at").toInstant(),steps,
+                json.readTree(rs.getString("action_plan")).valueStream().map(JsonNode::asText).toList(),
+                rs.getObject("behavior_revision",Integer.class),rs.getInt("rig_revision"),
+                rs.getString("rig_profile")==null?null:json.readTree(rs.getString("rig_profile")),rs.getTimestamp("rig_confirmed_at")!=null)).optional().orElseThrow(AssetStore::missing);
     }
     private Work work(ResultSet r) throws SQLException {
         var at=r.getTimestamp("submitted_at");

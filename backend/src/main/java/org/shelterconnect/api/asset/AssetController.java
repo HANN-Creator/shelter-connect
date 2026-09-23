@@ -12,7 +12,12 @@ import org.shelterconnect.api.catalog.CatalogResponses.Item;
 public class AssetController {
     private final AssetStore store;
     private final AssetManifestService manifests;
-    public AssetController(AssetStore store,AssetManifestService manifests) { this.store=store;this.manifests=manifests; }
+    private final AssetRigService rigs;
+    public AssetController(AssetStore store,AssetManifestService manifests,AssetRigService rigs) { this.store=store;this.manifests=manifests;this.rigs=rigs; }
+    @GetMapping("/shelter-admin/dogs/{dogId}/assets/{jobId}/rig")
+    public Item<Map<String,Object>> rig(@AuthenticationPrincipal Jwt jwt,@PathVariable String dogId,@PathVariable String jobId) { return new Item<>(rigs.preview(subject(jwt),AssetInput.id(dogId),AssetInput.id(jobId))); }
+    @PostMapping("/shelter-admin/dogs/{dogId}/assets/{jobId}/rig/confirm")
+    public Item<AssetStore.Job> confirmRig(@AuthenticationPrincipal Jwt jwt,@PathVariable String dogId,@PathVariable String jobId,@RequestBody JsonNode body) { return new Item<>(rigs.confirm(subject(jwt),AssetInput.id(dogId),AssetInput.id(jobId),body)); }
     @PostMapping("/operations/asset-permissions") @ResponseStatus(org.springframework.http.HttpStatus.CREATED)
     public Item<Map<String,UUID>> permission(@AuthenticationPrincipal Jwt jwt,@RequestBody JsonNode body) {
         return new Item<>(Map.of("id",store.permission(subject(jwt),body)));

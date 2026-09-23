@@ -1,0 +1,76 @@
+# 특성별 모션 하네스 · 서버 연결
+
+B-16 · [작업 카드](https://app.notion.com/p/3e45b2d1a55f807680c5d4f3fc54d1e2)
+
+사진에서 기본 도트를 만들고, 앞서 다듬은 걷기·달리기·물러나기 패턴을 해당 강아지에게 적용한다. 서버가 필요한 동작을 한 번 만들어 비공개 저장소에 보관하고, 앱은 승인된 PNG를 재생한다. 크롤러는 이 흐름의 입력을 공급할 뿐이라서 아직 연결하지 않아도 직접 등록한 허가된 사진으로 진행할 수 있다.
+
+## 생성 순서
+
+`사진 저장·허가 연결 → 행동 선택 → PixelLab 기본 도트 → 체형 검토 → 동작 생성 → 최종 검토 → 앱 조회`
+
+1. `dog-photos`와 `dog_photos`에 저장된 사진을 기존 등록 훅/API에 전달한다. 사진 업로드 화면과 외부 URL 다운로드는 이번 변경에 포함하지 않는다. 직접 등록은 `sourceKind=SHELTER`, `crawlAllowed=false`여도 되지만 가공·PixelLab 전송 허가는 필요하다.
+2. 공통 `IDLE`, `WALK`에 확인된 행동 설정의 대표 행동을 최대 두 개 더한다. 가중치가 0인 행동은 제외하고, 동률은 기존 행동 목록 순서로 정한다. 확인된 관찰 근거가 없으면 공통 두 개만 만든다. 사진으로 성격을 추정하지 않는다.
+3. 사진 ID, 생성 버전(`pixellab-harness-v3`), 행동 설정 버전과 선택 행동이 같으면 기존 작업을 반환한다. 설정 버전이 바뀌면 새 작업을 만들고 이전 작업의 선택은 보존한다.
+4. PixelLab으로 64×64 기본 도트를 만들고 체형 보정안을 저장한다. 상태는 `RIG_REVIEW`다. 자동 보정은 실루엣의 바깥 크기를 맞춘 제안이며 관절을 인식한 결과가 아니다. 담당자가 몸통·머리·꼬리 마스크, 네 다리의 시작점·발 위치, 털색 추출 위치를 확인해야 한다.
+5. 담당자가 체형을 확정하면 서버에서 선택된 로컬 동작을 시험 생성한다. 캔버스·색상·프레임 검사를 통과하면 작업을 다시 진행한다. `WALK`, `RUN`, `BACK_OFF`는 저장된 하네스로, 나머지는 PixelLab으로 만든다.
+6. 완성된 결과는 `REVIEW`에서 기다린다. 외형과 움직임을 보고 `APPROVE`한 결과만 앱에 제공한다. 기계 검사는 자연스러운 보행을 보장하지 않는다.
+
+체형 제안을 만들기 어려우면 `RIG_PROFILE_REQUIRED`와 함께 검토 단계에서 멈춘다. 검토용 편집 화면은 아직 없으므로 아래 API로 좌표를 확인·수정한다. 기본 도트와 전혀 다른 체형에 하네스를 무리하게 적용하지 않는다.
+
+## 체형 확인 API
+
+기존 에셋 API에 두 경로를 추가했다. 모두 Supabase 로그인과 해당 보호소 소속이 필요하고, 확정에는 수정 권한이 필요하다.
+
+| 경로 | 응답/요청 |
+| --- | --- |
+| `GET /v1/shelter-admin/dogs/{dogId}/assets/{jobId}/rig` | `data.expectedRevision`, `profile`, 60초짜리 `baseUrl`, `actionPlan`, `reviewRequired=true` |
+| `POST /v1/shelter-admin/dogs/{dogId}/assets/{jobId}/rig/confirm` | `{ "expectedRevision": 1, "profile": <확인하거나 수정한 전체 profile> }` |
+
+GET의 `profile`을 복사해 좌표와 색상 추출 위치를 확인한 뒤 POST한다. 프로필은 `backend/src/main/resources/motion-harness/canonical-profile.json`의 구조를 따른다. `baseImage`는 항상 `base.png`, 캔버스는 `[64,64]`, 기준점은 `[32,60]`이다. 서버 경로나 외부 URL은 받지 않는다. 좌표는 0~63이며 색상은 지정 좌표의 원본 픽셀에서 다시 추출한다.
+
+같은 수정 번호를 중복 제출하거나 다른 담당자가 먼저 확정했다면 409다. 기본 도트 파일이 바뀌어도 확정되지 않는다. 잘못된 형식은 400, 렌더링이 불가능한 체형은 422 `RIG_PROFILE_REQUIRES_REVIEW`, 렌더러가 사용 중이면 503 `HARNESS_BUSY`다. 503은 이후 같은 요청을 다시 보낼 수 있다.
+
+상태는 `QUEUED → RUNNING → RIG_REVIEW → QUEUED → RUNNING → REVIEW → APPROVED/REJECTED`다. 작업 조회의 `actionPlan`, `behaviorRevision`, `rigRevision`, `rigConfirmed`로 현재 진행 기준을 확인한다.
+
+## 앱에서 재생할 때
+
+최종 manifest의 `availableActions`에 있는 행동만 사용한다. 행동 설정이 가리키는 동작이 없으면 `fallbackAction=IDLE`로 돌아간다. 행동 설정의 버전과 에셋 생성 당시 `behaviorRevision`은 다를 수 있다. 새 설정으로 다시 생성하더라도 새 에셋이 승인될 때까지 이전 승인본이 유지된다.
+
+| 동작 | 생성 방식 | 프레임 수 | 한 프레임 |
+| --- | --- | --- | --- |
+| IDLE | PixelLab | 16 | 140ms |
+| WALK | 하네스 | 24 | 60ms |
+| RUN | 하네스, 선택된 경우 | 24 | 30ms |
+| BACK_OFF | 하네스, 선택된 경우 | 24 | 70ms |
+| SNIFF / TAIL_WAG / SIT / LIE_DOWN | PixelLab, 선택된 경우 | 16 | 기존 manifest 값 |
+
+시트 크기를 1024×64로 고정하지 말고 `frames`와 `frameCount`를 읽는다. 하네스 시트는 1536×64이며 발 기준점은 `(32,60)`이다. 걷기는 지지하는 동안 뒷다리를 펴고, 발을 들어 옮길 때 굽힌다. 달리기는 몸통·머리·꼬리도 함께 움직인다. 다리색은 강아지별 기본 도트에서 가져온다.
+
+기본 두 동작만 만들 때 유료 생성 요청은 기본 도트와 IDLE의 두 번이다. 대표 행동으로 RUN/BACK_OFF가 선택돼도 유료 요청은 늘지 않는다. 다른 대표 행동은 각 한 번씩 추가된다. 실패 후 명시적 재요청은 별도다.
+
+## 실행 환경과 재시작
+
+Java 21 서버 이미지에 Python 가상환경과 `motion-requirements.txt`의 Pillow/numpy를 포함한다. 렌더러·동작 패턴·기본 프로필은 JAR에 들어간다. 원본 사진, 두부 이미지, 개인 키는 배포 이미지나 저장소에 포함하지 않는다.
+
+로컬에서 실행할 때:
+
+```sh
+cd backend
+python3 -m venv .motion-venv
+.motion-venv/bin/pip install -r motion-requirements.txt
+export ASSET_HARNESS_PYTHON="$PWD/.motion-venv/bin/python"
+```
+
+Docker는 `/opt/motion/bin/python`을 사용한다. 기존 생성·워커·자동 등록 스위치와 서버 전용 키는 [에셋 설정](../backend/.env.assets.example)에 있다. 처음 시험할 때 자동 등록은 끄고 수동 요청부터 사용한다. 기존 일반 Supabase 실행 스크립트는 에셋 워커 실행 도구가 아니므로 에셋 설정을 별도로 전달해야 한다.
+
+로컬 렌더러에는 이미지와 좌표만 전달하고 환경변수의 키·비밀번호는 전달하지 않는다. 서버당 한 개만 실행하며 시간·파일 크기를 제한한다. 재시작 중 중단된 `RENDERING`은 같은 기본 도트와 확정 프로필로 다시 생성할 수 있다. PixelLab의 불명확한 유료 요청은 기존처럼 `OUTCOME_UNKNOWN`에서 운영자 확인을 기다린다.
+
+V4 다음에 [V5](../backend/src/main/resources/db/migration/V5__motion_harness.sql)를 적용한다. V5는 작업의 선택 행동·체형 프로필·확정 이력을 추가하며 기존 작업의 8개 행동 계획을 보존한다. 워커는 v3 신규 작업만 처리하므로 이전 생성 버전의 미완료 작업이 있다면 배포 전에 정리 여부를 확인해야 한다. 현재 개발 DB에는 배포 전 에셋 작업이 없다.
+
+Render Free 서버가 쉬고 있으면 워커도 쉰다. 저장된 작업은 다음 기동에 이어서 처리하며, 이번 변경으로 요금제나 상시 실행 서비스를 추가하지 않는다.
+
+## 검증과 남은 연결
+
+일회용 PostgreSQL의 HTTP 통합 검사에서 등록·행동 선택·체형 확인·생성·검토·공개 조회를 이어서 검증한다. PixelLab과 Storage는 테스트 대역이고 Python 하네스는 실제로 실행한다. 권한, 관찰 근거 철회, 중복 등록, 설정 버전 변경, 체형 동시 수정, 프로세스 중단 후 재개와 유료 호출 횟수를 검사한다. 별도 Python 검사는 원본 색상·프레임·여백·보행 관절·잘못된 좌표와 경로를 확인한다.
+
+실제 보호소 사진 등록, 크롤러, RN 재생·체형 검토 화면은 별도 연결이다. 실제 배포·개발 DB 적용 결과는 B-16 PR의 병합 기록과 노션 카드에 남긴다.

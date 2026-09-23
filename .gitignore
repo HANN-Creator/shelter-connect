@@ -44,3 +44,7 @@ node_modules/
 !/work/mobile-concept/check-player-motion.cjs
 !/work/mobile-concept/check-ball-play.cjs
 !/work/mobile-concept/check-natural-dogs.cjs
+
+# Disposable verification output.
+/tmp/b16-*
+backend/.motion-venv/

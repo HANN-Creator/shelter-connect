@@ -58,6 +58,13 @@ jobs:
       - uses: gradle/actions/setup-gradle@67621b124fd2e251c5e8a0e6e3b91318f2287669 # v6.3.0
       - name: Check local Supabase launcher
         run: python3 -m unittest discover -s scripts -p 'test_*.py'
+      - name: Install local motion renderer
+        run: |
+          python3 -m venv /tmp/shelter-motion-venv
+          /tmp/shelter-motion-venv/bin/pip install -r motion-requirements.txt
+          echo "ASSET_HARNESS_PYTHON=/tmp/shelter-motion-venv/bin/python" >> "$GITHUB_ENV"
+      - name: Test motion renderer
+        run: /tmp/shelter-motion-venv/bin/python -m unittest discover -s motion-tests -p 'test_*.py'
       - name: Test and build against PostgreSQL
         run: ./gradlew --no-daemon clean build integrationTest
       - name: Check sample loading and package separation
@@ -118,6 +125,7 @@ jobs:
             --cap-drop=ALL --security-opt=no-new-privileges shelter-connect-api:ci)
           trap 'docker rm -f "$container" > /dev/null' EXIT
           test "$(docker exec "$container" id -u)" = 10001
+          docker exec -i "$container" /opt/motion/bin/python < scripts/check_packaged_motion.py
           for attempt in $(seq 1 60); do
             if curl -fsS http://127.0.0.1:18080/actuator/health/readiness > /tmp/shelter-container-health.json; then
               python3 -c 'import json; assert json.load(open("/tmp/shelter-container-health.json")) == {"status": "UP"}'

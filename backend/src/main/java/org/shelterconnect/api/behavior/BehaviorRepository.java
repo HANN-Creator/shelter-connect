@@ -15,7 +15,11 @@ public class BehaviorRepository {
 	private final JsonMapper json;
 	public BehaviorRepository(JdbcClient jdbc,JsonMapper json) { this.jdbc=jdbc;this.json=json; }
 	public Optional<Profile> profile(UUID dog) {
-		return jdbc.sql("SELECT * FROM shelter.dog_behavior_profiles WHERE dog_id=:dog").param("dog",dog)
+		return profile(dog,false);
+	}
+	public Optional<Profile> lockedProfile(UUID dog) { return profile(dog,true); }
+	private Optional<Profile> profile(UUID dog,boolean lock) {
+		return jdbc.sql("SELECT * FROM shelter.dog_behavior_profiles WHERE dog_id=:dog"+(lock?" FOR SHARE":"")).param("dog",dog)
 				.query((rs,n)->new Profile(dog,rs.getInt("schema_version"),rs.getInt("revision"),json.readTree(rs.getString("settings")),
 						rs.getString("source"),rs.getString("status"),evidence(dog),rs.getObject("confirmed_by",UUID.class),time(rs,"confirmed_at"),time(rs,"updated_at"))).optional();
 	}
