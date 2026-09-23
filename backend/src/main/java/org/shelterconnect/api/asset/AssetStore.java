@@ -13,6 +13,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 @Service
 public class AssetStore {
+    @io.swagger.v3.oas.annotations.media.Schema(name="AssetJob")
     public record Job(UUID id,UUID dogId,String status,String failureCode,Instant createdAt,List<Step> steps,
         List<String> actionPlan,Integer behaviorRevision,int rigRevision,JsonNode rigProfile,boolean rigConfirmed) {}
     public record Step(String action,String status,JsonNode result) {}

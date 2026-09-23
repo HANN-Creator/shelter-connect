@@ -10,7 +10,9 @@ import tools.jackson.databind.JsonNode;
 @Service
 public class PhotoUploadStore {
     record Reservation(UUID id,UUID dogId,UUID photoId,UUID permissionId,String key,UUID token,boolean completed) {}
+    @io.swagger.v3.oas.annotations.media.Schema(name="ManagedPhoto")
     public record Photo(UUID id,String rightsStatus,int sortOrder,String uploadStatus) {}
+    @io.swagger.v3.oas.annotations.media.Schema(name="ManagedPhotoPage")
     public record Page(List<Photo> data,String nextCursor) {}
     private final JdbcClient jdbc;private final ShelterAccessService access;private final AssetProperties properties;private final AssetStore assets;
     public PhotoUploadStore(JdbcClient jdbc,ShelterAccessService access,AssetProperties properties,AssetStore assets) { this.jdbc=jdbc;this.access=access;this.properties=properties;this.assets=assets; }

@@ -38,6 +38,15 @@ class AiConfigurationTest(unittest.TestCase):
                 self.load(sample)
             self.assertNotIn('private-value', str(error.exception))
 
+    def test_documented_behavior_limit_is_accepted_and_bounded(self):
+        self.assertEqual('20', self.load('OPENAI_API_KEY=sk-fake')['BEHAVIOR_AI_DAILY_LIMIT'])
+        ai = self.load('OPENAI_API_KEY=sk-fake\nBEHAVIOR_AI_DAILY_LIMIT=7')
+        env, _ = launch_settings({}, {'BEHAVIOR_AI_DAILY_LIMIT': '99'}, ai=ai)
+        self.assertEqual('7', env['BEHAVIOR_AI_DAILY_LIMIT'])
+        for value in ['0', '101', '-1', 'abc']:
+            with self.assertRaises(ConfigurationError):
+                self.load('OPENAI_API_KEY=sk-fake\nBEHAVIOR_AI_DAILY_LIMIT=' + value)
+
     def test_config_check_makes_no_call_or_process_and_does_not_print_secrets(self):
         capture = io.StringIO()
         with patch('sys.argv', ['check_ai_live.py', '--project-ref', 'a' * 20, '--check-config']), \

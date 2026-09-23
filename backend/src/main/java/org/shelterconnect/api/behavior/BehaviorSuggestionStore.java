@@ -15,6 +15,7 @@ import static org.shelterconnect.api.behavior.BehaviorSuggestionProvider.Observa
 
 @Service
 public class BehaviorSuggestionStore {
+    @io.swagger.v3.oas.annotations.media.Schema(name="BehaviorSuggestionJob")
     public record Job(UUID id,UUID dogId,String status,String failureCode,JsonNode result,Instant createdAt) {}
     record Prepared(Job job,List<Observation> observations,boolean execute) {}
     private final JdbcClient jdbc;private final JsonMapper json;private final ShelterAccessService access;

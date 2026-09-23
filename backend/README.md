@@ -1,5 +1,7 @@
 # 보호소 커넥트 서버
 
+[Swagger 사용 방법](../docs/swagger-api.md) · [개발 서버 API 명세서](https://shelter-connect-dev.onrender.com/swagger-ui/index.html)
+
 Spring Boot 4.1.1, Java 21, Gradle Wrapper로 시작했어. DB는 Supabase의 PostgreSQL을 쓰고, 로컬에서는 Docker로 PostgreSQL을 띄우면 돼.
 
 서버 실행 설정과 상태 확인, 데이터 구조를 만드는 Flyway 마이그레이션이 들어 있어. [데이터 관계도와 필드 설명](../docs/data-model.md)을 같이 보면 돼. [가상 보호소 2곳·강아지 5마리 샘플](sample-data/README.md), [보호소·강아지 조회 API](../docs/read-api.md), [Supabase 인증과 보호소 권한](../docs/auth-and-permissions.md)도 준비했어. [강아지 등록·수정과 관찰 기록](../docs/dog-management-api.md)도 사용할 수 있어. [대화방·메시지 저장 API](../docs/chat-storage-api.md)도 준비했어. [기록 기반 AI 답변](../docs/grounded-chat-api.md)도 연결했어. AI는 기본 비활성이고 서버 키 설정이 필요해. 지정 개발 DB는 V3까지 적용했어. [사진 조회](../docs/photo-read-api.md)와 [8종 행동 설정](../docs/dog-behavior-api.md)도 구현했어. [개인 입양 준비 메모](../docs/adoption-notes-api.md) 저장·수정·조회도 구현했어. 현재 웹 시안에는 아직 연결하지 않았어.
