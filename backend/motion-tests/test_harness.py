@@ -57,6 +57,25 @@ class HarnessTest(unittest.TestCase):
                 (support if g['planted'] else swing).append(ratio)
             self.assertGreaterEqual(min(support),.94);self.assertLessEqual(min(swing),.85)
         self.assertGreaterEqual(min(sum(g['planted'] for g in f['legs'].values()) for f in frames),3)
+    def test_running_muzzle_crossing_export_edge_is_preserved_with_one_strip_offset(self):
+        # A long snout moves beyond x=63 during RUN. It must not be cut off before alignment.
+        ImageDraw.Draw(self.base).rectangle((48,22,61,29),fill='#554431')
+        self.base.save(self.root/'base.png')
+        profile=self.request({'mode':'fit'})['profile']
+        result=self.request({'mode':'render','action':'RUN','profile':profile})
+        guide=json.loads((self.root/'rendered/rig.json').read_text())
+        self.assertGreater(guide['sourceBounds'][2],63)
+        self.assertLess(result['sharedOffsetX'],0)
+        sheet=Image.open(self.root/'sheet.png').convert('RGBA')
+        for i,source_count in enumerate(guide['sourceOpaqueCounts']):
+            frame=sheet.crop((64*i,0,64*(i+1),64))
+            self.assertEqual(int(np.count_nonzero(np.asarray(frame)[:,:,3])),source_count)
+            b=frame.getbbox();self.assertGreaterEqual(min(b[0],b[1],64-b[2],64-b[3]),1)
+        self.assertEqual(max(sheet.crop((64*i,0,64*(i+1),64)).getbbox()[3] for i in range(24)),60)
+    def test_motion_too_wide_for_export_still_requires_rig_review(self):
+        profile=self.request({'mode':'fit'})['profile']
+        profile['legs']['NF'].update(root=[59,37],paw=[60,58])
+        self.request({'mode':'render','action':'RUN','profile':profile},False)
     def test_does_not_read_profile_paths_or_execute_unknown_actions(self):
         profile=self.request({'mode':'fit'})['profile'];profile['baseImage']='../../secret.png'
         self.request({'mode':'render','action':'WALK','profile':profile},False)

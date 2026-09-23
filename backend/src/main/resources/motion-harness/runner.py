@@ -82,13 +82,13 @@ elif request['mode']=='render':
     assert all(b and min(b[0],b[1],64-b[2],64-b[3])>=1 for b in boxes)
     palette={tuple(p) for p in np.asarray(base).reshape(-1,4) if p[3]}
     assert all(tuple(p) in palette for f in frames for p in np.asarray(f).reshape(-1,4) if p[3])
-    offset=60-max(b[3] for b in boxes)
-    assert min(b[1] for b in boxes)+offset>=1
+    assert max(b[3] for b in boxes)==60
     sheet=Image.new('RGBA',(64*len(frames),64))
-    for i,f in enumerate(frames):sheet.paste(f,(i*64,offset))
+    for i,f in enumerate(frames):sheet.paste(f,(i*64,0))
     sheet.save(ROOT/'sheet.png')
     guide=json.loads((ROOT/'rendered/rig.json').read_text())
-    response={'frameCount':24,'durationMs':guide['frameDurationMs'],'sharedOffsetY':offset,
+    response={'frameCount':24,'durationMs':guide['frameDurationMs'],
+        'sharedOffsetX':guide['sharedOffset'][0],'sharedOffsetY':guide['sharedOffset'][1],
         'paletteChecked':True,'boundsChecked':True,'templateVersion':guide['templateVersion']}
 else:raise ValueError('Unsupported operation')
 (ROOT/'response.json').write_text(json.dumps(response))
