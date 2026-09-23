@@ -5,6 +5,7 @@ from pathlib import Path
 import argparse,json,math
 import numpy as np
 from PIL import Image,ImageDraw
+from outline import restore_outline
 
 HERE=Path(__file__).resolve().parent
 parser=argparse.ArgumentParser()
@@ -196,7 +197,7 @@ for i in range(config['frameCount']):
     im=Image.new('RGBA',(64,64))
     for part in [parts['FH'],parts['FF'],warp(TAIL,tailxf),parts['NH'],parts['NF'],warp(TORSO,torsoxf),warp(HEAD,headxf)]:im.alpha_composite(part)
     # Tiny isolated raster fragments from cutout rotation are not anatomy.
-    im=solid_component(im)
+    im=restore_outline(solid_component(im),LINE)
     im.save(FRAMES/f'{i+1:02d}.png');frames.append(im)
     guides.append({'phase':t,'bodyOffset':[dx,dy],'bodyPitch':pitch,'headAnchor':neck,'legs':joints})
 

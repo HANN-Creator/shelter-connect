@@ -35,8 +35,16 @@ class HarnessTest(unittest.TestCase):
             self.assertEqual(result['frameCount'],24);self.assertEqual(result['durationMs'],duration)
             self.assertTrue(all(tuple(p) in allowed for p in np.asarray(sheet).reshape(-1,4) if p[3]))
             for i in range(24):
-                box=sheet.crop((i*64,0,(i+1)*64,64)).getbbox()
+                frame=sheet.crop((i*64,0,(i+1)*64,64));box=frame.getbbox()
                 self.assertGreaterEqual(min(box[0],box[1],64-box[2],64-box[3]),1)
+                # Flood only the exterior, not enclosed transparent holes.
+                air=frame.getchannel('A').point(lambda a:255 if a else 0).convert('RGB')
+                ImageDraw.floodfill(air,(0,0),(127,127,127))
+                line=tuple(profile['palette']['LINE'][:3])
+                for y in range(1,63):
+                    for x in range(1,63):
+                        if frame.getpixel((x,y))[3] and any(air.getpixel(p)==(127,127,127) for p in [(x-1,y),(x+1,y),(x,y-1),(x,y+1)]):
+                            self.assertEqual(frame.getpixel((x,y))[:3],line,(action,i,x,y))
     def test_walk_extends_under_load_and_flexes_while_lifted(self):
         profile=self.request({'mode':'fit'})['profile']
         self.request({'mode':'render','action':'WALK','profile':profile})
