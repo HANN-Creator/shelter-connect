@@ -22,7 +22,7 @@ public class AssetManifestService {
     }
     private Map<String,Object> manifest(AssetStore.Job job) {
         var steps=job.steps();
-        if(steps.size()!=9 || steps.stream().anyMatch(s->s.result()==null || !s.status().equals("SUCCEEDED"))) throw new AssetException(409,"ASSET_NOT_READY");
+        if(!AssetStore.stepsComplete(job) || steps.stream().anyMatch(s->s.result()==null || !s.status().equals("SUCCEEDED"))) throw new AssetException(409,"ASSET_NOT_READY");
         var keys=steps.stream().map(s->s.result().path("key").asText()).toList();
         var links=storage.sign(keys);
         var clips=new LinkedHashMap<String,Object>();
@@ -37,8 +37,11 @@ public class AssetManifestService {
             clips.put(step.action(),Map.of("spritesheetUrl",link,"frameCount",count,"loop",m.path("loop").asBoolean(),
                 "holdLastFrame",m.path("holdLastFrame").asBoolean(),"returnToIdle",m.path("returnToIdle").asText(),"frames",frames));
         }
-        return Map.of("schemaVersion",1,"id",job.id(),"status",job.status(),"provider","PixelLab",
+        var result=new LinkedHashMap<String,Object>(Map.of("schemaVersion",1,"id",job.id(),"status",job.status(),"provider","PixelLab + motion harness",
             "frameSize",Map.of("width",64,"height",64),"anchorPixels",Map.of("x",32,"y",60),
-            "facing","right-three-quarter","baseUrl",Objects.requireNonNull(base),"expiresAt",Instant.now().plusSeconds(60),"animations",clips);
+            "facing","right-three-quarter","baseUrl",Objects.requireNonNull(base),"expiresAt",Instant.now().plusSeconds(60),"animations",clips));
+        result.put("availableActions",job.actionPlan().stream().filter(a->!a.equals("BASE")).toList());
+        result.put("behaviorRevision",job.behaviorRevision());result.put("fallbackAction","IDLE");
+        return result;
     }
 }

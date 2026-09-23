@@ -11,7 +11,7 @@ public enum AssetAction {
     SIT(90, false, "Bend the hind legs and lower the hips into a natural seated dog pose. Front paws planted. End seated and hold for the last two frames. Do not stand again."),
     LIE_DOWN(100, false, "Bend front and hind legs and lower chest and belly to rest on the ground. End lying down and hold for the last two frames. Do not stand again.");
 
-    public static final String VERSION = "pixellab-pro64-v2";
+    public static final String VERSION = "pixellab-harness-v3";
     final int durationMs;
     final boolean loop;
     private final String motion;

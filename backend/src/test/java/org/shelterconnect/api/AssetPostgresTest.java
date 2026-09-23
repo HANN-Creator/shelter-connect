@@ -54,6 +54,9 @@ class AssetPostgresTest {
         jdbc.update("DELETE FROM shelter.asset_submissions WHERE job_id IN (SELECT id FROM shelter.asset_jobs WHERE dog_id=?)",dog);
         jdbc.update("DELETE FROM shelter.asset_steps WHERE job_id IN (SELECT id FROM shelter.asset_jobs WHERE dog_id=?)",dog);
         jdbc.update("DELETE FROM shelter.asset_jobs WHERE dog_id=?",dog);
+        jdbc.update("DELETE FROM shelter.dog_behavior_evidence WHERE dog_id=?",dog);
+        jdbc.update("DELETE FROM shelter.dog_behavior_profiles WHERE dog_id=?",dog);
+        jdbc.update("DELETE FROM shelter.dog_observations WHERE dog_id=?",dog);
         jdbc.update("DELETE FROM shelter.asset_photo_sources WHERE photo_id=?",photo);
         jdbc.update("DELETE FROM shelter.asset_source_permissions WHERE shelter_id=?",shelter);
         jdbc.update("DELETE FROM shelter.dog_photos WHERE dog_id=?",dog);
@@ -62,19 +65,21 @@ class AssetPostgresTest {
         jdbc.update("DELETE FROM shelter.shelters WHERE id=?",shelter);
         jdbc.update("DELETE FROM shelter.app_users WHERE id IN (?,?)",operator,user);
     }
-    @Test void eightActionsAreGeneratedOnceAndPublishedOnlyAfterShelterReview() throws Exception {
+    @Test void selectedActionsUseTheHarnessOnlyAfterRigReviewAndPublishAfterShelterReview() throws Exception {
         UUID permission=permission(true);UUID job=importPhoto(permission);
         assertThat(importPhoto(permission)).isEqualTo(job);
-        for(int i=0;i<18;i++) tick();
+        finish(job);
         var draft=read(subject,job,200);assertThat(draft.at("/data/status").asText()).isEqualTo("REVIEW");
-        assertThat(draft.at("/data/steps").size()).isEqualTo(9);
-        verify(provider,times(9)).submit(any(),any());
+        assertThat(draft.at("/data/steps").size()).isEqualTo(3);
+        verify(provider,times(2)).submit(any(),any());
+        verify(provider,never()).submit(eq(AssetAction.WALK),any());
         mvc.perform(get("/v1/dogs/"+dog+"/assets")).andExpect(status().isNotFound());
         postJson(subject,"/v1/shelter-admin/dogs/"+dog+"/assets/"+job+"/review",Map.of("decision","APPROVE"),200);
         var result=mvc.perform(get("/v1/dogs/"+dog+"/assets")).andExpect(status().isOk()).andExpect(header().string("Cache-Control","no-store")).andReturn();
         JsonNode published=json.readTree(result.getResponse().getContentAsString());
-        assertThat(published.at("/data/animations").size()).isEqualTo(8);
-        assertThat(published.at("/data/animations/SIT/holdLastFrame").asBoolean()).isTrue();
+        assertThat(published.at("/data/animations").size()).isEqualTo(2);
+        assertThat(published.at("/data/animations/WALK/frameCount").asInt()).isEqualTo(24);
+        assertThat(published.at("/data/fallbackAction").asText()).isEqualTo("IDLE");
         assertThat(published.toString()).doesNotContain("photoId","source.png","permissionNote","test-key");
         mvc.perform(delete("/v1/operations/asset-permissions/"+permission).header("Authorization",bearer(opSubject))).andExpect(status().isNoContent());
         mvc.perform(get("/v1/dogs/"+dog+"/assets")).andExpect(status().isNotFound());
@@ -88,6 +93,60 @@ class AssetPostgresTest {
         mvc.perform(post("/v1/shelter-admin/dogs/"+dog+"/assets").contentType("application/json").content("{}" )).andExpect(status().isUnauthorized());
         jdbc.update("UPDATE shelter.dog_photos SET rights_status='REVOKED' WHERE id=?",photo);tick();
         assertThat(read(subject,job,200).at("/data/status").asText()).isEqualTo("CANCELLED");verifyNoInteractions(provider);
+    }
+    @Test void shelterPhotosCanEnterWithoutCrawlingPermission() throws Exception {
+        var body=new HashMap<>(permissionBody(true));body.put("sourceKind","SHELTER");body.put("crawlAllowed",false);
+        UUID grant=UUID.fromString(postJson(opSubject,"/v1/operations/asset-permissions",body,201).at("/data/id").asText());
+        UUID job=importPhoto(grant);tick();tick();
+        assertThat(read(subject,job,200).at("/data/status").asText()).isEqualTo("RIG_REVIEW");
+        tick();tick();verify(provider,times(1)).submit(any(),any());
+    }
+    @Test void confirmedObservationsChooseOnlyTheTopTwoAdditionalActions() throws Exception {
+        behavior(Map.of("RUN",90,"BACK_OFF",70,"SIT",70,"SNIFF",60),"CONFIRMED");
+        UUID job=importPhoto(permission(true));
+        var plan=read(subject,job,200).at("/data/actionPlan").valueStream().map(JsonNode::asText).toList();
+        assertThat(plan).containsExactly("BASE","IDLE","WALK","RUN","BACK_OFF");
+        finish(job);verify(provider,times(2)).submit(any(),any());
+        verify(provider,never()).submit(eq(AssetAction.RUN),any());verify(provider,never()).submit(eq(AssetAction.BACK_OFF),any());
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.asset_submissions WHERE job_id=?",Integer.class,job)).isEqualTo(2);
+    }
+    @Test void aNewConfirmedRevisionCreatesANewPlanWithoutChangingTheOldJob() throws Exception {
+        behavior(Map.of("RUN",90),"CONFIRMED");UUID grant=permission(true),first=importPhoto(grant);
+        jdbc.update("UPDATE shelter.dog_behavior_profiles SET settings=CAST(? AS jsonb),revision=revision+1 WHERE dog_id=?",json.writeValueAsString(settings(Map.of("SNIFF",90))),dog);
+        UUID second=importPhoto(grant);assertThat(second).isNotEqualTo(first);assertThat(importPhoto(grant)).isEqualTo(second);
+        assertThat(read(subject,first,200).at("/data/actionPlan").valueStream().map(JsonNode::asText).toList()).contains("RUN").doesNotContain("SNIFF");
+        assertThat(read(subject,second,200).at("/data/actionPlan").valueStream().map(JsonNode::asText).toList()).contains("SNIFF").doesNotContain("RUN");
+    }
+    @Test void draftSettingsAndRetractedEvidenceUseOnlyTheTwoCommonActions() throws Exception {
+        behavior(Map.of("RUN",90),"DRAFT");UUID grant=permission(true),first=importPhoto(grant);
+        assertThat(read(subject,first,200).at("/data/actionPlan").size()).isEqualTo(3);
+        jdbc.update("UPDATE shelter.dog_behavior_profiles SET status='CONFIRMED',revision=revision+1 WHERE dog_id=?",dog);
+        jdbc.update("UPDATE shelter.dog_observations SET status='RETRACTED' WHERE dog_id=?",dog);
+        assertThat(importPhoto(grant)).isEqualTo(first);
+    }
+    @Test void rigReviewChecksMembershipRevisionAndUntrustedPathsBeforeProceeding() throws Exception {
+        UUID job=importPhoto(permission(true));tick();tick();
+        var state=read(subject,job,200).path("data");String path="/v1/shelter-admin/dogs/"+dog+"/assets/"+job+"/rig";
+        mvc.perform(get(path)).andExpect(status().isUnauthorized());
+        mvc.perform(get(path).header("Authorization",bearer(outsiderSubject))).andExpect(status().isForbidden());
+        mvc.perform(get(path).header("Authorization",bearer(subject))).andExpect(status().isOk());
+        var body=Map.of("expectedRevision",state.path("rigRevision").asInt(),"profile",state.path("rigProfile"));
+        postJson(outsiderSubject,path+"/confirm",body,403);
+        postJson(subject,path+"/confirm",Map.of("expectedRevision",999,"profile",state.path("rigProfile")),409);
+        var invalid=json.readTree(state.path("rigProfile").toString().replace("base.png","../other.png"));
+        postJson(subject,path+"/confirm",Map.of("expectedRevision",1,"profile",invalid),422);
+        assertThat(read(subject,job,200).at("/data/status").asText()).isEqualTo("RIG_REVIEW");
+        postJson(subject,path+"/confirm",body,200);postJson(subject,path+"/confirm",body,409);
+        verify(provider,times(1)).submit(any(),any());
+    }
+    @Test void interruptedLocalRenderingResumesWithoutAnotherPaidSubmission() throws Exception {
+        UUID job=importPhoto(permission(true));tick();tick();var state=read(subject,job,200).path("data");
+        postJson(subject,"/v1/shelter-admin/dogs/"+dog+"/assets/"+job+"/rig/confirm",Map.of("expectedRevision",1,"profile",state.path("rigProfile")),200);
+        tick();tick();jdbc.update("UPDATE shelter.asset_jobs SET next_run_at=now() WHERE id=?",job);
+        var work=store.claim();assertThat(work).isNotNull();assertThat(store.reserveLocal(work)).isTrue();
+        jdbc.update("UPDATE shelter.asset_jobs SET lease_until=now()-interval '1 second' WHERE id=?",job);tick();
+        assertThat(read(subject,job,200).at("/data/status").asText()).isEqualTo("REVIEW");
+        verify(provider,times(2)).submit(any(),any());
     }
     @Test void crawlConsentAndBothAutomaticFlagsAreRequired() throws Exception {
         var denied=new HashMap<>(permissionBody(true));denied.put("crawlAllowed",false);
@@ -145,7 +204,7 @@ class AssetPostgresTest {
         assertThat(read(subject,job,200).at("/data/status").asText()).isEqualTo("CANCELLED");
     }
     @Test void revokedSourceCannotLeakSignedManifestAfterStorageResponds() throws Exception {
-        UUID job=importPhoto(permission(true));for(int i=0;i<18;i++)tick();
+        UUID job=importPhoto(permission(true));finish(job);
         postJson(subject,"/v1/shelter-admin/dogs/"+dog+"/assets/"+job+"/review",Map.of("decision","APPROVE"),200);
         when(storage.sign(anyList())).thenAnswer(c->{
             jdbc.update("UPDATE shelter.dog_photos SET rights_status='REVOKED' WHERE id=?",photo);
@@ -153,6 +212,34 @@ class AssetPostgresTest {
         });
         var response=mvc.perform(get("/v1/dogs/"+dog+"/assets")).andExpect(status().isConflict()).andReturn().getResponse().getContentAsString();
         assertThat(response).doesNotContain("assets.example.invalid","spritesheetUrl");
+    }
+    private void finish(UUID job) throws Exception {
+        for(int i=0;i<20;i++) {
+            var state=read(subject,job,200).path("data");
+            if(state.path("status").asText().equals("REVIEW")) return;
+            if(state.path("status").asText().equals("RIG_REVIEW")) {
+                postJson(subject,"/v1/shelter-admin/dogs/"+dog+"/assets/"+job+"/rig/confirm",
+                    Map.of("expectedRevision",state.path("rigRevision").asInt(),"profile",state.path("rigProfile")),200);
+            }
+            tick();
+        }
+        fail("Generation did not reach review: "+read(subject,job,200));
+    }
+    private Map<String,Object> settings(Map<String,Integer> weights) {
+        Map<String,Object> actions=new LinkedHashMap<>();
+        for(AssetAction action:AssetAction.values()) if(action!=AssetAction.BASE) {
+            double speed=switch(action) { case WALK->0.8;case RUN->1.8;case BACK_OFF->0.6;default->0; };
+            actions.put(action.name(),Map.of("weight",weights.getOrDefault(action.name(),action==AssetAction.IDLE||action==AssetAction.WALK?10:0),
+                "speedTilesPerSecond",speed,"minDurationMs",1000,"maxDurationMs",2000,"cooldownMs",500));
+        }
+        return Map.of("actions",actions,"approachDistanceTiles",3,"personalSpaceTiles",1,"reactionDelayMs",100,
+            "ballPlay",Map.of("chaseEnabled",false,"returnEnabled",false,"reactionDelayMs",100));
+    }
+    private void behavior(Map<String,Integer> weights,String status) {
+        UUID observation=UUID.randomUUID();
+        jdbc.update("INSERT INTO shelter.dog_observations(id,dog_id,category,content,observed_at,recorded_by,status,confirmed_by,confirmed_at) VALUES (?,?,'PLAY','가상 관찰',now(),?,'CONFIRMED',?,now())",observation,dog,user,user);
+        jdbc.update("INSERT INTO shelter.dog_behavior_profiles(dog_id,settings,status,confirmed_by,confirmed_at) VALUES (?,CAST(? AS jsonb),?,?,now())",dog,json.writeValueAsString(settings(weights)),status,user);
+        jdbc.update("INSERT INTO shelter.dog_behavior_evidence(dog_id,observation_id) VALUES (?,?)",dog,observation);
     }
     private void tick() { jdbc.update("UPDATE shelter.asset_jobs SET next_run_at=now() WHERE dog_id=?",dog);worker.tick(); }
     private Map<String,Object> permissionBody(boolean auto) { return Map.of("shelterId",shelter,"sourceKey","fixture-source","sourceKind","CRAWL","permissionNote","TEST ONLY: 허가된 사진의 파생 제작 및 PixelLab 전송 허용","crawlAllowed",true,"derivativesAllowed",true,"pixellabAllowed",true,"autoGenerate",auto); }

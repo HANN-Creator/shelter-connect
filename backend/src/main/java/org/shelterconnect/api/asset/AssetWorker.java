@@ -10,8 +10,9 @@ public class AssetWorker {
     private final AssetProvider provider;
     private final AssetStorage storage;
     private final AssetProperties properties;
-    public AssetWorker(AssetStore store,AssetProvider provider,AssetStorage storage,AssetProperties properties) {
-        this.store=store;this.provider=provider;this.storage=storage;this.properties=properties;
+    private final MotionHarness harness;
+    public AssetWorker(AssetStore store,AssetProvider provider,AssetStorage storage,AssetProperties properties,MotionHarness harness) {
+        this.store=store;this.provider=provider;this.storage=storage;this.properties=properties;this.harness=harness;
     }
     // Each tick advances one durable step. All network calls run outside DB transactions.
     public void tick() {
@@ -19,7 +20,19 @@ public class AssetWorker {
         var work=store.claim();if(work==null) return;
         boolean reserved=false;
         try {
-            if(work.stepStatus().equals("PENDING")) {
+            if(MotionHarness.handles(work.action()) && java.util.Set.of("PENDING","RENDERING").contains(work.stepStatus())) {
+                var profile=store.localProfile(work);if(profile==null) return;
+                storage.ready();
+                byte[] base=storage.asset(work.prefix()+"base.png");
+                if(!store.reserveLocal(work)) return;
+                var clip=harness.render(work.action(),base,profile);
+                if(!store.authorized(work)) return;
+                String key=work.prefix()+work.action().name().toLowerCase(java.util.Locale.ROOT)+".png";
+                storage.put(key,clip.sheet());
+                store.success(work,Map.of("key",key,"frameCount",clip.frameCount(),"width",64,"height",64,
+                    "durationMs",clip.durationMs(),"loop",true,"holdLastFrame",false,"returnToIdle","DIRECT",
+                    "generator","motion-harness","validation",clip.validation()));
+            } else if(work.stepStatus().equals("PENDING")) {
                 storage.ready();
                 byte[] source=work.action()==AssetAction.BASE
                     ?SpriteNormalizer.reference(storage.photo(work.dogId(),work.photoBucket(),work.photoKey()))
@@ -52,16 +65,22 @@ public class AssetWorker {
                         "returnToIdle",work.action().loop?"DIRECT":"REVERSE_FRAMES","offsets",clip.offsets());
                 }
                 storage.put(key,png);
-                store.success(work,metadata);
+                if(work.action()==AssetAction.BASE) {
+                    tools.jackson.databind.JsonNode proposed;
+                    try { proposed=harness.propose(png); }
+                    catch(AssetException e) { if(e.status!=422) throw e;proposed=null; }
+                    store.baseReady(work,metadata,proposed,AssetRigService.sha256(png));
+                } else store.success(work,metadata);
             }
         } catch(AssetProvider.Failure e) {
             store.fail(work,reserved&&e.uncertain?"OUTCOME_UNKNOWN":"FAILED",e.code);
         } catch(AssetException e) {
-            if(work.stepStatus().equals("WAITING") && e.status>=500) store.release(work,30);
+            if(MotionHarness.handles(work.action()) && e.status==422) store.rigNeedsReview(work);
+            else if((work.stepStatus().equals("WAITING") || MotionHarness.handles(work.action())) && e.status>=500) store.release(work,30);
             else store.fail(work,reserved?"OUTCOME_UNKNOWN":"FAILED",e.code);
         } catch(RuntimeException e) {
             // Includes DB acknowledgement failure after a paid request. Never retry a POST without its id.
-            if(work.stepStatus().equals("WAITING")) store.release(work,30);
+            if(work.stepStatus().equals("WAITING") || MotionHarness.handles(work.action())) store.release(work,30);
             else store.fail(work,reserved?"OUTCOME_UNKNOWN":"FAILED","ASSET_STEP_INTERRUPTED");
         }
     }

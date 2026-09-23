@@ -55,6 +55,22 @@ public class BehaviorService {
 		if(!"CONFIRMED".equals(profile.status())) repository.confirm(id,revision,actor);
 		return repository.profile(id).orElseThrow();
 	}
+	/** Stable generation plan derived only from confirmed, evidenced observations. */
+	public record AssetSelection(Integer revision,java.util.List<String> actions) {}
+	@Transactional
+	public AssetSelection assetSelection(UUID dog) {
+		var selected=new java.util.ArrayList<String>(java.util.List.of("BASE","IDLE","WALK"));
+		var profile=repository.lockedProfile(dog).orElse(null);
+		if(profile==null || !"CONFIRMED".equals(profile.status()) || profile.schemaVersion()!=1
+				|| !repository.evidenceValid(dog,profile.evidenceObservationIds(),true)) return new AssetSelection(null,java.util.List.copyOf(selected));
+		try {
+			var settings=BehaviorInput.settings(profile.settings());
+			settings.actions().entrySet().stream().filter(e->e.getKey()!=Action.IDLE && e.getKey()!=Action.WALK && e.getValue().weight()>0)
+				.sorted(java.util.Comparator.<java.util.Map.Entry<Action,Motion>>comparingInt(e->e.getValue().weight()).reversed().thenComparing(e->e.getKey().ordinal()))
+				.limit(2).forEach(e->selected.add(e.getKey().name()));
+			return new AssetSelection(profile.revision(),java.util.List.copyOf(selected));
+		} catch(BehaviorException ignored) { return new AssetSelection(null,java.util.List.of("BASE","IDLE","WALK")); }
+	}
 	private UUID editable(UUID subject,UUID dog) {
 		var writer=access.requireDogForWrite(subject,dog);
 		var current=dogs.dog(dog,writer.shelterId()).orElseThrow(BehaviorException::stale);

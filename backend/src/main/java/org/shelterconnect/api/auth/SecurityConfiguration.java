@@ -54,10 +54,11 @@ public class SecurityConfiguration {
 								"/v1/shelter-admin/dogs/{dogId}/access").authenticated()
 						.requestMatchers(HttpMethod.POST, "/v1/operations/asset-permissions", "/v1/operations/asset-imports",
                                 "/v1/operations/asset-jobs/{jobId}/reconcile", "/v1/operations/asset-jobs/{jobId}/retry",
-                                "/v1/shelter-admin/dogs/{dogId}/assets", "/v1/shelter-admin/dogs/{dogId}/assets/{jobId}/review").authenticated()
+                                "/v1/shelter-admin/dogs/{dogId}/assets", "/v1/shelter-admin/dogs/{dogId}/assets/{jobId}/review",
+                                "/v1/shelter-admin/dogs/{dogId}/assets/{jobId}/rig/confirm").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/v1/operations/asset-permissions/{permissionId}").authenticated()
                         .requestMatchers(HttpMethod.GET, "/v1/shelter-admin/dogs/{dogId}/assets/{jobId}",
-                                "/v1/shelter-admin/dogs/{dogId}/assets/{jobId}/preview").authenticated()
+                                "/v1/shelter-admin/dogs/{dogId}/assets/{jobId}/preview", "/v1/shelter-admin/dogs/{dogId}/assets/{jobId}/rig").authenticated()
                         .anyRequest().denyAll())
 				.exceptionHandling(handling -> handling.authenticationEntryPoint(errors).accessDeniedHandler(errors))
 				.oauth2ResourceServer(resource -> resource
