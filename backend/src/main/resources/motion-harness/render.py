@@ -22,7 +22,17 @@ assert BASE.size==(64,64),'Only 64px profiles are supported in this prototype'
 PALETTE={name:BASE.getpixel(tuple(xy)) for name,xy in PROFILE['paletteSamples'].items()}
 assert all(color[3]==255 for color in PALETTE.values()),'Palette samples must be inside the character'
 LINE,COAT,SHADE,FAR,TOE,FAR_TOE=[PALETTE[k] for k in ['LINE','COAT','SHADE','FAR','TOE','FAR_TOE']]
-mask=Image.new('L',(64,64));ImageDraw.Draw(mask).polygon([tuple(p) for p in PROFILE['bodyMask']],fill=255)
+# Compose outside the export frame first. Rotating directly in 64px can destroy
+# muzzle/tail pixels before the shared strip alignment has a chance to run.
+PAD=64
+WORK=(64+2*PAD,64+2*PAD)
+def padded(p):return [p[0]+PAD,p[1]+PAD]
+for key in ['torsoPivot','neck','tailBase']:PROFILE[key]=padded(PROFILE[key])
+PROFILE['bodyMask']=[padded(p) for p in PROFILE['bodyMask']]
+PROFILE['parts']={key:[padded(p) for p in points] for key,points in PROFILE['parts'].items()}
+PROFILE['legs']={key:{**leg,'root':padded(leg['root']),'paw':padded(leg['paw'])} for key,leg in PROFILE['legs'].items()}
+canvas=Image.new('RGBA',WORK);canvas.paste(BASE,(PAD,PAD));BASE=canvas
+mask=Image.new('L',WORK);ImageDraw.Draw(mask).polygon([tuple(p) for p in PROFILE['bodyMask']],fill=255)
 BODY=BASE.copy();BODY.putalpha(Image.fromarray(np.minimum(np.array(mask),np.array(BASE.getchannel('A')))))
 
 def ik(root, target, l1, l2, bend):
@@ -40,7 +50,7 @@ def segment(d,a,b,wa,wb,color):
 
 def front_limb(root,joint,foot,near):
     # Keep the reviewed geometry; sample the coat from the current character.
-    im=Image.new('RGBA',(64,64));d=ImageDraw.Draw(im)
+    im=Image.new('RGBA',WORK);d=ImageDraw.Draw(im)
     color=COAT if near else FAR;wide=7 if near else 5;narrow=5 if near else 4
     segment(d,root,joint,wide+2,narrow+2,LINE);segment(d,joint,foot,narrow+2,narrow+1,LINE)
     x,y=joint;d.ellipse((round(x)-3,round(y)-3,round(x)+3,round(y)+3),fill=LINE)
@@ -59,8 +69,8 @@ def solid_component(im):
         stack=[(x,y)];seen.add((x,y));part=[]
         while stack:
             xx,yy=stack.pop();part.append((xx,yy))
-            for nx in range(max(0,xx-1),min(64,xx+2)):
-                for ny in range(max(0,yy-1),min(64,yy+2)):
+            for nx in range(max(0,xx-1),min(im.width,xx+2)):
+                for ny in range(max(0,yy-1),min(im.height,yy+2)):
                     if alpha[ny,nx] and (nx,ny) not in seen:seen.add((nx,ny));stack.append((nx,ny))
         components.append(part)
     keep=max(components,key=len);out=np.zeros_like(arr)
@@ -68,7 +78,7 @@ def solid_component(im):
     return Image.fromarray(out)
 
 def cut(poly):
-    m=Image.new('L',(64,64));ImageDraw.Draw(m).polygon(poly,fill=255)
+    m=Image.new('L',WORK);ImageDraw.Draw(m).polygon(poly,fill=255)
     im=BODY.copy();im.putalpha(Image.fromarray(np.minimum(np.array(m),np.array(BODY.getchannel('A')))))
     return solid_component(im)
 
@@ -82,7 +92,7 @@ def point(xy,xf):return tuple(xf[0]@np.array(xy)+xf[1])
 
 def warp(im,xf):
     matrix,off=xf;inv=np.linalg.inv(matrix);shift=-inv@off
-    return solid_component(im.transform((64,64),Image.Transform.AFFINE,(*inv[0],shift[0],*inv[1],shift[1]),resample=Image.Resampling.NEAREST))
+    return solid_component(im.transform(WORK,Image.Transform.AFFINE,(*inv[0],shift[0],*inv[1],shift[1]),resample=Image.Resampling.NEAREST))
 
 def redraw_hind(g,root_delta,near):
     # Preserve ground-space paw paths. Only the upper joints follow the moving
@@ -92,7 +102,7 @@ def redraw_hind(g,root_delta,near):
         points.append(tuple(np.array(g[key])+np.array(root_delta)*weight))
     widths=[8,5,3,3] if near else [6,4,2.5,2.5]
     color=COAT if near else FAR
-    im=Image.new('RGBA',(64,64));d=ImageDraw.Draw(im)
+    im=Image.new('RGBA',WORK);d=ImageDraw.Draw(im)
     for extra,fill in [(2,LINE),(0,color)]:
         for j in range(3):segment(d,points[j],points[j+1],widths[j]+extra,widths[j+1]+extra,fill)
         for (x,y),w in zip(points[:-1],widths[:-1]):
@@ -194,12 +204,31 @@ for i in range(config['frameCount']):
         elbow=ik(root,foot,*lens,1)
         parts[name]=front_limb(root,elbow,foot,leg['near'])
         joints[name]={'shoulder':root,'elbow':elbow,'paw':foot,'planted':planted}
-    im=Image.new('RGBA',(64,64))
+    im=Image.new('RGBA',WORK)
     for part in [parts['FH'],parts['FF'],warp(TAIL,tailxf),parts['NH'],parts['NF'],warp(TORSO,torsoxf),warp(HEAD,headxf)]:im.alpha_composite(part)
     # Tiny isolated raster fragments from cutout rotation are not anatomy.
     im=restore_outline(solid_component(im),LINE)
-    im.save(FRAMES/f'{i+1:02d}.png');frames.append(im)
+    frames.append(im)
     guides.append({'phase':t,'bodyOffset':[dx,dy],'bodyPitch':pitch,'headAnchor':neck,'legs':joints})
+
+# One translation for the entire clip; no per-frame scaling or centering.
+boxes=[frame.getbbox() for frame in frames]
+assert all(b and min(b[0],b[1],WORK[0]-b[2],WORK[1]-b[3])>=1 for b in boxes),'Working canvas overflow'
+left=min(b[0] for b in boxes)-PAD;right=max(b[2] for b in boxes)-PAD
+top=min(b[1] for b in boxes)-PAD;bottom=max(b[3] for b in boxes)-PAD
+assert right-left<=62 and bottom-top<=59,'Motion needs a smaller or revised rig'
+shift_x=max(1-left,min(0,63-right));shift_y=60-bottom
+crop=(PAD-shift_x,PAD-shift_y,PAD-shift_x+64,PAD-shift_y+64)
+source_counts=[int(np.count_nonzero(np.asarray(frame)[:,:,3])) for frame in frames]
+frames=[frame.crop(crop) for frame in frames]
+assert source_counts==[int(np.count_nonzero(np.asarray(frame)[:,:,3])) for frame in frames],'Export would discard visible pixels'
+for i,frame in enumerate(frames):frame.save(FRAMES/f'{i+1:02d}.png')
+def exported(p):return [p[0]-PAD+shift_x,p[1]-PAD+shift_y]
+for guide in guides:
+    guide['headAnchor']=exported(guide['headAnchor'])
+    for leg in guide['legs'].values():
+        for key in ['hip','stifle','hock','paw','shoulder','elbow']:
+            if key in leg:leg[key]=exported(leg[key])
 
 sheet=Image.new('RGB',(6*272,4*288),'#f7f2e5');d=ImageDraw.Draw(sheet)
 for i,im in enumerate(frames):
@@ -207,6 +236,7 @@ for i,im in enumerate(frames):
     sheet.paste(big,(x+8,y+24),big);d.text((x+8,y+4),f'{ACTION} {i+1}',fill='#344936')
 sheet.save(OUT/'contact-sheet.png')
 report={'method':'deterministic motion-template harness','profile':PROFILE['id'],'templateVersion':TEMPLATES['version'],'action':ACTION,'frameCount':len(frames),'frameDurationMs':config['durationMs'],'anchor':PROFILE['anchor'],'frames':guides}
+report.update(sharedOffset=[shift_x,shift_y],sourceBounds=[left,top,right,bottom],sourceOpaqueCounts=source_counts)
 if ACTION=='WALK':report['hindGait']='extend-on-support-flex-on-swing'
 if ACTION!='RUN':report['suggestedWorldVelocityPixelsPerSecond']=config['direction']*config['stride']/((1-config['swingFraction'])*len(frames)*config['durationMs']/1000)
 (OUT/'rig.json').write_text(json.dumps(report,indent=2)+'\n')
