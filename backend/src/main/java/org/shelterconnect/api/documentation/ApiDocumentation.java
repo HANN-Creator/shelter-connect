@@ -104,6 +104,8 @@ public class ApiDocumentation {
             case "415" -> "지원하지 않는 Content-Type";
             case "422" -> "체형·이미지 검증 실패";
             case "429" -> "요청 한도 초과";
+            case "502" -> "외부 사진 저장소 응답 오류";
+            case "504" -> "외부 사진 저장소 응답 시간 초과";
             case "503" -> "AI/Storage/생성 기능 연결 비활성화 또는 일시적 사용 불가";
             default -> "서버 오류. requestId와 함께 확인 요청";
         };

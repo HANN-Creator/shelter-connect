@@ -57,6 +57,9 @@ class ApiDocumentationTest {
         assertThat(manifest.at("/responses/200/content/application~1json/schema/$ref").asText()).endsWith("AssetManifestResponse");
         assertThat(schemas.path("AssetManifest").path("properties").has("animations")).isTrue();
         assertThat(root.path("paths").path("/v1/chat-sessions/{sessionId}/messages").path("post").path("responses").has("201")).isTrue();
+        assertThat(root.path("paths").path("/v1/chat-sessions/{sessionId}/messages/{messageId}/reply").path("post").path("responses").has("201")).isTrue();
+        var photos=root.path("paths").path("/v1/dogs/{dogId}/photos").path("get").path("responses");
+        assertThat(photos.has("502") && photos.has("504")).isTrue();
     }
     @Test void documentationIsReadableWithoutOpeningProtectedApiRoutesOrPersistingTokens() throws Exception {
         mvc.perform(get("/swagger-ui.html")).andExpect(status().is3xxRedirection());

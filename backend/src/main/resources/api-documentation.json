@@ -1487,6 +1487,7 @@
       "description": "사용자 메시지 ID로 요청. 200이어도 processingStatus/failureCode/retryable 확인. retry=true는 명시적 재시도에만 사용.",
       "success": [
         200,
+        201,
         202
       ],
       "errors": [
@@ -1516,7 +1517,9 @@
         400,
         404,
         409,
-        503
+        502,
+        503,
+        504
       ],
       "public": false
     },
