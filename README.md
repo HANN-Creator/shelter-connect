@@ -1,5 +1,7 @@
 # 보호소 커넥트
 
+[Swagger 사용 방법](docs/swagger-api.md) · [개발 서버 API 명세서](https://shelter-connect-dev.onrender.com/swagger-ui/index.html)
+
 유기견 입양 서비스를 이런 방식으로 만들어보면 어떨까 해서 만든 시안이야. 처음부터 사진을 보여주기보다는 도트 강아지랑 먼저 대화하면서, 평소에 어떻게 지내고 어떤 걸 좋아하는지 알아가는 게 핵심고 그러고 나서 실제 사진과 프로필을 보는 흐름으로 잡았어.
 
 

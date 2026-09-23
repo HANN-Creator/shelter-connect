@@ -14,6 +14,7 @@ public final class BehaviorTypes {
 	public record BallPlay(boolean chaseEnabled, boolean returnEnabled, int reactionDelayMs) {}
 	public record Settings(Map<Action, Motion> actions, BigDecimal approachDistanceTiles,
 			BigDecimal personalSpaceTiles, int reactionDelayMs, BallPlay ballPlay) {}
+	@io.swagger.v3.oas.annotations.media.Schema(name="BehaviorProfile")
 	public record Profile(UUID dogId, int schemaVersion, int revision, JsonNode settings, String source, String status,
 			List<UUID> evidenceObservationIds, UUID confirmedBy, Instant confirmedAt, Instant updatedAt) {}
 	public record Playback(UUID dogId, int schemaVersion, String basis, Integer revision, Settings settings) {

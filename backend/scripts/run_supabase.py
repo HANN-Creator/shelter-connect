@@ -9,7 +9,7 @@ from urllib.parse import parse_qs, urlsplit
 
 BACKEND = Path(__file__).resolve().parents[1]
 KEYS = {"DB_URL", "DB_USERNAME", "DB_PASSWORD", "SUPABASE_URL", "DB_POOL_SIZE", "PORT"}
-AI_KEYS = {"OPENAI_API_KEY", "OPENAI_MODEL", "AI_TIMEOUT_SECONDS"}
+AI_KEYS = {"OPENAI_API_KEY", "OPENAI_MODEL", "AI_TIMEOUT_SECONDS", "BEHAVIOR_AI_DAILY_LIMIT"}
 STORAGE_KEYS = {"SUPABASE_SECRET_KEY", "PHOTO_STORAGE_BUCKET", "PHOTO_STORAGE_TIMEOUT_SECONDS"}
 
 
@@ -61,6 +61,9 @@ def load_ai_settings(path):
         raise ConfigurationError("OPENAI_MODEL 이름을 확인해 주세요.")
     if not timeout.isascii() or not timeout.isdecimal() or not 5 <= int(timeout) <= 60:
         raise ConfigurationError("AI_TIMEOUT_SECONDS는 5~60초로 설정해 주세요.")
+    limit = values.setdefault("BEHAVIOR_AI_DAILY_LIMIT", "20")
+    if not limit.isascii() or not limit.isdecimal() or not 1 <= int(limit) <= 100:
+        raise ConfigurationError("BEHAVIOR_AI_DAILY_LIMIT는 1~100으로 설정해 주세요.")
     return values
 
 
@@ -99,7 +102,7 @@ def load_settings(path):
 
 def launch_settings(values, inherited, read_only=False, storage=None, ai=None):
     # Prevent unrelated local Spring/AI settings from overriding the selected development target.
-    prefixes = ("SPRING_", "DB_", "SERVER_", "SUPABASE_", "AI_", "OPENAI_", "PHOTO_")
+    prefixes = ("SPRING_", "DB_", "SERVER_", "SUPABASE_", "AI_", "OPENAI_", "PHOTO_", "BEHAVIOR_AI_")
     env = {key: value for key, value in inherited.items() if not key.startswith(prefixes)
            and key not in {"JAVA_TOOL_OPTIONS", "_JAVA_OPTIONS", "JDK_JAVA_OPTIONS"}}
     env.update(values)

@@ -1,0 +1,2176 @@
+{
+  "schemas": {
+    "ApiFailure": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "requestId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message",
+        "requestId"
+      ],
+      "additionalProperties": false
+    },
+    "EmptyRequest": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    },
+    "MessageInput": {
+      "type": "object",
+      "properties": {
+        "clientMessageId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        }
+      },
+      "required": [
+        "clientMessageId",
+        "text"
+      ],
+      "additionalProperties": false
+    },
+    "ReplyInput": {
+      "type": "object",
+      "properties": {
+        "retry": {
+          "type": "boolean"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "AdoptionNoteInput": {
+      "type": "object",
+      "properties": {
+        "questions": {
+          "type": "string",
+          "maxLength": 5000
+        },
+        "carePlan": {
+          "type": "string",
+          "maxLength": 10000
+        },
+        "checklist": {
+          "type": "object",
+          "properties": {
+            "householdDiscussed": {
+              "type": "boolean"
+            },
+            "housingChecked": {
+              "type": "boolean"
+            },
+            "careTimePlanned": {
+              "type": "boolean"
+            },
+            "budgetPlanned": {
+              "type": "boolean"
+            },
+            "shelterQuestionsPrepared": {
+              "type": "boolean"
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "expectedUpdatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true
+        }
+      },
+      "required": [
+        "questions",
+        "carePlan",
+        "checklist",
+        "expectedUpdatedAt"
+      ],
+      "additionalProperties": false
+    },
+    "DogCreateInput": {
+      "type": "object",
+      "properties": {
+        "shelterId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "sex": {
+          "type": "string",
+          "enum": [
+            "MALE",
+            "FEMALE",
+            "UNKNOWN"
+          ]
+        },
+        "breed": {
+          "type": "string",
+          "maxLength": 120,
+          "nullable": true
+        },
+        "birthDate": {
+          "type": "string",
+          "format": "date",
+          "nullable": true
+        },
+        "birthDatePrecision": {
+          "type": "string",
+          "enum": [
+            "UNKNOWN",
+            "YEAR",
+            "MONTH",
+            "DAY"
+          ]
+        },
+        "birthDateEstimated": {
+          "type": "boolean",
+          "nullable": true
+        },
+        "weightKg": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 9999.99,
+          "nullable": true
+        },
+        "neutered": {
+          "type": "boolean",
+          "nullable": true
+        },
+        "adoptionStatus": {
+          "type": "string",
+          "enum": [
+            "AVAILABLE",
+            "IN_PROGRESS",
+            "ADOPTED",
+            "PAUSED"
+          ]
+        },
+        "isPublic": {
+          "type": "boolean"
+        },
+        "avatarKey": {
+          "type": "string",
+          "maxLength": 100,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9/_-]{0,99}$"
+        },
+        "traitLabels": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "maxItems": 8,
+          "uniqueItems": true
+        },
+        "introduction": {
+          "type": "string",
+          "maxLength": 2000,
+          "nullable": true
+        }
+      },
+      "required": [
+        "shelterId",
+        "name",
+        "avatarKey"
+      ],
+      "additionalProperties": false
+    },
+    "DogUpdateInput": {
+      "type": "object",
+      "properties": {
+        "expectedUpdatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "sex": {
+          "type": "string",
+          "enum": [
+            "MALE",
+            "FEMALE",
+            "UNKNOWN"
+          ]
+        },
+        "breed": {
+          "type": "string",
+          "maxLength": 120,
+          "nullable": true
+        },
+        "birthDate": {
+          "type": "string",
+          "format": "date",
+          "nullable": true
+        },
+        "birthDatePrecision": {
+          "type": "string",
+          "enum": [
+            "UNKNOWN",
+            "YEAR",
+            "MONTH",
+            "DAY"
+          ]
+        },
+        "birthDateEstimated": {
+          "type": "boolean",
+          "nullable": true
+        },
+        "weightKg": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 9999.99,
+          "nullable": true
+        },
+        "neutered": {
+          "type": "boolean",
+          "nullable": true
+        },
+        "adoptionStatus": {
+          "type": "string",
+          "enum": [
+            "AVAILABLE",
+            "IN_PROGRESS",
+            "ADOPTED",
+            "PAUSED"
+          ]
+        },
+        "isPublic": {
+          "type": "boolean"
+        },
+        "avatarKey": {
+          "type": "string",
+          "maxLength": 100,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9/_-]{0,99}$"
+        },
+        "traitLabels": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "maxItems": 8,
+          "uniqueItems": true
+        },
+        "introduction": {
+          "type": "string",
+          "maxLength": 2000,
+          "nullable": true
+        }
+      },
+      "required": [
+        "expectedUpdatedAt"
+      ],
+      "additionalProperties": false,
+      "minProperties": 2
+    },
+    "ObservationCreateInput": {
+      "type": "object",
+      "properties": {
+        "category": {
+          "type": "string",
+          "enum": [
+            "TEMPERAMENT",
+            "ROUTINE",
+            "PEOPLE",
+            "DOGS",
+            "PLAY",
+            "CARE",
+            "HEALTH",
+            "OTHER"
+          ]
+        },
+        "content": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "observedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "sourceNote": {
+          "type": "string",
+          "maxLength": 1000,
+          "nullable": true
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "DRAFT",
+            "CONFIRMED",
+            "RETRACTED"
+          ]
+        }
+      },
+      "required": [
+        "category",
+        "content",
+        "observedAt"
+      ],
+      "additionalProperties": false
+    },
+    "ObservationUpdateInput": {
+      "type": "object",
+      "properties": {
+        "expectedUpdatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "TEMPERAMENT",
+            "ROUTINE",
+            "PEOPLE",
+            "DOGS",
+            "PLAY",
+            "CARE",
+            "HEALTH",
+            "OTHER"
+          ]
+        },
+        "content": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "observedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "sourceNote": {
+          "type": "string",
+          "maxLength": 1000,
+          "nullable": true
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "DRAFT",
+            "CONFIRMED",
+            "RETRACTED"
+          ]
+        }
+      },
+      "required": [
+        "expectedUpdatedAt"
+      ],
+      "additionalProperties": false,
+      "minProperties": 2
+    },
+    "MotionInput": {
+      "type": "object",
+      "properties": {
+        "weight": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "speedTilesPerSecond": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 6
+        },
+        "minDurationMs": {
+          "type": "integer",
+          "minimum": 500,
+          "maximum": 30000
+        },
+        "maxDurationMs": {
+          "type": "integer",
+          "minimum": 500,
+          "maximum": 60000
+        },
+        "cooldownMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 120000
+        }
+      },
+      "required": [
+        "weight",
+        "speedTilesPerSecond",
+        "minDurationMs",
+        "maxDurationMs",
+        "cooldownMs"
+      ],
+      "additionalProperties": false
+    },
+    "BehaviorSettingsInput": {
+      "type": "object",
+      "properties": {
+        "actions": {
+          "type": "object",
+          "properties": {
+            "IDLE": {
+              "$ref": "#/components/schemas/MotionInput"
+            },
+            "WALK": {
+              "$ref": "#/components/schemas/MotionInput"
+            },
+            "RUN": {
+              "$ref": "#/components/schemas/MotionInput"
+            },
+            "SNIFF": {
+              "$ref": "#/components/schemas/MotionInput"
+            },
+            "TAIL_WAG": {
+              "$ref": "#/components/schemas/MotionInput"
+            },
+            "BACK_OFF": {
+              "$ref": "#/components/schemas/MotionInput"
+            },
+            "SIT": {
+              "$ref": "#/components/schemas/MotionInput"
+            },
+            "LIE_DOWN": {
+              "$ref": "#/components/schemas/MotionInput"
+            }
+          },
+          "required": [
+            "IDLE",
+            "WALK",
+            "RUN",
+            "SNIFF",
+            "TAIL_WAG",
+            "BACK_OFF",
+            "SIT",
+            "LIE_DOWN"
+          ],
+          "additionalProperties": false
+        },
+        "approachDistanceTiles": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 12
+        },
+        "personalSpaceTiles": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 12
+        },
+        "reactionDelayMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "ballPlay": {
+          "type": "object",
+          "properties": {
+            "chaseEnabled": {
+              "type": "boolean"
+            },
+            "returnEnabled": {
+              "type": "boolean"
+            },
+            "reactionDelayMs": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000
+            }
+          },
+          "required": [
+            "chaseEnabled",
+            "returnEnabled",
+            "reactionDelayMs"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "actions",
+        "approachDistanceTiles",
+        "personalSpaceTiles",
+        "reactionDelayMs",
+        "ballPlay"
+      ],
+      "additionalProperties": false
+    },
+    "BehaviorSaveInput": {
+      "type": "object",
+      "properties": {
+        "expectedRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483646
+        },
+        "schemaVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1
+        },
+        "settings": {
+          "$ref": "#/components/schemas/BehaviorSettingsInput"
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "SHELTER",
+            "AI_SUGGESTED"
+          ]
+        },
+        "evidenceObservationIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "maxItems": 20,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "expectedRevision",
+        "schemaVersion",
+        "settings",
+        "source",
+        "evidenceObservationIds"
+      ],
+      "additionalProperties": false
+    },
+    "BehaviorConfirmInput": {
+      "type": "object",
+      "properties": {
+        "expectedRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483646
+        }
+      },
+      "required": [
+        "expectedRevision"
+      ],
+      "additionalProperties": false
+    },
+    "BehaviorSuggestionInput": {
+      "type": "object",
+      "properties": {
+        "clientRequestId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "expectedRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483646
+        },
+        "evidenceObservationIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "minItems": 1,
+          "maxItems": 20,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "clientRequestId",
+        "expectedRevision",
+        "evidenceObservationIds"
+      ],
+      "additionalProperties": false
+    },
+    "PhotoUploadMetadata": {
+      "type": "object",
+      "properties": {
+        "clientUploadId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "permissionId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "rightsConfirmed": {
+          "type": "boolean",
+          "enum": [
+            true
+          ]
+        },
+        "rightsNote": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        }
+      },
+      "required": [
+        "clientUploadId",
+        "permissionId",
+        "rightsConfirmed",
+        "rightsNote"
+      ],
+      "additionalProperties": false
+    },
+    "PhotoUploadInput": {
+      "type": "object",
+      "properties": {
+        "metadata": {
+          "$ref": "#/components/schemas/PhotoUploadMetadata"
+        },
+        "file": {
+          "type": "string",
+          "format": "binary",
+          "description": "PNG/JPEG 8MB 이하. 총 1600만 픽셀 이하."
+        }
+      },
+      "required": [
+        "metadata",
+        "file"
+      ],
+      "additionalProperties": false
+    },
+    "AssetPermissionInput": {
+      "type": "object",
+      "properties": {
+        "shelterId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "sourceKey": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "sourceKind": {
+          "type": "string",
+          "enum": [
+            "SHELTER",
+            "CRAWL"
+          ]
+        },
+        "permissionNote": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "crawlAllowed": {
+          "type": "boolean"
+        },
+        "derivativesAllowed": {
+          "type": "boolean"
+        },
+        "pixellabAllowed": {
+          "type": "boolean"
+        },
+        "autoGenerate": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "shelterId",
+        "sourceKey",
+        "sourceKind",
+        "permissionNote",
+        "crawlAllowed",
+        "derivativesAllowed",
+        "pixellabAllowed",
+        "autoGenerate"
+      ],
+      "additionalProperties": false
+    },
+    "AssetImportInput": {
+      "type": "object",
+      "properties": {
+        "photoId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "permissionId": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "required": [
+        "photoId",
+        "permissionId"
+      ],
+      "additionalProperties": false
+    },
+    "AssetRequestInput": {
+      "type": "object",
+      "properties": {
+        "photoId": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "required": [
+        "photoId"
+      ],
+      "additionalProperties": false
+    },
+    "AssetReviewInput": {
+      "type": "object",
+      "properties": {
+        "decision": {
+          "type": "string",
+          "enum": [
+            "APPROVE",
+            "REJECT"
+          ]
+        }
+      },
+      "required": [
+        "decision"
+      ],
+      "additionalProperties": false
+    },
+    "AssetReconcileInput": {
+      "type": "object",
+      "properties": {
+        "providerJobId": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "required": [
+        "providerJobId"
+      ],
+      "additionalProperties": false
+    },
+    "RigConfirmInput": {
+      "type": "object",
+      "properties": {
+        "expectedRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "profile": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "체형 조회의 profile을 사용한다. 골격 좌표를 임의 기본값으로 보내지 않는다. 하네스 규격은 motion-harness-pipeline.md 참고."
+        }
+      },
+      "required": [
+        "expectedRevision",
+        "profile"
+      ],
+      "additionalProperties": false
+    },
+    "AssetFrame": {
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "y": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "durationMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "width",
+        "height",
+        "durationMs"
+      ],
+      "additionalProperties": false
+    },
+    "AssetAnimation": {
+      "type": "object",
+      "properties": {
+        "spritesheetUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "frameCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 24
+        },
+        "loop": {
+          "type": "boolean"
+        },
+        "holdLastFrame": {
+          "type": "boolean"
+        },
+        "returnToIdle": {
+          "type": "string",
+          "enum": [
+            "DIRECT",
+            "REVERSE_FRAMES"
+          ]
+        },
+        "frames": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/AssetFrame"
+          }
+        }
+      },
+      "required": [
+        "spritesheetUrl",
+        "frameCount",
+        "loop",
+        "holdLastFrame",
+        "returnToIdle",
+        "frames"
+      ],
+      "additionalProperties": false
+    },
+    "AssetManifest": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1
+        },
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "REVIEW",
+            "APPROVED"
+          ]
+        },
+        "provider": {
+          "type": "string"
+        },
+        "availableActions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "IDLE",
+              "WALK",
+              "RUN",
+              "SNIFF",
+              "TAIL_WAG",
+              "BACK_OFF",
+              "SIT",
+              "LIE_DOWN"
+            ]
+          }
+        },
+        "fallbackAction": {
+          "type": "string",
+          "enum": [
+            "IDLE"
+          ]
+        },
+        "behaviorRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647,
+          "nullable": true
+        },
+        "frameSize": {
+          "type": "object",
+          "properties": {
+            "width": {
+              "type": "integer",
+              "minimum": 64,
+              "maximum": 64
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 64,
+              "maximum": 64
+            }
+          },
+          "required": [
+            "width",
+            "height"
+          ],
+          "additionalProperties": false
+        },
+        "anchorPixels": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "integer",
+              "minimum": 32,
+              "maximum": 32
+            },
+            "y": {
+              "type": "integer",
+              "minimum": 60,
+              "maximum": 60
+            }
+          },
+          "required": [
+            "x",
+            "y"
+          ],
+          "additionalProperties": false
+        },
+        "facing": {
+          "type": "string",
+          "enum": [
+            "right-three-quarter"
+          ]
+        },
+        "baseUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "animations": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/components/schemas/AssetAnimation"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "id",
+        "status",
+        "provider",
+        "availableActions",
+        "fallbackAction",
+        "behaviorRevision",
+        "frameSize",
+        "anchorPixels",
+        "facing",
+        "baseUrl",
+        "expiresAt",
+        "animations"
+      ],
+      "additionalProperties": false
+    },
+    "AssetManifestResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/AssetManifest"
+        }
+      },
+      "required": [
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "PermissionResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "PhotoRegistrationResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "photoId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "REGISTERED"
+                  ]
+                }
+              },
+              "required": [
+                "photoId",
+                "status"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "photoId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "job": {
+                  "$ref": "#/components/schemas/AssetJob"
+                }
+              },
+              "required": [
+                "photoId",
+                "job"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "required": [
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "RigPreviewResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "expectedRevision": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            },
+            "profile": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "baseUrl": {
+              "type": "string",
+              "format": "uri"
+            },
+            "reviewRequired": {
+              "type": "boolean"
+            },
+            "actionPlan": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "fitMethod": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "jobId",
+            "expectedRevision",
+            "profile",
+            "baseUrl",
+            "reviewRequired",
+            "actionPlan",
+            "fitMethod"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "BehaviorProfile": {
+      "type": "object",
+      "properties": {
+        "dogId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "schemaVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "settings": {
+          "$ref": "#/components/schemas/BehaviorSettingsInput"
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "SHELTER",
+            "AI_SUGGESTED"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "DRAFT",
+            "CONFIRMED"
+          ]
+        },
+        "evidenceObservationIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "confirmedBy": {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        },
+        "confirmedAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "dogId",
+        "schemaVersion",
+        "revision",
+        "settings",
+        "source",
+        "status",
+        "evidenceObservationIds",
+        "confirmedBy",
+        "confirmedAt",
+        "updatedAt"
+      ],
+      "additionalProperties": false
+    },
+    "BehaviorSuggestionJob": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "dogId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "COMPLETED",
+            "FAILED"
+          ]
+        },
+        "failureCode": {
+          "type": "string",
+          "nullable": true
+        },
+        "result": {
+          "type": "object",
+          "properties": {
+            "profile": {
+              "$ref": "#/components/schemas/BehaviorProfile"
+            },
+            "traits": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "enum": [
+                      "RUNNER",
+                      "SNIFFER",
+                      "FRIENDLY",
+                      "CAUTIOUS",
+                      "RESTFUL",
+                      "BALL_CHASER",
+                      "BALL_RETURNER"
+                    ]
+                  },
+                  "observationId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "quote": {
+                    "type": "string",
+                    "maxLength": 300
+                  }
+                },
+                "required": [
+                  "code",
+                  "observationId",
+                  "quote"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "requiresConfirmation": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "profile",
+            "traits",
+            "requiresConfirmation"
+          ],
+          "additionalProperties": false,
+          "nullable": true
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "dogId",
+        "status",
+        "failureCode",
+        "result",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "operations": {
+    "GET /v1/shelters": {
+      "summary": "주변/지역 보호소 목록",
+      "tag": "01. 공개 조회",
+      "description": "승인되고 공개된 보호소만 반환. region은 지역 문자열 필터이며 GPS 거리 정렬은 아직 제공하지 않습니다.",
+      "success": [
+        200
+      ],
+      "errors": [
+        400
+      ],
+      "public": true
+    },
+    "GET /v1/shelters/{shelterId}": {
+      "summary": "보호소 상세",
+      "tag": "01. 공개 조회",
+      "description": "",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404
+      ],
+      "public": true
+    },
+    "GET /v1/shelters/{shelterId}/dogs": {
+      "summary": "보호소 강아지 목록",
+      "tag": "01. 공개 조회",
+      "description": "",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404
+      ],
+      "public": true
+    },
+    "GET /v1/dogs/{dogId}": {
+      "summary": "강아지 공개 프로필",
+      "tag": "01. 공개 조회",
+      "description": "사진 원본은 포함하지 않습니다.",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404
+      ],
+      "public": true
+    },
+    "POST /v1/me": {
+      "summary": "로그인 계정 최초 연결",
+      "tag": "02. 계정과 권한",
+      "description": "Supabase 로그인 후 호출. 사용자 권한을 클라이언트가 지정하지 않습니다.",
+      "success": [
+        200
+      ],
+      "errors": [
+        409
+      ],
+      "public": false
+    },
+    "GET /v1/me": {
+      "summary": "내 계정",
+      "tag": "02. 계정과 권한",
+      "description": "",
+      "success": [
+        200
+      ],
+      "errors": [
+        404
+      ],
+      "public": false
+    },
+    "GET /v1/me/shelters": {
+      "summary": "내 보호소 소속",
+      "tag": "02. 계정과 권한",
+      "description": "",
+      "success": [
+        200
+      ],
+      "errors": [],
+      "public": false
+    },
+    "GET /v1/shelter-admin/shelters/{shelterId}/access": {
+      "summary": "보호소 관리 권한 확인",
+      "tag": "02. 계정과 권한",
+      "description": "",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404,
+        409
+      ],
+      "public": false
+    },
+    "GET /v1/shelter-admin/dogs/{dogId}/access": {
+      "summary": "강아지 관리 권한 확인",
+      "tag": "02. 계정과 권한",
+      "description": "",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404,
+        409
+      ],
+      "public": false
+    },
+    "POST /v1/dogs/{dogId}/chat-sessions": {
+      "summary": "대화방 열기",
+      "tag": "03. 대화",
+      "description": "본인 대화방. 새 생성 201, 기존 방 200.",
+      "success": [
+        200,
+        201
+      ],
+      "errors": [
+        400,
+        404,
+        409
+      ],
+      "public": false,
+      "request": {
+        "schema": "EmptyRequest",
+        "required": false,
+        "contentType": "application/json",
+        "example": {}
+      }
+    },
+    "GET /v1/me/chat-sessions": {
+      "summary": "내 대화방 목록",
+      "tag": "03. 대화",
+      "description": "",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404,
+        409
+      ],
+      "public": false
+    },
+    "GET /v1/chat-sessions/{sessionId}": {
+      "summary": "내 대화방 상세",
+      "tag": "03. 대화",
+      "description": "",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404,
+        409
+      ],
+      "public": false
+    },
+    "GET /v1/chat-sessions/{sessionId}/messages": {
+      "summary": "메시지 목록",
+      "tag": "03. 대화",
+      "description": "",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404,
+        409
+      ],
+      "public": false
+    },
+    "POST /v1/chat-sessions/{sessionId}/messages": {
+      "summary": "사용자 메시지 저장",
+      "tag": "03. 대화",
+      "description": "같은 clientMessageId와 내용은 중복 저장하지 않습니다. AI 답변은 별도 reply API로 요청.",
+      "success": [
+        200,
+        201
+      ],
+      "errors": [
+        400,
+        404,
+        409
+      ],
+      "public": false,
+      "request": {
+        "schema": "MessageInput",
+        "required": true,
+        "contentType": "application/json",
+        "example": {
+          "clientMessageId": "mobile-question-001",
+          "text": "공놀이를 좋아해?"
+        }
+      }
+    },
+    "POST /v1/chat-sessions/{sessionId}/messages/{messageId}/reply": {
+      "summary": "강아지 기록 기반 AI 답변",
+      "tag": "03. 대화",
+      "description": "사용자 메시지 ID로 요청. 200이어도 processingStatus/failureCode/retryable 확인. retry=true는 명시적 재시도에만 사용.",
+      "success": [
+        200,
+        202
+      ],
+      "errors": [
+        400,
+        404,
+        409,
+        503
+      ],
+      "public": false,
+      "request": {
+        "schema": "ReplyInput",
+        "required": false,
+        "contentType": "application/json",
+        "example": {
+          "retry": false
+        }
+      }
+    },
+    "GET /v1/dogs/{dogId}/photos": {
+      "summary": "대화 후 실제 사진 보기",
+      "tag": "04. 사진",
+      "description": "로그인·본인 대화 조건·사진 사용 권리를 확인합니다. 원본 서명 URL은 유효기간 후 재조회.",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404,
+        409,
+        503
+      ],
+      "public": false
+    },
+    "GET /v1/me/adoption-notes": {
+      "summary": "내 입양 준비 메모 목록",
+      "tag": "05. 입양 준비",
+      "description": "",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404,
+        409
+      ],
+      "public": false
+    },
+    "GET /v1/me/adoption-notes/{dogId}": {
+      "summary": "입양 준비 메모 읽기",
+      "tag": "05. 입양 준비",
+      "description": "",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404,
+        409
+      ],
+      "public": false
+    },
+    "PUT /v1/me/adoption-notes/{dogId}": {
+      "summary": "입양 준비 메모 저장",
+      "tag": "05. 입양 준비",
+      "description": "최초 저장 expectedUpdatedAt=null, 수정은 조회한 시간을 그대로 사용. 입양 신청/예약 API가 아닙니다.",
+      "success": [
+        200,
+        201
+      ],
+      "errors": [
+        400,
+        404,
+        409
+      ],
+      "public": false,
+      "request": {
+        "schema": "AdoptionNoteInput",
+        "required": true,
+        "contentType": "application/json",
+        "example": {
+          "questions": "산책은 하루 몇 번 하나요?",
+          "carePlan": "아침과 저녁에 함께 산책",
+          "checklist": {
+            "householdDiscussed": true
+          },
+          "expectedUpdatedAt": null
+        }
+      }
+    },
+    "GET /v1/shelter-admin/shelters/{shelterId}/dogs": {
+      "summary": "보호소 관리 강아지 목록",
+      "tag": "06. 보호소 관리",
+      "description": "",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404,
+        409
+      ],
+      "public": false
+    },
+    "GET /v1/shelter-admin/dogs/{dogId}": {
+      "summary": "관리 프로필 조회",
+      "tag": "06. 보호소 관리",
+      "description": "",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404,
+        409
+      ],
+      "public": false
+    },
+    "POST /v1/shelter-admin/dogs": {
+      "summary": "강아지 등록",
+      "tag": "06. 보호소 관리",
+      "description": "승인된 보호소의 활성 소속만 가능. 생일 모름은 UNKNOWN/null, YEAR는 1월 1일, MONTH는 1일로 저장.",
+      "success": [
+        201
+      ],
+      "errors": [
+        400,
+        404,
+        409
+      ],
+      "public": false,
+      "request": {
+        "schema": "DogCreateInput",
+        "required": true,
+        "contentType": "application/json",
+        "example": {
+          "shelterId": "02100000-0000-4000-8000-000000000001",
+          "name": "가상 강아지",
+          "avatarKey": "sample-dog",
+          "sex": "UNKNOWN",
+          "isPublic": false
+        }
+      }
+    },
+    "PATCH /v1/shelter-admin/dogs/{dogId}": {
+      "summary": "강아지 정보 수정",
+      "tag": "06. 보호소 관리",
+      "description": "expectedUpdatedAt과 수정할 필드를 전송. 다른 수정이 먼저 반영되면 409.",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404,
+        409
+      ],
+      "public": false,
+      "request": {
+        "schema": "DogUpdateInput",
+        "required": true,
+        "contentType": "application/json",
+        "example": {
+          "expectedUpdatedAt": "2026-09-23T00:00:00Z",
+          "introduction": "산책 중 냄새를 천천히 맡아요."
+        }
+      }
+    },
+    "GET /v1/shelter-admin/dogs/{dogId}/observations": {
+      "summary": "관찰 기록 목록",
+      "tag": "06. 보호소 관리",
+      "description": "",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404,
+        409
+      ],
+      "public": false
+    },
+    "POST /v1/shelter-admin/dogs/{dogId}/observations": {
+      "summary": "관찰 기록 등록",
+      "tag": "06. 보호소 관리",
+      "description": "관찰 시각은 미래일 수 없습니다. DRAFT/CONFIRMED로 등록하며 처음부터 RETRACTED는 불가.",
+      "success": [
+        201
+      ],
+      "errors": [
+        400,
+        404,
+        409
+      ],
+      "public": false,
+      "request": {
+        "schema": "ObservationCreateInput",
+        "required": true,
+        "contentType": "application/json",
+        "example": {
+          "category": "PLAY",
+          "content": "운동장에서 던진 공을 따라 달렸어요.",
+          "observedAt": "2026-09-23T00:00:00Z",
+          "status": "DRAFT"
+        }
+      }
+    },
+    "PATCH /v1/shelter-admin/dogs/{dogId}/observations/{observationId}": {
+      "summary": "관찰 수정·확인·철회",
+      "tag": "06. 보호소 관리",
+      "description": "확인된 기록은 status=RETRACTED로만 변경할 수 있습니다. 철회 후 새 기록을 작성하세요.",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404,
+        409
+      ],
+      "public": false,
+      "request": {
+        "schema": "ObservationUpdateInput",
+        "required": true,
+        "contentType": "application/json",
+        "example": {
+          "expectedUpdatedAt": "2026-09-23T00:00:00Z",
+          "status": "CONFIRMED"
+        }
+      }
+    },
+    "GET /v1/dogs/{dogId}/behavior": {
+      "summary": "앱 행동 설정과 공놀이 레시피",
+      "tag": "07. 행동 설정",
+      "description": "8개 행동 설정과 interactions.BALL_CHASE. 확인된 근거가 없으면 IDLE60/WALK30/SIT10 기본값.",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404
+      ],
+      "public": true
+    },
+    "GET /v1/shelter-admin/dogs/{dogId}/behavior": {
+      "summary": "보호소 행동 설정 조회",
+      "tag": "07. 행동 설정",
+      "description": "초안과 확인 상태 및 수정 버전을 조회합니다.",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404,
+        409
+      ],
+      "public": false
+    },
+    "PUT /v1/shelter-admin/dogs/{dogId}/behavior": {
+      "summary": "행동 초안 저장",
+      "tag": "07. 행동 설정",
+      "description": "8개 코드를 모두 보내며 사용하지 않는 행동은 weight=0. IDLE/WALK는 양수, 이동 동작만 속도 양수, RUN 속도≥WALK, min≤max, approach≥personalSpace. 확인 API 호출 전 공개되지 않습니다.",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404,
+        409
+      ],
+      "public": false,
+      "request": {
+        "schema": "BehaviorSaveInput",
+        "required": true,
+        "contentType": "application/json",
+        "example": {
+          "expectedRevision": 0,
+          "schemaVersion": 1,
+          "settings": {
+            "actions": {
+              "IDLE": {
+                "weight": 60,
+                "speedTilesPerSecond": 0,
+                "minDurationMs": 2000,
+                "maxDurationMs": 5000,
+                "cooldownMs": 2000
+              },
+              "WALK": {
+                "weight": 30,
+                "speedTilesPerSecond": 0.8,
+                "minDurationMs": 2000,
+                "maxDurationMs": 5000,
+                "cooldownMs": 2000
+              },
+              "RUN": {
+                "weight": 0,
+                "speedTilesPerSecond": 1.8,
+                "minDurationMs": 2000,
+                "maxDurationMs": 5000,
+                "cooldownMs": 2000
+              },
+              "SNIFF": {
+                "weight": 0,
+                "speedTilesPerSecond": 0,
+                "minDurationMs": 2000,
+                "maxDurationMs": 5000,
+                "cooldownMs": 2000
+              },
+              "TAIL_WAG": {
+                "weight": 0,
+                "speedTilesPerSecond": 0,
+                "minDurationMs": 2000,
+                "maxDurationMs": 5000,
+                "cooldownMs": 2000
+              },
+              "BACK_OFF": {
+                "weight": 0,
+                "speedTilesPerSecond": 0.6,
+                "minDurationMs": 2000,
+                "maxDurationMs": 5000,
+                "cooldownMs": 2000
+              },
+              "SIT": {
+                "weight": 10,
+                "speedTilesPerSecond": 0,
+                "minDurationMs": 2000,
+                "maxDurationMs": 5000,
+                "cooldownMs": 2000
+              },
+              "LIE_DOWN": {
+                "weight": 0,
+                "speedTilesPerSecond": 0,
+                "minDurationMs": 2000,
+                "maxDurationMs": 5000,
+                "cooldownMs": 2000
+              }
+            },
+            "approachDistanceTiles": 0,
+            "personalSpaceTiles": 0,
+            "reactionDelayMs": 1000,
+            "ballPlay": {
+              "chaseEnabled": false,
+              "returnEnabled": false,
+              "reactionDelayMs": 1000
+            }
+          },
+          "source": "SHELTER",
+          "evidenceObservationIds": [
+            "02300000-0000-4000-8000-000000000001"
+          ]
+        }
+      }
+    },
+    "POST /v1/shelter-admin/dogs/{dogId}/behavior/confirmation": {
+      "summary": "행동 설정 확인",
+      "tag": "07. 행동 설정",
+      "description": "최신 버전과 같은 강아지의 CONFIRMED 근거가 필요합니다.",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404,
+        409
+      ],
+      "public": false,
+      "request": {
+        "schema": "BehaviorConfirmInput",
+        "required": true,
+        "contentType": "application/json",
+        "example": {
+          "expectedRevision": 1
+        }
+      }
+    },
+    "POST /v1/shelter-admin/dogs/{dogId}/behavior/suggestions": {
+      "summary": "관찰로 AI 행동 초안 생성",
+      "tag": "07. 행동 설정",
+      "description": "유료 AI 요청. 같은 요청 ID는 재호출하지 않습니다. 근거 1~20개/합계 20,000자 이하. 결과는 보호소 확인이 필요한 초안. HTTP 200에서도 status 확인.",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404,
+        409,
+        429,
+        503
+      ],
+      "public": false,
+      "request": {
+        "schema": "BehaviorSuggestionInput",
+        "required": true,
+        "contentType": "application/json",
+        "example": {
+          "clientRequestId": "02300000-0000-4000-8000-000000000003",
+          "expectedRevision": 0,
+          "evidenceObservationIds": [
+            "02300000-0000-4000-8000-000000000001"
+          ]
+        }
+      }
+    },
+    "GET /v1/shelter-admin/dogs/{dogId}/behavior/suggestions/{suggestionId}": {
+      "summary": "AI 행동 초안 요청 상태",
+      "tag": "07. 행동 설정",
+      "description": "",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404,
+        409
+      ],
+      "public": false
+    },
+    "POST /v1/shelter-admin/dogs/{dogId}/photos": {
+      "summary": "보호소 사진 직접 업로드",
+      "tag": "04. 사진",
+      "description": "metadata 파트를 application/json으로 전송. 실제 허가를 확인한 SHELTER 출처 ID 필요. 같은 clientUploadId/사진/허가 내용은 중복 등록하지 않습니다. 생성·Storage 기능 활성화가 필요합니다.",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404,
+        409,
+        413,
+        415,
+        503
+      ],
+      "public": false,
+      "request": {
+        "schema": "PhotoUploadInput",
+        "required": true,
+        "contentType": "multipart/form-data"
+      },
+      "responseSchema": "PhotoRegistrationResponse"
+    },
+    "GET /v1/shelter-admin/dogs/{dogId}/photos": {
+      "summary": "등록 사진 관리 목록",
+      "tag": "04. 사진",
+      "description": "원본 URL 없이 사진 ID·권리·업로드 상태를 반환합니다.",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404,
+        409
+      ],
+      "public": false
+    },
+    "GET /v1/dogs/{dogId}/assets": {
+      "summary": "승인된 강아지 에셋 조회",
+      "tag": "08. 도트와 애니메이션",
+      "description": "서명 URL 60초. availableActions에 있는 행동만 재생. 행동 설정 API와 함께 사용.",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404,
+        409,
+        503
+      ],
+      "public": true,
+      "responseSchema": "AssetManifestResponse"
+    },
+    "POST /v1/shelter-admin/dogs/{dogId}/assets": {
+      "summary": "도트·행동 생성 요청",
+      "tag": "08. 도트와 애니메이션",
+      "description": "등록된 사진과 허가로 요청. 동일 사진·생성 버전·행동 버전은 기존 작업 반환. 체형 검토 및 최종 승인을 거칩니다.",
+      "success": [
+        202
+      ],
+      "errors": [
+        400,
+        404,
+        409,
+        503
+      ],
+      "public": false,
+      "request": {
+        "schema": "AssetRequestInput",
+        "required": true,
+        "contentType": "application/json",
+        "example": {
+          "photoId": "02200000-0000-4000-8000-000000000001"
+        }
+      }
+    },
+    "GET /v1/shelter-admin/dogs/{dogId}/assets/{jobId}": {
+      "summary": "생성 진행 상태 조회",
+      "tag": "08. 도트와 애니메이션",
+      "description": "",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404,
+        409
+      ],
+      "public": false
+    },
+    "GET /v1/shelter-admin/dogs/{dogId}/assets/{jobId}/rig": {
+      "summary": "체형 검토 초안 조회",
+      "tag": "08. 도트와 애니메이션",
+      "description": "RIG_REVIEW에서 baseUrl과 profile을 검토합니다.",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404,
+        409,
+        503
+      ],
+      "public": false,
+      "responseSchema": "RigPreviewResponse"
+    },
+    "POST /v1/shelter-admin/dogs/{dogId}/assets/{jobId}/rig/confirm": {
+      "summary": "체형 확인 후 동작 생성 계속",
+      "tag": "08. 도트와 애니메이션",
+      "description": "조회한 profile을 검토·보정해 expectedRevision과 함께 보냅니다. 기본 빈 객체로 실행하면 검증에 실패합니다.",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404,
+        409,
+        422,
+        503
+      ],
+      "public": false,
+      "request": {
+        "schema": "RigConfirmInput",
+        "required": true,
+        "contentType": "application/json"
+      }
+    },
+    "GET /v1/shelter-admin/dogs/{dogId}/assets/{jobId}/preview": {
+      "summary": "완성된 동작 검토 미리보기",
+      "tag": "08. 도트와 애니메이션",
+      "description": "",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404,
+        409,
+        503
+      ],
+      "public": false,
+      "responseSchema": "AssetManifestResponse"
+    },
+    "POST /v1/shelter-admin/dogs/{dogId}/assets/{jobId}/review": {
+      "summary": "동작 승인·반려",
+      "tag": "08. 도트와 애니메이션",
+      "description": "APPROVE 후 공개 조회에 반영. REJECT 결과는 공개하지 않습니다.",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404,
+        409
+      ],
+      "public": false,
+      "request": {
+        "schema": "AssetReviewInput",
+        "required": true,
+        "contentType": "application/json",
+        "example": {
+          "decision": "APPROVE"
+        }
+      }
+    },
+    "POST /v1/operations/asset-permissions": {
+      "summary": "출처 허가 등록",
+      "tag": "09. 운영자",
+      "description": "OPERATOR 전용. 보호소 직접 등록은 SHELTER, crawlAllowed=false. 허가 문서와 실제 범위를 확인한 뒤 입력.",
+      "success": [
+        201
+      ],
+      "errors": [
+        400,
+        404,
+        409
+      ],
+      "public": false,
+      "request": {
+        "schema": "AssetPermissionInput",
+        "required": true,
+        "contentType": "application/json",
+        "example": {
+          "shelterId": "02100000-0000-4000-8000-000000000001",
+          "sourceKey": "shelter-direct-v1",
+          "sourceKind": "SHELTER",
+          "permissionNote": "확인한 허가 범위와 근거를 입력",
+          "crawlAllowed": false,
+          "derivativesAllowed": true,
+          "pixellabAllowed": true,
+          "autoGenerate": false
+        }
+      },
+      "responseSchema": "PermissionResponse"
+    },
+    "DELETE /v1/operations/asset-permissions/{permissionId}": {
+      "summary": "출처 허가 철회",
+      "tag": "09. 운영자",
+      "description": "OPERATOR 전용. 관련 작업 취소·공개 중단. 기록은 보존.",
+      "success": [
+        204
+      ],
+      "errors": [
+        400,
+        404,
+        409
+      ],
+      "public": false
+    },
+    "POST /v1/operations/asset-imports": {
+      "summary": "저장된 사진 출처 연결",
+      "tag": "09. 운영자",
+      "description": "OPERATOR 전용. 외부 URL 다운로드 API가 아닙니다. 허가와 자동 설정에 따라 생성 작업 접수.",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404,
+        409,
+        503
+      ],
+      "public": false,
+      "request": {
+        "schema": "AssetImportInput",
+        "required": true,
+        "contentType": "application/json",
+        "example": {
+          "photoId": "02200000-0000-4000-8000-000000000001",
+          "permissionId": "02300000-0000-4000-8000-000000000001"
+        }
+      },
+      "responseSchema": "PhotoRegistrationResponse"
+    },
+    "POST /v1/operations/asset-jobs/{jobId}/retry": {
+      "summary": "실패한 생성 단계 재시도",
+      "tag": "09. 운영자",
+      "description": "OPERATOR 전용. 유료 재요청 가능. 접수 여부가 불명확한 작업은 reconcile을 먼저 사용.",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404,
+        409,
+        503
+      ],
+      "public": false
+    },
+    "POST /v1/operations/asset-jobs/{jobId}/reconcile": {
+      "summary": "접수 불명 작업의 공급자 ID 연결",
+      "tag": "09. 운영자",
+      "description": "OPERATOR 전용. 실제 PixelLab 작업 ID를 확인해 연결. 새 유료 생성 요청은 보내지 않습니다.",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404,
+        409
+      ],
+      "public": false,
+      "request": {
+        "schema": "AssetReconcileInput",
+        "required": true,
+        "contentType": "application/json",
+        "example": {
+          "providerJobId": "02300000-0000-4000-8000-000000000001"
+        }
+      }
+    }
+  }
+}

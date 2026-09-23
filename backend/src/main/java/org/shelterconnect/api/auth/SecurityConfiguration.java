@@ -15,7 +15,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration(proxyBeanMethods = false)
 public class SecurityConfiguration {
 	private static final String[] PUBLIC_READS = {"/actuator/health", "/actuator/health/liveness",
-			"/actuator/health/readiness", "/v1/shelters", "/v1/shelters/{shelterId}",
+			"/actuator/health/readiness", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml", "/v1/shelters", "/v1/shelters/{shelterId}",
 			"/v1/shelters/{shelterId}/dogs", "/v1/dogs/{dogId}", "/v1/dogs/{dogId}/behavior", "/v1/dogs/{dogId}/assets"};
 
 	@Bean
