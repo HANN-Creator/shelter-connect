@@ -96,6 +96,11 @@ public class AssetStore {
         UUID dog=jdbc.sql("SELECT dog_id FROM shelter.dog_photos WHERE id=:p").param("p",photo).query(UUID.class).single();
         var plan=behaviors.assetSelection(dog);
         String selectionKey=String.valueOf(plan.revision())+":"+String.join(",",plan.actions());
+        // Replays must not take the worker's job lock while holding source/dog locks.
+        // The original transaction created the job and all planned steps atomically.
+        var existing=jdbc.sql("SELECT id FROM shelter.asset_jobs WHERE photo_id=:photo AND pipeline_version=:version AND selection_key=:selection")
+            .param("photo",photo).param("version",AssetAction.VERSION).param("selection",selectionKey).query(UUID.class).optional();
+        if(existing.isPresent()) return job(existing.get());
         UUID id=jdbc.sql("""
             INSERT INTO shelter.asset_jobs(photo_id,dog_id,shelter_id,permission_id,pipeline_version,action_plan,behavior_revision,selection_key)
             SELECT p.id,p.dog_id,d.shelter_id,a.permission_id,:version,CAST(:plan AS jsonb),:revision,:selection FROM shelter.dog_photos p
