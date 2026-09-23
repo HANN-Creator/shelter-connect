@@ -70,6 +70,8 @@ B-19 · [작업 카드](https://app.notion.com/p/3e45b2d1a55f8081a888cec58625f09
 
 저장 중 오류가 나면 같은 요청을 다시 보낼 수 있다. 진행 중인 같은 요청은 409 `UPLOAD_IN_PROGRESS`, 다른 사진·허가 내용이면 409 `UPLOAD_ID_CONFLICT`다. 업로드 중 소속이나 허가가 철회되면 공개하지 않는다. 실패한 업로드는 `UNKNOWN` 권리 상태로 남아 원본 조회·생성에서 제외된다.
 
+같은 사진·확인된 행동 버전의 생성 작업이 이미 있으면 기존 작업을 반환한다. 재요청 때문에 워커의 작업 행을 갱신하거나 새 생성 요청을 보내지 않는다. 워커가 작업을 처리하는 중에도 완료된 업로드를 다시 조회할 수 있다.
+
 `GET /v1/shelter-admin/dogs/{dogId}/photos?limit=20&cursor=...`는 `{data:[{id,rightsStatus,sortOrder,uploadStatus}],nextCursor}`를 반환한다. 최대 50건, 마지막 응답의 커서를 그대로 사용한다. 진행 중·실패한 예약도 표시할 수 있으며 원본 사진 주소는 포함하지 않는다.
 
 ## 공통 행동과 공놀이

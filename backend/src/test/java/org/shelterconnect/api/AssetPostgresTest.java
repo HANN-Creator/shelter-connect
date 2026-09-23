@@ -265,6 +265,29 @@ class AssetPostgresTest {
         upload(subject,path,Map.of("clientUploadId",UUID.randomUUID(),"permissionId",grant,"rightsConfirmed",false,"rightsNote","허가 없음"),sprite,409);
         mvc.perform(get(path).header("Authorization",bearer(subject))).andExpect(status().isOk()).andExpect(jsonPath("$.data.length()").value(2));
     }
+    @Test void completedUploadReplayDoesNotWaitForTheWorkersJobLock() throws Exception {
+        var consent=new HashMap<>(permissionBody(true));consent.put("sourceKind","SHELTER");consent.put("crawlAllowed",false);
+        UUID grant=UUID.fromString(postJson(opSubject,"/v1/operations/asset-permissions",consent,201).at("/data/id").asText());
+        var metadata=Map.of("clientUploadId",UUID.randomUUID(),"permissionId",grant,"rightsConfirmed",true,"rightsNote","가상 사진 허가");
+        String path="/v1/shelter-admin/dogs/"+dog+"/photos";
+        var first=upload(subject,path,metadata,sprite,200);
+        UUID job=UUID.fromString(first.at("/data/job/id").asText());
+        try(var connection=jdbc.getDataSource().getConnection();var pool=Executors.newSingleThreadExecutor()) {
+            connection.setAutoCommit(false);
+            try(var lock=connection.prepareStatement("SELECT id FROM shelter.asset_jobs WHERE id=? FOR UPDATE")) {
+                lock.setObject(1,job);try(var row=lock.executeQuery()) { assertThat(row.next()).isTrue(); }
+            }
+            var replay=pool.submit(()->upload(subject,path,metadata,sprite,200));
+            try {
+                var repeated=replay.get(5,TimeUnit.SECONDS);
+                assertThat(repeated.at("/data/photoId")).isEqualTo(first.at("/data/photoId"));
+                assertThat(repeated.at("/data/job/id")).isEqualTo(first.at("/data/job/id"));
+            } finally { connection.rollback(); }
+        }
+        verify(storage,times(1)).putPhoto(eq(dog),anyString(),any());
+        verifyNoInteractions(provider);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.asset_jobs WHERE dog_id=?",Integer.class,dog)).isEqualTo(1);
+    }
     @Test void concurrentSuggestionOnlyCallsAiOnceAndRejectsAnInterveningProfileEdit() throws Exception {
         UUID evidence=observation("공을 따라 달렸어요.");
         var entered=new CountDownLatch(1);var release=new CountDownLatch(1);
