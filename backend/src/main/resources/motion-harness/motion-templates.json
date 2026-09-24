@@ -1,5 +1,5 @@
 {
-  "version": "0.2.2",
+  "version": "0.3.0",
   "sourceFrameSize": [
     64,
     64
@@ -8,8 +8,8 @@
     "WALK": {
       "status": "implemented",
       "type": "procedural-four-beat",
-      "frameCount": 24,
-      "durationMs": 60,
+      "frameCount": 48,
+      "durationMs": 30,
       "stride": 6,
       "swingFraction": 0.22,
       "direction": 1,
@@ -26,8 +26,8 @@
     "RUN": {
       "status": "implemented",
       "type": "authored-connected-run",
-      "frameCount": 24,
-      "durationMs": 30,
+      "frameCount": 48,
+      "durationMs": 15,
       "bodyKeyPoses": [
         [
           1.0,

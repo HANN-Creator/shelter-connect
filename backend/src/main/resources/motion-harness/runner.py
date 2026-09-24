@@ -74,10 +74,12 @@ elif request['mode']=='render':
     action=request['action'];assert action in ('WALK','RUN','BACK_OFF')
     rig_profile=profile(request['profile'])
     (ROOT/'profile.json').write_text(json.dumps(rig_profile))
+    for old in (ROOT/'rendered/frames').glob('*.png'):old.unlink()
     subprocess.run([sys.executable,str(HERE/'render.py'),'--profile',str(ROOT/'profile.json'),
         '--action',action,'--out',str(ROOT/'rendered')],check=True,timeout=45,stdout=subprocess.DEVNULL)
     frames=[Image.open(p).convert('RGBA') for p in sorted((ROOT/'rendered/frames').glob('*.png'))]
-    assert len(frames)==24
+    expected=48 if action in ('WALK','RUN') else 24
+    assert len(frames)==expected
     boxes=[f.getbbox() for f in frames]
     assert all(b and min(b[0],b[1],64-b[2],64-b[3])>=1 for b in boxes)
     palette={tuple(p) for p in np.asarray(base).reshape(-1,4) if p[3]}
@@ -87,7 +89,7 @@ elif request['mode']=='render':
     for i,f in enumerate(frames):sheet.paste(f,(i*64,0))
     sheet.save(ROOT/'sheet.png')
     guide=json.loads((ROOT/'rendered/rig.json').read_text())
-    response={'frameCount':24,'durationMs':guide['frameDurationMs'],
+    response={'frameCount':len(frames),'durationMs':guide['frameDurationMs'],
         'sharedOffsetX':guide['sharedOffset'][0],'sharedOffsetY':guide['sharedOffset'][1],
         'paletteChecked':True,'boundsChecked':True,'templateVersion':guide['templateVersion']}
 else:raise ValueError('Unsupported operation')

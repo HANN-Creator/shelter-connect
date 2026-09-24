@@ -29,12 +29,15 @@ class HarnessTest(unittest.TestCase):
     def test_three_local_motions_use_source_colors_and_common_anchor(self):
         profile=self.request({'mode':'fit'})['profile']
         allowed={tuple(p) for p in np.asarray(self.base).reshape(-1,4) if p[3]}
-        for action,duration in [('WALK',60),('RUN',30),('BACK_OFF',70)]:
+        for action,duration in [('WALK',30),('RUN',15),('BACK_OFF',70)]:
             result=self.request({'mode':'render','action':action,'profile':profile})
-            sheet=Image.open(self.root/'sheet.png');self.assertEqual(sheet.size,(1536,64))
-            self.assertEqual(result['frameCount'],24);self.assertEqual(result['durationMs'],duration)
+            count=24 if action=='BACK_OFF' else 48
+            sheet=Image.open(self.root/'sheet.png');self.assertEqual(sheet.size,(64*count,64))
+            self.assertEqual(result['frameCount'],count);self.assertEqual(result['durationMs'],duration)
+            self.assertEqual(count*duration,{'WALK':1440,'RUN':720,'BACK_OFF':1680}[action])
+            self.assertGreater(len({sheet.crop((64*i,0,64*(i+1),64)).tobytes() for i in range(count)}),count*.75)
             self.assertTrue(all(tuple(p) in allowed for p in np.asarray(sheet).reshape(-1,4) if p[3]))
-            for i in range(24):
+            for i in range(count):
                 frame=sheet.crop((i*64,0,(i+1)*64,64));box=frame.getbbox()
                 self.assertGreaterEqual(min(box[0],box[1],64-box[2],64-box[3]),1)
                 # Flood only the exterior, not enclosed transparent holes.
@@ -71,7 +74,7 @@ class HarnessTest(unittest.TestCase):
             frame=sheet.crop((64*i,0,64*(i+1),64))
             self.assertEqual(int(np.count_nonzero(np.asarray(frame)[:,:,3])),source_count)
             b=frame.getbbox();self.assertGreaterEqual(min(b[0],b[1],64-b[2],64-b[3]),1)
-        self.assertEqual(max(sheet.crop((64*i,0,64*(i+1),64)).getbbox()[3] for i in range(24)),60)
+        self.assertEqual(max(sheet.crop((64*i,0,64*(i+1),64)).getbbox()[3] for i in range(48)),60)
     def test_motion_too_wide_for_export_still_requires_rig_review(self):
         profile=self.request({'mode':'fit'})['profile']
         profile['legs']['NF'].update(root=[59,37],paw=[60,58])
