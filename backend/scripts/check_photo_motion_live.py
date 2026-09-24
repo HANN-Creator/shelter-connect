@@ -27,11 +27,13 @@ def review_decision(document, expected):
 def local_manifest(manifest):
     # Only playback fields belong in the local preview. Never copy signed URLs.
     result = {key: manifest[key] for key in
-              ('availableActions', 'frameSize', 'anchorPixels', 'fallbackAction', 'behaviorRevision')}
+              ('schemaVersion', 'facing', 'availableActions', 'frameSize', 'anchorPixels',
+               'fallbackAction', 'behaviorRevision')}
+    result['baseUrl'] = 'base.png'
     result['animations'] = {}
     for action, clip in manifest['animations'].items():
         result['animations'][action] = {key: clip[key] for key in
-                                       ('frameCount', 'loop', 'holdLastFrame', 'frames')}
+                                       ('frameCount', 'loop', 'holdLastFrame', 'returnToIdle', 'frames')}
         result['animations'][action]['spritesheetUrl'] = action.lower() + '.png'
     return result
 

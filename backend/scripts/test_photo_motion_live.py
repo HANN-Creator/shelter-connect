@@ -27,12 +27,15 @@ class PhotoMotionReviewTest(unittest.TestCase):
 
     def test_preview_exports_only_playback_metadata_without_signed_credentials(self):
         source = manifest()
-        source.update(behaviorRevision=2, baseUrl='https://private/?token=secret')
+        source.update(behaviorRevision=2, schemaVersion=1, facing='right-three-quarter',
+                      baseUrl='https://private/?token=secret')
         for clip in source['animations'].values():
             clip.update(spritesheetUrl='https://private/?token=secret', internal='secret')
+            clip['returnToIdle'] = 'DIRECT' if clip['loop'] else 'REVERSE_FRAMES'
         preview = local_manifest(source)
         self.assertNotIn('secret', str(preview))
-        self.assertNotIn('baseUrl', preview)
+        self.assertEqual(preview['baseUrl'], 'base.png')
+        self.assertEqual(preview['animations']['SIT']['returnToIdle'], 'REVERSE_FRAMES')
         self.assertEqual(preview['animations']['WALK']['spritesheetUrl'], 'walk.png')
         self.assertEqual(preview['animations']['WALK']['frames'], source['animations']['WALK']['frames'])
 
