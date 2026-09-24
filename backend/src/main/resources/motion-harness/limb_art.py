@@ -47,6 +47,40 @@ class LimbArt:
             toes = source.copy(); toes[~foot] = 0
             self.sources[name] = (root, paw, length, axis, shaft, toes)
 
+    def walk(self, name, root_target, paw_target, flex=0, hind=False):
+        """Move a shallow walking pose without folding its raster into a mesh.
+
+        The photographed rest leg already contains its hock/elbow shape. Bend
+        that drawing by a small displacement, instead of forcing it onto long
+        synthetic bones. Invert a monotone row mapping so every output pixel has
+        exactly one source, including at the ankle. The last rows are a rigid paw.
+        """
+        root, paw, length, axis, shaft, toes = self.sources[name]
+        source = shaft.copy()
+        visible = toes[..., 3] > 0
+        source[visible] = toes[visible]
+        root_delta = np.asarray(root_target) - root
+        paw_delta = np.asarray(paw_target) - paw
+        ankle_y = paw[1] - 3
+        span = ankle_y - root[1]
+        assert span >= 2, 'Review walking leg height'
+        rows = np.arange(self.size[1], dtype=float)
+        t = np.clip((rows-root[1])/span, 0, 1)
+        # Smooth joins with a rigid body attachment and rigid toe rows.
+        weight = t*t*(3-2*t)
+        displacement = root_delta[None, :]*(1-weight[:, None]) + paw_delta[None, :]*weight[:, None]
+        displacement[:, 0] += (1 if hind else -1) * min(1.25, length*.07) * flex * np.sin(np.pi*t)**2
+        target_y = rows + displacement[:, 1]
+        assert np.all(np.diff(target_y) > .1), 'Review excessive walking compression'
+        yy, xx = np.indices(source.shape[:2], dtype=float)
+        source_y = np.interp(yy, target_y, rows)
+        source_x = xx - np.interp(source_y, rows, displacement[:, 0])
+        sx = np.rint(source_x).astype(int); sy = np.rint(source_y).astype(int)
+        valid = (sx >= 0) & (sx < self.size[0]) & (sy >= 0) & (sy < self.size[1])
+        result = np.zeros_like(source)
+        result[valid] = source[sy[valid], sx[valid]]
+        return Image.fromarray(result)
+
     def render(self, name, joints, paw_angle=0):
         root, rest_paw, length, rest_axis, shaft, toes = self.sources[name]
         points = np.array(joints, float)

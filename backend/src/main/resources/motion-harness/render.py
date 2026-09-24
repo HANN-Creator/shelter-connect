@@ -5,7 +5,7 @@ from pathlib import Path
 import argparse,json,math
 import numpy as np
 from PIL import Image,ImageDraw
-from outline import restore_outline
+from outline import restore_outline, source_edges
 from limb_art import LimbArt, sample_cycle
 
 HERE=Path(__file__).resolve().parent
@@ -35,6 +35,8 @@ PROFILE['legs']={key:{**leg,'root':padded(leg['root']),'paw':padded(leg['paw'])}
 canvas=Image.new('RGBA',WORK);canvas.paste(BASE,(PAD,PAD));BASE=canvas
 mask=Image.new('L',WORK);ImageDraw.Draw(mask).polygon([tuple(p) for p in PROFILE['bodyMask']],fill=255)
 BODY=BASE.copy();BODY.putalpha(Image.fromarray(np.minimum(np.array(mask),np.array(BASE.getchannel('A')))))
+BASE_EDGES=source_edges(BASE)
+BODY_EDGES=BASE_EDGES.copy();BODY_EDGES.putalpha(BODY.getchannel('A'))
 
 def ik(root, target, l1, l2, bend):
     a=np.array(root,float); c=np.array(target,float); v=c-a
@@ -60,9 +62,9 @@ def solid_component(im):
     for x,y in keep:out[y,x]=arr[y,x]
     return Image.fromarray(out)
 
-def cut(poly):
+def cut(poly,source=BODY):
     m=Image.new('L',WORK);ImageDraw.Draw(m).polygon(poly,fill=255)
-    im=BODY.copy();im.putalpha(Image.fromarray(np.minimum(np.array(m),np.array(BODY.getchannel('A')))))
+    im=source.copy();im.putalpha(Image.fromarray(np.minimum(np.array(m),np.array(source.getchannel('A')))))
     return solid_component(im)
 
 def affine(pivot, dest, angle=0, sx=1, sy=1):
@@ -84,43 +86,29 @@ def redraw_hind(g,root_delta,name):
     for key,weight in [('hip',1),('stifle',.65),('hock',.15),('paw',0)]:
         points.append(tuple(np.array(g[key])+np.array(root_delta)*weight))
     im=ART.render(name,points,g['pawAngle'])
-    return im,{**g,**dict(zip(['hip','stifle','hock','paw'],points))}
+    edges=EDGE_ART.render(name,points,g['pawAngle'])
+    return im,edges,{**g,**dict(zip(['hip','stifle','hock','paw'],points))}
 
 TORSO,HEAD,TAIL=[cut([tuple(p) for p in PROFILE['parts'][n]]) for n in ['torso','head','tail']]
+TORSO_EDGES,HEAD_EDGES,TAIL_EDGES=[cut([tuple(p) for p in PROFILE['parts'][n]],BODY_EDGES) for n in ['torso','head','tail']]
 ACTION=args.action;config=TEMPLATES['actions'][ACTION]
 OUT=Path(args.out);FRAMES=OUT/'frames';FRAMES.mkdir(parents=True,exist_ok=True)
 LEGS=PROFILE['legs'];pivot=np.array(PROFILE['torsoPivot'])
 ART=LimbArt(BASE,LEGS)
+EDGE_ART=LimbArt(BASE_EDGES,LEGS)
 
 def ground_path(t,leg):
     phase=(t-leg['offset'])%1;swing=config['swingFraction'];stride=config['stride']
+    if ACTION=='WALK':stride=min(stride,min(math.dist(l['root'],l['paw']) for l in LEGS.values())*.4)
     if phase<swing:
         q=phase/swing;smooth=q*q*(3-2*q)
-        clearance=config.get('hindSwingLiftPixels',2.5) if leg['hind'] else 2.5
+        clearance=config.get('hindSwingLiftPixels',2.5) if leg['hind'] else config.get('frontSwingLiftPixels',2.5)
+        if ACTION=='WALK':clearance=min(clearance,math.dist(leg['root'],leg['paw'])*.12)
         x=stride/2-stride*smooth;lift=clearance*math.sin(math.pi*q)**2;planted=False
     else:
         q=(phase-swing)/(1-swing);x=-stride/2+stride*q;lift=0;planted=True
     if config['direction']==1:x=-x
     return (leg['paw'][0]+x,leg['paw'][1]-lift),x,lift,planted
-
-def walking_hind_pose(root,foot,t,leg):
-    """Extend under load, flex during clearance, then extend into contact.
-
-    Build joints from the moving hip and the planted foot together. A fixed
-    knee/hock shape would stay folded throughout the support phase.
-    """
-    phase=(t-leg['offset'])%1
-    q=phase/config['swingFraction'] if phase<config['swingFraction'] else None
-    flex=math.sin(math.pi*q)**2 if q is not None else 0
-    root=np.array(root,float);foot=np.array(foot,float);axis=foot-root
-    normal=np.array([axis[1],-axis[0]])/np.linalg.norm(axis)
-    pose=config['hindPose']
-    knee_bend=pose['supportKneeOffset']+(pose['swingKneeOffset']-pose['supportKneeOffset'])*flex
-    hock_bend=pose['supportHockOffset']+(pose['swingHockOffset']-pose['supportHockOffset'])*flex
-    knee=root+pose['kneeFraction']*axis+normal*knee_bend
-    hock=root+pose['hockFraction']*axis+normal*hock_bend
-    return {'hip':tuple(root),'stifle':tuple(knee),'hock':tuple(hock),
-            'paw':tuple(foot),'pawAngle':0,'swingProgress':q,'flexAmount':flex}
 
 def run_map(xy,name,leg):
     source_name=('nearHind' if leg['near'] else 'farHind') if leg['hind'] else name
@@ -145,6 +133,10 @@ for i in range(config['frameCount']):
     t=i/config['frameCount'];a=2*math.pi*t
     if ACTION=='RUN':
         sx,sy,pitch,dx,dy,head_pitch,tail_swing=sample_cycle(config['bodyKeyPoses'],t)
+    elif ACTION=='WALK':
+        dx=.25*math.sin(a);dy=.25+.2*math.cos(2*a)
+        pitch=.7*math.sin(a);sx=1;sy=1
+        head_pitch=.4*math.sin(a-.4);tail_swing=2*math.sin(a-.5)
     else:
         dx=-.8-.65*math.sin(a-.8);dy=.8+.4*math.cos(2*a)
         pitch=-1.5+1.8*math.sin(a);sx=.98;sy=1
@@ -153,7 +145,7 @@ for i in range(config['frameCount']):
     neck=point(PROFILE['neck'],torsoxf)
     headxf=affine(PROFILE['neck'],neck,head_pitch)
     tailxf=affine(PROFILE['tailBase'],point(PROFILE['tailBase'],torsoxf),pitch+tail_swing)
-    parts={};joints={}
+    parts={};edge_parts={};joints={}
     for name,leg in LEGS.items():
         root=point(leg['root'],torsoxf)
         if ACTION=='RUN':
@@ -163,7 +155,7 @@ for i in range(config['frameCount']):
                 g={**old,**{k:run_map(old[k],name,leg) for k in ['hip','stifle','hock','paw']}}
                 for key,weight in [('stifle',.3),('hock',.7),('paw',1)]:
                     g[key]=(g[key][0],g[key][1]-run_ground_offset[name]*weight)
-                parts[name],joints[name]=redraw_hind(g,np.array(root)-np.array(g['hip']),name)
+                parts[name],edge_parts[name],joints[name]=redraw_hind(g,np.array(root)-np.array(g['hip']),name)
                 continue
             foot=run_map(sample_cycle(config['frontPaws'],t)[name],name,leg)
             foot=(foot[0],foot[1]-run_ground_offset[name])
@@ -171,15 +163,20 @@ for i in range(config['frameCount']):
             planted=False
         else:
             foot,x,lift,planted=ground_path(t,leg)
+            if ACTION=='WALK':
+                phase=(t-leg['offset'])%1
+                progress=phase/config['swingFraction'] if phase<config['swingFraction'] else 0
+                flex=math.sin(math.pi*progress)**2
+                parts[name]=ART.walk(name,root,foot,flex,leg['hind'])
+                edge_parts[name]=EDGE_ART.walk(name,root,foot,flex,leg['hind'])
+                # Report the actual small displacement over the drawn rest pose.
+                joints[name]={'root':root,'paw':foot,'planted':planted,'flexAmount':flex}
+                continue
             if leg['hind']:
-                if ACTION=='WALK':
-                    g=walking_hind_pose(root,foot,t,leg)
-                    parts[name],joints[name]=redraw_hind(g,(0,0),name)
-                else:
-                    px,py=leg['paw'];knee=(leg['root'][0]+2+.2*x,leg['root'][1]+7-.25*lift)
-                    hock=(px-2+.8*x,py-5-.7*lift)
-                    g={'hip':leg['root'],'stifle':knee,'hock':hock,'paw':foot,'pawAngle':0}
-                    parts[name],joints[name]=redraw_hind(g,np.array(root)-np.array(leg['root']),name)
+                px,py=leg['paw'];knee=(leg['root'][0]+2+.2*x,leg['root'][1]+7-.25*lift)
+                hock=(px-2+.8*x,py-5-.7*lift)
+                g={'hip':leg['root'],'stifle':knee,'hock':hock,'paw':foot,'pawAngle':0}
+                parts[name],edge_parts[name],joints[name]=redraw_hind(g,np.array(root)-np.array(leg['root']),name)
                 joints[name]['planted']=planted
                 continue
             lens=(9.1,9.25) if leg['near'] else (7,7.5)
@@ -187,11 +184,13 @@ for i in range(config['frameCount']):
         if length>sum(lens)-.01:lens=tuple(v*length/(sum(lens)-.01) for v in lens)
         elbow=ik(root,foot,*lens,1)
         parts[name]=ART.render(name,[root,elbow,foot])
+        edge_parts[name]=EDGE_ART.render(name,[root,elbow,foot])
         joints[name]={'shoulder':root,'elbow':elbow,'paw':foot,'planted':planted}
-    im=Image.new('RGBA',WORK)
+    im=Image.new('RGBA',WORK);edges=Image.new('RGBA',WORK)
     for part in [parts['FH'],parts['FF'],warp(TAIL,tailxf),parts['NH'],parts['NF'],warp(TORSO,torsoxf),warp(HEAD,headxf)]:im.alpha_composite(part)
-    # Tiny isolated raster fragments from cutout rotation are not anatomy.
-    im=restore_outline(solid_component(im),LINE)
+    for part in [edge_parts['FH'],edge_parts['FF'],warp(TAIL_EDGES,tailxf),edge_parts['NH'],edge_parts['NF'],warp(TORSO_EDGES,torsoxf),warp(HEAD_EDGES,headxf)]:edges.alpha_composite(part)
+    # Repair only new cut edges. Preserve the original outline shades and width.
+    im=restore_outline(solid_component(im),LINE,np.asarray(edges)[:,:,0]>127)
     frames.append(im)
     guides.append({'phase':t,'bodyOffset':[dx,dy],'bodyPitch':pitch,'headAnchor':neck,'legs':joints})
 
@@ -211,7 +210,7 @@ def exported(p):return [p[0]-PAD+shift_x,p[1]-PAD+shift_y]
 for guide in guides:
     guide['headAnchor']=exported(guide['headAnchor'])
     for leg in guide['legs'].values():
-        for key in ['hip','stifle','hock','paw','shoulder','elbow']:
+        for key in ['root','hip','stifle','hock','paw','shoulder','elbow']:
             if key in leg:leg[key]=exported(leg[key])
 
 sheet=Image.new('RGB',(6*272,math.ceil(len(frames)/6)*288),'#f7f2e5');d=ImageDraw.Draw(sheet)
@@ -221,7 +220,9 @@ for i,im in enumerate(frames):
 sheet.save(OUT/'contact-sheet.png')
 report={'method':'deterministic motion-template harness','profile':PROFILE['id'],'templateVersion':TEMPLATES['version'],'action':ACTION,'frameCount':len(frames),'frameDurationMs':config['durationMs'],'anchor':PROFILE['anchor'],'frames':guides}
 report.update(sharedOffset=[shift_x,shift_y],sourceBounds=[left,top,right,bottom],sourceOpaqueCounts=source_counts)
-if ACTION=='WALK':report['hindGait']='extend-on-support-flex-on-swing'
-if ACTION!='RUN':report['suggestedWorldVelocityPixelsPerSecond']=config['direction']*config['stride']/((1-config['swingFraction'])*len(frames)*config['durationMs']/1000)
+if ACTION=='WALK':report['hindGait']='source-rest-shape-small-swing-flex'
+if ACTION!='RUN':
+    stride=config['stride'] if ACTION!='WALK' else min(config['stride'],min(math.dist(l['root'],l['paw']) for l in LEGS.values())*.4)
+    report['suggestedWorldVelocityPixelsPerSecond']=config['direction']*stride/((1-config['swingFraction'])*len(frames)*config['durationMs']/1000)
 (OUT/'rig.json').write_text(json.dumps(report,indent=2)+'\n')
 print(json.dumps({'action':ACTION,'frames':len(frames),'profile':PROFILE['id']}))
