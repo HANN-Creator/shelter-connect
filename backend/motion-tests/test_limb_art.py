@@ -41,6 +41,28 @@ class LimbArtTest(unittest.TestCase):
         # No repeated end row protruding beneath the paw.
         self.assertLessEqual(result.getbbox()[3], 45)
 
+    def test_walk_rest_pose_and_translated_paw_keep_the_original_art(self):
+        result=Image.new('RGBA',self.base.size)
+        for name,leg in self.legs.items():result.alpha_composite(self.art.walk(name,leg['root'],leg['paw']))
+        np.testing.assert_array_equal(np.asarray(result),np.asarray(self.base))
+        result=self.art.walk('near',[16,20],[19,46],1,True)
+        expected=self.base.crop((13,46,20,51))
+        np.testing.assert_array_equal(np.asarray(result.crop((16,44,23,49))),np.asarray(expected))
+        self.assertLessEqual(result.getbbox()[3],49)
+        # Each original row is sampled once, so bends cannot double its width.
+        for row in np.asarray(result):
+            occupied=np.flatnonzero(row[:,3])
+            if len(occupied):self.assertLessEqual(occupied[-1]-occupied[0]+1,7)
+
+    def test_short_walking_leg_does_not_fold_or_extrude(self):
+        base=Image.new('RGBA',(32,32));ImageDraw.Draw(base).rectangle((12,14,16,25),fill='#ba874b')
+        art=LimbArt(base,{'leg':{'root':[14,15],'paw':[14,23]}})
+        for phase in np.linspace(0,2*np.pi,48,endpoint=False):
+            result=art.walk('leg',[14,15.3],[14+1.6*np.cos(phase),23-max(0,np.sin(phase))*.96],max(0,np.sin(phase)),True)
+            self.assertIsNotNone(result.getbbox())
+            self.assertLessEqual(result.getbbox()[3],26)
+            for row in np.asarray(result):self.assertLessEqual(np.count_nonzero(row[:,3]),5)
+
     def test_pose_resampling_keeps_keys_and_interpolates_loop_seam(self):
         keys = [{'paw': [0, 4], 'angle': 0}, {'paw': [8, 0], 'angle': 10}]
         self.assertEqual(sample_cycle(keys, 0), keys[0])

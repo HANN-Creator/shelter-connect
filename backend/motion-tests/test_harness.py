@@ -40,25 +40,27 @@ class HarnessTest(unittest.TestCase):
             for i in range(count):
                 frame=sheet.crop((i*64,0,(i+1)*64,64));box=frame.getbbox()
                 self.assertGreaterEqual(min(box[0],box[1],64-box[2],64-box[3]),1)
-                # Flood only the exterior, not enclosed transparent holes.
-                air=frame.getchannel('A').point(lambda a:255 if a else 0).convert('RGB')
-                ImageDraw.floodfill(air,(0,0),(127,127,127))
-                line=tuple(profile['palette']['LINE'][:3])
-                for y in range(1,63):
-                    for x in range(1,63):
-                        if frame.getpixel((x,y))[3] and any(air.getpixel(p)==(127,127,127) for p in [(x-1,y),(x+1,y),(x,y-1),(x,y+1)]):
-                            self.assertEqual(frame.getpixel((x,y))[:3],line,(action,i,x,y))
-    def test_walk_extends_under_load_and_flexes_while_lifted(self):
+    def test_walk_has_three_planted_feet_and_bounded_swing_over_the_source_pose(self):
         profile=self.request({'mode':'fit'})['profile']
         self.request({'mode':'render','action':'WALK','profile':profile})
-        frames=json.loads((self.root/'rendered/rig.json').read_text())['frames']
-        for leg in ['NH','FH']:
-            support=[];swing=[]
+        report=json.loads((self.root/'rendered/rig.json').read_text())
+        frames=report['frames']
+        for name,rest in profile['legs'].items():
+            baseline=rest['paw'][1]+report['sharedOffset'][1]
+            supports=[];lifts=[]
             for f in frames:
-                g=f['legs'][leg];p=[g[k] for k in ['hip','stifle','hock','paw']]
-                ratio=math.dist(p[0],p[-1])/sum(math.dist(a,b) for a,b in zip(p,p[1:]))
-                (support if g['planted'] else swing).append(ratio)
-            self.assertGreaterEqual(min(support),.94);self.assertLessEqual(min(swing),.85)
+                g=f['legs'][name]
+                if g['planted']:
+                    self.assertAlmostEqual(g['paw'][1],baseline)
+                    self.assertEqual(g['flexAmount'],0)
+                    supports.append(g)
+                else:
+                    lifts.append(baseline-g['paw'][1])
+                # Walking must not pull a source leg into a long synthetic limb.
+                self.assertLess(math.dist(g['root'],g['paw']),math.dist(rest['root'],rest['paw'])+2)
+            self.assertGreater(len(supports),30)
+            self.assertGreater(max(lifts),.5)
+            self.assertLessEqual(max(lifts),2.2)
         self.assertGreaterEqual(min(sum(g['planted'] for g in f['legs'].values()) for f in frames),3)
     def test_running_muzzle_crossing_export_edge_is_preserved_with_one_strip_offset(self):
         # A long snout moves beyond x=63 during RUN. It must not be cut off before alignment.

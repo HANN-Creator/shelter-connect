@@ -1,5 +1,5 @@
 {
-  "version": "0.3.0",
+  "version": "0.3.1",
   "sourceFrameSize": [
     64,
     64
@@ -10,18 +10,11 @@
       "type": "procedural-four-beat",
       "frameCount": 48,
       "durationMs": 30,
-      "stride": 6,
+      "stride": 5,
       "swingFraction": 0.22,
       "direction": 1,
-      "hindSwingLiftPixels": 4.0,
-      "hindPose": {
-        "kneeFraction": 0.42,
-        "hockFraction": 0.76,
-        "supportKneeOffset": 0.75,
-        "swingKneeOffset": 4.0,
-        "supportHockOffset": -0.25,
-        "swingHockOffset": -2.25
-      }
+      "hindSwingLiftPixels": 2.2,
+      "frontSwingLiftPixels": 1.8
     },
     "RUN": {
       "status": "implemented",

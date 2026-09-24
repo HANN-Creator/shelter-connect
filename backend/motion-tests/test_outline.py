@@ -6,7 +6,7 @@ import numpy as np
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src/main/resources/motion-harness'))
-from outline import restore_outline
+from outline import restore_outline, source_edges
 
 
 class OutlineTest(unittest.TestCase):
@@ -50,6 +50,23 @@ class OutlineTest(unittest.TestCase):
         self.assertEqual(result.getpixel((2, 2)), (*self.LINE[:3], 128))
         self.assertEqual(result.getpixel((3, 4)), self.LINE)
         np.testing.assert_array_equal(np.array(result)[:, :, 3], np.array(image)[:, :, 3])
+
+    def test_original_outline_shades_survive_but_new_cut_edges_are_repaired(self):
+        original=Image.new('RGBA',(12,12))
+        original.paste(self.COAT,(2,2,10,10))
+        light_line=(130,110,90,255)
+        original.putpixel((2,5),light_line)
+        original.putpixel((9,5),self.LINE)
+        provenance=source_edges(original)
+        cut=original.copy()
+        for x in range(6,10):
+            for y in range(2,10):cut.putpixel((x,y),(0,0,0,0))
+        result=restore_outline(cut,self.LINE,np.asarray(provenance)[:,:,0]>127)
+        # Existing fur/line edge colors are exact, not forced to one dark color.
+        self.assertEqual(result.getpixel((2,5)),light_line)
+        self.assertEqual(result.getpixel((3,2)),self.COAT)
+        self.assertEqual(result.getpixel((5,5)),self.LINE)
+        np.testing.assert_array_equal(np.asarray(result)[:,:,3],np.asarray(cut)[:,:,3])
 
     def test_empty_and_single_pixel_frames(self):
         image = Image.new('RGBA', (1, 1))
