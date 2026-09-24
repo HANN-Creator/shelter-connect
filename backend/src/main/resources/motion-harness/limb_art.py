@@ -59,7 +59,9 @@ class LimbArt:
         # towards the toe and leaving a gap when the leg folds.
         points[-1] = paw_target - rotation @ rest_axis * 3
         fractions[-1] = (length - 3) / length
-        if (np.linalg.norm(points[-1]-points[-2]) < 2 or
+        # In a tightly tucked pose the ankle can pass both the hock and knee.
+        # Collapse the occluded mesh segments until the visible path is valid.
+        while len(points) > 2 and (np.linalg.norm(points[-1]-points[-2]) < 2 or
                 (points[-2]-points[-3]) @ (points[-1]-points[-2]) < 0):
             points = np.delete(points, -2, axis=0)
             fractions = np.delete(fractions, -2)

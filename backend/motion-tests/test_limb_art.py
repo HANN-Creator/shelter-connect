@@ -49,6 +49,12 @@ class LimbArtTest(unittest.TestCase):
         self.assertEqual(sample_cycle(keys, .75), {'paw': [4, 2], 'angle': 5})
         self.assertEqual(sample_cycle(keys, 1), keys[0])
 
+    def test_tucked_paw_can_pass_both_lower_joints_without_a_reversed_mesh(self):
+        # A compact retargeted RUN can put the ankle behind both lower joints.
+        image = self.art.render('near', [[16,20], [19.4,22.2], [22,24], [18.8,24.8]])
+        self.assertIsNotNone(image.getbbox())
+        self.assertGreater(np.count_nonzero(np.asarray(image)[:,:,3]), 10)
+
 
 if __name__ == '__main__':
     unittest.main()
