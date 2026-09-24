@@ -6,6 +6,7 @@ import argparse,json,math
 import numpy as np
 from PIL import Image,ImageDraw
 from outline import restore_outline
+from limb_art import LimbArt, sample_cycle
 
 HERE=Path(__file__).resolve().parent
 parser=argparse.ArgumentParser()
@@ -44,24 +45,6 @@ def ik(root, target, l1, l2, bend):
     height=math.sqrt(max(0,l1*l1-along*along))
     return tuple(a+along*u+bend*height*np.array([-u[1],u[0]]))
 
-def segment(d,a,b,wa,wb,color):
-    a=np.array(a);b=np.array(b);v=b-a;n=np.array([-v[1],v[0]])/np.linalg.norm(v)
-    d.polygon([tuple(np.rint(p).astype(int)) for p in [a+n*wa/2,b+n*wb/2,b-n*wb/2,a-n*wa/2]],fill=color)
-
-def front_limb(root,joint,foot,near):
-    # Keep the reviewed geometry; sample the coat from the current character.
-    im=Image.new('RGBA',WORK);d=ImageDraw.Draw(im)
-    color=COAT if near else FAR;wide=7 if near else 5;narrow=5 if near else 4
-    segment(d,root,joint,wide+2,narrow+2,LINE);segment(d,joint,foot,narrow+2,narrow+1,LINE)
-    x,y=joint;d.ellipse((round(x)-3,round(y)-3,round(x)+3,round(y)+3),fill=LINE)
-    segment(d,root,joint,wide,narrow,color);segment(d,joint,foot,narrow,narrow-1,color)
-    d.ellipse((round(x)-2,round(y)-2,round(x)+2,round(y)+2),fill=color)
-    x,y=map(round,foot)
-    d.polygon([(x-2,y-2),(x+1,y-2),(x+3,y),(x+3,y+2),(x-2,y+2)],fill=LINE)
-    d.polygon([(x-1,y-1),(x+1,y-1),(x+2,y),(x+2,y+1),(x-1,y+1)],fill=TOE if near else FAR_TOE)
-    if near:d.point((x,y+1),fill=SHADE);d.point((x+2,y+1),fill=SHADE)
-    return im
-
 def solid_component(im):
     arr=np.array(im);alpha=arr[:,:,3]>0;seen=set();components=[]
     for y,x in zip(*np.where(alpha)):
@@ -94,30 +77,20 @@ def warp(im,xf):
     matrix,off=xf;inv=np.linalg.inv(matrix);shift=-inv@off
     return solid_component(im.transform(WORK,Image.Transform.AFFINE,(*inv[0],shift[0],*inv[1],shift[1]),resample=Image.Resampling.NEAREST))
 
-def redraw_hind(g,root_delta,near):
+def redraw_hind(g,root_delta,name):
     # Preserve ground-space paw paths. Only the upper joints follow the moving
     # pelvis; rotating the finished sprite would make planted feet skate.
     points=[]
     for key,weight in [('hip',1),('stifle',.65),('hock',.15),('paw',0)]:
         points.append(tuple(np.array(g[key])+np.array(root_delta)*weight))
-    widths=[8,5,3,3] if near else [6,4,2.5,2.5]
-    color=COAT if near else FAR
-    im=Image.new('RGBA',WORK);d=ImageDraw.Draw(im)
-    for extra,fill in [(2,LINE),(0,color)]:
-        for j in range(3):segment(d,points[j],points[j+1],widths[j]+extra,widths[j+1]+extra,fill)
-        for (x,y),w in zip(points[:-1],widths[:-1]):
-            r=(w+extra)/2;d.ellipse((round(x-r),round(y-r),round(x+r),round(y+r)),fill=fill)
-    paw=points[3];a=math.radians(g['pawAngle']);c=math.cos(a);s=math.sin(a)
-    def poly(coords,color):
-        d.polygon([(round(paw[0]+x*c-y*s),round(paw[1]+x*s+y*c)) for x,y in coords],fill=color)
-    poly([(-2,-2),(1,-2),(3,0),(3,2),(-2,2)],LINE)
-    poly([(-1,-1),(1,-1),(2,0),(2,1),(-1,1)],TOE if near else FAR_TOE)
+    im=ART.render(name,points,g['pawAngle'])
     return im,{**g,**dict(zip(['hip','stifle','hock','paw'],points))}
 
 TORSO,HEAD,TAIL=[cut([tuple(p) for p in PROFILE['parts'][n]]) for n in ['torso','head','tail']]
 ACTION=args.action;config=TEMPLATES['actions'][ACTION]
 OUT=Path(args.out);FRAMES=OUT/'frames';FRAMES.mkdir(parents=True,exist_ok=True)
 LEGS=PROFILE['legs'];pivot=np.array(PROFILE['torsoPivot'])
+ART=LimbArt(BASE,LEGS)
 
 def ground_path(t,leg):
     phase=(t-leg['offset'])%1;swing=config['swingFraction'];stride=config['stride']
@@ -158,12 +131,20 @@ def run_map(xy,name,leg):
     target_basis=np.column_stack((target,[-target[1],target[0]]))
     return tuple(np.array(leg['root'])+target_basis@np.linalg.solve(source_basis,np.array(xy)-origin))
 
+run_ground_offset={}
+if ACTION=='RUN':
+    # Retarget contact to this dog's resting paw height. Scaling an authored
+    # long-legged pose alone otherwise pushes real, full-size paws below ground.
+    for name,leg in LEGS.items():
+        side='nearHind' if leg['near'] else 'farHind'
+        paws=[pose[side]['paw'] for pose in config['hindPoses']] if leg['hind'] else [pose[name] for pose in config['frontPaws']]
+        run_ground_offset[name]=max(run_map(p,name,leg)[1] for p in paws)-leg['paw'][1]
+
 frames=[];guides=[]
 for i in range(config['frameCount']):
     t=i/config['frameCount'];a=2*math.pi*t
     if ACTION=='RUN':
-        k=i//2;f=(i%2)/2;keys=config['bodyKeyPoses']
-        sx,sy,pitch,dx,dy,head_pitch,tail_swing=[x*(1-f)+y*f for x,y in zip(keys[k],keys[(k+1)%len(keys)])]
+        sx,sy,pitch,dx,dy,head_pitch,tail_swing=sample_cycle(config['bodyKeyPoses'],t)
     else:
         dx=-.8-.65*math.sin(a-.8);dy=.8+.4*math.cos(2*a)
         pitch=-1.5+1.8*math.sin(a);sx=.98;sy=1
@@ -178,11 +159,14 @@ for i in range(config['frameCount']):
         if ACTION=='RUN':
             if leg['hind']:
                 side='nearHind' if leg['near'] else 'farHind'
-                old=config['hindPoses'][i][side]
+                old=sample_cycle(config['hindPoses'],t)[side]
                 g={**old,**{k:run_map(old[k],name,leg) for k in ['hip','stifle','hock','paw']}}
-                parts[name],joints[name]=redraw_hind(g,np.array(root)-np.array(g['hip']),leg['near'])
+                for key,weight in [('stifle',.3),('hock',.7),('paw',1)]:
+                    g[key]=(g[key][0],g[key][1]-run_ground_offset[name]*weight)
+                parts[name],joints[name]=redraw_hind(g,np.array(root)-np.array(g['hip']),name)
                 continue
-            foot=run_map(config['frontPaws'][i][name],name,leg)
+            foot=run_map(sample_cycle(config['frontPaws'],t)[name],name,leg)
+            foot=(foot[0],foot[1]-run_ground_offset[name])
             lens=(10.5,11) if leg['near'] else (9,10)
             planted=False
         else:
@@ -190,19 +174,19 @@ for i in range(config['frameCount']):
             if leg['hind']:
                 if ACTION=='WALK':
                     g=walking_hind_pose(root,foot,t,leg)
-                    parts[name],joints[name]=redraw_hind(g,(0,0),leg['near'])
+                    parts[name],joints[name]=redraw_hind(g,(0,0),name)
                 else:
                     px,py=leg['paw'];knee=(leg['root'][0]+2+.2*x,leg['root'][1]+7-.25*lift)
                     hock=(px-2+.8*x,py-5-.7*lift)
                     g={'hip':leg['root'],'stifle':knee,'hock':hock,'paw':foot,'pawAngle':0}
-                    parts[name],joints[name]=redraw_hind(g,np.array(root)-np.array(leg['root']),leg['near'])
+                    parts[name],joints[name]=redraw_hind(g,np.array(root)-np.array(leg['root']),name)
                 joints[name]['planted']=planted
                 continue
             lens=(9.1,9.25) if leg['near'] else (7,7.5)
         length=math.dist(root,foot)
         if length>sum(lens)-.01:lens=tuple(v*length/(sum(lens)-.01) for v in lens)
         elbow=ik(root,foot,*lens,1)
-        parts[name]=front_limb(root,elbow,foot,leg['near'])
+        parts[name]=ART.render(name,[root,elbow,foot])
         joints[name]={'shoulder':root,'elbow':elbow,'paw':foot,'planted':planted}
     im=Image.new('RGBA',WORK)
     for part in [parts['FH'],parts['FF'],warp(TAIL,tailxf),parts['NH'],parts['NF'],warp(TORSO,torsoxf),warp(HEAD,headxf)]:im.alpha_composite(part)
@@ -216,7 +200,7 @@ boxes=[frame.getbbox() for frame in frames]
 assert all(b and min(b[0],b[1],WORK[0]-b[2],WORK[1]-b[3])>=1 for b in boxes),'Working canvas overflow'
 left=min(b[0] for b in boxes)-PAD;right=max(b[2] for b in boxes)-PAD
 top=min(b[1] for b in boxes)-PAD;bottom=max(b[3] for b in boxes)-PAD
-assert right-left<=62 and bottom-top<=59,'Motion needs a smaller or revised rig'
+assert right-left<=62 and bottom-top<=59,('Motion needs a smaller or revised rig',[left,top,right,bottom])
 shift_x=max(1-left,min(0,63-right));shift_y=60-bottom
 crop=(PAD-shift_x,PAD-shift_y,PAD-shift_x+64,PAD-shift_y+64)
 source_counts=[int(np.count_nonzero(np.asarray(frame)[:,:,3])) for frame in frames]
@@ -230,7 +214,7 @@ for guide in guides:
         for key in ['hip','stifle','hock','paw','shoulder','elbow']:
             if key in leg:leg[key]=exported(leg[key])
 
-sheet=Image.new('RGB',(6*272,4*288),'#f7f2e5');d=ImageDraw.Draw(sheet)
+sheet=Image.new('RGB',(6*272,math.ceil(len(frames)/6)*288),'#f7f2e5');d=ImageDraw.Draw(sheet)
 for i,im in enumerate(frames):
     x=i%6*272;y=i//6*288;big=im.resize((256,256),Image.Resampling.NEAREST)
     sheet.paste(big,(x+8,y+24),big);d.text((x+8,y+4),f'{ACTION} {i+1}',fill='#344936')

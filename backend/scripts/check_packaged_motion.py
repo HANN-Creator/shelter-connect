@@ -6,7 +6,7 @@ from PIL import Image, ImageDraw
 with tempfile.TemporaryDirectory(prefix='harness-check-') as folder:
     root=Path(folder)
     with zipfile.ZipFile('/app/app.jar') as jar:
-        for name in ['runner.py','render.py','outline.py','motion-templates.json','canonical-profile.json']:
+        for name in ['runner.py','render.py','outline.py','limb_art.py','motion-templates.json','canonical-profile.json']:
             (root/name).write_bytes(jar.read('BOOT-INF/classes/motion-harness/'+name))
     # Fictional silhouette; no photo, provider credential or external call.
     im=Image.new('RGBA',(64,64));d=ImageDraw.Draw(im)
@@ -23,6 +23,7 @@ with tempfile.TemporaryDirectory(prefix='harness-check-') as folder:
     profile=run({'mode':'fit'})['profile']
     for action in ['WALK','RUN','BACK_OFF']:
         result=run({'mode':'render','action':action,'profile':profile})
-        assert result['frameCount']==24 and Image.open(root/'sheet.png').size==(1536,64)
+        count=24 if action=='BACK_OFF' else 48
+        assert result['frameCount']==count and Image.open(root/'sheet.png').size==(64*count,64)
         print(action,'PASS',result['templateVersion'])
     assert os.getuid()==10001

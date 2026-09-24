@@ -24,8 +24,9 @@ public final class PythonMotionHarness implements MotionHarness {
         var result=execute(base,Map.of("mode","render","action",action.name(),"profile",profile));
         JsonNode m=result.metadata();
         int count=m.path("frameCount").asInt(),duration=m.path("durationMs").asInt();
-        if(count!=24 || duration<1 || duration>1000 || result.sheet().length==0) throw new AssetException(422,"HARNESS_INVALID_RESULT");
-        var size=SpriteNormalizer.dimensions(result.sheet(),1536);
+        int expected=action==AssetAction.BACK_OFF?24:48;
+        if(count!=expected || duration<1 || duration>1000 || result.sheet().length==0) throw new AssetException(422,"HARNESS_INVALID_RESULT");
+        var size=SpriteNormalizer.dimensions(result.sheet(),3072);
         if(size[0]!=64*count || size[1]!=64) throw new AssetException(422,"HARNESS_INVALID_RESULT");
         return new Clip(result.sheet(),count,duration,Map.of("templateVersion",m.path("templateVersion").asText(),"paletteChecked",true,"boundsChecked",true));
     }
@@ -36,7 +37,7 @@ public final class PythonMotionHarness implements MotionHarness {
         Path dir=null;Process process=null;
         try {
             dir=Files.createTempDirectory("shelter-motion-");
-            for(String name:List.of("runner.py","render.py","outline.py","motion-templates.json","canonical-profile.json")) {
+            for(String name:List.of("runner.py","render.py","outline.py","limb_art.py","motion-templates.json","canonical-profile.json")) {
                 try(var in=getClass().getResourceAsStream("/motion-harness/"+name)) {
                     if(in==null) throw new IOException("Missing bundled renderer");
                     Files.copy(in,dir.resolve(name));

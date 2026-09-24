@@ -68,15 +68,15 @@ TAIL_WAG가 재생됐다는 이유로 화면에 ‘항상 사람을 좋아함’
 | 코드 | 현재 신규 생성 프레임 수 | 프레임당 시간 | `loop` | `holdLastFrame` | `returnToIdle` |
 | --- | --- | --- | --- | --- | --- |
 | IDLE | 16 | 140ms | true | false | DIRECT |
-| WALK | 24 | 60ms | true | false | DIRECT |
-| RUN | 24 | 30ms | true | false | DIRECT |
+| WALK | 48 | 30ms | true | false | DIRECT |
+| RUN | 48 | 15ms | true | false | DIRECT |
 | SNIFF | 16 | 100ms | true | false | DIRECT |
 | TAIL_WAG | 16 | 90ms | true | false | DIRECT |
 | BACK_OFF | 24 | 70ms | true | false | DIRECT |
 | SIT | 16 | 90ms | false | true | REVERSE_FRAMES |
 | LIE_DOWN | 16 | 100ms | false | true | REVERSE_FRAMES |
 
-표는 검사·협의용이다. 로컬 검토본은 선별된 프레임 수가 다를 수 있다. `frameCount`, `frames[i].durationMs`와 실제 배열을 읽고, 16장/24장이나 60fps를 하드코딩하지 않는다.
+표는 검사·협의용이다. 로컬 검토본은 선별된 프레임 수가 다를 수 있다. `frameCount`, `frames[i].durationMs`와 실제 배열을 읽고, 16장/24장/48장이나 60fps를 하드코딩하지 않는다.
 
 ## 4. 시간·좌표의 뜻
 

@@ -91,7 +91,16 @@ class AssetPostgresTest {
         var result=mvc.perform(get("/v1/dogs/"+dog+"/assets")).andExpect(status().isOk()).andExpect(header().string("Cache-Control","no-store")).andReturn();
         JsonNode published=json.readTree(result.getResponse().getContentAsString());
         assertThat(published.at("/data/animations").size()).isEqualTo(3);
-        assertThat(published.at("/data/animations/WALK/frameCount").asInt()).isEqualTo(24);
+        assertThat(published.at("/data/animations/WALK/frameCount").asInt()).isEqualTo(48);
+        var frames=published.at("/data/animations/WALK/frames");
+        assertThat(frames.size()).isEqualTo(48);
+        int elapsed=0;
+        for(int i=0;i<frames.size();i++) {
+            assertThat(frames.get(i).path("x").asInt()).isEqualTo(i*64);
+            assertThat(frames.get(i).path("durationMs").asInt()).isEqualTo(30);
+            elapsed+=frames.get(i).path("durationMs").asInt();
+        }
+        assertThat(elapsed).isEqualTo(1440);
         assertThat(published.at("/data/fallbackAction").asText()).isEqualTo("IDLE");
         assertThat(published.toString()).doesNotContain("photoId","source.png","permissionNote","test-key","preparation","headBox");
         mvc.perform(delete("/v1/operations/asset-permissions/"+permission).header("Authorization",bearer(opSubject))).andExpect(status().isNoContent());
