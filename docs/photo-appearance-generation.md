@@ -42,3 +42,5 @@ Java 테스트 294개, PostgreSQL 통합 검사 233개, Python 도구 검사 20�
 `backend/scripts/check_photo_appearance_live.py`는 실제 개발 서버의 사진 등록부터 BASE까지 확인하는 도구다. `--photo`, `--project-ref`, `--server-commit`, `--env-file`, `--storage-env-file`, `--output-dir`와 `--allow-paid-calls`를 명시한다. 사용 허가를 확인한 1024px 이하 PNG로 실행하며 Luna 분석 1회와 PixelLab BASE 1회를 확인한다. 중복 업로드는 같은 작업을 반환해야 한다. 체형 확정·동작 생성·공개 승인은 하지 않고 임시 계정·허가·등록만 정리한다. `appearance.json`, `base.png`, 얼굴 영역 확인 이미지와 비밀 값 없는 `report.json`을 남긴다.
 
 얼굴 확인 이미지는 서버에 저장된 분석 좌표로 재구성한 것이다. 생성된 도트는 서버의 인증된 API에서 직접 받은 원본이다. 실제 실행 결과와 디자인 차이는 병합 기록·노션에 추가한다.
+
+이후 동작 생성과 검토·앱 조회까지 이어서 확인하는 도구는 [B-26 사진·동작 전체 검증](photo-motion-verification.md)에 정리했다. 기본 도트 검토만 필요한 경우에는 위 B-25 도구를 그대로 쓴다.
