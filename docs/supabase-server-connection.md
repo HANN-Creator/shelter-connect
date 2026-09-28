@@ -27,18 +27,18 @@ Java 21과 Python 3를 준비하고 `backend/`에서 실행하면 돼. Gradle Wr
 처음 설정할 때만 예제 파일을 복사해. 기존 파일이 있으면 덮어쓰지 않아.
 
 ```sh
-cp -n .env.supabase.example .env.supabase
-chmod 600 .env.supabase
+cp -n .env.supabase.example .env.runtime
+chmod 600 .env.runtime
 ```
 
-Supabase의 Connect → Direct → Session pooler에서 호스트·사용자명을 확인해서 `.env.supabase`에 넣어줘. DB 비밀번호는 프로젝트를 만들 때 정한 값을 `DB_PASSWORD=` 뒤에 넣어. 이 파일은 Git에서 제외돼. 공개 주소·사용자명은 비밀번호가 아니지만, 연결 파일 전체를 GitHub나 노션에 붙여 넣지는 않아.
+Supabase의 Connect → Direct → Session pooler에서 호스트를 확인하고, [실행 계정·TLS 설정](database-runtime-security.md)에 따라 `.env.runtime`을 준비해. 사용자명은 `shelter_runtime.<project-ref>`, 비밀번호는 별도 실행 계정의 값을 넣어. `sslrootcert`에는 공식 CA 파일의 절대 경로를 적어. 프로젝트 관리자 비밀번호는 서버에 넣지 않아. 이 파일은 Git에서 제외돼. 공개 주소·사용자명은 비밀번호가 아니지만, 연결 파일 전체를 GitHub나 노션에 붙여 넣지는 않아.
 
 값에 셸용 따옴표를 덧붙이지 말고 그대로 적어. 비밀번호 안의 `$`, `#`, 작은따옴표, 백틱은 문자 그대로 사용해. 비밀번호의 앞뒤 공백도 보존하므로 의도하지 않은 공백이 들어가지 않게 해줘. 이 파일은 `source`로 실행하지 않아.
 
 ```sh
-python3 scripts/run_supabase.py --check-config
+python3 scripts/run_supabase.py --env-file .env.runtime --check-config
 ./gradlew bootJar
-python3 scripts/run_supabase.py --read-only
+python3 scripts/run_supabase.py --env-file .env.runtime --read-only
 ```
 
 `--check-config`는 설정 형식만 확인하고 비밀번호를 출력하거나 DB에 접속하지 않아. 실제 비밀번호가 맞는지는 서버 실행으로 확인해. `--read-only`는 이번처럼 조회 연결을 검증할 때 사용해. 인증된 저장 기능을 확인하는 후속 작업에서는 이 옵션을 빼고 실행해야 해.
