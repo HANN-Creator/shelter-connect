@@ -9,7 +9,8 @@ from urllib.parse import parse_qs, urlsplit
 
 BACKEND = Path(__file__).resolve().parents[1]
 KEYS = {"DB_URL", "DB_USERNAME", "DB_PASSWORD", "SUPABASE_URL", "DB_POOL_SIZE", "PORT"}
-AI_KEYS = {"OPENAI_API_KEY", "OPENAI_MODEL", "AI_TIMEOUT_SECONDS", "BEHAVIOR_AI_DAILY_LIMIT"}
+AI_KEYS = {"OPENAI_API_KEY", "OPENAI_MODEL", "AI_TIMEOUT_SECONDS", "BEHAVIOR_AI_DAILY_LIMIT",
+           "AI_USER_MINUTE_LIMIT", "AI_USER_DAILY_LIMIT", "AI_GLOBAL_DAILY_LIMIT", "AI_CONCURRENT_LIMIT"}
 STORAGE_KEYS = {"SUPABASE_SECRET_KEY", "PHOTO_STORAGE_BUCKET", "PHOTO_STORAGE_TIMEOUT_SECONDS"}
 
 
@@ -64,6 +65,11 @@ def load_ai_settings(path):
     limit = values.setdefault("BEHAVIOR_AI_DAILY_LIMIT", "20")
     if not limit.isascii() or not limit.isdecimal() or not 1 <= int(limit) <= 100:
         raise ConfigurationError("BEHAVIOR_AI_DAILY_LIMIT는 1~100으로 설정해 주세요.")
+    for name, default, maximum in [("AI_USER_MINUTE_LIMIT", "6", 60), ("AI_USER_DAILY_LIMIT", "60", 1000),
+                                    ("AI_GLOBAL_DAILY_LIMIT", "500", 10000), ("AI_CONCURRENT_LIMIT", "2", 10)]:
+        value = values.setdefault(name, default)
+        if not value.isascii() or not value.isdecimal() or not 1 <= int(value) <= maximum:
+            raise ConfigurationError(f"{name}는 1~{maximum}으로 설정해 주세요.")
     return values
 
 

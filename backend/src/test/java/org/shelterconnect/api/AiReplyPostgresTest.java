@@ -37,6 +37,7 @@ class AiReplyPostgresTest {
 	@Autowired JdbcTemplate jdbc; @Autowired MockMvc mvc; @Autowired JsonMapper json; @Autowired JwtTestSupport tokens;
 	@MockitoBean org.shelterconnect.api.behavior.BehaviorSuggestionProvider behaviorSuggestions;
 	@MockitoBean AiProvider provider; @MockitoSpyBean AiProperties properties;
+	@MockitoSpyBean AiBudgetProperties budgetProperties;
 	private UUID user,other,subject,otherSubject,shelter,dog,otherDog,session,message,observation;
 	private String token,otherToken;
 	private ExecutorService executor;
@@ -104,6 +105,81 @@ class AiReplyPostgresTest {
 		var result=reply(greeting,false,201).at("/data/reply");
 		assertThat(result.get("needsShelterConfirmation").asBoolean()).isFalse();
 		verifyNoInteractions(provider);
+		assertThat(usage()).isZero();
+	}
+	@Test void minuteLimitDoesNotChargeCachedRepliesOrConsumeAttemptsWhenRejected() throws Exception {
+		doReturn(1).when(budgetProperties).userMinute();
+		reply(message,false,201);reply(message,false,200);
+		UUID next=addMessage("minute-next","산책할 때는 어때?");
+		assertThat(reply(next,false,429).path("code").asText()).isEqualTo("AI_USER_MINUTE_LIMIT");
+		assertThat(jdbc.queryForObject("SELECT generation_attempts FROM shelter.chat_messages WHERE id=?",Integer.class,next)).isZero();
+		assertThat(usage()).isEqualTo(1);verify(provider,times(1)).generate(any());
+		jdbc.update("UPDATE shelter.ai_reply_usage SET reserved_at=clock_timestamp()-interval '61 seconds' WHERE user_id=?",user);
+		reply(next,false,201);assertThat(usage()).isEqualTo(2);
+	}
+	@Test void dailyLimitPersistsBeyondMinuteWindowAndAcrossNewBudgetInstances() throws Exception {
+		doReturn(1).when(budgetProperties).userDay();
+		reply(message,false,201);
+		jdbc.update("UPDATE shelter.ai_reply_usage SET reserved_at=clock_timestamp()-interval '61 seconds' WHERE user_id=?",user);
+		UUID next=addMessage("daily-next","다른 놀이도 좋아해?");
+		assertThat(reply(next,false,429).path("code").asText()).isEqualTo("AI_USER_DAILY_LIMIT");
+		var fresh=new AiReplyBudget(org.springframework.jdbc.core.simple.JdbcClient.create(jdbc.getDataSource()),budgetProperties);
+		var tx=new org.springframework.transaction.support.TransactionTemplate(new org.springframework.jdbc.datasource.DataSourceTransactionManager(jdbc.getDataSource()));
+		assertThatThrownBy(()->tx.execute(status->{fresh.reserve(user,next,UUID.randomUUID(),90);return null;})).hasMessageContaining("오늘의 대화 생성 한도");
+		assertThat(usage()).isEqualTo(1);verify(provider,times(1)).generate(any());
+	}
+	@Test void dailyUsageFromYesterdayDoesNotUseTodaysAllowance() throws Exception {
+		doReturn(1).when(budgetProperties).userDay();reply(message,false,201);
+		jdbc.update("UPDATE shelter.ai_reply_usage SET reserved_at=date_trunc('day',clock_timestamp() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'-interval '1 second' WHERE user_id=?",user);
+		reply(addMessage("new-day","공놀이를 좋아해?"),false,201);
+		assertThat(usage()).isEqualTo(2);
+	}
+	@Test void globalDailyLimitIsSharedByDifferentUsers() throws Exception {
+		doReturn(1).when(budgetProperties).globalDay();reply(message,false,201);
+		String otherPath=otherReplyPath();
+		assertThat(body(auth(post(otherPath),otherToken),429).path("code").asText()).isEqualTo("AI_DAILY_LIMIT");
+		verify(provider,times(1)).generate(any());
+	}
+	@Test void concurrentCapacityIsSharedAndReleasedAfterCompletion() throws Exception {
+		doReturn(1).when(budgetProperties).concurrent();
+		String otherPath=otherReplyPath();
+		var entered=new CountDownLatch(1);var release=new CountDownLatch(1);
+		doAnswer(call->{entered.countDown();assertThat(release.await(10,TimeUnit.SECONDS)).isTrue();return new Generated("공놀이가 좋아!",false,List.of(observation),"resp_budget");}).when(provider).generate(any());
+		Future<JsonNode> first=executor.submit(()->reply(message,false,201));
+		try {
+			assertThat(entered.await(5,TimeUnit.SECONDS)).isTrue();
+			assertThat(body(auth(post(otherPath),otherToken),429).path("code").asText()).isEqualTo("AI_BUSY");
+			verify(provider,times(1)).generate(any());
+		} finally { release.countDown(); }
+		first.get(10,TimeUnit.SECONDS);body(auth(post(otherPath),otherToken),201);
+		verify(provider,times(2)).generate(any());
+		assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.ai_reply_usage WHERE user_id IN (?,?) AND released_at IS NULL",Integer.class,user,other)).isZero();
+	}
+	@Test void simultaneousUsersCannotOverbookTheGlobalDailyBudget() throws Exception {
+		doReturn(1).when(budgetProperties).globalDay();
+		String otherPath=otherReplyPath();var go=new CountDownLatch(1);
+		Future<Integer> first=executor.submit(()->{go.await();return mvc.perform(auth(post(path(message)),token)).andReturn().getResponse().getStatus();});
+		Future<Integer> second=executor.submit(()->{go.await();return mvc.perform(auth(post(otherPath),otherToken)).andReturn().getResponse().getStatus();});
+		go.countDown();assertThat(List.of(first.get(10,TimeUnit.SECONDS),second.get(10,TimeUnit.SECONDS))).containsExactlyInAnyOrder(201,429);
+		verify(provider,times(1)).generate(any());
+	}
+	@Test void failedAttemptsStillCountAndExplicitRetriesReserveAnotherAttempt() throws Exception {
+		doThrow(new AiFailure("AI_TIMEOUT")).when(provider).generate(any());
+		reply(message,false,200);reply(message,false,200);assertThat(usage()).isEqualTo(1);
+		reply(message,true,200);assertThat(usage()).isEqualTo(2);
+		assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.ai_reply_usage WHERE user_id=? AND released_at IS NULL",Integer.class,user)).isZero();
+	}
+	@Test void abandonedReservationsExpireWithoutRestoringTheDailyCharge() throws Exception {
+		doReturn(1).when(budgetProperties).concurrent();reply(message,false,201);
+		jdbc.update("UPDATE shelter.ai_reply_usage SET reserved_at=clock_timestamp()-interval '2 minutes',expires_at=clock_timestamp()-interval '1 minute',released_at=NULL WHERE user_id=?",user);
+		reply(addMessage("after-crash","다시 공놀이 이야기 해줘"),false,201);
+		assertThat(usage()).isEqualTo(2);
+	}
+	private int usage() { return jdbc.queryForObject("SELECT count(*) FROM shelter.ai_reply_usage WHERE user_id=?",Integer.class,user); }
+	private String otherReplyPath() throws Exception {
+		String s=body(auth(post("/v1/dogs/"+dog+"/chat-sessions"),otherToken),201).at("/data/id").asText();
+		String m=body(auth(post("/v1/chat-sessions/"+s+"/messages"),otherToken).contentType("application/json").content("{\"clientMessageId\":\"other-budget\",\"text\":\"공놀이를 좋아해?\"}"),201).at("/data/id").asText();
+		return "/v1/chat-sessions/"+s+"/messages/"+m+"/reply";
 	}
 	@Test void failuresRequireExplicitRetryAndAttemptsAreBounded() throws Exception {
 		doThrow(new AiFailure("AI_RATE_LIMITED")).when(provider).generate(any());

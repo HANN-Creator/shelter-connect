@@ -8,6 +8,7 @@ import static org.shelterconnect.api.chat.AiTypes.*;
 
 @Service
 public class AiReplyService {
+	private static final org.slf4j.Logger log=org.slf4j.LoggerFactory.getLogger(AiReplyService.class);
 	private final AiReplyStore store;
 	private final AiProvider provider;
 	private final AiGrounding grounding;
@@ -34,6 +35,9 @@ public class AiReplyService {
 		} catch(RuntimeException failure) {
 			store.abandon(work,"AI_INTERNAL_ERROR");
 			throw new ChatException(500,"INTERNAL_ERROR","답변을 저장하지 못했어요. 메시지 상태를 확인한 뒤 다시 시도해 주세요.");
+		} finally {
+			try { store.releaseCapacity(work); }
+			catch(RuntimeException failure) { log.warn("AI capacity release deferred to lease expiry; type={}",failure.getClass().getSimpleName()); }
 		}
 	}
 }

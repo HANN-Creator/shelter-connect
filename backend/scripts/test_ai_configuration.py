@@ -58,6 +58,18 @@ class AiConfigurationTest(unittest.TestCase):
         execute.assert_not_called()
         self.assertNotIn('private-', capture.getvalue())
 
+    def test_chat_budgets_are_explicit_bounded_and_passed_to_the_server(self):
+        expected = {'AI_USER_MINUTE_LIMIT': '6', 'AI_USER_DAILY_LIMIT': '60',
+                    'AI_GLOBAL_DAILY_LIMIT': '500', 'AI_CONCURRENT_LIMIT': '2'}
+        ai = self.load('OPENAI_API_KEY=sk-fake')
+        env, _ = launch_settings({}, {}, ai=ai)
+        for name, value in expected.items():
+            self.assertEqual(value, env[name])
+            for invalid in ['0', '-1', '10001', 'private-value', '６']:
+                with self.subTest(name=name, value=invalid), self.assertRaises(ConfigurationError) as error:
+                    self.load('OPENAI_API_KEY=sk-fake\n' + name + '=' + invalid)
+                self.assertNotIn('private-value', str(error.exception))
+
 
 if __name__ == '__main__':
     unittest.main()

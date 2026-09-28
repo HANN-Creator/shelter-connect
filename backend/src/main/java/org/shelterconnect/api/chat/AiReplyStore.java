@@ -16,8 +16,10 @@ public class AiReplyStore {
 	private final ChatRepository chats;
 	private final AiReplyRepository replies;
 	private final AiProperties properties;
-	public AiReplyStore(AccountService accounts,ChatRepository chats,AiReplyRepository replies,AiProperties properties) {
-		this.accounts=accounts;this.chats=chats;this.replies=replies;this.properties=properties;
+	private final AiReplyBudget budget;
+	private final AiGrounding grounding;
+	public AiReplyStore(AccountService accounts,ChatRepository chats,AiReplyRepository replies,AiProperties properties,AiReplyBudget budget,AiGrounding grounding) {
+		this.accounts=accounts;this.chats=chats;this.replies=replies;this.properties=properties;this.budget=budget;this.grounding=grounding;
 	}
 	public Started start(UUID subject,UUID sessionId,UUID requestId,boolean retry) {
 		UUID user=accounts.lockProfile(subject,false).id();
@@ -35,8 +37,10 @@ public class AiReplyStore {
 		if(!chats.lockAvailableDog(session.dogId())) throw ChatException.conflict("DOG_UNAVAILABLE","지금은 새 대화를 나눌 수 없어요.");
 		if(replies.otherActive(sessionId,requestId)) throw ChatException.conflict("REPLY_IN_PROGRESS","앞선 답변이 끝난 뒤 다시 요청해 주세요.");
 		UUID token=UUID.randomUUID();
+		var context=replies.context(session,request.message());
+		if(grounding.local(context).isEmpty()) budget.reserve(user,requestId,token,properties.leaseSeconds());
 		replies.claim(requestId,token,properties);
-		return new Started(new Work(subject,user,sessionId,session.dogId(),requestId,token,replies.context(session,request.message())),null);
+		return new Started(new Work(subject,user,sessionId,session.dogId(),requestId,token,context),null);
 	}
 	public Outcome complete(Work work,Generated answer) {
 		accounts.lockProfile(work.subject(),false);
@@ -55,6 +59,7 @@ public class AiReplyStore {
 		return completed(work.requestId(),replies.complete(work,answer,used),201);
 	}
 	public void abandon(Work work,String code) { replies.fail(work,code); }
+	public void releaseCapacity(Work work) { budget.release(work.token()); }
 	public Outcome current(UUID subject,UUID sessionId,UUID requestId) {
 		UUID user=accounts.lockProfile(subject,false).id();owned(user,sessionId);
 		Request request=request(sessionId,requestId);
