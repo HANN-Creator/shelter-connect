@@ -27,7 +27,7 @@ public final class SupabaseAssetStorage implements AssetStorage {
     public byte[] photo(UUID dog,String bucket,String key) {
         if(!bucket.equals(properties.photoBucket) || !key.startsWith(dog+"/")) throw AssetException.invalid();
         privateBucket(bucket);
-        return request("/object/authenticated/"+bucket+"/"+path(key),"GET",null,8*1024*1024);
+        return request("/object/authenticated/"+bucket+"/"+path(key),"GET",null,PhotoUploadImage.MAX_BYTES);
     }
     public byte[] asset(String key) {
         privateBucket(properties.assetBucket);
@@ -38,6 +38,7 @@ public final class SupabaseAssetStorage implements AssetStorage {
         request("/object/"+properties.assetBucket+"/"+path(key),"POST",png,256*1024);
     }
     public void putPhoto(UUID dogId,String key,byte[] png) {
+        if(png.length==0 || png.length>PhotoUploadImage.MAX_BYTES) throw new AssetException(413,"PHOTO_TOO_LARGE");
         if(!key.matches(dogId+"/uploads/[a-f0-9-]{36}/[a-f0-9]{64}\\.png")) throw AssetException.invalid();
         privateBucket(properties.photoBucket);
         // The immutable, server-selected content hash makes a repeated upload write the same bytes only.

@@ -20,7 +20,7 @@ public class AccountErrorHandler {
 
 	@ExceptionHandler(Exception.class)
 	ResponseEntity<SecurityErrors.Error> unexpected(Exception exception, HttpServletRequest request) {
-		log.error("Account request failed; requestId={}", ApiRequestFilter.requestId(request), exception);
+		log.error("Account request failed; requestId={}, type={}", ApiRequestFilter.requestId(request), exception.getClass().getSimpleName());
 		return ResponseEntity.internalServerError().body(new SecurityErrors.Error(
 				"INTERNAL_ERROR", "정보를 불러오지 못했어요. 잠시 뒤 다시 시도해 주세요.", ApiRequestFilter.requestId(request)));
 	}

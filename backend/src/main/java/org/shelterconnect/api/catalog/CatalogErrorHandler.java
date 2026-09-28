@@ -23,7 +23,7 @@ public class CatalogErrorHandler {
 
 	@ExceptionHandler(Exception.class)
 	ResponseEntity<ApiError> unexpected(Exception exception, HttpServletRequest request) {
-		log.error("Catalog request failed; requestId={}", requestId(request), exception);
+		log.error("Catalog request failed; requestId={}, type={}", requestId(request), exception.getClass().getSimpleName());
 		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiError(
 				"INTERNAL_ERROR", "정보를 불러오지 못했어요. 잠시 뒤 다시 시도해 주세요.", requestId(request)));
 	}

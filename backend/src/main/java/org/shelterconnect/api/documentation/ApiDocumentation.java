@@ -30,6 +30,7 @@ public class ApiDocumentation {
 
                 Try it out은 현재 서버에 실제 요청을 보냅니다. 저장·AI·생성 요청은 데이터를 바꾸거나 사용량을 소모합니다.
                 AI와 에셋 생성은 서버 설정이 활성화된 경우에만 가능합니다. Free 서버 첫 응답은 늦을 수 있습니다.
+                일반 요청 본문은 64KiB, 사진은 원본·변환본 모두 5MiB 이하입니다. 요청 제한 시 429와 Retry-After(초)를 반환합니다.
                 목록은 nextCursor를 그대로 보내 이어 읽습니다. 오류는 code/message/requestId를 확인하세요.
 
                 [사진·특징 연결 순서](https://github.com/HANN-Creator/shelter-connect/blob/main/docs/asset-input-workflow.md)
@@ -87,6 +88,9 @@ public class ApiDocumentation {
                 if(!spec.path("public").asBoolean(false)) {
                     responses.addApiResponse("401",error("401"));responses.addApiResponse("403",error("403"));
                 }
+                responses.addApiResponse("413",error("413"));
+                responses.addApiResponse("429",error("429"));
+                responses.addApiResponse("415",error("415"));
                 responses.addApiResponse("500",error("500"));
                 op.setResponses(responses);
             }));
@@ -109,6 +113,8 @@ public class ApiDocumentation {
             case "503" -> "AI/Storage/생성 기능 연결 비활성화 또는 일시적 사용 불가";
             default -> "서버 오류. requestId와 함께 확인 요청";
         };
-        return new ApiResponse().description(description).content(new Content().addMediaType("application/json",new MediaType().schema(ref("ApiFailure"))));
+        var response = new ApiResponse().description(description).content(new Content().addMediaType("application/json",new MediaType().schema(ref("ApiFailure"))));
+        if(status.equals("429")) response.addHeaderObject("Retry-After", new io.swagger.v3.oas.models.headers.Header().description("다시 요청하기까지 기다릴 초").schema(new IntegerSchema()));
+        return response;
     }
 }
