@@ -56,7 +56,7 @@ Render가 지정한 `PORT`를 받고 `0.0.0.0`에서 요청을 받아. 컨테이
 
 로컬에서 쓰던 `PORT=8080`은 복사하지 않아도 돼. Render가 정한 포트를 그대로 사용해.
 
-AI를 켤 때는 서버에 `OPENAI_API_KEY`, `OPENAI_MODEL=gpt-5.6-luna`, `AI_TIMEOUT_SECONDS=30`, `AI_ENABLED=true`를 넣어. Render 서버가 무료여도 실제 AI 호출 요금은 따로 발생해. 공개 개발 서버에는 아직 사용자별 호출 횟수 제한이 없으므로, 개발자 검증 후 넓게 공유하기 전에 제한을 추가해야 해. 키를 RN 앱에 넣지 않아.
+AI를 켤 때는 서버에 `OPENAI_API_KEY`, `OPENAI_MODEL=gpt-5.6-luna`, `AI_TIMEOUT_SECONDS=30`, `AI_ENABLED=true`를 넣어. Render 서버가 무료여도 실제 AI 호출 요금은 따로 발생해. B-29부터 [AI 사용량·동시 호출 제한](ai-usage-limits.md)을 적용했고, B-32부터 [일반 요청 횟수·크기 제한](api-request-security.md)도 적용해. 키를 RN 앱에 넣지 않아.
 
 사진 기능은 `SUPABASE_SECRET_KEY`, `PHOTO_STORAGE_BUCKET=dog-photos`, `PHOTO_STORAGE_TIMEOUT_SECONDS=5`, `PHOTO_STORAGE_ENABLED=true`로 켤 수 있어. 현재 실제 강아지 사진은 등록하지 않았고, 사용 허가를 받을 때까지 등록을 보류해.
 
