@@ -1,2 +1,4 @@
+# Keep the installer patched in CI and the deployment image.
+pip==26.2.1
 Pillow==12.3.0
 numpy==2.2.6
