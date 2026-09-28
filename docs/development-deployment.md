@@ -45,9 +45,9 @@ Render가 지정한 `PORT`를 받고 `0.0.0.0`에서 요청을 받아. 컨테이
 | 이름 | 넣을 값 |
 | --- | --- |
 | `SUPABASE_URL` | 기존 개발 프로젝트의 HTTPS 주소 |
-| `DB_URL` | 기존 session pooler의 JDBC 주소. `:5432/postgres?sslmode=require` |
-| `DB_USERNAME` | 기존 개발 DB 사용자 이름 |
-| `DB_PASSWORD` | 기존 개발 DB 비밀번호 |
+| `DB_URL` | 기존 session pooler의 JDBC 주소. `:5432/postgres?sslmode=verify-full&sslrootcert=/app/certs/supabase-prod-ca-2021.crt` |
+| `DB_USERNAME` | 별도 실행 계정 `shelter_runtime.<project-ref>` |
+| `DB_PASSWORD` | 별도 실행 계정 비밀번호. 관리자 비밀번호를 넣지 않음 |
 | `DB_POOL_SIZE` | `3` |
 | `DB_MIGRATE` | `false` |
 | `SERVER_ADDRESS` | `0.0.0.0` |

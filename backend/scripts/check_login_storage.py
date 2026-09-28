@@ -19,11 +19,20 @@ def deployment_origin(value):
     return value
 
 
+def runtime_environment(path, project_ref):
+    values = load_settings(path)
+    check_settings(values, project_ref)
+    if values['DB_USERNAME'] != 'shelter_runtime.' + project_ref:
+        raise ConfigurationError('로컬 API 실행에는 별도의 shelter_runtime 계정이 필요해요.')
+    return {'RUNTIME_' + name: values[name] for name in ('DB_URL', 'DB_USERNAME', 'DB_PASSWORD')}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--project-ref', required=True, help='explicit development project ref; must match the local configuration')
     parser.add_argument('--env-file', type=Path, default=BACKEND / '.env.supabase')
     parser.add_argument('--storage-env-file', type=Path, default=BACKEND / '.env.storage')
+    parser.add_argument('--runtime-env-file', type=Path, default=BACKEND / '.env.runtime')
     parser.add_argument('--api-origin', type=deployment_origin,
                         help='opt-in deployed Render HTTPS origin; never restarts the hosted server')
     args = parser.parse_args()
@@ -38,6 +47,8 @@ def main():
         if args.api_origin:
             env['DEPLOYMENT_CHECK_ORIGIN'] = args.api_origin
             task = 'checkDeployedStorage'
+        else:
+            env.update(runtime_environment(args.runtime_env_file, args.project_ref))
         command = [str(BACKEND / 'gradlew'), '--no-daemon', task]
         os.chdir(BACKEND)
         os.execve(command[0], command, env)

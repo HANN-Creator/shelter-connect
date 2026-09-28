@@ -64,6 +64,6 @@ python3 scripts/check_auth_api.py
 - AI와 Storage 호출 비활성
 - 연결 풀 기본 3개, 최대 5개
 
-현재는 세션 풀러의 `postgres.<project-ref>` 사용자와 `sslmode=require`를 쓰는 개발 연결 도구야. 직접 연결·사용자 지정 도메인·운영 DB 역할·인증서 검증 강화 설정은 이 도구의 지원 범위가 아니야. B-12에서 추가한 `--with-photos`는 [별도 Storage 서버 키](photo-storage-connection.md)를 읽어서 사진 기능만 켜. 운영 배포나 실제 AI 실행에는 목적에 맞는 서버 환경 설정을 따로 사용하면 돼.
+현재 서버는 별도 실행 계정과 공식 CA를 사용하는 `verify-full` 연결을 요구해. [B-31 계정·TLS 설정](database-runtime-security.md)을 따라 `.env.runtime`을 준비하면 돼. `--with-photos`와 `--with-ai`는 기존처럼 별도 서버 키 파일로 켠다.
 
 원격 DB에는 테스트용 데이터 생성·삭제를 하는 `integrationTest`나 샘플 로더를 실행하지 않아. 기존 테스트 DB 검사는 로컬의 임시 `shelter_test`만 허용하고, 원격 연결 검증은 위 HTTP 조회로 진행했어.

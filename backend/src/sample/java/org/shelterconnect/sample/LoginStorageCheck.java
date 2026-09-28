@@ -54,9 +54,9 @@ public class LoginStorageCheck {
                 "Explicit development project ref must match SUPABASE_URL.");
         require(("postgres." + ref).equals(env.get("DB_USERNAME")), "Database user must match the Auth project.");
         require(env.getOrDefault("SUPABASE_SECRET_KEY", "").matches("sb_secret_[A-Za-z0-9_-]+"), "A server key is required.");
-        require(env.getOrDefault("DB_URL", "").matches(
-                "jdbc:postgresql://aws-[0-9]+-[a-z0-9-]+\\.pooler\\.supabase\\.com:5432/postgres\\?sslmode=require"),
-                "Use the development session pooler with SSL.");
+        require(env.getOrDefault("DB_URL", "").matches("jdbc:postgresql://aws-[0-9]+-[a-z0-9-]+\\.pooler\\.supabase\\.com:5432/postgres\\?.+"),
+                "Use the selected development session pooler.");
+        org.shelterconnect.api.database.DatabaseTargetPolicy.validate(env.get("DB_URL"), "shelter_runtime."+ref);
         require(!env.getOrDefault("DB_PASSWORD", "").isBlank(), "Database password is required.");
     }
 
@@ -281,6 +281,11 @@ public class LoginStorageCheck {
         for (String name : List.of("PATH", "JAVA_HOME", "DB_URL", "DB_USERNAME", "DB_PASSWORD", "DB_POOL_SIZE", "SUPABASE_URL"))
             if (env.containsKey(name)) process.environment().put(name, env.get(name));
         process.environment().put("DB_MIGRATE", "false");
+        // Fixture setup/cleanup uses the administrator; the actual server does not.
+        for (String name : List.of("DB_URL", "DB_USERNAME", "DB_PASSWORD")) {
+            require(env.containsKey("RUNTIME_"+name), "Set the separate runtime database settings for local API checks.");
+            process.environment().put(name,env.get("RUNTIME_"+name));
+        }
         process.environment().putAll(ai);
         server = process.redirectErrorStream(true).redirectOutput(ProcessBuilder.Redirect.appendTo(work.resolve("server.log").toFile())).start();
         long deadline = System.nanoTime() + Duration.ofSeconds(60).toNanos();

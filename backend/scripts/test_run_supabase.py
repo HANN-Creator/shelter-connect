@@ -11,7 +11,7 @@ import run_supabase
 class SupabaseLauncherTest(unittest.TestCase):
     def setUp(self):
         self.values = {
-            "DB_URL": "jdbc:postgresql://aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres?sslmode=require",
+            "DB_URL": "jdbc:postgresql://aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres?sslmode=verify-full&sslrootcert=/tmp/official-ca.crt",
             "DB_USERNAME": "postgres.abcdefghijklmnopqrst",
             "DB_PASSWORD": "local-fake-only",
             "SUPABASE_URL": "https://abcdefghijklmnopqrst.supabase.co",
@@ -39,9 +39,9 @@ class SupabaseLauncherTest(unittest.TestCase):
         changes = [
             {"DB_USERNAME": "postgres.differentprojectref00"},
             {"DB_URL": self.values["DB_URL"].replace(":5432", ":6543")},
-            {"DB_URL": self.values["DB_URL"].replace("sslmode=require", "sslmode=disable")},
+            {"DB_URL": self.values["DB_URL"].replace("sslmode=verify-full&sslrootcert=/tmp/official-ca.crt", "sslmode=disable")},
             {"DB_URL": self.values["DB_URL"] + "&password=secret-not-to-log"},
-            {"DB_URL": "jdbc:postgresql://evil.example:5432/postgres?sslmode=require"},
+            {"DB_URL": "jdbc:postgresql://evil.example:5432/postgres?sslmode=verify-full&sslrootcert=/tmp/official-ca.crt"},
             {"SUPABASE_URL": "http://abcdefghijklmnopqrst.supabase.co"},
             {"PORT": "80"}, {"DB_POOL_SIZE": "10"},
         ]
@@ -66,6 +66,15 @@ class SupabaseLauncherTest(unittest.TestCase):
         self.assertIn("--spring.datasource.hikari.read-only=true", args)
         self.assertIn("--spring.flyway.enabled=false", args)
         self.assertFalse(any(self.values["DB_PASSWORD"] in arg for arg in args))
+
+    def test_runtime_role_and_verified_ca_are_required_for_the_server_launcher(self):
+        self.assertEqual('shelter_runtime.abcdefghijklmnopqrst',
+                         self.load({'DB_USERNAME': 'shelter_runtime.abcdefghijklmnopqrst'})['DB_USERNAME'])
+        for query in ['sslmode=require', 'sslmode=verify-full',
+                      'sslmode=verify-full&sslrootcert=relative.crt',
+                      'sslmode=verify-full&sslrootcert=/tmp/ca&sslfactory=unsafe']:
+            with self.assertRaises(run_supabase.ConfigurationError):
+                self.load({'DB_URL': self.values['DB_URL'].split('?')[0]+'?'+query})
 
     def test_config_only_never_starts_a_process_or_prints_password(self):
         capture = io.StringIO()

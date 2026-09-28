@@ -15,6 +15,7 @@ RUN python3 -m venv /opt/motion \
 RUN groupadd --system --gid 10001 shelter \
     && useradd --system --uid 10001 --gid shelter --no-create-home shelter
 WORKDIR /app
+COPY --chown=shelter:shelter certs ./certs
 COPY --from=build --chown=shelter:shelter /build/build/libs/shelter-connect-api.jar ./app.jar
 USER 10001:10001
 ENV SERVER_ADDRESS=0.0.0.0
