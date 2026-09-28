@@ -80,6 +80,7 @@ API_BASE_URL=https://shelter-connect-dev.onrender.com python3 scripts/check_auth
 ```sh
 python3 scripts/check_login_storage.py \
   --project-ref gwimdiwrqfcqulefshoz \
+  --env-file .env.admin-tls \
   --api-origin https://shelter-connect-dev.onrender.com
 ```
 

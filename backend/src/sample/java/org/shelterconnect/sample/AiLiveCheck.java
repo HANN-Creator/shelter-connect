@@ -29,7 +29,10 @@ public final class AiLiveCheck extends LoginStorageCheck {
         require(key.matches("sk-[A-Za-z0-9_-]+"), "Missing local OpenAI API key; no external call was made.");
         new AiProperties(true, key, env.get("OPENAI_MODEL"), Integer.parseInt(env.getOrDefault("AI_TIMEOUT_SECONDS", "30")));
         ai = Map.of("OPENAI_API_KEY", key, "OPENAI_MODEL", env.get("OPENAI_MODEL"),
-                "AI_TIMEOUT_SECONDS", env.getOrDefault("AI_TIMEOUT_SECONDS", "30"));
+                "AI_TIMEOUT_SECONDS", env.getOrDefault("AI_TIMEOUT_SECONDS", "30"),
+                // This isolated verifier makes exactly twelve reviewed calls.
+                // Keep daily/global budgets, but allow its short test burst.
+                "AI_USER_MINUTE_LIMIT", "20");
     }
 
     public static void main(String[] args) {

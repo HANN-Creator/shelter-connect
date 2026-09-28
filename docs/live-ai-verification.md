@@ -4,14 +4,14 @@
 
 ## 다시 실행하려면
 
-Java 21을 준비하고 `backend`에서 실행해. `.env.supabase`에는 지정 개발 DB 설정, `.env.storage`에는 임시 계정을 만들고 정리할 Supabase 서버 키가 필요해. `.env.ai.example`을 `.env.ai`로 복사하고 OpenAI 키를 넣어줘. 세 파일은 Git에서 제외돼. 값을 명령행에 직접 붙이거나 셸로 실행하지 않아.
+Java 21을 준비하고 `backend`에서 실행해. `.env.admin-tls`에는 지정 개발 DB 관리자 설정, `.env.runtime`에는 별도 실행 계정과 공식 CA의 verify-full 설정, `.env.storage`에는 임시 계정을 만들고 정리할 Supabase 서버 키가 필요해. `.env.ai.example`을 `.env.ai`로 복사하고 OpenAI 키를 넣어줘. 모든 비밀 설정 파일은 Git에서 제외돼. 값을 명령행에 직접 붙이거나 셸로 실행하지 않아.
 
 ```sh
-python3 scripts/check_ai_live.py --project-ref <개발 프로젝트 ref> --check-config
-python3 scripts/check_ai_live.py --project-ref <개발 프로젝트 ref>
+python3 scripts/check_ai_live.py --project-ref <개발 프로젝트 ref> --env-file .env.admin-tls --runtime-env-file .env.runtime --check-config
+python3 scripts/check_ai_live.py --project-ref <개발 프로젝트 ref> --env-file .env.admin-tls --runtime-env-file .env.runtime
 ```
 
-첫 번째 명령은 설정 형식만 검사해. 두 번째 명령은 실제 외부 호출과 요금이 생길 수 있어. 일반 `build`, `test`, CI에서는 실행하지 않아.
+첫 번째 명령은 설정 형식만 검사해. 두 번째 명령은 실제 외부 호출과 요금이 생길 수 있어. 일반 `build`, `test`, CI에서는 실행하지 않아. 이 도구가 띄운 로컬 검증 서버만 분당 한도를 20회로 설정해 12회 검사를 수행한다. 일일·전역 한도는 유지하고 Render 설정은 바꾸지 않아.
 
 검사는 다음 순서로 진행돼.
 
