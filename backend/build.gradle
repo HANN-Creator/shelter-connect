@@ -105,6 +105,15 @@ tasks.register('checkDeployedStorage', JavaExec) {
 	mainClass = 'org.shelterconnect.sample.DeployedStorageCheck'
 }
 
+// Manual loopback UI only; never packaged or deployed with the API.
+tasks.register('browserFlowCheck', JavaExec) {
+	description = 'Opens a local browser harness against the selected development API with disposable users.'
+	group = 'verification'
+	dependsOn tasks.named('bootJar')
+	classpath = sourceSets.sample.runtimeClasspath
+	mainClass = 'org.shelterconnect.sample.BrowserFlowCheck'
+}
+
 // Explicit paid development check; never depends on test/build/CI.
 tasks.register('checkAiLive', JavaExec) {
 	description = 'Checks real Luna replies using reviewed fictional records and temporary users.'

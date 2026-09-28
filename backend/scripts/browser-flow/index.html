@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="ko">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>보호소 커넥트 · 연결 테스트</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head>
+<body>
+<header><div class="brand"><span class="paw">✿</span><div><strong>보호소 커넥트</strong><small>작은 화면으로 먼저 만나보기</small></div></div><span class="badge" id="server-status">연결 준비 중</span></header>
+<main>
+<section class="intro"><p class="eyebrow">DEVELOPMENT PLAYGROUND</p><h1>처음 만나는 순간부터,<br>함께 살 준비까지.</h1><p>실제 개발 서버에 연결한 테스트 화면이에요.<br>가상 강아지와 임시 계정으로 한 번의 흐름을 확인해요.</p><div class="toolbar"><button class="primary" id="run" disabled>전체 흐름 검증하기 <span>↗</span></button><button id="cleanup" disabled>임시 데이터 정리</button></div><p class="fine" id="scope">준비 상태를 확인하고 있어요.</p></section>
+<div class="workspace">
+<section class="phone" aria-label="테스트 앱">
+<div class="phone-top"><span>CONNECT</span><span id="account-label">로그인 전</span></div>
+<div class="account-buttons"><button id="login-a" disabled>계정 A 로그인</button><button id="login-b" disabled>계정 B 로그인</button><button id="logout" disabled>로그아웃</button></div>
+<section class="app-section"><div class="section-title"><span>01</span><h2>우리 동네 보호소</h2><button id="reload-shelters" class="text-button" disabled>다시 보기</button></div><div id="shelters" class="choices"><p class="muted">로그인하면 보호소를 불러와요.</p></div></section>
+<section class="app-section"><div class="section-title"><span>02</span><h2>먼저 성격을 알아봐요</h2></div><div id="dogs" class="choices"></div><div class="dog-card"><span class="dog-icon">🐶</span><p class="eyebrow">오늘의 친구</p><h3 id="dog-name">봄이를 만나볼까요?</h3><p id="dog-intro">아직 강아지를 선택하지 않았어요.</p><div id="traits" class="tags"></div><p id="behavior" class="fine"></p></div></section>
+<section class="app-section"><div class="section-title"><span>03</span><h2>조금씩 가까워지기</h2></div><p class="fine">보호소 기록을 소개하는 AI 캐릭터예요.</p><div id="messages" class="messages" aria-live="polite"><p class="muted">먼저 인사를 건네보세요.</p></div><label for="question">궁금한 이야기</label><div class="send-row"><input id="question" maxlength="4000" value="낯선 사람이 다가오면 어떻게 해?" autocomplete="off"><button id="send" disabled>보내기</button></div><button id="reload-chat" class="text-button" disabled>저장된 대화 다시 불러오기</button></section>
+<section class="app-section"><div class="section-title"><span>04</span><h2>사진으로 만나기</h2><button id="photos" class="text-button" disabled>사진 보기</button></div><div id="photo-panel" class="photo-panel"><span>♡</span><p>이야기를 나눈 후 사진을 볼 수 있어요.</p></div><p class="fine">이번 검증에는 직접 만든 체크무늬 이미지를 사용해요.</p></section>
+<section class="app-section"><div class="section-title"><span>05</span><h2>함께 살 준비</h2></div><label for="note-questions">보호소에 물어볼 것</label><textarea id="note-questions" rows="2" maxlength="5000">봄이가 좋아하는 산책 시간은 언제인가요?</textarea><label for="care-plan">나의 돌봄 계획</label><textarea id="care-plan" rows="2" maxlength="10000">아침과 저녁에 짧게 산책하고, 적응할 시간을 충분히 주기.</textarea><label class="check"><input id="household" type="checkbox" checked> 함께 사는 사람들과 이야기했어요</label><div class="toolbar"><button id="save-note" disabled>메모 저장</button><button id="reload-note" disabled>저장된 메모 보기</button></div><p id="note-status" class="fine" aria-live="polite">아직 저장하지 않았어요.</p></section>
+</section>
+<aside class="results"><p class="eyebrow">LIVE CHECK</p><h2>어디까지 연결됐을까?</h2><p class="muted" id="progress">버튼을 누르면 실제 요청 결과가 쌓여요.</p><ol id="checks"></ol><div id="notice" class="notice" role="status">임시 계정을 준비하고 있어요.</div><details><summary>요청 기록 보기</summary><p class="fine">상태 코드와 요청 번호만 표시해요. 키·토큰은 남기지 않아요.</p><ol id="requests" class="requests"></ol></details><p class="fine">이 화면은 로컬 연결 도구를 통해 개발 API를 호출해요. RN 조작·소셜 로그인·웹 CORS 검증은 별도로 진행해요.</p></aside>
+</div>
+</main><footer>한 발짝씩, 더 가까이. <span id="origin"></span></footer>
+</body></html>

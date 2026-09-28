@@ -94,7 +94,11 @@ public class LoginStorageCheck {
             Files.writeString(work.resolve("cleanup-complete.txt"), "Only this run's users and records were removed. Original app row counts restored.\n");
             System.out.println("PASS temporary Auth users and owned app rows removed; all 12 original app table counts restored.");
         }
-        System.out.println("PASS " + checks + " HTTP expectations; temporary users/data cleaned. No photos, role grants, schema/RLS changes or deployment.");
+        System.out.println("PASS " + checks + " HTTP expectations; " + completionScope());
+    }
+
+    protected String completionScope() {
+        return "temporary users/data cleaned. No photos, role grants, schema/RLS changes or deployment.";
     }
 
     protected void verify() throws Exception {
