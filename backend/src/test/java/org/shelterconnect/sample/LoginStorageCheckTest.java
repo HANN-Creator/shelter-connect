@@ -10,7 +10,7 @@ class LoginStorageCheckTest {
         return new HashMap<>(Map.of("AUTH_CHECK_PROJECT_REF", "a".repeat(20),
                 "SUPABASE_URL", "https://" + "a".repeat(20) + ".supabase.co",
                 "DB_USERNAME", "postgres." + "a".repeat(20),
-                "DB_URL", "jdbc:postgresql://aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres?sslmode=require",
+                "DB_URL", "jdbc:postgresql://aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres?sslmode=verify-full&sslrootcert=/tmp/ca.crt",
                 "DB_PASSWORD", "test-password-never-print", "SUPABASE_SECRET_KEY", "sb_secret_test_only"));
     }
 
@@ -23,7 +23,7 @@ class LoginStorageCheckTest {
     }
 
     @Test void refusesUnsafeDatabaseTargetsAndCredentialBearingUrls() {
-        for (String url : new String[] {"jdbc:postgresql://localhost/test", settings().get("DB_URL").replace("require", "disable"),
+        for (String url : new String[] {"jdbc:postgresql://localhost/test", settings().get("DB_URL").replace("verify-full", "disable"),
                 settings().get("DB_URL").replace(":5432", ":6543"), settings().get("DB_URL") + "&password=private-value"}) {
             var env = settings(); env.put("DB_URL", url);
             assertThatThrownBy(() -> new LoginStorageCheck(env)).isInstanceOf(RuntimeException.class)

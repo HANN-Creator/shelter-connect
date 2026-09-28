@@ -22,8 +22,8 @@ public class AccountRepository {
 
 	public void register(UUID subject) {
 		jdbc.sql("""
-				INSERT INTO shelter.app_users(display_name, role, auth_provider, auth_subject)
-				VALUES ('방문자', 'USER', :provider, :subject)
+				INSERT INTO shelter.app_users(display_name, auth_provider, auth_subject)
+				VALUES ('방문자', :provider, :subject)
 				ON CONFLICT (auth_provider, auth_subject) DO NOTHING
 				""").param("provider", provider).param("subject", subject.toString()).update();
 	}

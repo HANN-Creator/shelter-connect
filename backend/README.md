@@ -57,24 +57,24 @@ curl http://127.0.0.1:8080/actuator/health/readiness
 
 ## Supabase 연결할 때
 
-Supabase 프로젝트의 **Connect → Direct → Session pooler**에서 호스트·DB 사용자명을 확인해줘. `.env.supabase.example`을 Git에서 제외되는 `.env.supabase`로 복사하고 기존 DB 비밀번호를 넣어. 파일은 셸로 실행하지 않고 `python3 scripts/run_supabase.py`로 읽어. [설정·실행·실제 검증 결과](../docs/supabase-server-connection.md)를 참고해. 로컬 PostgreSQL용 `.env`와는 다른 파일이야.
+Supabase 프로젝트의 **Connect → Direct → Session pooler**에서 호스트를 확인해줘. `.env.supabase.example`을 Git에서 제외되는 `.env.runtime`으로 복사하고, 별도로 만든 `shelter_runtime` 계정의 비밀번호와 공식 CA 인증서 경로를 넣어. 관리자 DB 비밀번호는 서버에 쓰지 않아. 파일은 셸로 실행하지 않고 `python3 scripts/run_supabase.py --env-file .env.runtime`으로 읽어. [설정·실행·실제 검증 결과](../docs/supabase-server-connection.md)를 참고해. 로컬 PostgreSQL용 `.env`와는 다른 파일이야.
 
 | 이름 | 용도 |
 | --- | --- |
 | `SUPABASE_URL` | 필수. 로그인 토큰을 발급하는 프로젝트의 HTTPS 주소. `.env.example`에는 개발 프로젝트의 공개 주소가 들어 있음 |
-| `DB_URL` | `jdbc:postgresql://호스트:5432/postgres?sslmode=require` |
-| `DB_USERNAME` | Connect 화면의 사용자 이름. 보통 `postgres.프로젝트참조값` |
-| `DB_PASSWORD` | DB 비밀번호. Supabase API 키가 아님 |
+| `DB_URL` | `jdbc:postgresql://호스트:5432/postgres?sslmode=verify-full&sslrootcert=/절대경로/supabase-prod-ca-2021.crt` |
+| `DB_USERNAME` | 별도 실행 계정 `shelter_runtime.프로젝트참조값` |
+| `DB_PASSWORD` | 실행 계정의 비밀번호. 관리자 비밀번호나 Supabase API 키가 아님 |
 | `DB_POOL_SIZE` | 연결 수 상한. 기본 5 |
 | `PORT` | 서버 포트. 기본 8080 |
 | `SERVER_ADDRESS` | 서버가 받을 주소. 기본 `127.0.0.1` |
 | `DB_MIGRATE` | Flyway 마이그레이션 실행 여부. 기본 false |
 
-오래 실행되는 Spring 서버 기준으로 세션 풀러의 5432 포트를 사용해. 6543은 트랜잭션 풀러라 이 설정에 섞지 않아. IPv6를 쓸 수 있는 서버라면 direct connection도 가능해. 연결 방식은 [Supabase 공식 안내](https://supabase.com/docs/guides/database/connecting-to-postgres)를 참고하면 돼.
+오래 실행되는 Spring 서버 기준으로 세션 풀러의 5432 포트를 사용해. 6543은 트랜잭션 풀러라 이 설정에 섞지 않아. 현재 서버 시작 검사는 이 세션 풀러 연결만 허용해. 다른 연결 방식의 차이는 [Supabase 공식 안내](https://supabase.com/docs/guides/database/connecting-to-postgres)를 참고하면 돼.
 
-`sslmode=require`는 암호화 연결을 요구해. 인증서 검증까지 필요한 배포 환경에서는 Supabase 인증서를 준비해 `verify-full` 구성을 정하면 돼. 접속 비밀번호와 API 키는 GitHub나 노션에 적지 말고, 환경변수로만 관리해줘.
+`verify-full`은 공식 CA로 인증서와 서버 이름을 모두 검증해. [실행 계정·인증서 설정](../docs/database-runtime-security.md)을 따라 준비해줘. 느슨한 SSL 옵션이나 관리자 계정으로는 원격 서버가 시작되지 않아. 접속 비밀번호와 API 키는 GitHub나 노션에 적지 말고, 환경변수로만 관리해줘.
 
-Hibernate의 자동 테이블 수정은 꺼져 있어(`ddl-auto=validate`). 테이블 변경은 Flyway로 관리하고, `DB_MIGRATE=true`일 때만 적용해. V1은 `shelter` 스키마에 앱 테이블 11개를 만들어. Supabase의 `auth`, `storage`, `public` 테이블은 수정하지 않아.
+Hibernate의 자동 테이블 수정은 꺼져 있어(`ddl-auto=validate`). 테이블 변경은 별도 관리자 연결의 Flyway 작업으로 적용해. 원격 실행 계정은 DDL 권한이 없으므로 서버는 `DB_MIGRATE=false`를 유지해. V1은 `shelter` 스키마에 앱 테이블 11개를 만들어. Supabase의 `auth`, `storage`, `public` 테이블은 수정하지 않아.
 
 비어 있는 Supabase 개발 프로젝트에 SQL 편집기로 먼저 구조와 샘플을 넣는 방법도 [샘플 사용 안내](sample-data/README.md#새-supabase-프로젝트에-처음-넣을-때)에 있어. Flyway 이력을 함께 기록하므로 다음 서버 실행에서 V1을 중복 적용하지 않아.
 
@@ -132,6 +132,6 @@ TEST_DB_USERNAME="$DB_USERNAME" TEST_DB_PASSWORD="$DB_PASSWORD" \
 
 입양 준비 메모는 [B-09 연결 문서](../docs/adoption-notes-api.md)를 참고해. 사용자·강아지별로 질문, 돌봄 계획, 준비 체크를 저장하고 본인만 조회·수정해. 수정할 때는 응답의 `updatedAt`을 그대로 보내 오래된 내용의 덮어쓰기를 막아. 기존 V1 테이블을 사용하므로 추가 DB 적용이나 새 환경변수는 없어.
 
-로컬에서 Supabase 연결만 확인할 때는 `python3 scripts/run_supabase.py --read-only`를 사용해. 이 도구는 마이그레이션·AI·Storage를 끄고 로컬 주소에서 서버를 실행해. 비밀번호가 담긴 `.env.supabase`는 Git에서 제외되고 명령행 인자로 전달되지 않아.
+로컬에서 Supabase 연결만 확인할 때는 `python3 scripts/run_supabase.py --env-file .env.runtime --read-only`를 사용해. 이 도구는 마이그레이션·AI·Storage를 끄고 로컬 주소에서 서버를 실행해. 비밀번호가 담긴 `.env.runtime`는 Git에서 제외되고 명령행 인자로 전달되지 않아.
 
 사진과 특징 등록은 [입력 흐름 명세서](../docs/asset-input-workflow.md)를 따라 연결하면 돼.

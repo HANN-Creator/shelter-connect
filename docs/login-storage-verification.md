@@ -15,12 +15,13 @@ B-13은 실제 Supabase Auth에서 발급한 사용자 토큰을 Spring Boot에 
 
 ## 실행 방법
 
-Java 21, 기존 `.env.supabase`의 개발 DB 접속 설정, `.env.storage`의 서버 키가 필요해. 이 파일들은 Git에서 제외돼 있어. 프로젝트 ref는 대시보드 주소의 `project/` 뒤 값이고, 입력한 ref와 로컬 설정이 다르면 접속 전에 중단해.
+Java 21, `.env.admin-tls`의 개발 DB 관리자 설정, `.env.runtime`의 서버 실행 계정 설정, `.env.storage`의 서버 키가 필요해. 두 DB 설정은 모두 공식 CA를 지정한 verify-full 연결을 사용해. 관리자는 임시 데이터 준비·정리만 맡고 실제 서버는 실행 계정으로 접속해. 이 파일들은 Git에서 제외돼 있어. 프로젝트 ref는 대시보드 주소의 `project/` 뒤 값이고, 입력한 ref와 로컬 설정이 다르면 접속 전에 중단해.
 
 `backend` 폴더에서 실행해.
 
 ```sh
-python3 scripts/check_login_storage.py --project-ref <개발-프로젝트-ref>
+python3 scripts/check_login_storage.py --project-ref <개발-프로젝트-ref> \
+  --env-file .env.admin-tls --runtime-env-file .env.runtime
 ```
 
 도구가 서버 JAR을 빌드하고 비어 있는 로컬 포트에서 실행해. 평소 쓰는 8080 서버나 다른 프로세스를 종료하지 않아. AI·사진 기능과 DB 자동 변경은 꺼져 있고, 서버 키는 테스트 계정 관리에만 쓰며 Spring Boot 프로세스에는 전달하지 않아.

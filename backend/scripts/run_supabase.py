@@ -85,7 +85,7 @@ def load_settings(path):
         if project.scheme != "https" or project.username or project.password or project.port or project.path or project.query or project.fragment:
             raise ValueError()
         ref = project.hostname.split(".")[0]
-        if values["DB_USERNAME"] != "postgres." + ref:
+        if values["DB_USERNAME"] not in {"postgres." + ref, "shelter_runtime." + ref}:
             raise ValueError()
         url = values["DB_URL"]
         if not url.startswith("jdbc:postgresql://"):
@@ -95,7 +95,9 @@ def load_settings(path):
             raise ValueError()
         if database.username or database.password or database.port != 5432 or database.path != "/postgres" or database.fragment:
             raise ValueError()
-        if parse_qs(database.query, strict_parsing=True) != {"sslmode": ["require"]}:
+        params = parse_qs(database.query, strict_parsing=True)
+        if set(params) != {"sslmode", "sslrootcert"} or params["sslmode"] != ["verify-full"] \
+                or len(params["sslrootcert"]) != 1 or not Path(params["sslrootcert"][0]).is_absolute():
             raise ValueError()
         for key, default, low, high in (("DB_POOL_SIZE", "3", 1, 5), ("PORT", "8080", 1024, 65535)):
             value = values.setdefault(key, default)
@@ -108,7 +110,7 @@ def load_settings(path):
 
 def launch_settings(values, inherited, read_only=False, storage=None, ai=None):
     # Prevent unrelated local Spring/AI settings from overriding the selected development target.
-    prefixes = ("SPRING_", "DB_", "SERVER_", "SUPABASE_", "AI_", "OPENAI_", "PHOTO_", "BEHAVIOR_AI_")
+    prefixes = ("SPRING_", "DB_", "RUNTIME_DB_", "SERVER_", "SUPABASE_", "AI_", "OPENAI_", "PHOTO_", "BEHAVIOR_AI_")
     env = {key: value for key, value in inherited.items() if not key.startswith(prefixes)
            and key not in {"JAVA_TOOL_OPTIONS", "_JAVA_OPTIONS", "JDK_JAVA_OPTIONS"}}
     env.update(values)

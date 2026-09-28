@@ -53,6 +53,7 @@ class AiConfigurationTest(unittest.TestCase):
              patch.object(check_ai_live, 'load_settings', return_value={'SUPABASE_URL': 'https://' + 'a' * 20 + '.supabase.co'}), \
              patch.object(check_ai_live, 'load_ai_settings', return_value={'OPENAI_MODEL': 'gpt-5.6-luna', 'OPENAI_API_KEY': 'private-ai'}), \
              patch.object(check_ai_live, 'load_storage_settings', return_value={'SUPABASE_SECRET_KEY': 'private-auth'}), \
+             patch.object(check_ai_live, 'runtime_environment', return_value={'RUNTIME_DB_PASSWORD': 'private-db'}), \
              patch.object(check_ai_live.os, 'execve') as execute, contextlib.redirect_stdout(capture):
             self.assertEqual(0, check_ai_live.main())
         execute.assert_not_called()

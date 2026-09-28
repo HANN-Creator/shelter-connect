@@ -7,6 +7,8 @@
 !build.gradle
 !settings.gradle
 !motion-requirements.txt
+!certs/
+!certs/supabase-prod-ca-2021.crt
 !gradle/
 !gradle/wrapper/
 !gradle/wrapper/gradle-wrapper.jar
