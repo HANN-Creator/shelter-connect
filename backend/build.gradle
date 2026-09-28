@@ -130,3 +130,20 @@ tasks.register('integrationTest', Test) {
 tasks.named('bootJar') {
 	archiveFileName = 'shelter-connect-api.jar'
 }
+
+// Resolve transitive versions actually used by the server, not only declared dependencies.
+tasks.register('exportRuntimeDependencies') {
+    group = 'verification'
+    description = 'Exports public Maven coordinates for the dependency security check.'
+    inputs.files(configurations.runtimeClasspath)
+    def report = layout.buildDirectory.file('reports/security/maven.json')
+    outputs.file(report)
+    doLast {
+        def packages = configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts.collect {
+            [group: it.moduleVersion.id.group, name: it.moduleVersion.id.name, version: it.moduleVersion.id.version]
+        }.unique().sort { a, b -> "${a.group}:${a.name}:${a.version}" <=> "${b.group}:${b.name}:${b.version}" }
+        def output = report.get().asFile
+        output.parentFile.mkdirs()
+        output.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(packages))
+    }
+}

@@ -1,0 +1,51 @@
+name: Dependency security
+
+on:
+  pull_request:
+    paths: ['backend/**', '.github/workflows/dependency-security.yml']
+  push:
+    branches: [main]
+    paths: ['backend/**', '.github/workflows/dependency-security.yml']
+  schedule:
+    - cron: '17 1 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scan:
+    name: Maven and Python vulnerabilities
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@67621b124fd2e251c5e8a0e6e3b91318f2287669 # v6.3.0
+      - name: Test scanner failure handling
+        run: python3 -m unittest discover -s scripts -p 'test_dependency_security.py'
+      - name: Resolve runtime Maven dependencies
+        run: ./gradlew --no-daemon exportRuntimeDependencies
+      - name: Resolve installed motion dependencies
+        run: |
+          python3 -m venv /tmp/shelter-security-venv
+          /tmp/shelter-security-venv/bin/pip install -r motion-requirements.txt
+          /tmp/shelter-security-venv/bin/pip list --format=json > build/reports/security/python.json
+      - name: Check current OSV advisories
+        run: |
+          python3 scripts/check_dependency_security.py \
+            --maven build/reports/security/maven.json \
+            --python build/reports/security/python.json \
+            --summary "$GITHUB_STEP_SUMMARY"
