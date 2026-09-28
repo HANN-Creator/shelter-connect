@@ -38,4 +38,11 @@ class AiReplyHttpTest {
 				.andExpect(jsonPath("$.code").value("AI_NOT_CONFIGURED")).andExpect(jsonPath("$.requestId").isNotEmpty());
 		verifyNoInteractions(provider);
 	}
+	@Test void rateLimitsAre429WithRetryAfterAndNeverCallTheProvider() throws Exception {
+		when(store.start(subject,session,message,false)).thenThrow(ChatException.limited("AI_USER_MINUTE_LIMIT","잠시 뒤 다시 요청해 주세요.",60));
+		mvc.perform(post(path()).header("Authorization","Bearer "+tokens.token(subject)))
+			.andExpect(status().isTooManyRequests()).andExpect(header().string("Retry-After","60"))
+			.andExpect(jsonPath("$.code").value("AI_USER_MINUTE_LIMIT")).andExpect(jsonPath("$.requestId").isNotEmpty());
+		verifyNoInteractions(provider);
+	}
 }

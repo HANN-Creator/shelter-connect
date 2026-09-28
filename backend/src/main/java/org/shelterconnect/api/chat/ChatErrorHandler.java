@@ -18,6 +18,9 @@ public class ChatErrorHandler {
 	private static final Logger log = LoggerFactory.getLogger(ChatErrorHandler.class);
 	@ExceptionHandler(ChatException.class)
 	ResponseEntity<SecurityErrors.Error> invalid(ChatException exception, HttpServletRequest request) {
+		if(exception.retryAfterSeconds!=null) return ResponseEntity.status(exception.status)
+			.header("Retry-After",exception.retryAfterSeconds.toString())
+			.body(new SecurityErrors.Error(exception.code,exception.getMessage(),ApiRequestFilter.requestId(request)));
 		return error(exception.status, exception.code, exception.getMessage(), request);
 	}
 	@ExceptionHandler(AccountAccessException.class)

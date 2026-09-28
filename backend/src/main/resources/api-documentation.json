@@ -1484,7 +1484,7 @@
     "POST /v1/chat-sessions/{sessionId}/messages/{messageId}/reply": {
       "summary": "강아지 기록 기반 AI 답변",
       "tag": "03. 대화",
-      "description": "사용자 메시지 ID로 요청. 200이어도 processingStatus/failureCode/retryable 확인. retry=true는 명시적 재시도에만 사용.",
+      "description": "사용자 메시지 ID로 요청. 200이어도 processingStatus/failureCode/retryable 확인. retry=true는 명시적 재시도에만 사용. 사용자별·전체 사용량 또는 동시 호출 한도 초과 시 429와 Retry-After(초)를 반환합니다. 같은 메시지 ID로 다시 요청하세요. 완료된 답변 재조회와 로컬 안내는 한도를 차감하지 않습니다.",
       "success": [
         200,
         201,
@@ -1494,7 +1494,8 @@
         400,
         404,
         409,
-        503
+        503,
+        "429"
       ],
       "public": false,
       "request": {
