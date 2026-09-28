@@ -636,7 +636,7 @@
         "file": {
           "type": "string",
           "format": "binary",
-          "description": "PNG/JPEG 8MB 이하. 총 1600만 픽셀 이하."
+          "description": "PNG/JPEG 원본·변환 PNG 모두 5MiB(5,242,880바이트) 이하. 총 1600만 픽셀 이하."
         }
       },
       "required": [

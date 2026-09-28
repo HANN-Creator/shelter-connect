@@ -17,7 +17,7 @@ import org.shelterconnect.api.web.ApiRequestFilter;
 public class AssetErrorHandler {
 	private static final Logger log = LoggerFactory.getLogger(AssetErrorHandler.class);
 	@ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
-	ResponseEntity<SecurityErrors.Error> tooLarge(HttpServletRequest request) { return error(413,"PHOTO_TOO_LARGE","사진은 8MB 이하로 보내 주세요.",request); }
+	ResponseEntity<SecurityErrors.Error> tooLarge(HttpServletRequest request) { return error(413,"PHOTO_TOO_LARGE","사진은 5MiB 이하로 보내 주세요.",request); }
 	@ExceptionHandler({org.springframework.web.multipart.support.MissingServletRequestPartException.class,org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class})
 	ResponseEntity<SecurityErrors.Error> badPart(HttpServletRequest request) { return error(400,"INVALID_ASSET_REQUEST","파일과 입력 항목을 확인해 주세요.",request); }
 	@ExceptionHandler(AssetException.class)

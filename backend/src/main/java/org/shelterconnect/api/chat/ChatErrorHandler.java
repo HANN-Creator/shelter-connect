@@ -41,7 +41,7 @@ public class ChatErrorHandler {
 	}
 	@ExceptionHandler(Exception.class)
 	ResponseEntity<SecurityErrors.Error> unexpected(Exception exception, HttpServletRequest request) {
-		log.error("Chat request failed; requestId={}", ApiRequestFilter.requestId(request), exception);
+		log.error("Chat request failed; requestId={}, type={}", ApiRequestFilter.requestId(request), exception.getClass().getSimpleName());
 		return error(500, "INTERNAL_ERROR", "정보를 저장하거나 불러오지 못했어요. 잠시 뒤 다시 시도해 주세요.", request);
 	}
 	private ResponseEntity<SecurityErrors.Error> error(int status, String code, String message, HttpServletRequest request) {

@@ -31,6 +31,8 @@ class ApiDocumentationTest {
             assertThat(op.path("operationId").asText()).isNotBlank();
             for(var p:op.path("parameters")) assertThat(p.path("name").asText()).isNotEqualTo("jwt");
             assertThat(op.path("responses").has("500")).isTrue();
+            assertThat(op.path("responses").has("413")).isTrue();
+            assertThat(op.at("/responses/429/headers/Retry-After").isMissingNode()).isFalse();
         }));
         var actual=new TreeSet<String>();
         requestMappingHandlerMapping.getHandlerMethods().forEach((mapping,handler) -> {

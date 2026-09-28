@@ -19,7 +19,7 @@ public class PhotoUploadController {
     public Item<Map<String,Object>> upload(@AuthenticationPrincipal Jwt jwt,@PathVariable String dogId,
                                           @RequestPart("metadata") JsonNode metadata,@RequestPart("file") MultipartFile file) throws IOException {
         UUID subject=UUID.fromString(jwt.getSubject()),dog=AssetInput.id(dogId);access.requireDog(subject,dog);
-        if(file.getSize()>8*1024*1024) throw new AssetException(413,"PHOTO_TOO_LARGE");
+        if(file.getSize()>PhotoUploadImage.MAX_BYTES) throw new AssetException(413,"PHOTO_TOO_LARGE");
         byte[] png=PhotoUploadImage.normalize(file.getBytes());var upload=store.begin(subject,dog,metadata,AssetRigService.sha256(png));
         if(upload.completed()) return new Item<>(store.complete(subject,upload));
         try { storage.putPhoto(dog,upload.key(),png);return new Item<>(store.complete(subject,upload)); }

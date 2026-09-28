@@ -7,8 +7,9 @@ import java.util.Locale;
 import javax.imageio.ImageIO;
 
 final class PhotoUploadImage {
+    static final int MAX_BYTES = 5 * 1024 * 1024;
     static byte[] normalize(byte[] bytes) {
-        if(bytes.length==0 || bytes.length>8*1024*1024) throw new AssetException(413,"PHOTO_TOO_LARGE");
+        if(bytes.length==0 || bytes.length>PhotoUploadImage.MAX_BYTES) throw new AssetException(413,"PHOTO_TOO_LARGE");
         try(var input=ImageIO.createImageInputStream(new ByteArrayInputStream(bytes))) {
             var readers=ImageIO.getImageReaders(input);if(!readers.hasNext()) throw AssetException.invalid();
             var reader=readers.next();
@@ -21,7 +22,7 @@ final class PhotoUploadImage {
                 var clean=new BufferedImage(Math.max(1,(int)(width*scale)),Math.max(1,(int)(height*scale)),BufferedImage.TYPE_INT_ARGB);
                 var g=clean.createGraphics();try { g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,RenderingHints.VALUE_INTERPOLATION_BILINEAR);g.drawImage(image,0,0,clean.getWidth(),clean.getHeight(),null); } finally { g.dispose(); }
                 var output=new ByteArrayOutputStream();ImageIO.write(clean,"png",output);
-                if(output.size()>8*1024*1024) throw new AssetException(413,"PHOTO_TOO_LARGE");
+                if(output.size()>PhotoUploadImage.MAX_BYTES) throw new AssetException(413,"PHOTO_TOO_LARGE");
                 return output.toByteArray();
             } finally { reader.dispose(); }
         } catch(AssetException ex) { throw ex; }

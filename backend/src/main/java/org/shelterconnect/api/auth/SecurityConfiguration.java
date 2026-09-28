@@ -11,6 +11,11 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
+import org.springframework.core.env.Environment;
+import org.shelterconnect.api.web.ApiTrafficPolicy;
+import org.shelterconnect.api.web.ApiInputFilter;
+import tools.jackson.databind.json.JsonMapper;
 
 @Configuration(proxyBeanMethods = false)
 public class SecurityConfiguration {
@@ -19,8 +24,12 @@ public class SecurityConfiguration {
 			"/v1/shelters/{shelterId}/dogs", "/v1/dogs/{dogId}", "/v1/dogs/{dogId}/behavior", "/v1/dogs/{dogId}/assets"};
 
 	@Bean
-	SecurityFilterChain securityFilterChain(HttpSecurity http, JwtDecoder decoder, SecurityErrors errors) {
+	ApiTrafficPolicy apiTrafficPolicy(Environment environment) { return new ApiTrafficPolicy(environment); }
+
+	@Bean
+	SecurityFilterChain securityFilterChain(HttpSecurity http, JwtDecoder decoder, SecurityErrors errors, ApiTrafficPolicy traffic, JsonMapper json) {
 		return http
+				.addFilterAfter(new ApiInputFilter(traffic,json),AuthorizationFilter.class)
 				// Only explicit Authorization headers authenticate; no cookie, form or server session login.
 				.csrf(AbstractHttpConfigurer::disable)
 				.formLogin(AbstractHttpConfigurer::disable).httpBasic(AbstractHttpConfigurer::disable)

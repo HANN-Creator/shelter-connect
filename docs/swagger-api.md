@@ -31,3 +31,5 @@ Spring Boot 4.1.1에 [springdoc-openapi 3.1.1](https://springdoc.org/getting-sta
 로컬에서도 `/swagger-ui/index.html`, `/v3/api-docs` 주소가 같아. 서버 주소는 상대 경로 `/`를 사용하므로 로컬 화면에서 개발 서버로 토큰이 넘어가지 않아. 문서 화면은 로그인 없이 볼 수 있고 실제 관리 API의 인증·소속 검사는 그대로야. `API_DOCS_ENABLED=false`로 문서 UI와 OpenAPI 제공을 함께 끌 수 있어.
 
 검증은 런타임 46개 API와 문서의 일치, 스키마 참조, multipart 설정, 서로 다른 작업 응답 모델, 공개 문서 접근과 기존 보호 API의 401을 확인해. 실제 배포 후 공개 조회와 인증 차단도 다시 확인해.
+
+일반 본문 64KiB, 사진 5MiB와 공통 413·429·415 처리는 [API 요청 보안 기준](api-request-security.md)을 따른다. 429 응답의 Retry-After 초 동안 재시도를 멈춘다.

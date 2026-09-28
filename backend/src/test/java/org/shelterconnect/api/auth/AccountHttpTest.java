@@ -27,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(AccountController.class)
 @Import({AccountService.class, ShelterAccessService.class, AccountErrorHandler.class, ApiRequestFilter.class,
 		SecurityConfiguration.class, SecurityErrors.class, JwtTestConfiguration.class})
+@org.junit.jupiter.api.extension.ExtendWith(org.springframework.boot.test.system.OutputCaptureExtension.class)
 class AccountHttpTest {
 	private static final UUID SUBJECT = UUID.randomUUID(), APP_ID = UUID.randomUUID();
 	@Autowired MockMvc mvc;
@@ -121,11 +122,12 @@ class AccountHttpTest {
 	}
 
 	@Test
-	void databaseFailureDoesNotExposeInternalDetails() throws Exception {
+	void databaseFailureDoesNotExposeInternalDetails(org.springframework.boot.test.system.CapturedOutput output) throws Exception {
 		when(repository.account(SUBJECT)).thenThrow(new DataAccessResourceFailureException("private-host secret SQL"));
 		var response = mvc.perform(auth(get("/v1/me"))).andExpect(status().isInternalServerError())
 				.andExpect(jsonPath("$.code").value("INTERNAL_ERROR")).andReturn().getResponse();
 		assertThat(response.getContentAsString()).doesNotContain("private-host", "secret", "SQL");
+		assertThat(output.getAll()).doesNotContain("private-host", "secret SQL").contains("type=DataAccessResourceFailureException");
 		assertThat(json.readTree(response.getContentAsString()).get("requestId").asText()).isEqualTo(response.getHeader("X-Request-ID"));
 	}
 
