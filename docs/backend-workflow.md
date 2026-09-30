@@ -109,6 +109,12 @@ B-15는 [PixelLab 에셋 생성 API](dog-asset-generation.md)로 구현한다. �
 
 B-16은 [특성별 모션 하네스](motion-harness-pipeline.md)를 서버에 연결한다. 크롤링을 시작하지 않고 직접 등록된 허가 사진부터 처리할 수 있다. DB 적용·개발 서버 배포의 실제 결과는 PR·노션 기록에 남긴다.
 
+## 2026-10-01 신규 화면 후속 작업
+
+- B-35 개인 프로필·저장한 친구·홈 탐색 API: [노션](https://app.notion.com/p/3eb5b2d1a55f80c0a925d1e9ff4e1a85), [연결 명세](personal-discovery-api.md). B-34 이후 작업.
+- B-36 커뮤니티 게시글·댓글·목격·신고: B-35 병합 이후 별도 카드/PR.
+- B-37 이웃 문의방·메시지·읽음: B-36 병합 이후 별도 카드/PR.
+
 ## 2026-10-01 보안 선행 패치
 
 B-35A: [Jackson 신규 보안 공지 대응](jackson-security-update.md). B-35 CI에서 기존 의존성 경고가 확인되어 별도 카드/PR로 수정한 뒤 개인 기능을 이어서 검사한다.

@@ -1278,6 +1278,66 @@
         "createdAt"
       ],
       "additionalProperties": false
+    },
+    "ProfileUpdate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "displayName"
+      ],
+      "properties": {
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 30
+        }
+      }
+    },
+    "PreferenceUpdate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "currentShelterId"
+      ],
+      "properties": {
+        "currentShelterId": {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        }
+      }
+    },
+    "ConsentUpdate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "termsVersion",
+        "privacyVersion",
+        "termsAccepted",
+        "privacyAccepted"
+      ],
+      "properties": {
+        "termsVersion": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "privacyVersion": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "termsAccepted": {
+          "type": "boolean",
+          "enum": [
+            true
+          ]
+        },
+        "privacyAccepted": {
+          "type": "boolean",
+          "enum": [
+            true
+          ]
+        }
+      }
     }
   },
   "operations": {
@@ -2175,6 +2235,195 @@
           "providerJobId": "02300000-0000-4000-8000-000000000001"
         }
       }
+    },
+    "GET /v1/registration-policy": {
+      "summary": "가입 동의 문서 버전",
+      "description": "공개된 약관 버전이 없으면 available=false. 비밀번호와 이메일 인증은 Supabase Auth에서 처리.",
+      "tag": "개인 기능·탐색",
+      "public": true,
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ]
+    },
+    "PATCH /v1/me/profile": {
+      "summary": "닉네임 변경",
+      "description": "본인 닉네임 1~30자. 다른 필드와 권한 변경 거절.",
+      "tag": "개인 기능·탐색",
+      "public": false,
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ],
+      "request": {
+        "schema": "ProfileUpdate"
+      }
+    },
+    "GET /v1/me/preferences": {
+      "summary": "현재 보호소 조회",
+      "description": "비공개 보호소는 null.",
+      "tag": "개인 기능·탐색",
+      "public": false,
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ]
+    },
+    "PUT /v1/me/preferences": {
+      "summary": "현재 보호소 선택",
+      "description": "승인·공개 보호소만 선택. null로 해제.",
+      "tag": "개인 기능·탐색",
+      "public": false,
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ],
+      "request": {
+        "schema": "PreferenceUpdate"
+      }
+    },
+    "GET /v1/me/consents": {
+      "summary": "현재 버전 동의 기록",
+      "description": "기록이 없으면 data=null.",
+      "tag": "개인 기능·탐색",
+      "public": false,
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ]
+    },
+    "PUT /v1/me/consents": {
+      "summary": "필수 동의 기록",
+      "description": "각 필수 동의=true와 현재 버전만 허용. 서버 시각 기록, 재요청은 기존 기록.",
+      "tag": "개인 기능·탐색",
+      "public": false,
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ],
+      "request": {
+        "schema": "ConsentUpdate"
+      }
+    },
+    "GET /v1/me/saved-dogs": {
+      "summary": "저장한 친구 목록",
+      "description": "본인 목록. q(강아지/보호소), shelterId. 공개 중인 친구만 최신 저장순.",
+      "tag": "개인 기능·탐색",
+      "public": false,
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ]
+    },
+    "GET /v1/me/saved-dogs/{dogId}": {
+      "summary": "하트 저장 상태",
+      "description": "본인 저장 상태만 반환.",
+      "tag": "개인 기능·탐색",
+      "public": false,
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ]
+    },
+    "PUT /v1/me/saved-dogs/{dogId}": {
+      "summary": "친구 저장",
+      "description": "공개 친구만 저장. 반복 요청은 저장 시각 유지.",
+      "tag": "개인 기능·탐색",
+      "public": false,
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ]
+    },
+    "DELETE /v1/me/saved-dogs/{dogId}": {
+      "summary": "친구 저장 해제",
+      "description": "반복 요청 안전. 대화·메모 유지.",
+      "tag": "개인 기능·탐색",
+      "public": false,
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ]
+    },
+    "GET /v1/me/dog-conversations": {
+      "summary": "강아지 대화 목록",
+      "description": "q 검색, savedOnly 필터, 최근 활동순. 비공개 친구의 현재 이름·에셋은 숨기고 본인 대화 기록 유지.",
+      "tag": "개인 기능·탐색",
+      "public": false,
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ]
+    },
+    "GET /v1/shelter-discovery": {
+      "summary": "주변 보호소 검색",
+      "description": "latitude/longitude 함께 전달 시 직선거리순. q/region 검색, 좌표 없는 보호소는 마지막. 위치 저장 안 함. 좌표 생략 시 거리 null.",
+      "tag": "개인 기능·탐색",
+      "public": true,
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ]
     }
   }
 }
