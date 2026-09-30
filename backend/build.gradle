@@ -10,6 +10,10 @@ description = 'Shelter Connect API'
 
 // Boot 4.1.1 manages 11.0.24; retain the compatible patch with September fixes.
 ext['tomcat.version'] = '11.0.26'
+// Keep both Jackson families aligned; 2.x serves Swagger and 3.x serves the API.
+// September 2026 databind advisories require these compatible patch releases.
+ext['jackson-2-bom.version'] = '2.21.7'
+ext['jackson-bom.version'] = '3.1.7'
 
 java {
 	toolchain {
