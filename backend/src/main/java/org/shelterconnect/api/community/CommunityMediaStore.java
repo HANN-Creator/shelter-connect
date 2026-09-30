@@ -51,7 +51,8 @@ public class CommunityMediaStore {
                     WHERE r.id=m.room_id AND (r.author_id=:user OR r.requester_id=:user) AND im.media_id=m.id
                 ) OR EXISTS (
                     SELECT 1 FROM shelter.community_posts p JOIN shelter.app_users a ON a.id=p.author_id
-                    WHERE p.id=m.post_id AND ((p.publication='PUBLISHED' AND p.hidden_at IS NULL AND p.deleted_at IS NULL AND a.disabled_at IS NULL) OR :operator)
+                    WHERE p.id=m.post_id AND p.publication='PUBLISHED'
+                    AND ((p.hidden_at IS NULL AND p.deleted_at IS NULL AND a.disabled_at IS NULL) OR :operator)
                     AND (jsonb_exists(p.content->'mediaIds',CAST(m.id AS text)) OR EXISTS (
                         SELECT 1 FROM shelter.community_comments c JOIN shelter.app_users ca ON ca.id=c.author_id
                         WHERE c.post_id=p.id AND c.deleted_at IS NULL AND ca.disabled_at IS NULL
