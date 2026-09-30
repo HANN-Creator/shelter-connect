@@ -19,9 +19,17 @@ public class FeatureErrorHandler {
     ResponseEntity<SecurityErrors.Error> account(AccountAccessException ex, HttpServletRequest request) {
         return error(ex.status(), ex.code(), ex.getMessage(), request);
     }
-    @ExceptionHandler({HttpMessageNotReadableException.class, MissingServletRequestParameterException.class, MethodArgumentTypeMismatchException.class})
+    @ExceptionHandler({HttpMessageNotReadableException.class, MissingServletRequestParameterException.class, MethodArgumentTypeMismatchException.class, org.springframework.web.multipart.support.MissingServletRequestPartException.class})
     ResponseEntity<SecurityErrors.Error> invalid(Exception ex, HttpServletRequest request) {
         return feature(FeatureException.invalid(), request);
+    }
+    @ExceptionHandler(org.springframework.web.HttpMediaTypeNotSupportedException.class)
+    ResponseEntity<SecurityErrors.Error> unsupported(Exception ex, HttpServletRequest request) {
+        return error(415,"UNSUPPORTED_MEDIA_TYPE","요청의 Content-Type을 확인해 주세요.",request);
+    }
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    ResponseEntity<SecurityErrors.Error> tooLarge(Exception ex, HttpServletRequest request) {
+        return error(413,"PHOTO_TOO_LARGE","사진 크기 제한을 확인해 주세요.",request);
     }
     @ExceptionHandler(Exception.class)
     ResponseEntity<SecurityErrors.Error> unexpected(Exception ex, HttpServletRequest request) {
@@ -29,6 +37,6 @@ public class FeatureErrorHandler {
         return error(500, "INTERNAL_ERROR", "잠시 뒤 다시 시도해 주세요.", request);
     }
     private ResponseEntity<SecurityErrors.Error> error(int status, String code, String message, HttpServletRequest request) {
-        return ResponseEntity.status(status).body(new SecurityErrors.Error(code, message, ApiRequestFilter.requestId(request)));
+        return ResponseEntity.status(status).headers(headers -> { if(status==429) headers.set("Retry-After","3600"); }).body(new SecurityErrors.Error(code, message, ApiRequestFilter.requestId(request)));
     }
 }

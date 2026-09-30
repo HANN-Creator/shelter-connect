@@ -1338,6 +1338,317 @@
           ]
         }
       }
+    },
+    "CommunityLocationInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "latitude": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90,
+          "nullable": true
+        },
+        "longitude": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180,
+          "nullable": true
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "nullable": true
+        }
+      },
+      "required": [
+        "label"
+      ]
+    },
+    "CommunityCreateInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "clientRequestId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "LOST",
+            "FOUND",
+            "NEIGHBOR_NEWS"
+          ]
+        },
+        "publication": {
+          "type": "string",
+          "enum": [
+            "DRAFT",
+            "PUBLISHED"
+          ]
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "regionLabel": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "location": {
+          "$ref": "#/components/schemas/CommunityLocationInput"
+        },
+        "features": {
+          "type": "array",
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "maxLength": 20
+          }
+        },
+        "mediaIds": {
+          "type": "array",
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "required": [
+        "clientRequestId",
+        "category",
+        "publication"
+      ]
+    },
+    "CommunityEditInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "type": "integer",
+          "format": "int64",
+          "minimum": 1
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "LOST",
+            "FOUND",
+            "NEIGHBOR_NEWS"
+          ]
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "regionLabel": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "location": {
+          "$ref": "#/components/schemas/CommunityLocationInput"
+        },
+        "features": {
+          "type": "array",
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "maxLength": 20
+          }
+        },
+        "mediaIds": {
+          "type": "array",
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "required": [
+        "version",
+        "category"
+      ]
+    },
+    "CommunityVersionInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "type": "integer",
+          "format": "int64",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "version"
+      ]
+    },
+    "CommunityStatusInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "type": "integer",
+          "format": "int64",
+          "minimum": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "REUNITED",
+            "CLOSED",
+            "TRANSFERRED"
+          ]
+        }
+      },
+      "required": [
+        "version",
+        "status"
+      ]
+    },
+    "CommunityCommentInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "clientRequestId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "COMMENT",
+            "SIGHTING"
+          ]
+        },
+        "parentId": {
+          "type": "string",
+          "format": "uuid",
+          "nullable": true
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "location": {
+          "$ref": "#/components/schemas/CommunityLocationInput"
+        },
+        "mediaIds": {
+          "type": "array",
+          "maxItems": 1,
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "required": [
+        "clientRequestId",
+        "kind",
+        "text"
+      ]
+    },
+    "CommunityRegionInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "regionLabel": {
+          "type": "string",
+          "maxLength": 100,
+          "nullable": true
+        }
+      },
+      "required": [
+        "regionLabel"
+      ]
+    },
+    "CommunityReportInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "reason": {
+          "type": "string",
+          "enum": [
+            "SPAM",
+            "FALSE_INFORMATION",
+            "ABUSE",
+            "PRIVACY",
+            "OTHER"
+          ]
+        },
+        "details": {
+          "type": "string",
+          "maxLength": 1000
+        }
+      },
+      "required": [
+        "reason"
+      ]
+    },
+    "CommunityReviewInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "type": "integer",
+          "format": "int64",
+          "minimum": 1
+        },
+        "action": {
+          "type": "string",
+          "enum": [
+            "HIDE",
+            "DISMISS"
+          ]
+        },
+        "note": {
+          "type": "string",
+          "maxLength": 1000
+        }
+      },
+      "required": [
+        "version",
+        "action",
+        "note"
+      ]
+    },
+    "CommunityUploadInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "clientRequestId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "file": {
+          "type": "string",
+          "format": "binary"
+        }
+      },
+      "required": [
+        "clientRequestId",
+        "file"
+      ]
     }
   },
   "operations": {
@@ -2415,6 +2726,338 @@
       "description": "latitude/longitude 함께 전달 시 직선거리순. q/region 검색, 좌표 없는 보호소는 마지막. 위치 저장 안 함. 좌표 생략 시 거리 null.",
       "tag": "개인 기능·탐색",
       "public": true,
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ]
+    },
+    "GET /v1/me/community-region": {
+      "summary": "내 커뮤니티 지역",
+      "description": "현재 보호소 선택과 독립적인 지역. 값이 없으면 null.",
+      "tag": "커뮤니티",
+      "public": false,
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ]
+    },
+    "PUT /v1/me/community-region": {
+      "summary": "커뮤니티 지역 저장",
+      "description": "regionLabel을 null로 비우거나 100자 이내로 저장. 정밀 위치를 자동 수집하지 않음.",
+      "tag": "커뮤니티",
+      "public": false,
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ],
+      "request": {
+        "schema": "CommunityRegionInput",
+        "example": {
+          "regionLabel": "춘천시 효자동"
+        }
+      }
+    },
+    "GET /v1/community/posts": {
+      "summary": "커뮤니티 글 목록",
+      "description": "로그인 필요. q(제목·본문), region(접두어), category. 공개 글만 최신 등록순, limit 20/최대50, nextCursor. 신고자 정보는 반환하지 않음.",
+      "tag": "커뮤니티",
+      "public": false,
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ]
+    },
+    "GET /v1/me/community-posts": {
+      "summary": "내 글·임시저장 목록",
+      "description": "본인만 조회. publication=DRAFT/PUBLISHED 또는 생략. 생성순, q, limit/cursor. 삭제 글 제외.",
+      "tag": "커뮤니티",
+      "public": false,
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ]
+    },
+    "GET /v1/community/posts/{postId}": {
+      "summary": "게시글 상세",
+      "description": "임시저장은 작성자만 조회. 숨김 글은 작성자만 상태 확인. 사진은 content.mediaIds로 별도 서명 주소 요청.",
+      "tag": "커뮤니티",
+      "public": false,
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ]
+    },
+    "POST /v1/community/posts": {
+      "summary": "글 작성·임시저장",
+      "description": "clientRequestId는 재전송 시 유지. 같은 ID·다른 최초 내용은409. DRAFT는 빈 내용 허용, PUBLISHED는 제목·본문·지역 필수. LOST/FOUND는 장소·과거 시각 필수.",
+      "tag": "커뮤니티",
+      "public": false,
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ],
+      "request": {
+        "schema": "CommunityCreateInput",
+        "example": {
+          "clientRequestId": "aa000000-0000-4000-8000-000000000001",
+          "category": "NEIGHBOR_NEWS",
+          "publication": "DRAFT",
+          "title": "산책 소식",
+          "text": "",
+          "regionLabel": "춘천시",
+          "mediaIds": []
+        }
+      }
+    },
+    "PATCH /v1/community/posts/{postId}": {
+      "summary": "내 글 수정",
+      "description": "부분 수정이 아닌 내용 전체 교체. version 일치 필요, 없거나 생략한 선택 내용은 비워짐. 게시 후 category는 변경 불가. mediaIds 최대5개·본인 업로드만.",
+      "tag": "커뮤니티",
+      "public": false,
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ],
+      "request": {
+        "schema": "CommunityEditInput"
+      }
+    },
+    "POST /v1/community/posts/{postId}/publish": {
+      "summary": "임시저장 글 등록",
+      "description": "완성된 필수 내용을 검사한 뒤 공개. 본인·현재 version 필요.",
+      "tag": "커뮤니티",
+      "public": false,
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ],
+      "request": {
+        "schema": "CommunityVersionInput",
+        "example": {
+          "version": 1
+        }
+      }
+    },
+    "PUT /v1/community/posts/{postId}/status": {
+      "summary": "글 상태 변경",
+      "description": "본인·현재 version 필요. LOST: ACTIVE/REUNITED/CLOSED, FOUND는TRANSFERRED 추가, NEIGHBOR_NEWS:ACTIVE/CLOSED. ACTIVE만 새 목격 제보 허용. 댓글과 기존 문의는 보존.",
+      "tag": "커뮤니티",
+      "public": false,
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ],
+      "request": {
+        "schema": "CommunityStatusInput",
+        "example": {
+          "version": 1,
+          "status": "REUNITED"
+        }
+      }
+    },
+    "DELETE /v1/community/posts/{postId}": {
+      "summary": "내 글 삭제",
+      "description": "query version 필수. soft delete; 반복 삭제는 같은 결과. 타인404, 이전 version409. 이후 새 조회·사진 주소 발급 차단.",
+      "tag": "커뮤니티",
+      "public": false,
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ]
+    },
+    "GET /v1/community/posts/{postId}/comments": {
+      "summary": "댓글·목격 제보 목록",
+      "description": "kind=COMMENT/SIGHTING 또는 생략. 생성순 오름차순, limit/cursor. 삭제 댓글은 내용 없는 표식과 parentId로 답글 맥락 보존.",
+      "tag": "커뮤니티",
+      "public": false,
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ]
+    },
+    "POST /v1/community/posts/{postId}/comments": {
+      "summary": "댓글·답글·목격 제보",
+      "description": "같은 clientRequestId 재전송은 중복 저장하지 않음. parentId는 같은 글의 최상위 댓글/제보만, 답글 중첩 1단계. SIGHTING은 장소·시각 필수, 종료 글409. 사진 최대1개.",
+      "tag": "커뮤니티",
+      "public": false,
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ],
+      "request": {
+        "schema": "CommunityCommentInput",
+        "example": {
+          "clientRequestId": "aa000000-0000-4000-8000-000000000002",
+          "kind": "COMMENT",
+          "text": "확인했어요.",
+          "mediaIds": []
+        }
+      }
+    },
+    "DELETE /v1/community/posts/{postId}/comments/{commentId}": {
+      "summary": "내 댓글 삭제",
+      "description": "작성자만 삭제. 반복 삭제 가능. 답글은 남기고 삭제한 본문·사진은 공개하지 않음.",
+      "tag": "커뮤니티",
+      "public": false,
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ]
+    },
+    "POST /v1/community/posts/{postId}/reports": {
+      "summary": "게시글 신고",
+      "description": "타인 게시글을 이유와 선택 설명으로 신고. 본인 글 불가. OTHER는 설명 필수. 사용자·게시글당 한 번 접수, 신고자의 id와 설명은 운영자만 조회.",
+      "tag": "커뮤니티",
+      "public": false,
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ],
+      "request": {
+        "schema": "CommunityReportInput",
+        "example": {
+          "reason": "FALSE_INFORMATION",
+          "details": "확인이 필요해요."
+        }
+      }
+    },
+    "GET /v1/operations/community-reports": {
+      "summary": "운영 신고 대기 목록",
+      "description": "DB OPERATOR 역할만. status=PENDING 기본/HIDDEN/DISMISSED, 생성순, limit/cursor. 신고 내용과 대상 글 내용 제공.",
+      "tag": "커뮤니티 운영",
+      "public": false,
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ]
+    },
+    "PUT /v1/operations/community-reports/{reportId}": {
+      "summary": "신고 검토·글 숨김",
+      "description": "OPERATOR만 version과 HIDE/DISMISS·검토 사유 전달. 처리자·처리시각 기록. HIDE는 글 조회·새 제보·다른 사람의 사진 서명 발급을 차단.",
+      "tag": "커뮤니티 운영",
+      "public": false,
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ],
+      "request": {
+        "schema": "CommunityReviewInput",
+        "example": {
+          "version": 1,
+          "action": "HIDE",
+          "note": "운영 검토 결과 비공개 처리"
+        }
+      }
+    },
+    "POST /v1/community/media": {
+      "summary": "커뮤니티 사진 업로드",
+      "description": "multipart의 file·clientRequestId만 전송. PNG/JPEG 5MiB·1600만 화소 이하, 최대2048px로 변환·메타데이터 제거. 업로드 재시도는 같은 ID/사진. 24시간20장·사용자100MiB 저장 한도. 별도 private 버킷.",
+      "tag": "커뮤니티",
+      "public": false,
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ],
+      "request": {
+        "schema": "CommunityUploadInput",
+        "contentType": "multipart/form-data"
+      }
+    },
+    "GET /v1/community/media/{mediaId}": {
+      "summary": "사진 주소 발급",
+      "description": "작성자 또는 현재 공개된 글을 볼 수 있는 로그인 사용자만. 운영자는 검토 중인 글 사진도 확인. 60초 만료, 영구 보관하지 말 것. 이미 발급된 URL은 만료까지 열릴 수 있음.",
+      "tag": "커뮤니티",
+      "public": false,
       "success": [
         "200"
       ],
