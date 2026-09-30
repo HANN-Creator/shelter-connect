@@ -113,7 +113,7 @@ B-16은 [특성별 모션 하네스](motion-harness-pipeline.md)를 서버에 �
 
 - B-35 개인 프로필·저장한 친구·홈 탐색 API: [노션](https://app.notion.com/p/3eb5b2d1a55f80c0a925d1e9ff4e1a85), [연결 명세](personal-discovery-api.md). B-34 이후 작업.
 - B-36 커뮤니티 게시글·댓글·목격·신고: [노션](https://app.notion.com/p/3eb5b2d1a55f80218108d105351207df), [연결 명세](community-api.md). B-35 병합 이후 별도 카드/PR.
-- B-37 이웃 문의방·메시지·읽음: B-36 병합 이후 별도 카드/PR.
+- B-37 이웃 문의방·메시지·읽음: [노션](https://app.notion.com/p/3eb5b2d1a55f8067a824edd126c7dbb8), [연결 명세](inquiry-api.md). B-36 병합 이후 별도 카드/PR.
 
 ## 2026-10-01 보안 선행 패치
 
