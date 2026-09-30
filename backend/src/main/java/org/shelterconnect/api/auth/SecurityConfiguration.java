@@ -19,7 +19,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 @Configuration(proxyBeanMethods = false)
 public class SecurityConfiguration {
-	private static final String[] PUBLIC_READS = {"/actuator/health", "/actuator/health/liveness",
+	private static final String[] PUBLIC_READS = {"/v1/registration-policy", "/v1/shelter-discovery", "/actuator/health", "/actuator/health/liveness",
 			"/actuator/health/readiness", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml", "/v1/shelters", "/v1/shelters/{shelterId}",
 			"/v1/shelters/{shelterId}/dogs", "/v1/dogs/{dogId}", "/v1/dogs/{dogId}/behavior", "/v1/dogs/{dogId}/assets"};
 
@@ -39,7 +39,11 @@ public class SecurityConfiguration {
 						.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
 						.requestMatchers(HttpMethod.GET, PUBLIC_READS).permitAll()
 						.requestMatchers(HttpMethod.HEAD, PUBLIC_READS).permitAll()
-						.requestMatchers(HttpMethod.POST, "/v1/me").authenticated()
+						.requestMatchers(HttpMethod.GET, "/v1/me/preferences", "/v1/me/consents", "/v1/me/saved-dogs", "/v1/me/saved-dogs/{dogId}", "/v1/me/dog-conversations").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/v1/me/profile").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/v1/me/preferences", "/v1/me/consents", "/v1/me/saved-dogs/{dogId}").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/v1/me/saved-dogs/{dogId}").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/v1/me").authenticated()
 						.requestMatchers(HttpMethod.GET, "/v1/me/adoption-notes", "/v1/me/adoption-notes/{dogId}").authenticated()
 						.requestMatchers(HttpMethod.PUT, "/v1/me/adoption-notes/{dogId}").authenticated()
 						.requestMatchers(HttpMethod.GET, "/v1/shelter-admin/dogs/{dogId}/behavior").authenticated()
