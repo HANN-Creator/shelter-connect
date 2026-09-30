@@ -10,7 +10,7 @@ import static org.shelterconnect.api.community.CommunityTypes.*;
 
 @Service @Transactional(readOnly=true)
 public class CommunityMediaStore {
-    public record Stored(UUID id,UUID owner,String key,String hash,String state,int bytes,UUID postId) {public Media response(){return new Media(id,state,bytes);}}
+    public record Stored(UUID id,UUID owner,String key,String hash,String state,int bytes,UUID postId,UUID roomId) {public Media response(){return new Media(id,state,bytes);}}
     private final JdbcClient jdbc;private final AccountService accounts;
     public CommunityMediaStore(JdbcClient jdbc,AccountService accounts){this.jdbc=jdbc;this.accounts=accounts;}
     public void authorize(UUID subject){accounts.profile(subject);}
@@ -33,15 +33,23 @@ public class CommunityMediaStore {
         // A consistent media lock order prevents two drafts with overlapping images deadlocking.
         for(UUID id:ids.stream().sorted().toList()) {
             var found=jdbc.sql("SELECT * FROM shelter.community_media WHERE id=:id AND owner_id=:user FOR UPDATE").param("id",id).param("user",user).query(this::stored).optional().orElseThrow(FeatureException::missing);
-            if(!found.state().equals("READY") || found.postId()!=null&&!found.postId().equals(post))throw new FeatureException(409,"MEDIA_NOT_AVAILABLE","사용할 수 없는 사진이에요.");
+            if(!found.state().equals("READY") || found.roomId()!=null || found.postId()!=null&&!found.postId().equals(post))throw new FeatureException(409,"MEDIA_NOT_AVAILABLE","사용할 수 없는 사진이에요.");
             jdbc.sql("UPDATE shelter.community_media SET post_id=:post WHERE id=:id").param("post",post).param("id",id).update();
         }
+    }
+    @Transactional(propagation=Propagation.MANDATORY) public void bindRoom(UUID user,UUID room,UUID id) {
+        var found=jdbc.sql("SELECT * FROM shelter.community_media WHERE id=:id AND owner_id=:user FOR UPDATE").param("id",id).param("user",user).query(this::stored).optional().orElseThrow(FeatureException::missing);
+        if(!found.state().equals("READY") || found.postId()!=null || found.roomId()!=null&&!found.roomId().equals(room))throw new FeatureException(409,"MEDIA_NOT_AVAILABLE","사용할 수 없는 사진이에요.");
+        jdbc.sql("UPDATE shelter.community_media SET room_id=:room WHERE id=:id").param("room",room).param("id",id).update();
     }
     public Stored accessible(UUID subject,UUID id) {
         var user=accounts.profile(subject);
         String sql="""
             SELECT m.* FROM shelter.community_media m WHERE m.id=:id AND m.state='READY' AND (
                 m.owner_id=:user OR EXISTS (
+                    SELECT 1 FROM shelter.inquiry_rooms r JOIN shelter.inquiry_messages im ON im.room_id=r.id
+                    WHERE r.id=m.room_id AND (r.author_id=:user OR r.requester_id=:user) AND im.media_id=m.id
+                ) OR EXISTS (
                     SELECT 1 FROM shelter.community_posts p JOIN shelter.app_users a ON a.id=p.author_id
                     WHERE p.id=m.post_id AND ((p.publication='PUBLISHED' AND p.hidden_at IS NULL AND p.deleted_at IS NULL AND a.disabled_at IS NULL) OR :operator)
                     AND (jsonb_exists(p.content->'mediaIds',CAST(m.id AS text)) OR EXISTS (
@@ -54,5 +62,5 @@ public class CommunityMediaStore {
             """;
         return jdbc.sql(sql).param("id",id).param("user",user.id()).param("operator",user.role().equals("OPERATOR")).query(this::stored).optional().orElseThrow(FeatureException::missing);
     }
-    private Stored stored(java.sql.ResultSet rs,int row)throws java.sql.SQLException {return new Stored(rs.getObject("id",UUID.class),rs.getObject("owner_id",UUID.class),rs.getString("object_key"),rs.getString("content_hash"),rs.getString("state"),rs.getInt("byte_size"),rs.getObject("post_id",UUID.class));}
+    private Stored stored(java.sql.ResultSet rs,int row)throws java.sql.SQLException {return new Stored(rs.getObject("id",UUID.class),rs.getObject("owner_id",UUID.class),rs.getString("object_key"),rs.getString("content_hash"),rs.getString("state"),rs.getInt("byte_size"),rs.getObject("post_id",UUID.class),rs.getObject("room_id",UUID.class));}
 }
