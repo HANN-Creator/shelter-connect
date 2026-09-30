@@ -114,3 +114,7 @@ B-16은 [특성별 모션 하네스](motion-harness-pipeline.md)를 서버에 �
 - B-35 개인 프로필·저장한 친구·홈 탐색 API: [노션](https://app.notion.com/p/3eb5b2d1a55f80c0a925d1e9ff4e1a85), [연결 명세](personal-discovery-api.md). B-34 이후 작업.
 - B-36 커뮤니티 게시글·댓글·목격·신고: B-35 병합 이후 별도 카드/PR.
 - B-37 이웃 문의방·메시지·읽음: B-36 병합 이후 별도 카드/PR.
+
+## 2026-10-01 보안 선행 패치
+
+B-35A: [Jackson 신규 보안 공지 대응](jackson-security-update.md). B-35 CI에서 기존 의존성 경고가 확인되어 별도 카드/PR로 수정한 뒤 개인 기능을 이어서 검사한다.
