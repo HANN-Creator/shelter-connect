@@ -121,6 +121,18 @@ class CommunityPostgresTest {
         mvc.perform(as(get("/v1/community/media/"+media),other)).andExpect(status().isNotFound());
         body(get("/v1/community/media/"+media),subject);
     }
+    @Test void operatorsCannotSignUnpublishedDraftPhotosButCanReviewPublishedHiddenPhotos()throws Exception{
+        jdbc.execute("SET LOCAL ROLE shelter_runtime");String media=upload(UUID.randomUUID(),png(),subject).at("/data/id").asText();
+        String p=payload("DRAFT","NEIGHBOR_NEWS","임시 사진").replace("\"mediaIds\":[]","\"mediaIds\":[\""+media+"\"]");
+        String id=body(post("/v1/community/posts").contentType("application/json").content(p),subject).at("/data/id").asText();
+        body(get("/v1/community/media/"+media),subject);
+        mvc.perform(as(get("/v1/community/media/"+media),operator)).andExpect(status().isNotFound());
+        mvc.perform(as(get("/v1/community/media/"+media),other)).andExpect(status().isNotFound());
+        body(post("/v1/community/posts/"+id+"/publish").contentType("application/json").content("{\"version\":1}"),subject);
+        jdbc.update("UPDATE shelter.community_posts SET hidden_at=now() WHERE id=?",UUID.fromString(id));
+        body(get("/v1/community/media/"+media),operator);
+        mvc.perform(as(get("/v1/community/media/"+media),other)).andExpect(status().isNotFound());
+    }
     @Test void otherUsersMediaAndMediaAlreadyBoundElsewhereAreRejected()throws Exception{
         String media=upload(UUID.randomUUID(),png(),other).at("/data/id").asText();String p=payload("PUBLISHED","NEIGHBOR_NEWS","소식").replace("\"mediaIds\":[]","\"mediaIds\":[\""+media+"\"]");
         mvc.perform(as(post("/v1/community/posts").contentType("application/json").content(p),subject)).andExpect(status().isNotFound());
