@@ -30,20 +30,44 @@ public final class PythonMotionHarness implements MotionHarness {
         if(size[0]!=64*count || size[1]!=64) throw new AssetException(422,"HARNESS_INVALID_RESULT");
         return new Clip(result.sheet(),count,duration,Map.of("templateVersion",m.path("templateVersion").asText(),"paletteChecked",true,"boundsChecked",true));
     }
+    public MapClip mapPixels(byte[] base,byte[] source,int frameCount) {
+        try {
+            if(frameCount<1 || frameCount>48) throw new AssetException(422,"MAP_PIXEL_INVALID_INPUT");
+            int[] sourceSize=SpriteNormalizer.dimensions(source,3072);
+            if(sourceSize[0]!=64*frameCount || sourceSize[1]!=64) throw new AssetException(422,"MAP_PIXEL_INVALID_INPUT");
+            var output=execute(base,Map.of("mode","map_pixels","frameCount",frameCount),source);
+            var m=output.metadata();var size=SpriteNormalizer.dimensions(output.sheet(),1536);
+            if(size[0]!=32*frameCount || size[1]!=32 || m.path("frameCount").asInt()!=frameCount
+                || !m.path("converterVersion").asText().equals("map-pixel-v1")
+                || !m.path("paletteSha256").asText().matches("[a-f0-9]{64}")
+                || !m.path("paletteChecked").asBoolean() || !m.path("transparencyChecked").asBoolean())
+                throw new AssetException(422,"MAP_PIXEL_INVALID_RESULT");
+            return new MapClip(output.sheet(),frameCount,Map.of("converterVersion","map-pixel-v1",
+                "paletteSha256",m.path("paletteSha256").asText(),"paletteChecked",true,
+                "boundsChecked",true,"transparencyChecked",true));
+        } catch(AssetException e) {
+            if(e.code.startsWith("MAP_PIXEL_")) throw e;
+            throw new AssetException(e.status,e.status>=500?"MAP_PIXEL_UNAVAILABLE":"MAP_PIXEL_INVALID_INPUT");
+        }
+    }
     private record Output(JsonNode metadata,byte[] sheet) {}
     private Output execute(byte[] base,Object request) {
+        return execute(base,request,null);
+    }
+    private Output execute(byte[] base,Object request,byte[] source) {
         SpriteNormalizer.dimensions(base,64);
         if(!capacity.tryAcquire()) throw new AssetException(503,"HARNESS_BUSY");
         Path dir=null;Process process=null;
         try {
             dir=Files.createTempDirectory("shelter-motion-");
-            for(String name:List.of("runner.py","render.py","outline.py","limb_art.py","motion-templates.json","canonical-profile.json")) {
+            for(String name:List.of("runner.py","render.py","outline.py","limb_art.py","map_pixels.py","motion-templates.json","canonical-profile.json")) {
                 try(var in=getClass().getResourceAsStream("/motion-harness/"+name)) {
                     if(in==null) throw new IOException("Missing bundled renderer");
                     Files.copy(in,dir.resolve(name));
                 }
             }
             Files.write(dir.resolve("base.png"),base);
+            if(source!=null) Files.write(dir.resolve("source.png"),source);
             Files.write(dir.resolve("request.json"),json.writeValueAsBytes(request));
             var builder=new ProcessBuilder(python,dir.resolve("runner.py").toString(),dir.toString());
             builder.directory(dir.toFile());builder.environment().clear();

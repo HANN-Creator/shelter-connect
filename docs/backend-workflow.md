@@ -119,3 +119,7 @@ B-16은 [특성별 모션 하네스](motion-harness-pipeline.md)를 서버에 �
 ## 2026-10-01 보안 선행 패치
 
 B-35A: [Jackson 신규 보안 공지 대응](jackson-security-update.md). B-35 CI에서 기존 의존성 경고가 확인되어 별도 카드/PR로 수정한 뒤 개인 기능을 이어서 검사한다.
+
+## 2026-10-04 맵 도트
+
+B-38: [강아지별 32×32 맵 도트 하네스](https://app.notion.com/p/3ee5b2d1a55f80499c12cb1560cb9850). B-16/B-28 기반으로 원본 팔레트·타임라인을 보존하는 서버 변환과 `variants.MAP_32`를 추가한다. [연결 명세](map-pixel-assets.md).

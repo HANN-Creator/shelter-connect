@@ -136,7 +136,13 @@ public class AssetStore {
         // Completed visual analysis survives PixelLab failures. Only explicit retries permit a new analysis call.
         jdbc.sql("UPDATE shelter.asset_steps SET result=jsonb_set(result,'{preparation,status}','\"RETRY_READY\"') WHERE job_id=:id AND action='BASE' AND result->'preparation'->>'status' IN ('STARTED','RETRY_READY')")
             .param("id",id).update();
-        jdbc.sql("UPDATE shelter.asset_steps SET status='PENDING',provider_job_id=NULL WHERE job_id=:id AND status='FAILED'").param("id",id).update();
+        // A completed source survives map conversion failures; never buy its generation again.
+        jdbc.sql("""
+            UPDATE shelter.asset_steps SET status=CASE WHEN jsonb_exists(result,'renderedSource')
+                THEN CASE WHEN action IN ('WALK','RUN','BACK_OFF') THEN 'RENDERING' ELSE 'WAITING' END ELSE 'PENDING' END,
+                provider_job_id=CASE WHEN jsonb_exists(result,'renderedSource') THEN provider_job_id ELSE NULL END
+            WHERE job_id=:id AND status='FAILED'
+            """).param("id",id).update();
         // Submitted rows retain their timestamp for the daily quota; retries are counted in a separate ledger (see reserve).
         jdbc.sql("UPDATE shelter.asset_jobs SET status='QUEUED',failure_code=NULL,next_run_at=now(),lease_token=NULL,lease_until=NULL WHERE id=:id").param("id",id).update();
         return job(id);
@@ -240,6 +246,21 @@ public class AssetStore {
         try { valid(work.id(),true);return true; } catch(AssetException e) { cancel(work.id());return false; }
     }
     @Transactional
+    public Map<String,Object> renderedSource(Work work) {
+        if(!authorized(work)) return null;
+        String result=jdbc.sql("SELECT coalesce(result->'renderedSource','null'::jsonb)::text AS source FROM shelter.asset_steps WHERE job_id=:id AND action=:a")
+            .param("id",work.id()).param("a",work.action().name()).query((r,n)->r.getString("source")).single();
+        return json.readTree(result).isNull()?null:json.readValue(result,new tools.jackson.core.type.TypeReference<Map<String,Object>>() {});
+    }
+    @Transactional
+    public boolean checkpointSource(Work work,Map<String,Object> metadata) {
+        if(!authorized(work)) return false;
+        return jdbc.sql("""
+            UPDATE shelter.asset_steps SET result=coalesce(result,'{}'::jsonb)||jsonb_build_object('renderedSource',CAST(:r AS jsonb))
+            WHERE job_id=:id AND action=:a AND status IN ('WAITING','RENDERING')
+            """).param("r",json.writeValueAsString(metadata)).param("id",work.id()).param("a",work.action().name()).update()==1;
+    }
+    @Transactional
     public void success(Work work,Map<String,Object> result) {
         if(!authorized(work)) return;
         jdbc.sql("UPDATE shelter.asset_steps SET status='SUCCEEDED',result=CAST(:r AS jsonb) WHERE job_id=:id AND action=:a AND status IN ('WAITING','RENDERING')")
@@ -268,7 +289,7 @@ public class AssetStore {
     @Transactional
     public void baseReady(Work work,Map<String,Object> result,JsonNode proposed,String sha256) {
         if(!authorized(work)) return;
-        if(jdbc.sql("UPDATE shelter.asset_steps SET status='SUCCEEDED',result=coalesce(result,'{}'::jsonb)||CAST(:r AS jsonb) WHERE job_id=:id AND action='BASE' AND status='WAITING'")
+        if(jdbc.sql("UPDATE shelter.asset_steps SET status='SUCCEEDED',result=(coalesce(result,'{}'::jsonb)-'renderedSource')||CAST(:r AS jsonb) WHERE job_id=:id AND action='BASE' AND status='WAITING'")
             .param("r",json.writeValueAsString(result)).param("id",work.id()).update()!=1) return;
         jdbc.sql("UPDATE shelter.asset_jobs SET status='RIG_REVIEW',rig_profile=CAST(:p AS jsonb),rig_revision=rig_revision+1,rig_base_sha256=:hash,lease_token=NULL,lease_until=NULL,failure_code=:failure WHERE id=:id")
             .param("id",work.id()).param("p",proposed==null?null:json.writeValueAsString(proposed)).param("hash",sha256)

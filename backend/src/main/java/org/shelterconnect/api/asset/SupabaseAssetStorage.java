@@ -46,7 +46,7 @@ public final class SupabaseAssetStorage implements AssetStorage {
     }
     public Map<String,String> sign(List<String> keys) {
         privateBucket(properties.assetBucket);
-        if(keys.isEmpty() || keys.size()>9) throw AssetException.invalid();
+        if(keys.isEmpty() || keys.size()>18) throw AssetException.invalid();
         keys.forEach(SupabaseAssetStorage::path);
         var body=json.writeValueAsBytes(Map.of("expiresIn",60,"paths",keys));
         JsonNode data=json.readTree(request("/object/sign/"+properties.assetBucket,"SIGN",body,256*1024));

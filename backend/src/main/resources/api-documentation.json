@@ -822,7 +822,7 @@
         "frameCount": {
           "type": "integer",
           "minimum": 1,
-          "maximum": 24
+          "maximum": 48
         },
         "loop": {
           "type": "boolean"
@@ -963,6 +963,16 @@
           "additionalProperties": {
             "$ref": "#/components/schemas/AssetAnimation"
           }
+        },
+        "variants": {
+          "type": "object",
+          "description": "새 작업의 모든 시트가 변환·검증된 경우 MAP_32 제공. 기존 작업 또는 불완전한 변환은 빈 객체이며 상위 64px를 사용한다. 기존 작업을 자동 재생성하지 않는다.",
+          "properties": {
+            "MAP_32": {
+              "$ref": "#/components/schemas/MapPixelVariant"
+            }
+          },
+          "additionalProperties": false
         }
       },
       "required": [
@@ -1721,6 +1731,114 @@
           "minimum": 0
         }
       }
+    },
+    "MapPixelVariant": {
+      "type": "object",
+      "description": "원본 64px와 같은 프레임 수·시간·동작. 맵에서 정수 배율/nearest로 재생하는 32px 버전. URL 만료는 상위 expiresAt과 동일하다.",
+      "properties": {
+        "frameSize": {
+          "type": "object",
+          "properties": {
+            "width": {
+              "type": "integer",
+              "minimum": 32,
+              "maximum": 32
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 32,
+              "maximum": 32
+            }
+          },
+          "required": [
+            "width",
+            "height"
+          ],
+          "additionalProperties": false
+        },
+        "anchorPixels": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "integer",
+              "minimum": 16,
+              "maximum": 16
+            },
+            "y": {
+              "type": "integer",
+              "minimum": 30,
+              "maximum": 30
+            }
+          },
+          "required": [
+            "x",
+            "y"
+          ],
+          "additionalProperties": false
+        },
+        "facing": {
+          "type": "string",
+          "enum": [
+            "right-three-quarter"
+          ]
+        },
+        "baseUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "animations": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/components/schemas/AssetAnimation"
+          }
+        },
+        "availableActions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "IDLE",
+              "WALK",
+              "RUN",
+              "SNIFF",
+              "TAIL_WAG",
+              "BACK_OFF",
+              "SIT",
+              "LIE_DOWN"
+            ]
+          }
+        },
+        "fallbackAction": {
+          "type": "string",
+          "enum": [
+            "IDLE"
+          ]
+        },
+        "generatorVersion": {
+          "type": "string",
+          "enum": [
+            "map-pixel-v1"
+          ]
+        },
+        "sampling": {
+          "type": "string",
+          "enum": [
+            "nearest"
+          ]
+        }
+      },
+      "required": [
+        "frameSize",
+        "anchorPixels",
+        "facing",
+        "baseUrl",
+        "animations",
+        "availableActions",
+        "fallbackAction",
+        "generatorVersion",
+        "sampling"
+      ],
+      "additionalProperties": false
     }
   },
   "operations": {
