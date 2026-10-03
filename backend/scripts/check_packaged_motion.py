@@ -6,7 +6,7 @@ from PIL import Image, ImageDraw
 with tempfile.TemporaryDirectory(prefix='harness-check-') as folder:
     root=Path(folder)
     with zipfile.ZipFile('/app/app.jar') as jar:
-        for name in ['runner.py','render.py','outline.py','limb_art.py','motion-templates.json','canonical-profile.json']:
+        for name in ['runner.py','render.py','outline.py','limb_art.py','map_pixels.py','motion-templates.json','canonical-profile.json']:
             (root/name).write_bytes(jar.read('BOOT-INF/classes/motion-harness/'+name))
     # Fictional silhouette; no photo, provider credential or external call.
     im=Image.new('RGBA',(64,64));d=ImageDraw.Draw(im)
@@ -26,4 +26,9 @@ with tempfile.TemporaryDirectory(prefix='harness-check-') as folder:
         count=24 if action=='BACK_OFF' else 48
         assert result['frameCount']==count and Image.open(root/'sheet.png').size==(64*count,64)
         print(action,'PASS',result['templateVersion'])
+        (root/'source.png').write_bytes((root/'sheet.png').read_bytes())
+        mapped=run({'mode':'map_pixels','frameCount':count})
+        assert Image.open(root/'sheet.png').size==(32*count,32)
+        assert mapped['frameCount']==count and mapped['paletteChecked'] and mapped['transparencyChecked']
+        print(action,'MAP_32 PASS',mapped['converterVersion'])
     assert os.getuid()==10001

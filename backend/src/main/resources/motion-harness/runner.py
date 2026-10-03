@@ -3,6 +3,7 @@ from pathlib import Path
 import json,math,sys,subprocess
 import numpy as np
 from PIL import Image
+from map_pixels import convert_sheet
 
 HERE=Path(__file__).resolve().parent
 ROOT=Path(sys.argv[1]).resolve()
@@ -66,7 +67,13 @@ def fit():
     proposed['landmarksSource']='bounding-box proposal; review limbs, masks and coat samples before confirming'
     return {'profile':proposed,'reviewRequired':True,'fitMethod':'bounding-box-proposal'}
 
-if request['mode']=='fit':
+if request['mode']=='map_pixels':
+    assert set(request)=={'mode','frameCount'}
+    assert (ROOT/'source.png').stat().st_size<=8*1024*1024
+    with Image.open(ROOT/'source.png') as source:
+        output,response=convert_sheet(base,source,request['frameCount'])
+        output.save(ROOT/'sheet.png')
+elif request['mode']=='fit':
     assert set(request)=={'mode'}
     response=fit()
 elif request['mode']=='render':

@@ -31,6 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AssetPostgresTest {
     @Autowired JdbcTemplate jdbc; @Autowired MockMvc mvc;@Autowired JsonMapper json;@Autowired JwtTestSupport tokens;
     @Autowired AssetWorker worker; @Autowired AssetStore store;
+    @org.springframework.test.context.bean.override.mockito.MockitoSpyBean PythonMotionHarness harness;
     @MockitoBean BehaviorSuggestionProvider suggestions;
     @MockitoBean PhotoAppearanceProvider appearance;
     @MockitoBean AssetProvider provider; @MockitoBean AssetStorage storage;
@@ -101,10 +102,53 @@ class AssetPostgresTest {
             elapsed+=frames.get(i).path("durationMs").asInt();
         }
         assertThat(elapsed).isEqualTo(1440);
+        var mapped=published.at("/data/variants/MAP_32");
+        assertThat(mapped.at("/frameSize/width").asInt()).isEqualTo(32);
+        assertThat(mapped.at("/anchorPixels/x").asInt()).isEqualTo(16);
+        assertThat(mapped.at("/anchorPixels/y").asInt()).isEqualTo(30);
+        assertThat(mapped.at("/animations/WALK/frameCount").asInt()).isEqualTo(48);
+        assertThat(mapped.path("availableActions")).isEqualTo(published.at("/data/availableActions"));
+        for(int i=0;i<frames.size();i++) {
+            var f=mapped.at("/animations/WALK/frames").get(i);
+            assertThat(f.path("x").asInt()).isEqualTo(i*32);
+            assertThat(f.path("durationMs")).isEqualTo(frames.get(i).path("durationMs"));
+        }
+        var mapSheet=ImageIO.read(new java.io.ByteArrayInputStream(objects.get(dog+"/"+job+"/map-32/walk.png")));
+        assertThat(mapSheet.getWidth()).isEqualTo(1536);assertThat(mapSheet.getHeight()).isEqualTo(32);
+        assertThat(published.toString()).doesNotContain("paletteSha256","validation","renderedSource");
         assertThat(published.at("/data/fallbackAction").asText()).isEqualTo("IDLE");
         assertThat(published.toString()).doesNotContain("photoId","source.png","permissionNote","test-key","preparation","headBox");
         mvc.perform(delete("/v1/operations/asset-permissions/"+permission).header("Authorization",bearer(opSubject))).andExpect(status().isNoContent());
         mvc.perform(get("/v1/dogs/"+dog+"/assets")).andExpect(status().isNotFound());
+    }
+    @Test void failedMapConversionResumesSavedBaseEvenAfterProviderExpiryWithoutPaidCalls() throws Exception {
+        UUID job=importPhoto(permission(true));
+        doAnswer(c->new PythonMotionHarness(json,"unused").mapPixels(sprite,new byte[0],1)).when(harness).mapPixels(any(),any(),eq(1));
+        tick();tick();
+        assertThat(read(subject,job,200).at("/data/status").asText()).isEqualTo("FAILED");
+        assertThat(read(subject,job,200).at("/data/steps/0/result/renderedSource/key").asText()).endsWith("/base.png");
+        mvc.perform(get("/v1/dogs/"+dog+"/assets")).andExpect(status().isNotFound());
+        jdbc.update("UPDATE shelter.asset_steps SET submitted_at=now()-interval '3 hours' WHERE job_id=? AND action='BASE'",job);
+        postJson(opSubject,"/v1/operations/asset-jobs/"+job+"/retry",Map.of(),200);
+        doCallRealMethod().when(harness).mapPixels(any(),any(),eq(1));tick();
+        assertThat(read(subject,job,200).at("/data/status").asText()).isEqualTo("RIG_REVIEW");
+        assertThat(read(subject,job,200).at("/data/steps/0/result").has("renderedSource")).isFalse();
+        verify(appearance,times(1)).analyze(any());verify(provider,times(1)).submitBase(any());verify(provider,times(1)).poll(any());
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.asset_submissions WHERE job_id=?",Integer.class,job)).isEqualTo(1);
+    }
+    @Test void localMapFailurePreservesConfirmedRigAndRenderedWalkForExplicitRetry() throws Exception {
+        UUID job=importPhoto(permission(true));tick();tick();
+        var rig=read(subject,job,200).path("data");
+        postJson(subject,"/v1/shelter-admin/dogs/"+dog+"/assets/"+job+"/rig/confirm",
+            Map.of("expectedRevision",rig.path("rigRevision").asInt(),"profile",rig.path("rigProfile")),200);
+        clearInvocations(harness); // Rig confirmation already performs a separate validation render.
+        doAnswer(c->new PythonMotionHarness(json,"unused").mapPixels(sprite,new byte[0],48)).when(harness).mapPixels(any(),any(),eq(48));
+        for(int i=0;i<6 && !read(subject,job,200).at("/data/status").asText().equals("FAILED");i++) tick();
+        assertThat(read(subject,job,200).at("/data/failureCode").asText()).isEqualTo("MAP_PIXEL_INVALID_INPUT");
+        postJson(opSubject,"/v1/operations/asset-jobs/"+job+"/retry",Map.of(),200);
+        doCallRealMethod().when(harness).mapPixels(any(),any(),eq(48));finish(job);
+        verify(harness,times(1)).render(eq(AssetAction.WALK),any(),any());
+        verify(provider,never()).submit(eq(AssetAction.WALK),any());
     }
     @Test void completedAppearanceIsStoredOnceAndReusedAfterAPixelLabRejection() throws Exception {
         UUID job=importPhoto(permission(true));

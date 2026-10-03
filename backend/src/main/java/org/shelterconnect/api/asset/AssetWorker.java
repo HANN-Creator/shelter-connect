@@ -22,7 +22,12 @@ public class AssetWorker {
         var work=store.claim();if(work==null) return;
         boolean reserved=false;
         try {
-            if(MotionHarness.handles(work.action()) && java.util.Set.of("PENDING","RENDERING").contains(work.stepStatus())) {
+            var saved=store.renderedSource(work);
+            if(!store.authorized(work)) return;
+            if(saved!=null) {
+                storage.ready();
+                finish(work,storage.asset((String)saved.get("key")),saved);
+            } else if(MotionHarness.handles(work.action()) && java.util.Set.of("PENDING","RENDERING").contains(work.stepStatus())) {
                 var profile=store.localProfile(work);if(profile==null) return;
                 storage.ready();
                 byte[] base=storage.asset(work.prefix()+"base.png");
@@ -30,8 +35,7 @@ public class AssetWorker {
                 var clip=harness.render(work.action(),base,profile);
                 if(!store.authorized(work)) return;
                 String key=work.prefix()+work.action().name().toLowerCase(java.util.Locale.ROOT)+".png";
-                storage.put(key,clip.sheet());
-                store.success(work,Map.of("key",key,"frameCount",clip.frameCount(),"width",64,"height",64,
+                saveSource(work,clip.sheet(),Map.of("key",key,"frameCount",clip.frameCount(),"width",64,"height",64,
                     "durationMs",clip.durationMs(),"loop",true,"holdLastFrame",false,"returnToIdle","DIRECT",
                     "generator","motion-harness","validation",clip.validation()));
             } else if(work.stepStatus().equals("PENDING")) {
@@ -85,18 +89,14 @@ public class AssetWorker {
                         "durationMs",work.action().durationMs,"loop",work.action().loop,"holdLastFrame",!work.action().loop,
                         "returnToIdle",work.action().loop?"DIRECT":"REVERSE_FRAMES","offsets",clip.offsets());
                 }
-                storage.put(key,png);
-                if(work.action()==AssetAction.BASE) {
-                    tools.jackson.databind.JsonNode proposed;
-                    try { proposed=harness.propose(png); }
-                    catch(AssetException e) { if(e.status!=422) throw e;proposed=null; }
-                    store.baseReady(work,metadata,proposed,AssetRigService.sha256(png));
-                } else store.success(work,metadata);
+                saveSource(work,png,metadata);
             }
         } catch(AssetProvider.Failure e) {
             store.fail(work,reserved&&e.uncertain?"OUTCOME_UNKNOWN":"FAILED",e.code);
         } catch(AssetException e) {
-            if(MotionHarness.handles(work.action()) && e.status==422) store.rigNeedsReview(work);
+            if(e.code.startsWith("MAP_PIXEL_")) {
+                if(e.status>=500) store.release(work,30);else store.fail(work,"FAILED",e.code);
+            } else if(MotionHarness.handles(work.action()) && e.status==422) store.rigNeedsReview(work);
             else if((work.stepStatus().equals("WAITING") || MotionHarness.handles(work.action())) && e.status>=500) store.release(work,30);
             else store.fail(work,reserved?"OUTCOME_UNKNOWN":"FAILED",e.code);
         } catch(RuntimeException e) {
@@ -104,5 +104,25 @@ public class AssetWorker {
             if(work.stepStatus().equals("WAITING") || MotionHarness.handles(work.action())) store.release(work,30);
             else store.fail(work,reserved?"OUTCOME_UNKNOWN":"FAILED","ASSET_STEP_INTERRUPTED");
         }
+    }
+    private void saveSource(AssetStore.Work work,byte[] png,Map<String,Object> metadata) {
+        if(!store.authorized(work)) return;
+        storage.put((String)metadata.get("key"),png);
+        if(store.checkpointSource(work,metadata)) finish(work,png,metadata);
+    }
+    private void finish(AssetStore.Work work,byte[] png,Map<String,Object> metadata) {
+        byte[] base=work.action()==AssetAction.BASE?png:storage.asset(work.prefix()+"base.png");
+        var map=harness.mapPixels(base,png,((Number)metadata.get("frameCount")).intValue());
+        if(!store.authorized(work)) return;
+        String key=work.prefix()+"map-32/"+work.action().name().toLowerCase(java.util.Locale.ROOT)+".png";
+        storage.put(key,map.sheet());
+        var result=new java.util.LinkedHashMap<>(metadata);
+        result.put("mapPixel",Map.of("key",key,"frameCount",map.frameCount(),"width",32,"height",32,"validation",map.validation()));
+        if(work.action()==AssetAction.BASE) {
+            tools.jackson.databind.JsonNode proposed;
+            try { proposed=harness.propose(png); }
+            catch(AssetException e) { if(e.status!=422) throw e;proposed=null; }
+            store.baseReady(work,result,proposed,AssetRigService.sha256(png));
+        } else store.success(work,result);
     }
 }
