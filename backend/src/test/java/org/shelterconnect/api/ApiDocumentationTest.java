@@ -52,6 +52,9 @@ class ApiDocumentationTest {
         assertThat(schemas.path("BehaviorSuggestionJob").path("properties").has("result")).isTrue();
         assertThat(schemas.path("BehaviorProfile").at("/properties/settings/$ref").asText()).endsWith("BehaviorSettingsInput");
         assertThat(schemas.path("BehaviorSaveInput").path("required").size()).isEqualTo(5);
+        assertThat(schemas.at("/BehaviorSuggestionJob/properties/result/properties/generationPlan/$ref").asText()).endsWith("BehaviorGenerationPlan");
+        assertThat(schemas.at("/BehaviorInteractions/properties/PERSON_GREETING/$ref").asText()).endsWith("PersonGreeting");
+        assertThat(schemas.at("/AssetManifest/properties/behavior/$ref").asText()).endsWith("BehaviorPlayback");
         var upload=root.path("paths").path("/v1/shelter-admin/dogs/{dogId}/photos").path("post");
         assertThat(upload.at("/requestBody/content/multipart~1form-data/encoding/metadata/contentType").asText()).isEqualTo("application/json");
         assertThat(schemas.path("PhotoUploadInput").at("/properties/file/format").asText()).isEqualTo("binary");

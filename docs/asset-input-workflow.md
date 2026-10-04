@@ -34,21 +34,22 @@ RN 화면 없이 실제 사진부터 동작 생성·검토·앱 조회까지 확
 }
 ```
 
-처음 설정할 때 버전은 0, 기존 설정이 있으면 관리 행동 조회의 버전을 사용한다. 관찰은 같은 강아지의 확인된 기록 1~20개, 합계 20,000자 이하다. 응답은 `{data:{id,dogId,status,failureCode,result,createdAt}}`이며 `result`에는 `profile`, 근거가 있는 `traits`, `requiresConfirmation:true`가 들어간다. 상태는 `PENDING`, `COMPLETED`, `FAILED`다. HTTP 200이어도 작업 상태를 확인한다.
+처음 설정할 때 버전은 0, 기존 설정이 있으면 관리 행동 조회의 버전을 사용한다. 관찰은 같은 강아지의 확인된 기록 1~20개, 합계 20,000자 이하다. 응답은 `{data:{id,dogId,status,failureCode,result,createdAt}}`이며 `result`에는 `profile`, 근거가 있는 `traits`, `requiresConfirmation:true`, `generationPlan`이 들어간다. 새 계획은 기본3개/추가 행동/4방향 요청 수/상호작용을 포함하며, 이전에 저장한 결과에는 없을 수 있다. 상태는 `PENDING`, `COMPLETED`, `FAILED`다. HTTP 200이어도 작업 상태를 확인한다.
 
 연결이 끊기면 같은 요청 ID와 같은 본문으로 다시 보내거나 `GET /v1/shelter-admin/dogs/{dogId}/behavior/suggestions/{suggestionId}`를 조회한다. 같은 ID로 다른 내용을 보내면 409다. 실패한 요청의 ID는 AI를 다시 호출하지 않는다. 실패 이유를 확인한 뒤 사용자가 명시적으로 재시도할 때만 새 ID를 만든다. 처리 기한을 넘긴 요청은 `AI_OUTCOME_UNKNOWN`으로 남으며 자동 재호출하지 않는다.
 
 | 근거 태그 | 설정되는 행동 |
 | --- | --- |
-| RUNNER | RUN 비중 30 |
+| RUNNER / WALK_LOVER | 달리기/산책 선호 → RUN 비중 30 |
 | SNIFFER | SNIFF 비중 30 |
-| FRIENDLY | TAIL_WAG 비중 30, 접근 거리 4타일 |
+| FRIENDLY | TAIL_WAG·SNIFF 비중 30, 접근 거리 4타일, 사람 인사 활성화 |
 | CAUTIOUS | BACK_OFF 비중 30, 개인 거리 2타일·반응 대기 1.5초 |
 | RESTFUL | LIE_DOWN 비중 30 |
 | BALL_CHASER | RUN 40·SNIFF 30, 공 추적 허용 |
 | BALL_RETURNER | RUN 40·SNIFF 30, 공 추적·가져오기 허용 |
+| RUN_RESTRICTED | 달리기 금지/회피 기록 → RUN 0, 공 추적·가져오기 비활성 |
 
-공통 기본 비중은 IDLE 60·WALK 30·SIT 10이다. CAUTIOUS와 FRIENDLY가 함께 있으면 거리 설정은 조심스러운 쪽을 우선한다. 태그가 없으면 공통 설정만 초안으로 만든다. 반환된 관찰 ID와 인용문을 서버가 검증하고, AI 응답 후 근거·권한·버전을 다시 확인한다. 분류의 의미가 맞는지는 보호소가 최종 확인한다.
+공통 기본 비중은 IDLE 60·WALK 30·SIT 10이다. CAUTIOUS와 FRIENDLY가 함께 있으면 거리 설정은 조심스러운 쪽을 우선하고 사람에게 먼저 다가가는 인사를 끈다. 태그가 없으면 공통 설정만 초안으로 만든다. 반환된 관찰 ID와 인용문을 서버가 검증하고, AI 응답 후 근거·권한·버전을 다시 확인한다. 분류의 의미가 맞는지는 보호소가 최종 확인한다.
 
 `AI_ENABLED=true`, 유효한 `OPENAI_API_KEY`가 필요하다. 기존 대화 모델 설정을 사용한다. `BEHAVIOR_AI_DAILY_LIMIT=20`은 UTC 하루 전체 보호소의 초안 요청 상한이며 실패한 시도도 포함한다. 대화 호출의 한도와는 별도다.
 
@@ -80,9 +81,9 @@ RN 화면 없이 실제 사진부터 동작 생성·검토·앱 조회까지 확
 
 ## 공통 행동과 공놀이
 
-신규 생성 목록은 IDLE/WALK/SIT + 대표 행동 최대 2개다. 공놀이가 켜져 있고 비중이 양수인 RUN/SNIFF는 대표 행동 슬롯을 우선 사용한다. 나머지는 비중 순이다. 이미 확인된 설정의 SIT 비중이 0이면 시트는 생성해도 앱에서는 자발적으로 선택하지 않는다.
+B-42부터 신규 생성 목록은 IDLE/WALK/SIT + 비중이 양수인 모든 선택 행동이다. 최대 2개 제한은 제거했고, 4방향32px도 같은 선택기를 사용한다. 이미 확인된 설정의 SIT 비중이 0이면 시트는 생성해도 앱에서는 자발적으로 선택하지 않는다.
 
-`behavior.data.interactions.BALL_CHASE`에 공 추적 → 가까이 걷기 → 냄새 맡기 → 선택적 복귀 → 대기 단계가 내려간다. 새 공놀이 시트를 만들지 않고 RUN/WALK/SNIFF/IDLE을 사용한다. 앱이 이 단계대로 이동과 공 표시를 구현한다.
+`behavior.data.interactions.BALL_CHASE`에 공 추적 → 가까이 걷기 → 냄새 맡기 → 선택적 복귀 → 대기 단계가 내려간다. 새 공놀이 시트를 만들지 않고 RUN/WALK/SNIFF/IDLE을 사용한다. 앱이 이 단계대로 이동과 공 표시를 구현한다. `PERSON_GREETING`은 사용자 근처로 걷기 → 꼬리 흔들기 → 냄새 맡기 → 대기다. [특징 기반 선택 명세](trait-selected-sprites.md)를 따른다.
 
 ## 오류와 DB 적용
 

@@ -6,6 +6,8 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.shelterconnect.api.auth.*;
+import org.shelterconnect.api.behavior.BehaviorService;
+import org.shelterconnect.api.behavior.BehaviorGenerationPlan;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -15,16 +17,28 @@ public class StyledAssetStore {
     @io.swagger.v3.oas.annotations.media.Schema(name="StyledAssetStep")
     public record Step(String label,String action,String direction,String status,JsonNode result) {}
     @io.swagger.v3.oas.annotations.media.Schema(name="StyledAssetJob")
-    public record Job(UUID id,UUID dogId,String status,String failureCode,String pipelineVersion,List<Step> steps,JsonNode seedReview) {}
+    public record Job(UUID id,UUID dogId,String status,String failureCode,String pipelineVersion,List<Step> steps,JsonNode seedReview,
+                      List<String> actionPlan,JsonNode generationPlan) {
+        public List<String> availableActions() { return actionPlan.stream().filter(a->!a.equals("BASE")).toList(); }
+        public boolean complete() {
+            if(actionPlan.size()<4 || !actionPlan.getFirst().equals("BASE") || new HashSet<>(actionPlan).size()!=actionPlan.size()
+                || !availableActions().containsAll(BehaviorGenerationPlan.BASE)
+                || !StyledSpriteCodec.ACTIONS.containsAll(availableActions())) return false;
+            var expected=new HashSet<String>();expected.add("character");
+            for(String a:availableActions())for(String d:StyledSpriteCodec.DIRECTIONS)expected.add(a.toLowerCase(Locale.ROOT)+"-"+d);
+            return steps.size()==expected.size() && steps.stream().allMatch(step->step.status().equals("SUCCEEDED")
+                && step.result()!=null && expected.remove(step.label())) && expected.isEmpty();
+        }
+    }
     record Work(UUID id,UUID dogId,UUID token,String label,String action,String direction,String status,UUID providerId,
                 Instant submittedAt,String bucket,String key,JsonNode traits,JsonNode providerResult) {
         boolean character() { return action.equals("BASE"); }
         String prefix() { return dogId+"/"+id+"/native-32/"; }
     }
     private final JdbcClient jdbc;private final JsonMapper json;private final ShelterAccessService access;
-    private final AccountService accounts;private final AssetProperties properties;private final AssetStore legacy;
-    public StyledAssetStore(JdbcClient jdbc,JsonMapper json,ShelterAccessService access,AccountService accounts,AssetProperties properties,AssetStore legacy) {
-        this.jdbc=jdbc;this.json=json;this.access=access;this.accounts=accounts;this.properties=properties;this.legacy=legacy;
+    private final AccountService accounts;private final AssetProperties properties;private final AssetStore legacy;private final BehaviorService behaviors;
+    public StyledAssetStore(JdbcClient jdbc,JsonMapper json,ShelterAccessService access,AccountService accounts,AssetProperties properties,AssetStore legacy,BehaviorService behaviors) {
+        this.jdbc=jdbc;this.json=json;this.access=access;this.accounts=accounts;this.properties=properties;this.legacy=legacy;this.behaviors=behaviors;
     }
     @Transactional public Job request(UUID subject,UUID dog,JsonNode body) {
         access.requireDogForWrite(subject,dog);properties.requireEnabled();AssetInput.fields(body,"photoId","traits");
@@ -33,20 +47,29 @@ public class StyledAssetStore {
         legacy.validPhoto(photo,null,true);
         // Canonical field ordering makes JSON object order irrelevant. Review prose does not buy another generation.
         var canonical=new TreeMap<String,Object>();traits.properties().forEach(e->{if(!e.getKey().equals("reviewNote"))canonical.put(e.getKey(),e.getValue());});
+        // A replay of an old full-pack request must not silently buy a second pack after upgrade.
+        String oldSelection=StyledSpriteCodec.sha(json.writeValueAsBytes(canonical));
+        var old=jdbc.sql("SELECT id FROM shelter.asset_jobs WHERE photo_id=:p AND pipeline_version=:v AND selection_key=:s AND behavior_plan IS NULL")
+            .param("p",photo).param("v",StyledSpriteCodec.VERSION).param("s",oldSelection).query(UUID.class).optional();
+        if(old.isPresent())return job(old.get());
+        var selected=behaviors.assetSelection(dog);
+        canonical.put("behaviorPolicy",BehaviorGenerationPlan.POLICY);canonical.put("behaviorRevision",selected.revision());
+        canonical.put("actions",selected.actions());
         String selection=StyledSpriteCodec.sha(json.writeValueAsBytes(canonical));
         var existing=jdbc.sql("SELECT id FROM shelter.asset_jobs WHERE photo_id=:p AND pipeline_version=:v AND selection_key=:s")
             .param("p",photo).param("v",StyledSpriteCodec.VERSION).param("s",selection).query(UUID.class).optional();
         if(existing.isPresent()) return job(existing.get());
-        var plan=new ArrayList<String>();plan.add("BASE");plan.addAll(StyledSpriteCodec.ACTIONS);
+        var plan=selected.actions();
         UUID id=jdbc.sql("""
-            INSERT INTO shelter.asset_jobs(photo_id,dog_id,shelter_id,permission_id,pipeline_version,selection_key,action_plan,styled_input)
-            SELECT p.id,p.dog_id,d.shelter_id,b.permission_id,:v,:s,CAST(:plan AS jsonb),CAST(:input AS jsonb)
+            INSERT INTO shelter.asset_jobs(photo_id,dog_id,shelter_id,permission_id,pipeline_version,selection_key,action_plan,styled_input,behavior_revision,behavior_plan)
+            SELECT p.id,p.dog_id,d.shelter_id,b.permission_id,:v,:s,CAST(:plan AS jsonb),CAST(:input AS jsonb),:revision,CAST(:behavior AS jsonb)
             FROM shelter.dog_photos p JOIN shelter.dogs d ON d.id=p.dog_id JOIN shelter.asset_photo_sources b ON b.photo_id=p.id WHERE p.id=:p
             ON CONFLICT(photo_id,pipeline_version,selection_key) DO UPDATE SET photo_id=EXCLUDED.photo_id RETURNING id
             """).param("p",photo).param("v",StyledSpriteCodec.VERSION).param("s",selection).param("plan",json.writeValueAsString(plan))
-            .param("input",json.writeValueAsString(traits)).query(UUID.class).single();
+            .param("input",json.writeValueAsString(traits)).param("revision",selected.revision(),java.sql.Types.INTEGER)
+            .param("behavior",json.writeValueAsString(selected.generationPlan())).query(UUID.class).single();
         insert(id,0,"character","BASE",null);int ordinal=1;
-        for(String action:StyledSpriteCodec.ACTIONS) for(String direction:StyledSpriteCodec.DIRECTIONS)
+        for(String action:selected.generationPlan().selectedActions()) for(String direction:StyledSpriteCodec.DIRECTIONS)
             insert(id,ordinal++,action.toLowerCase(Locale.ROOT)+"-"+direction,action,direction);
         return job(id);
     }
@@ -73,7 +96,7 @@ public class StyledAssetStore {
         if(!j.status().equals(seed?"SEED_REVIEW":"REVIEW"))throw new AssetException(409,"ASSET_NOT_READY");
         var base=j.steps().getFirst().result();
         if(base==null || !base.path("hashes").equals(body.path("expectedSeedHashes")))throw new AssetException(409,"SEED_REVIEW_STALE");
-        if(!seed && (j.steps().size()!=33 || j.steps().stream().anyMatch(s->!s.status().equals("SUCCEEDED")))) throw new AssetException(409,"ASSET_NOT_READY");
+        if(!seed && !j.complete()) throw new AssetException(409,"ASSET_NOT_READY");
         if(seed && decision.equals("APPROVE")) {
             jdbc.sql("UPDATE shelter.asset_jobs SET seed_review=CAST(:r AS jsonb),status='QUEUED',next_run_at=now() WHERE id=:id")
                 .param("r",json.writeValueAsString(Map.of("hashes",base.path("hashes"),"reviewedBy",actor.userId(),"note",note,"reviewedAt",Instant.now())))
@@ -121,7 +144,9 @@ public class StyledAssetStore {
             WHERE j.id=:id AND s.status<>'SUCCEEDED' ORDER BY s.ordinal LIMIT 1
             """).param("id",id.get()).query((r,n)->new Work(id.get(),r.getObject("dog_id",UUID.class),token,r.getString("label"),r.getString("action"),r.getString("direction"),r.getString("status"),r.getObject("provider_job_id",UUID.class),
                 r.getTimestamp("submitted_at")==null?null:r.getTimestamp("submitted_at").toInstant(),r.getString("storage_bucket"),r.getString("storage_key"),json.readTree(r.getString("styled_input")),r.getString("provider_result")==null?null:json.readTree(r.getString("provider_result")))).optional();
-        if(w.isEmpty()) { status(id.get(),"REVIEW",null);return null; }
+        if(w.isEmpty()) {
+            boolean complete=job(id.get()).complete();status(id.get(),complete?"REVIEW":"FAILED",complete?null:"ACTION_PLAN_INCOMPLETE");return null;
+        }
         if(w.get().status().equals("SUBMITTING")) { fail(w.get(),true,"SUBMISSION_INTERRUPTED");return null; }
         if(!w.get().character()) {
             var j=job(id.get());
@@ -159,7 +184,7 @@ public class StyledAssetStore {
         jdbc.sql("UPDATE shelter.styled_asset_steps SET result=CAST(:r AS jsonb),provider_result=NULL,status='SUCCEEDED' WHERE job_id=:id AND label=:l AND status='PERSISTING'")
             .param("r",json.writeValueAsString(result)).param("id",w.id()).param("l",w.label()).update();
         if(w.character())status(w.id(),"SEED_REVIEW",null);
-        else if(job(w.id()).steps().stream().allMatch(s->s.status().equals("SUCCEEDED")))status(w.id(),"REVIEW",null);
+        else if(job(w.id()).complete())status(w.id(),"REVIEW",null);
         else defer(w,0);
     }
     @Transactional public void defer(Work w,int seconds) {
@@ -188,8 +213,9 @@ public class StyledAssetStore {
     private Job job(UUID id) {
         var steps=jdbc.sql("SELECT label,action,direction,status,result::text FROM shelter.styled_asset_steps WHERE job_id=:id ORDER BY ordinal").param("id",id)
             .query((r,n)->new Step(r.getString(1),r.getString(2),r.getString(3),r.getString(4),r.getString(5)==null?null:json.readTree(r.getString(5)))).list();
-        return jdbc.sql("SELECT dog_id,status,failure_code,seed_review::text FROM shelter.asset_jobs WHERE id=:id AND pipeline_version=:v")
-            .param("id",id).param("v",StyledSpriteCodec.VERSION).query((r,n)->new Job(id,r.getObject(1,UUID.class),r.getString(2),r.getString(3),StyledSpriteCodec.VERSION,steps,r.getString(4)==null?null:json.readTree(r.getString(4)))).optional().orElseThrow(StyledAssetStore::missing);
+        return jdbc.sql("SELECT dog_id,status,failure_code,seed_review::text,action_plan::text,behavior_plan::text FROM shelter.asset_jobs WHERE id=:id AND pipeline_version=:v")
+            .param("id",id).param("v",StyledSpriteCodec.VERSION).query((r,n)->new Job(id,r.getObject(1,UUID.class),r.getString(2),r.getString(3),StyledSpriteCodec.VERSION,steps,r.getString(4)==null?null:json.readTree(r.getString(4)),
+                json.readTree(r.getString(5)).valueStream().map(JsonNode::asText).toList(),r.getString(6)==null?null:json.readTree(r.getString(6)))).optional().orElseThrow(StyledAssetStore::missing);
     }
     private static AssetException missing() { return new AssetException(404,"ASSET_NOT_FOUND"); }
 }

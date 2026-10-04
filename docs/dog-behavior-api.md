@@ -127,3 +127,5 @@ API와 지정 개발 DB까지 준비됐어. RN에서 8종 애니메이션을 재
 ## 특징 글로 행동 초안 만들기
 
 B-19부터 확인된 관찰 기록을 Luna로 분류하고 고정 프리셋에 매칭할 수 있어. 결과는 `AI_SUGGESTED` 초안이며 보호소 확인 전에는 공개 행동에 반영하지 않아. 요청·조회·사진 업로드 순서는 [사진·특징 입력 명세서](asset-input-workflow.md)에 정리했어. 공개 응답의 `interactions.BALL_CHASE`는 공놀이 단계·거리·시간을 함께 내려줘.
+
+B-42: [특징 기반 선택 생성·상호작용](trait-selected-sprites.md). 기본3개 + 필요한 모든 선택 행동을 4방향 생성한다. `PERSON_GREETING`과 `BALL_CHASE`를 프론트 상태 전이에 연결한다.

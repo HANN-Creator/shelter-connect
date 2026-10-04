@@ -1021,6 +1021,12 @@
           "enum": [
             "nearest"
           ]
+        },
+        "generationPlan": {
+          "$ref": "#/components/schemas/GenerationPlanMetadata"
+        },
+        "behavior": {
+          "$ref": "#/components/schemas/BehaviorPlayback"
         }
       },
       "required": [
@@ -1302,7 +1308,9 @@
                       "CAUTIOUS",
                       "RESTFUL",
                       "BALL_CHASER",
-                      "BALL_RETURNER"
+                      "BALL_RETURNER",
+                      "WALK_LOVER",
+                      "RUN_RESTRICTED"
                     ]
                   },
                   "observationId": {
@@ -1324,6 +1332,9 @@
             },
             "requiresConfirmation": {
               "type": "boolean"
+            },
+            "generationPlan": {
+              "$ref": "#/components/schemas/BehaviorGenerationPlan"
             }
           },
           "required": [
@@ -2036,6 +2047,408 @@
       },
       "required": [],
       "additionalProperties": false
+    },
+    "BehaviorInteractionPhase": {
+      "type": "object",
+      "properties": {
+        "phase": {
+          "type": "string"
+        },
+        "preferredActions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "IDLE",
+              "WALK",
+              "RUN",
+              "SNIFF",
+              "TAIL_WAG",
+              "BACK_OFF",
+              "SIT",
+              "LIE_DOWN"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "until": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "phase",
+        "preferredActions",
+        "until"
+      ],
+      "additionalProperties": false
+    },
+    "PersonGreeting": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "type": "integer"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "triggerDistanceTiles": {
+          "type": "number"
+        },
+        "arrivalDistanceTiles": {
+          "type": "number"
+        },
+        "reactionDelayMs": {
+          "type": "integer"
+        },
+        "wagDurationMs": {
+          "type": "integer"
+        },
+        "sniffDurationMs": {
+          "type": "integer"
+        },
+        "maxDurationMs": {
+          "type": "integer"
+        },
+        "cooldownMs": {
+          "type": "integer"
+        },
+        "cancelWhen": {
+          "type": "string"
+        },
+        "fallbackAction": {
+          "type": "string"
+        },
+        "phases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/BehaviorInteractionPhase"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "enabled",
+        "triggerDistanceTiles",
+        "arrivalDistanceTiles",
+        "reactionDelayMs",
+        "wagDurationMs",
+        "sniffDurationMs",
+        "maxDurationMs",
+        "cooldownMs",
+        "cancelWhen",
+        "fallbackAction",
+        "phases"
+      ],
+      "additionalProperties": false
+    },
+    "BehaviorBallChase": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "type": "integer"
+        },
+        "reactionDelayMs": {
+          "type": "integer"
+        },
+        "sniffDurationMs": {
+          "type": "integer"
+        },
+        "maxChaseDurationMs": {
+          "type": "integer"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "returnEnabled": {
+          "type": "boolean"
+        },
+        "slowDistanceTiles": {
+          "type": "number"
+        },
+        "arrivalDistanceTiles": {
+          "type": "number"
+        },
+        "fallbackAction": {
+          "type": "string"
+        },
+        "phases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/BehaviorInteractionPhase"
+          }
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "reactionDelayMs",
+        "sniffDurationMs",
+        "maxChaseDurationMs",
+        "enabled",
+        "returnEnabled",
+        "slowDistanceTiles",
+        "arrivalDistanceTiles",
+        "fallbackAction",
+        "phases"
+      ],
+      "additionalProperties": false
+    },
+    "BehaviorInteractions": {
+      "type": "object",
+      "properties": {
+        "BALL_CHASE": {
+          "$ref": "#/components/schemas/BehaviorBallChase"
+        },
+        "PERSON_GREETING": {
+          "$ref": "#/components/schemas/PersonGreeting"
+        }
+      },
+      "required": [
+        "BALL_CHASE",
+        "PERSON_GREETING"
+      ],
+      "additionalProperties": false
+    },
+    "GenerationPlanMetadata": {
+      "type": "object",
+      "properties": {
+        "policyVersion": {
+          "type": "string"
+        },
+        "basis": {
+          "type": "string",
+          "enum": [
+            "DEFAULT",
+            "CONFIRMED",
+            "AI_DRAFT"
+          ]
+        },
+        "behaviorRevision": {
+          "type": "integer",
+          "nullable": true
+        },
+        "baseActions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "IDLE",
+              "WALK",
+              "RUN",
+              "SNIFF",
+              "TAIL_WAG",
+              "BACK_OFF",
+              "SIT",
+              "LIE_DOWN"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "optionalActions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "IDLE",
+              "WALK",
+              "RUN",
+              "SNIFF",
+              "TAIL_WAG",
+              "BACK_OFF",
+              "SIT",
+              "LIE_DOWN"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "selectedActions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "IDLE",
+              "WALK",
+              "RUN",
+              "SNIFF",
+              "TAIL_WAG",
+              "BACK_OFF",
+              "SIT",
+              "LIE_DOWN"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "directionCount": {
+          "type": "integer",
+          "enum": [
+            4
+          ]
+        },
+        "expectedProviderRequests": {
+          "type": "integer",
+          "minimum": 13,
+          "maximum": 33,
+          "description": "초기 시도 HTTP 생성 요청 수. PixelLab 청구 Generations와 다름."
+        }
+      },
+      "required": [
+        "policyVersion",
+        "basis",
+        "behaviorRevision",
+        "baseActions",
+        "optionalActions",
+        "selectedActions",
+        "directionCount",
+        "expectedProviderRequests"
+      ],
+      "additionalProperties": false
+    },
+    "BehaviorGenerationPlan": {
+      "type": "object",
+      "properties": {
+        "policyVersion": {
+          "type": "string"
+        },
+        "basis": {
+          "type": "string",
+          "enum": [
+            "DEFAULT",
+            "CONFIRMED",
+            "AI_DRAFT"
+          ]
+        },
+        "behaviorRevision": {
+          "type": "integer",
+          "nullable": true
+        },
+        "baseActions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "IDLE",
+              "WALK",
+              "RUN",
+              "SNIFF",
+              "TAIL_WAG",
+              "BACK_OFF",
+              "SIT",
+              "LIE_DOWN"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "optionalActions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "IDLE",
+              "WALK",
+              "RUN",
+              "SNIFF",
+              "TAIL_WAG",
+              "BACK_OFF",
+              "SIT",
+              "LIE_DOWN"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "selectedActions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "IDLE",
+              "WALK",
+              "RUN",
+              "SNIFF",
+              "TAIL_WAG",
+              "BACK_OFF",
+              "SIT",
+              "LIE_DOWN"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "directionCount": {
+          "type": "integer",
+          "enum": [
+            4
+          ]
+        },
+        "expectedProviderRequests": {
+          "type": "integer",
+          "minimum": 13,
+          "maximum": 33,
+          "description": "초기 시도 HTTP 생성 요청 수. PixelLab 청구 Generations와 다름."
+        },
+        "settings": {
+          "$ref": "#/components/schemas/BehaviorSettingsInput"
+        },
+        "interactions": {
+          "$ref": "#/components/schemas/BehaviorInteractions"
+        }
+      },
+      "required": [
+        "policyVersion",
+        "basis",
+        "behaviorRevision",
+        "baseActions",
+        "optionalActions",
+        "selectedActions",
+        "directionCount",
+        "expectedProviderRequests",
+        "settings",
+        "interactions"
+      ],
+      "additionalProperties": false
+    },
+    "BehaviorPlayback": {
+      "type": "object",
+      "properties": {
+        "dogId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "schemaVersion": {
+          "type": "integer"
+        },
+        "basis": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "integer",
+          "nullable": true
+        },
+        "settings": {
+          "$ref": "#/components/schemas/BehaviorSettingsInput"
+        },
+        "interactions": {
+          "$ref": "#/components/schemas/BehaviorInteractions"
+        }
+      },
+      "required": [
+        "dogId",
+        "schemaVersion",
+        "basis",
+        "revision",
+        "settings",
+        "interactions"
+      ],
+      "additionalProperties": false
+    },
+    "BehaviorPlaybackResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/BehaviorPlayback"
+        }
+      },
+      "required": [
+        "data"
+      ],
+      "additionalProperties": false
     }
   },
   "operations": {
@@ -2480,7 +2893,7 @@
     "GET /v1/dogs/{dogId}/behavior": {
       "summary": "앱 행동 설정과 공놀이 레시피",
       "tag": "07. 행동 설정",
-      "description": "8개 행동 설정과 interactions.BALL_CHASE. 확인된 근거가 없으면 IDLE60/WALK30/SIT10 기본값.",
+      "description": "8개 행동 설정과 BALL_CHASE/PERSON_GREETING 단계. 확인된 근거가 없으면 IDLE60/WALK30/SIT10. native32 assets.behavior는 현재 근거와 해당 팩의 실제 동작 목록을 함께 검사한 재생 설정이다.",
       "success": [
         200
       ],
@@ -2488,7 +2901,8 @@
         400,
         404
       ],
-      "public": true
+      "public": true,
+      "responseSchema": "BehaviorPlaybackResponse"
     },
     "GET /v1/shelter-admin/dogs/{dogId}/behavior": {
       "summary": "보호소 행동 설정 조회",
@@ -2624,7 +3038,7 @@
     "POST /v1/shelter-admin/dogs/{dogId}/behavior/suggestions": {
       "summary": "관찰로 AI 행동 초안 생성",
       "tag": "07. 행동 설정",
-      "description": "유료 AI 요청. 같은 요청 ID는 재호출하지 않습니다. 근거 1~20개/합계 20,000자 이하. 결과는 보호소 확인이 필요한 초안. HTTP 200에서도 status 확인.",
+      "description": "유료 AI 요청. 같은 요청 ID는 재호출하지 않습니다. 근거 1~20개/합계 20,000자 이하. 결과는 보호소 확인이 필요한 초안. HTTP 200에서도 status 확인. Luna가 선호 특징/제한을 분류하고 근거 인용 및 generationPlan(기본3개+선택 행동·상호작용·예상 요청 수)을 반환. AI_DRAFT이며 확인 API 후 신규 생성에 반영.",
       "success": [
         200
       ],
@@ -3555,7 +3969,7 @@
     },
     "POST /v1/shelter-admin/dogs/{dogId}/styled-assets": {
       "summary": "32px 4방향 생성 작업 접수",
-      "description": "허가된 사진만 처리. 동일 사진·스타일·입력 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 32개 동작 생성, REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수.",
+      "description": "허가된 사진만 처리. 동일 사진·스타일·입력·확인된 행동 버전 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 기본3개+양수 비중 선택 행동만 각각 4방향 생성(총13~33단계), REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수. actionPlan/generationPlan은 작업 접수 당시 고정. 기존 33단계는 변경 없이 재개. 공개 assets.behavior는 현재 유효한 행동과 실제 시트의 교집합.",
       "tag": "32px 에셋",
       "success": [
         "202"
@@ -3573,7 +3987,7 @@
     },
     "GET /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}": {
       "summary": "32px 생성 상태 조회",
-      "description": "허가된 사진만 처리. 동일 사진·스타일·입력 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 32개 동작 생성, REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수.",
+      "description": "허가된 사진만 처리. 동일 사진·스타일·입력·확인된 행동 버전 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 기본3개+양수 비중 선택 행동만 각각 4방향 생성(총13~33단계), REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수. actionPlan/generationPlan은 작업 접수 당시 고정. 기존 33단계는 변경 없이 재개. 공개 assets.behavior는 현재 유효한 행동과 실제 시트의 교집합.",
       "tag": "32px 에셋",
       "success": [
         "200"
@@ -3588,7 +4002,7 @@
     },
     "GET /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/preview": {
       "summary": "저장된 4방향·동작 검토 주소",
-      "description": "허가된 사진만 처리. 동일 사진·스타일·입력 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 32개 동작 생성, REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수.",
+      "description": "허가된 사진만 처리. 동일 사진·스타일·입력·확인된 행동 버전 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 기본3개+양수 비중 선택 행동만 각각 4방향 생성(총13~33단계), REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수. actionPlan/generationPlan은 작업 접수 당시 고정. 기존 33단계는 변경 없이 재개. 공개 assets.behavior는 현재 유효한 행동과 실제 시트의 교집합.",
       "tag": "32px 에셋",
       "success": [
         "200"
@@ -3603,7 +4017,7 @@
     },
     "POST /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/seed-review": {
       "summary": "4방향 원본 확인 후 동작 생성 승인",
-      "description": "허가된 사진만 처리. 동일 사진·스타일·입력 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 32개 동작 생성, REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수.",
+      "description": "허가된 사진만 처리. 동일 사진·스타일·입력·확인된 행동 버전 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 기본3개+양수 비중 선택 행동만 각각 4방향 생성(총13~33단계), REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수. actionPlan/generationPlan은 작업 접수 당시 고정. 기존 33단계는 변경 없이 재개. 공개 assets.behavior는 현재 유효한 행동과 실제 시트의 교집합.",
       "tag": "32px 에셋",
       "success": [
         "200"
@@ -3620,8 +4034,8 @@
       }
     },
     "POST /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/review": {
-      "summary": "32개 동작 검토 후 공개 승인",
-      "description": "허가된 사진만 처리. 동일 사진·스타일·입력 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 32개 동작 생성, REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수.",
+      "summary": "선택된 동작 검토 후 공개 승인",
+      "description": "허가된 사진만 처리. 동일 사진·스타일·입력·확인된 행동 버전 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 기본3개+양수 비중 선택 행동만 각각 4방향 생성(총13~33단계), REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수. actionPlan/generationPlan은 작업 접수 당시 고정. 기존 33단계는 변경 없이 재개. 공개 assets.behavior는 현재 유효한 행동과 실제 시트의 교집합.",
       "tag": "32px 에셋",
       "success": [
         "200"
@@ -3639,7 +4053,7 @@
     },
     "POST /v1/operations/styled-asset-jobs/{jobId}/recover": {
       "summary": "실패 작업 재개·결과 불명 작업 ID 연결",
-      "description": "허가된 사진만 처리. 동일 사진·스타일·입력 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 32개 동작 생성, REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수.",
+      "description": "허가된 사진만 처리. 동일 사진·스타일·입력·확인된 행동 버전 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 기본3개+양수 비중 선택 행동만 각각 4방향 생성(총13~33단계), REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수. actionPlan/generationPlan은 작업 접수 당시 고정. 기존 33단계는 변경 없이 재개. 공개 assets.behavior는 현재 유효한 행동과 실제 시트의 교집합.",
       "tag": "32px 에셋",
       "success": [
         "200"

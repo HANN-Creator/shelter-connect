@@ -8,6 +8,7 @@ import javax.imageio.ImageIO;
 import org.junit.jupiter.api.*;
 import org.shelterconnect.api.asset.*;
 import org.shelterconnect.api.auth.*;
+import org.shelterconnect.api.behavior.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -24,13 +25,13 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@Tag("postgres") @SpringBootTest(properties={"app.assets.enabled=true","app.assets.api-key=test-key","app.assets.storage-secret=sb_secret_testing"})
+@Tag("postgres") @SpringBootTest(properties={"app.ai.enabled=true","app.ai.api-key=test-key", "app.assets.enabled=true","app.assets.api-key=test-key","app.assets.storage-secret=sb_secret_testing"})
 @AutoConfigureMockMvc @ActiveProfiles("test") @Import(JwtTestConfiguration.class)
 class StyledAssetPostgresTest {
     @Autowired JdbcTemplate jdbc;@Autowired MockMvc mvc;@Autowired JsonMapper json;@Autowired JwtTestSupport tokens;
     @Autowired StyledAssetWorker worker;@Autowired StyledAssetStore store;
     @MockitoBean StyledAssetProvider provider;@MockitoBean AssetStorage storage;
-    @MockitoBean StyledSpriteCodec codec;
+    @MockitoBean StyledSpriteCodec codec;@MockitoBean BehaviorSuggestionProvider suggestions;
     UUID op,user,opSubject,subject,shelter,dog,photo,permission;byte[] png;
     Map<String,byte[]> objects=new ConcurrentHashMap<>();
     @BeforeAll static void migrate() throws Exception { SchemaMigrationTest.migratePostgres(); }
@@ -61,12 +62,16 @@ class StyledAssetPostgresTest {
         jdbc.update("DELETE FROM shelter.asset_jobs WHERE dog_id=?",dog);
         jdbc.update("DELETE FROM shelter.asset_photo_sources WHERE photo_id=?",photo);
         jdbc.update("DELETE FROM shelter.asset_source_permissions WHERE shelter_id=?",shelter);
+        jdbc.update("DELETE FROM shelter.behavior_suggestions WHERE dog_id=?",dog);
+        jdbc.update("DELETE FROM shelter.dog_behavior_evidence WHERE dog_id=?",dog);
+        jdbc.update("DELETE FROM shelter.dog_behavior_profiles WHERE dog_id=?",dog);
+        jdbc.update("DELETE FROM shelter.dog_observations WHERE dog_id=?",dog);
         jdbc.update("DELETE FROM shelter.dog_photos WHERE dog_id=?",dog);jdbc.update("DELETE FROM shelter.dogs WHERE id=?",dog);
         jdbc.update("DELETE FROM shelter.shelter_memberships WHERE shelter_id=?",shelter);jdbc.update("DELETE FROM shelter.shelters WHERE id=?",shelter);
         jdbc.update("DELETE FROM shelter.app_users WHERE id IN (?,?)",op,user);
     }
     @Test void allDirectionsPersistAndOnlyReviewedAssetsAreReusedWithoutGeneration() throws Exception {
-        UUID id=request();assertThat(request()).isEqualTo(id);assertThat(read(id).path("steps").size()).isEqualTo(33);
+        UUID id=request();assertThat(request()).isEqualTo(id);assertThat(read(id).path("steps").size()).isEqualTo(13);
         tick();tick();assertThat(read(id).path("status").asText()).isEqualTo("SEED_REVIEW");
         tick();verify(provider,times(1)).submit(anyBoolean(),any());publicStatus(404);
         var seeds=get(subject,path(id)+"/preview",200).path("data");assertThat(seeds.path("directions").size()).isEqualTo(4);
@@ -75,13 +80,15 @@ class StyledAssetPostgresTest {
         var manifest=get(null,"/v1/dogs/"+dog+"/assets",200).path("data");
         assertThat(manifest.at("/mapDirections/LEFT/WALK/frames").size()).isEqualTo(9);
         assertThat(manifest.at("/mapDirections/UP/SIT/returnToIdle").asText()).isEqualTo("REVERSE_FRAMES");
-        assertThat(manifest.at("/mapDirections/LEFT/BACK_OFF/worldMotion/unitVector/x").asInt()).isEqualTo(1);
+        assertThat(manifest.at("/mapDirections/LEFT/BACK_OFF").isMissingNode()).isTrue();
+        assertThat(manifest.path("availableActions").valueStream().map(JsonNode::asText)).containsExactly("IDLE","WALK","SIT");
+        assertThat(manifest.at("/behavior/interactions/PERSON_GREETING/enabled").asBoolean()).isFalse();
         assertThat(manifest.at("/frameSize/width").asInt()).isEqualTo(32);
         assertThat(manifest.toString()).doesNotContain("sourcePhoto","reviewedBy","photoId","provider_job_id","test-key");
-        assertThat(objects).hasSize(36);verify(provider,times(33)).submit(anyBoolean(),any());
+        assertThat(objects).hasSize(16);verify(provider,times(13)).submit(anyBoolean(),any());
         assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_asset_steps WHERE job_id=? AND provider_result IS NOT NULL",Integer.class,id)).isZero();
         for(int i=0;i<3;i++) {publicStatus(200);tick();}
-        assertThat(request()).isEqualTo(id);verify(provider,times(33)).submit(anyBoolean(),any());
+        assertThat(request()).isEqualTo(id);verify(provider,times(13)).submit(anyBoolean(),any());
         var pngSheet=ImageIO.read(new ByteArrayInputStream(objects.get(dog+"/"+id+"/native-32/sheets/walk-east.png")));
         assertThat(pngSheet.getWidth()).isEqualTo(288);assertThat(pngSheet.getRGB(8,4)).isEqualTo(0xffa07845);
     }
@@ -113,7 +120,7 @@ class StyledAssetPostgresTest {
     @Test void revokedPermissionCancelsQueuedWorkAndHidesPublishedAssets() throws Exception {
         UUID id=request();tick();tick();review(id,true,"APPROVE",200);finish(id);review(id,false,"APPROVE",200);publicStatus(200);
         mvc.perform(delete("/v1/operations/asset-permissions/"+permission).header("Authorization",bearer(opSubject))).andExpect(status().isNoContent());
-        publicStatus(404);tick();assertThat(read(id).path("status").asText()).isEqualTo("CANCELLED");verify(provider,times(33)).submit(anyBoolean(),any());
+        publicStatus(404);tick();assertThat(read(id).path("status").asText()).isEqualTo("CANCELLED");verify(provider,times(13)).submit(anyBoolean(),any());
     }
     @Test void wrongSeedApprovalAndForeignReadCannotStartAnimations() throws Exception {
         UUID id=request();tick();tick();
@@ -166,6 +173,63 @@ class StyledAssetPostgresTest {
     @Test void readOnlyRuntimeCanUseNewTableButClientsCannot() {
         assertThat(jdbc.queryForObject("SELECT has_table_privilege('shelter_runtime','shelter.styled_asset_steps','INSERT')",Boolean.class)).isTrue();
         assertThat(jdbc.queryForObject("SELECT has_table_privilege('authenticated','shelter.styled_asset_steps','SELECT')",Boolean.class)).isFalse();
+    }
+    @Test void lunaDraftOnlyChangesGenerationAfterConfirmationAndReadsNeverCallAi() throws Exception {
+        UUID evidence=UUID.randomUUID();String content="사람을 좋아하고 산책을 좋아해요. 누워서 쉬는 것도 좋아해요.";
+        jdbc.update("INSERT INTO shelter.dog_observations(id,dog_id,category,content,observed_at,recorded_by,status,confirmed_by,confirmed_at) VALUES (?,?,'PEOPLE',?,now(),?,'CONFIRMED',?,now())",evidence,dog,content,user,user);
+        when(suggestions.suggest(anyList())).thenAnswer(c->{outsideTransaction();return json.valueToTree(Map.of("traits",
+            List.of("FRIENDLY","WALK_LOVER","RESTFUL").stream().map(code->Map.of("code",code,"observationId",evidence,"quote",content)).toList()));});
+        var body=Map.of("clientRequestId",UUID.randomUUID(),"expectedRevision",0,"evidenceObservationIds",List.of(evidence));
+        String behavior="/v1/shelter-admin/dogs/"+dog+"/behavior";
+        var draft=post(subject,behavior+"/suggestions",body,200).at("/data/result");
+        assertThat(draft.at("/generationPlan/expectedProviderRequests").asInt()).isEqualTo(29);
+        assertThat(draft.at("/generationPlan/interactions/PERSON_GREETING/enabled").asBoolean()).isTrue();
+        post(subject,behavior+"/suggestions",body,200);verify(suggestions,times(1)).suggest(anyList());
+        UUID basic=request();assertThat(read(basic).path("steps").size()).isEqualTo(13);
+        // Complete the original basic pack so newer behavior can also exercise clip availability filtering.
+        tick();tick();review(basic,true,"APPROVE",200);finish(basic);review(basic,false,"APPROVE",200);
+        post(subject,behavior+"/confirmation",Map.of("expectedRevision",1),200);
+        var oldManifest=get(null,"/v1/dogs/"+dog+"/assets",200).path("data");
+        assertThat(oldManifest.at("/behavior/settings/actions/RUN/weight").asInt()).isZero();
+        assertThat(oldManifest.at("/behavior/interactions/PERSON_GREETING/enabled").asBoolean()).isFalse();
+        UUID selected=request();assertThat(selected).isNotEqualTo(basic);assertThat(request()).isEqualTo(selected);
+        assertThat(read(selected).path("steps").size()).isEqualTo(29);
+        assertThat(read(selected).path("actionPlan").valueStream().map(JsonNode::asText)).containsExactly("BASE","IDLE","WALK","SIT","RUN","SNIFF","TAIL_WAG","LIE_DOWN");
+        tick();tick();review(selected,true,"APPROVE",200);finish(selected);review(selected,false,"APPROVE",200);
+        var manifest=get(null,"/v1/dogs/"+dog+"/assets",200).path("data");
+        assertThat(manifest.at("/behavior/interactions/PERSON_GREETING/enabled").asBoolean()).isTrue();
+        assertThat(manifest.at("/generationPlan/settings").isMissingNode()).isTrue();
+        assertThat(manifest.at("/mapDirections/UP/LIE_DOWN/frameCount").asInt()).isEqualTo(9);
+        assertThat(manifest.toString()).doesNotContain(evidence.toString(),content);
+        jdbc.update("UPDATE shelter.dog_observations SET status='DRAFT',confirmed_by=NULL,confirmed_at=NULL WHERE id=?",evidence);
+        var revoked=get(null,"/v1/dogs/"+dog+"/assets",200).path("data");
+        assertThat(revoked.at("/behavior/basis").asText()).isEqualTo("DEFAULT");
+        assertThat(revoked.at("/behavior/interactions/PERSON_GREETING/enabled").asBoolean()).isFalse();
+        verify(suggestions,times(1)).suggest(anyList());verify(provider,times(42)).submit(anyBoolean(),any());
+    }
+    @Test void oldFullPacksWithoutBehaviorSnapshotStillResumeAndPublishAllDirections() throws Exception {
+        UUID id=request();var all=List.of("IDLE","WALK","RUN","SNIFF","TAIL_WAG","BACK_OFF","SIT","LIE_DOWN");
+        var plan=new ArrayList<String>();plan.add("BASE");plan.addAll(all);
+        var canonical=new TreeMap<String,Object>();json.valueToTree(input()).path("traits").properties()
+            .forEach(e->{if(!e.getKey().equals("reviewNote"))canonical.put(e.getKey(),e.getValue());});
+        String oldKey=HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(json.writeValueAsBytes(canonical)));
+        jdbc.update("UPDATE shelter.asset_jobs SET behavior_plan=NULL,action_plan=?::jsonb,selection_key=? WHERE id=?",json.writeValueAsString(plan),oldKey,id);
+        jdbc.update("DELETE FROM shelter.styled_asset_steps WHERE job_id=? AND ordinal>0",id);int ordinal=1;
+        for(String action:all)for(String direction:List.of("south","north","west","east"))
+            jdbc.update("INSERT INTO shelter.styled_asset_steps(job_id,ordinal,label,action,direction) VALUES (?,?,?,?,?)",id,ordinal++,action.toLowerCase(Locale.ROOT)+"-"+direction,action,direction);
+        tick();tick();review(id,true,"APPROVE",200);finish(id);review(id,false,"APPROVE",200);
+        var manifest=get(null,"/v1/dogs/"+dog+"/assets",200).path("data");
+        assertThat(manifest.path("availableActions").size()).isEqualTo(8);
+        assertThat(manifest.at("/mapDirections/LEFT/BACK_OFF/worldMotion/unitVector/x").asInt()).isEqualTo(1);
+        assertThat(request()).isEqualTo(id);assertThat(objects).hasSize(36);verify(provider,times(33)).submit(anyBoolean(),any());
+    }
+    @Test void missingPlannedDirectionCannotReachReviewOrPublish() throws Exception {
+        UUID id=request();tick();tick();review(id,true,"APPROVE",200);
+        jdbc.update("DELETE FROM shelter.styled_asset_steps WHERE job_id=? AND label='walk-north'",id);
+        for(int i=0;i<26;i++)tick();
+        assertThat(read(id).path("status").asText()).isEqualTo("FAILED");
+        assertThat(read(id).path("failureCode").asText()).isEqualTo("ACTION_PLAN_INCOMPLETE");
+        review(id,false,"APPROVE",409);publicStatus(404);
     }
     Map<String,Object> input() {return Map.of("photoId",photo,"traits",Map.of("sourcePhotoSha256","a".repeat(64),"faceBox",List.of(.1,.1,.8,.8),"identityDescription","brown dog","motionDescription","brown dog","rearDescription","unknown markings","seed",42,"reviewNote","Reviewed full body photo and face crop for this dog"));}
     UUID request() throws Exception {return UUID.fromString(post(subject,"/v1/shelter-admin/dogs/"+dog+"/styled-assets",input(),202).at("/data/id").asText());}
