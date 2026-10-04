@@ -29,6 +29,7 @@ with tempfile.TemporaryDirectory(prefix='harness-check-') as folder:
         (root/'source.png').write_bytes((root/'sheet.png').read_bytes())
         mapped=run({'mode':'map_pixels','frameCount':count})
         assert Image.open(root/'sheet.png').size==(32*count,32)
+        assert mapped['converterVersion']=='map-pixel-v2'
         assert mapped['frameCount']==count and mapped['paletteChecked'] and mapped['transparencyChecked']
         print(action,'MAP_32 PASS',mapped['converterVersion'])
     assert os.getuid()==10001

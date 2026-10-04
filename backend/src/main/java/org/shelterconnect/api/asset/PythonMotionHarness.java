@@ -38,11 +38,11 @@ public final class PythonMotionHarness implements MotionHarness {
             var output=execute(base,Map.of("mode","map_pixels","frameCount",frameCount),source);
             var m=output.metadata();var size=SpriteNormalizer.dimensions(output.sheet(),1536);
             if(size[0]!=32*frameCount || size[1]!=32 || m.path("frameCount").asInt()!=frameCount
-                || !m.path("converterVersion").asText().equals("map-pixel-v1")
+                || !m.path("converterVersion").asText().equals("map-pixel-v2")
                 || !m.path("paletteSha256").asText().matches("[a-f0-9]{64}")
                 || !m.path("paletteChecked").asBoolean() || !m.path("transparencyChecked").asBoolean())
                 throw new AssetException(422,"MAP_PIXEL_INVALID_RESULT");
-            return new MapClip(output.sheet(),frameCount,Map.of("converterVersion","map-pixel-v1",
+            return new MapClip(output.sheet(),frameCount,Map.of("converterVersion","map-pixel-v2",
                 "paletteSha256",m.path("paletteSha256").asText(),"paletteChecked",true,
                 "boundsChecked",true,"transparencyChecked",true));
         } catch(AssetException e) {
