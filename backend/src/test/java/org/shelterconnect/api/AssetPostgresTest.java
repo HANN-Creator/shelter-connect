@@ -211,14 +211,14 @@ class AssetPostgresTest {
         assertThat(read(subject,job,200).at("/data/status").asText()).isEqualTo("RIG_REVIEW");
         tick();tick();verify(provider,times(1)).submitBase(any());
     }
-    @Test void confirmedObservationsChooseOnlyTheTopTwoAdditionalActions() throws Exception {
+    @Test void confirmedObservationsKeepEverySupportedAdditionalAction() throws Exception {
         behavior(Map.of("RUN",90,"BACK_OFF",70,"SIT",70,"SNIFF",60),"CONFIRMED");
         UUID job=importPhoto(permission(true));
         var plan=read(subject,job,200).at("/data/actionPlan").valueStream().map(JsonNode::asText).toList();
-        assertThat(plan).containsExactly("BASE","IDLE","WALK","SIT","RUN","BACK_OFF");
-        finish(job);verify(provider,times(2)).submit(any(),any());verify(provider,times(1)).submitBase(any());
+        assertThat(plan).containsExactly("BASE","IDLE","WALK","SIT","RUN","SNIFF","BACK_OFF");
+        finish(job);verify(provider,times(3)).submit(any(),any());verify(provider,times(1)).submitBase(any());
         verify(provider,never()).submit(eq(AssetAction.RUN),any());verify(provider,never()).submit(eq(AssetAction.BACK_OFF),any());
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.asset_submissions WHERE job_id=?",Integer.class,job)).isEqualTo(3);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.asset_submissions WHERE job_id=?",Integer.class,job)).isEqualTo(4);
     }
     @Test void aNewConfirmedRevisionCreatesANewPlanWithoutChangingTheOldJob() throws Exception {
         behavior(Map.of("RUN",90),"CONFIRMED");UUID grant=permission(true),first=importPhoto(grant);
@@ -342,7 +342,7 @@ class AssetPostgresTest {
         behavior(Map.of("RUN",10,"SNIFF",10,"BACK_OFF",100),"CONFIRMED");
         jdbc.update("UPDATE shelter.dog_behavior_profiles SET settings=jsonb_set(settings,'{ballPlay,chaseEnabled}','true') WHERE dog_id=?",dog);
         var job=importPhoto(permission(true));
-        assertThat(read(subject,job,200).at("/data/actionPlan").valueStream().map(JsonNode::asText).toList()).containsExactly("BASE","IDLE","WALK","SIT","RUN","SNIFF");
+        assertThat(read(subject,job,200).at("/data/actionPlan").valueStream().map(JsonNode::asText).toList()).containsExactly("BASE","IDLE","WALK","SIT","RUN","SNIFF","BACK_OFF");
         mvc.perform(get("/v1/dogs/"+dog+"/behavior")).andExpect(status().isOk())
             .andExpect(jsonPath("$.data.interactions.BALL_CHASE.phases[2].preferredActions[0]").value("SNIFF"));
     }

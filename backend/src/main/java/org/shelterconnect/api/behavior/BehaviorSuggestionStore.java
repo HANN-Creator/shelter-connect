@@ -65,7 +65,8 @@ public class BehaviorSuggestionStore {
         var current=repository.profile(dog).orElse(null);if(revision!=(current==null?0:current.revision())) throw BehaviorException.stale();
         var settings=BehaviorInput.settings(json.valueToTree(generated.settings()));
         repository.save(dog,new Save(revision,settings,"AI_SUGGESTED",ids));
-        var result=Map.of("profile",repository.profile(dog).orElseThrow(),"traits",generated.traits(),"requiresConfirmation",true);
+        var result=Map.of("profile",repository.profile(dog).orElseThrow(),"traits",generated.traits(),"requiresConfirmation",true,
+            "generationPlan",BehaviorGenerationPlan.from(settings,"AI_DRAFT",revision+1));
         jdbc.sql("UPDATE shelter.behavior_suggestions SET status='COMPLETED',result=CAST(:r AS jsonb) WHERE id=:id AND status='PENDING'")
             .param("r",json.writeValueAsString(result)).param("id",id).update();
         return readJob(id,dog);

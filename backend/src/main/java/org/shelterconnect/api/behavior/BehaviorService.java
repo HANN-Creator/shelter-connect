@@ -55,26 +55,19 @@ public class BehaviorService {
 		if(!"CONFIRMED".equals(profile.status())) repository.confirm(id,revision,actor);
 		return repository.profile(id).orElseThrow();
 	}
-	/** Stable generation plan derived only from confirmed, evidenced observations. */
-	public record AssetSelection(Integer revision,java.util.List<String> actions) {}
+	/** All positive optional actions are selected; no arbitrary two-action cap. */
+	public record AssetSelection(Integer revision,java.util.List<String> actions,BehaviorGenerationPlan generationPlan) {}
 	@Transactional
 	public AssetSelection assetSelection(UUID dog) {
-		var selected=new java.util.ArrayList<String>(java.util.List.of("BASE","IDLE","WALK","SIT"));
+		var plan=BehaviorGenerationPlan.defaults();
 		var profile=repository.lockedProfile(dog).orElse(null);
-		if(profile==null || !"CONFIRMED".equals(profile.status()) || profile.schemaVersion()!=1
-				|| !repository.evidenceValid(dog,profile.evidenceObservationIds(),true)) return new AssetSelection(null,java.util.List.copyOf(selected));
-		try {
-			var settings=BehaviorInput.settings(profile.settings());
-			// Reserve the two optional slots for the interaction before selecting unrelated traits.
-			if(settings.ballPlay().chaseEnabled()) {
-				for(var action:java.util.List.of(Action.RUN,Action.SNIFF))
-					if(settings.actions().get(action).weight()>0) selected.add(action.name());
-			}
-			settings.actions().entrySet().stream().filter(e->!selected.contains(e.getKey().name()) && e.getValue().weight()>0)
-				.sorted(java.util.Comparator.<java.util.Map.Entry<Action,Motion>>comparingInt(e->e.getValue().weight()).reversed().thenComparing(e->e.getKey().ordinal()))
-				.limit(6-selected.size()).forEach(e->selected.add(e.getKey().name()));
-			return new AssetSelection(profile.revision(),java.util.List.copyOf(selected));
-		} catch(BehaviorException ignored) { return new AssetSelection(null,java.util.List.of("BASE","IDLE","WALK","SIT")); }
+		if(profile!=null && "CONFIRMED".equals(profile.status()) && profile.schemaVersion()==1
+				&& repository.evidenceValid(dog,profile.evidenceObservationIds(),true)) {
+			try { plan=BehaviorGenerationPlan.from(BehaviorInput.settings(profile.settings()),"CONFIRMED",profile.revision()); }
+			catch(BehaviorException ignored) { /* Invalid profiles safely retain the three basic actions. */ }
+		}
+		var selected=new java.util.ArrayList<String>();selected.add("BASE");selected.addAll(plan.selectedActions());
+		return new AssetSelection(plan.behaviorRevision(),java.util.List.copyOf(selected),plan);
 	}
 	private UUID editable(UUID subject,UUID dog) {
 		var writer=access.requireDogForWrite(subject,dog);
