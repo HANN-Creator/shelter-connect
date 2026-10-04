@@ -11,7 +11,7 @@ import tools.jackson.databind.JsonNode;
 public class PhotoUploadStore {
     record Reservation(UUID id,UUID dogId,UUID photoId,UUID permissionId,String key,UUID token,boolean completed) {}
     @io.swagger.v3.oas.annotations.media.Schema(name="ManagedPhoto")
-    public record Photo(UUID id,String rightsStatus,int sortOrder,String uploadStatus) {}
+    public record Photo(UUID id,String rightsStatus,int sortOrder,String uploadStatus,String sourcePhotoSha256) {}
     @io.swagger.v3.oas.annotations.media.Schema(name="ManagedPhotoPage")
     public record Page(List<Photo> data,String nextCursor) {}
     private final JdbcClient jdbc;private final ShelterAccessService access;private final AssetProperties properties;private final AssetStore assets;
@@ -57,7 +57,9 @@ public class PhotoUploadStore {
                 """).param("actor",actor.userId()).param("id",upload.id()).update();
             jdbc.sql("UPDATE shelter.photo_upload_requests SET status='COMPLETED',lease_token=NULL,lease_until=NULL WHERE id=:id").param("id",upload.id()).update();
         }
-        return assets.photoStored(upload.photoId(),upload.permissionId());
+        var result=new LinkedHashMap<String,Object>(assets.photoStored(upload.photoId(),upload.permissionId()));
+        result.put("sourcePhotoSha256",jdbc.sql("SELECT content_hash FROM shelter.photo_upload_requests WHERE id=:id").param("id",upload.id()).query(String.class).single());
+        return result;
     }
     @Transactional public void release(Reservation upload) {
         jdbc.sql("UPDATE shelter.photo_upload_requests SET lease_token=NULL,lease_until=NULL WHERE id=:id AND lease_token=:token")
@@ -66,9 +68,9 @@ public class PhotoUploadStore {
     @Transactional(readOnly=true) public Page list(UUID subject,UUID dog,int limit,String cursor) {
         access.requireDog(subject,dog);if(limit<1 || limit>50) throw AssetException.invalid();
         UUID after=cursor==null?null:AssetInput.id(cursor);
-        var query=jdbc.sql("SELECT p.id,p.rights_status,p.sort_order,coalesce(u.status,'EXTERNAL') AS upload_status FROM shelter.dog_photos p LEFT JOIN shelter.photo_upload_requests u ON u.photo_id=p.id WHERE p.dog_id=:d"+(after==null?"":" AND p.id>:cursor")+" ORDER BY p.id LIMIT :lim").param("d",dog).param("lim",limit+1);
+        var query=jdbc.sql("SELECT p.id,p.rights_status,p.sort_order,coalesce(u.status,'EXTERNAL') AS upload_status,u.content_hash FROM shelter.dog_photos p LEFT JOIN shelter.photo_upload_requests u ON u.photo_id=p.id WHERE p.dog_id=:d"+(after==null?"":" AND p.id>:cursor")+" ORDER BY p.id LIMIT :lim").param("d",dog).param("lim",limit+1);
         if(after!=null) query=query.param("cursor",after);
-        var rows=query.query((rs,n)->new Photo(rs.getObject("id",UUID.class),rs.getString("rights_status"),rs.getInt("sort_order"),rs.getString("upload_status"))).list();
+        var rows=query.query((rs,n)->new Photo(rs.getObject("id",UUID.class),rs.getString("rights_status"),rs.getInt("sort_order"),rs.getString("upload_status"),rs.getString("content_hash"))).list();
         boolean more=rows.size()>limit;var page=more?rows.subList(0,limit):rows;
         return new Page(List.copyOf(page),more?page.getLast().id().toString():null);
     }

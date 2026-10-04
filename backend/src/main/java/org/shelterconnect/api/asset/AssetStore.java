@@ -131,7 +131,7 @@ public class AssetStore {
     }
     @Transactional
     public Job retry(UUID subject,UUID id) {
-        operator(subject);properties.requireEnabled();lock(id);valid(id,true);
+        operator(subject);properties.requireEnabled();lock(id);requireLegacy(id);valid(id,true);
         if(!job(id).status().equals("FAILED")) throw new AssetException(409,"ASSET_RETRY_NOT_ALLOWED");
         // Completed visual analysis survives PixelLab failures. Only explicit retries permit a new analysis call.
         jdbc.sql("UPDATE shelter.asset_steps SET result=jsonb_set(result,'{preparation,status}','\"RETRY_READY\"') WHERE job_id=:id AND action='BASE' AND result->'preparation'->>'status' IN ('STARTED','RETRY_READY')")
@@ -150,7 +150,7 @@ public class AssetStore {
     @Transactional
     public Job reconcile(UUID subject,UUID id,JsonNode body) {
         operator(subject);properties.requireEnabled();AssetInput.fields(body,"providerJobId");
-        UUID provider=AssetInput.id(body,"providerJobId");lock(id);valid(id,true);
+        UUID provider=AssetInput.id(body,"providerJobId");lock(id);requireLegacy(id);valid(id,true);
         if(!job(id).status().equals("OUTCOME_UNKNOWN")) throw new AssetException(409,"ASSET_RECONCILE_NOT_ALLOWED");
         jdbc.sql("UPDATE shelter.asset_steps SET status='WAITING',provider_job_id=:provider,submitted_at=now() WHERE job_id=:id AND status='OUTCOME_UNKNOWN'")
             .param("provider",provider).param("id",id).update();
@@ -337,6 +337,9 @@ public class AssetStore {
         jdbc.sql("UPDATE shelter.asset_jobs SET status='RIG_REVIEW',rig_revision=rig_revision+1,rig_confirmed_by=NULL,rig_confirmed_at=NULL,lease_token=NULL,lease_until=NULL,failure_code='RIG_PROFILE_REQUIRES_REVIEW' WHERE id=:id")
             .param("id",work.id()).update();
     }
+    private void requireLegacy(UUID id) {
+        if(!jdbc.sql("SELECT pipeline_version FROM shelter.asset_jobs WHERE id=:id").param("id",id).query(String.class).single().equals(AssetAction.VERSION)) throw new AssetException(409,"USE_STYLED_ASSET_WORKFLOW");
+    }
     private UUID operator(UUID subject) {
         var user=accounts.lockProfile(subject,false);
         if(!user.role().equals("OPERATOR")) throw new AssetException(403,"FORBIDDEN");
@@ -361,12 +364,12 @@ public class AssetStore {
         return jdbc.sql("SELECT id FROM shelter.asset_jobs WHERE id=:id AND lease_token=:t AND lease_until>now() AND status='RUNNING' FOR UPDATE")
             .param("id",work.id()).param("t",work.token()).query(UUID.class).optional().isPresent();
     }
-    private void valid(UUID id,boolean lock) {
+    void valid(UUID id,boolean lock) {
         var ids=jdbc.sql("SELECT j.photo_id,j.permission_id FROM shelter.asset_jobs j JOIN shelter.dog_photos p ON p.id=j.photo_id JOIN shelter.dogs d ON d.id=p.dog_id WHERE j.id=:id AND j.dog_id=p.dog_id AND j.shelter_id=d.shelter_id").param("id",id)
             .query((r,n)->new UUID[]{r.getObject(1,UUID.class),r.getObject(2,UUID.class)}).optional().orElseThrow(AssetStore::missing);
         validPhoto(ids[0],ids[1],lock);
     }
-    private void validPhoto(UUID photo,UUID permission,boolean lock) {
+    void validPhoto(UUID photo,UUID permission,boolean lock) {
         boolean valid=jdbc.sql("""
             SELECT p.id FROM shelter.dog_photos p JOIN shelter.asset_photo_sources b ON b.photo_id=p.id
             JOIN shelter.asset_source_permissions a ON a.id=b.permission_id JOIN shelter.dogs d ON d.id=p.dog_id

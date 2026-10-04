@@ -3,6 +3,8 @@ WORKDIR /build
 COPY gradlew build.gradle settings.gradle ./
 COPY gradle ./gradle
 COPY src/main ./src/main
+COPY scripts/styled_dog ./scripts/styled_dog
+COPY asset-styles ./asset-styles
 RUN chmod +x gradlew && ./gradlew --no-daemon --max-workers=2 bootJar
 
 FROM eclipse-temurin:21-jre-jammy

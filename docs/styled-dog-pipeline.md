@@ -55,3 +55,7 @@ Gradle에서도 동일 도구를 호출한다. 예: `./gradlew generateStyledDog
 `python3 -m unittest discover -s scripts -p test_styled_dog_pipeline.py`는 사진/스타일 역할, 같은 개체 크롭, 변조/낡은 승인 거절, 32개 요청의 방향/반복, 불명확한 유료 요청 재전송 금지, 완료/접수 작업 재개, PNG 좌표·반투명 픽셀 보존, 부분 완료와 비밀 파일 제외를 검증한다. 기존 CI의 scripts 테스트 검색에 포함된다.
 
 실제 새 개체 생성 및 시각 검토 결과는 이 문서 후속 기록과 PR에 남긴다.
+
+## 서버 저장·조회 연결
+
+B-40에서 이 파이프라인을 기존 서버 작업 큐와 비공개 Storage·DB에 연결했다. [생성·검토·저장·프론트 조회 API](persistent-styled-assets.md)를 따른다. CLI는 기존 샘플 비교·명시 실행 도구로 유지한다.

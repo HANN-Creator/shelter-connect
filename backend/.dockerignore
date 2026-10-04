@@ -18,3 +18,10 @@
 !src/main/**
 **/.env
 **/.env.*
+!scripts/
+!scripts/styled_dog/
+!scripts/styled_dog/*.py
+!asset-styles/
+!asset-styles/cozy32-v1/
+!asset-styles/cozy32-v1/rules.json
+!asset-styles/cozy32-v1/style.png

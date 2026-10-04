@@ -364,6 +364,9 @@ class AssetPostgresTest {
         String path="/v1/shelter-admin/dogs/"+dog+"/photos";
         var a=upload(subject,path,metadata,sprite,200);var b=upload(subject,path,metadata,sprite,200);
         assertThat(a.at("/data/photoId")).isEqualTo(b.at("/data/photoId"));assertThat(a.at("/data/job/id")).isEqualTo(b.at("/data/job/id"));
+        String hash=jdbc.queryForObject("SELECT content_hash FROM shelter.photo_upload_requests WHERE photo_id=?",String.class,UUID.fromString(a.at("/data/photoId").asText()));
+        assertThat(a.at("/data/sourcePhotoSha256").asText()).isEqualTo(hash).matches("[a-f0-9]{64}");
+        assertThat(b.at("/data/sourcePhotoSha256").asText()).isEqualTo(hash);
         verify(storage,times(1)).putPhoto(eq(dog),matches(dog+"/uploads/.*\\.png"),any());
         upload(outsiderSubject,path,metadata,sprite,403);
         var altered=new HashMap<>(metadata);altered.put("rightsNote","다른 허가");upload(subject,path,altered,sprite,409);

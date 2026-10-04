@@ -129,3 +129,5 @@ B-39: [32×32 도트 얼굴·다리 자동 보정](https://app.notion.com/p/3ef5
 ## 2026-10-05 승인 도트 스타일 후속
 
 B-15 후속: [사진 + 승인 스타일 32px 생성 파이프라인](styled-dog-pipeline.md). 기준 도트와 규칙을 버전·해시로 저장하고 공공 API의 새 개체를 동일 경로로 생성한다. 브랜치 `backend/b-15-approved-style-pipeline`. 기존 B-15 사진 등록 API와 분리된 백엔드 명시 실행 도구이며, 운영 큐의 자동 전환·DB 변경은 포함하지 않는다.
+
+B-40: [32px 4방향 에셋 영구 저장·조회 연결](https://app.notion.com/p/3ef5b2d1a55f8077ace5d78b52dfecb8). B-15 승인 스타일 파이프라인을 기존 서버 작업 큐·비공개 Storage·DB에 통합한다. [생성·검토·프론트 조회 명세](persistent-styled-assets.md). 브랜치 `backend/b-40-persistent-native-sprites`.

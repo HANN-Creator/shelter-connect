@@ -147,6 +147,11 @@ tasks.named('test') {
 	useJUnitPlatform { excludeTags 'postgres' }
 }
 
+// ImageIO tests render buffers only; never initialize a native desktop on macOS.
+tasks.withType(Test).configureEach {
+	systemProperty 'java.awt.headless', 'true'
+}
+
 tasks.register('integrationTest', Test) {
 	description = 'Applies and checks the schema against a disposable PostgreSQL database.'
 	group = 'verification'
@@ -175,4 +180,10 @@ tasks.register('exportRuntimeDependencies') {
         output.parentFile.mkdirs()
         output.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(packages))
     }
+}
+
+// Bundle the exact CLI rules/payload builders; the worker never receives Python credentials.
+tasks.named('processResources') {
+    from('scripts/styled_dog') { include '*.py'; into 'styled-pipeline/scripts/styled_dog' }
+    from('asset-styles/cozy32-v1') { into 'styled-pipeline/asset-styles/cozy32-v1' }
 }
