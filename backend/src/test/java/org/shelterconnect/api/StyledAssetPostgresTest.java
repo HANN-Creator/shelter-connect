@@ -24,7 +24,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@Tag("postgres") @SpringBootTest(properties={"app.assets.enabled=true","app.assets.api-key=test-key","app.assets.storage-secret=sb_secret_testing","app.assets.daily-requests=100"})
+@Tag("postgres") @SpringBootTest(properties={"app.assets.enabled=true","app.assets.api-key=test-key","app.assets.storage-secret=sb_secret_testing"})
 @AutoConfigureMockMvc @ActiveProfiles("test") @Import(JwtTestConfiguration.class)
 class StyledAssetPostgresTest {
     @Autowired JdbcTemplate jdbc;@Autowired MockMvc mvc;@Autowired JsonMapper json;@Autowired JwtTestSupport tokens;
@@ -120,9 +120,26 @@ class StyledAssetPostgresTest {
         post(subject,path(id)+"/seed-review",Map.of("decision","APPROVE","note","reviewed all four images and their identity","expectedSeedHashes",Map.of()),409);
         get(UUID.randomUUID(),path(id),403);tick();verify(provider,times(1)).submit(anyBoolean(),any());
     }
-    @Test void quotaIncludesLegacyLedgerAndDefersWithoutPaidCalls() throws Exception {
-        UUID id=request();for(int i=0;i<100;i++)jdbc.update("INSERT INTO shelter.asset_submissions(job_id,action) VALUES (?,'WALK')",id);
-        tick();assertThat(read(id).path("failureCode").asText()).isEqualTo("DAILY_REQUEST_LIMIT");verifyNoInteractions(provider);
+    @Test void oldDailyLimitDeferralResumesDespitePriorSubmissions() throws Exception {
+        UUID id=request();
+        jdbc.update("INSERT INTO shelter.asset_submissions(job_id,action) SELECT ?,'WALK' FROM generate_series(1,1000)",id);
+        jdbc.update("UPDATE shelter.asset_jobs SET failure_code='DAILY_REQUEST_LIMIT',next_run_at=now()+interval '1 day' WHERE id=?",id);
+        worker.tick();verify(provider,times(1)).submit(anyBoolean(),any());
+        assertThat(read(id).path("failureCode").isNull()).isTrue();
+        assertThat(read(id).at("/steps/0/status").asText()).isEqualTo("WAITING");
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.asset_submissions WHERE job_id=?",Integer.class,id)).isEqualTo(1001);
+    }
+    @Test void ordinaryDelayAndExistingLeaseStillPreventDuplicateReservations() throws Exception {
+        UUID id=request();jdbc.update("UPDATE shelter.asset_jobs SET next_run_at=now()+interval '1 day' WHERE id=?",id);
+        assertThat(store.claim()).isNull();
+        jdbc.update("UPDATE shelter.asset_jobs SET failure_code='DAILY_REQUEST_LIMIT',lease_token=?,lease_until=now()+interval '1 minute' WHERE id=?",UUID.randomUUID(),id);
+        assertThat(store.claim()).isNull();
+        jdbc.update("UPDATE shelter.asset_jobs SET lease_token=NULL,lease_until=NULL WHERE id=?",id);
+        var work=store.claim();assertThat(work).isNotNull();
+        assertThat(store.reserve(work,json.valueToTree(Map.of("character",true)))).isTrue();
+        assertThat(store.reserve(work,json.valueToTree(Map.of("character",true)))).isFalse();
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.asset_submissions WHERE job_id=?",Integer.class,id)).isEqualTo(1);
+        verifyNoInteractions(provider);
     }
     @Test void expiredLeaseCanResumeAcceptedProviderButNeverResubmit() throws Exception {
         UUID id=request();tick();jdbc.update("UPDATE shelter.asset_jobs SET lease_until=now()-interval '1 minute',lease_token=?,next_run_at=now() WHERE id=?",UUID.randomUUID(),id);

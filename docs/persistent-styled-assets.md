@@ -55,10 +55,11 @@
 
 ## 비용·재시작·실패
 
-유료 POST 전에 DB에 예약과 전역 일일 요청 사용량을 기록한다. 기존64 파이프라인과 같은 `asset_submissions` 예산을 공유한다. 호출 단위 제한은 PixelLab의 청구 Generations와 다르다. 33회 요청이 반드시 33 Generations인 것은 아니다.
+유료 POST 전에 DB에 예약과 요청 시도 이력을 기록한다. 기존64 파이프라인과 같은 `asset_submissions`에 기록하며 자체 일일 횟수 제한은 없다. 요청 수는 PixelLab의 청구 Generations와 다르다. 33회 요청이 반드시 33 Generations인 것은 아니다.
 
 - `ASSET_GENERATION_ENABLED`, `ASSET_WORKER_ENABLED`, `PIXELLAB_API_KEY`, `SUPABASE_SECRET_KEY`는 기존 설정을 사용한다.
-- `ASSET_DAILY_REQUEST_LIMIT` 기본값은 10. 한 마리 전체는 33개의 요청이 필요하므로 기본 설정에서는 여러 UTC 날짜에 걸쳐 생성된다. 비용 제한은 자동 상향하지 않는다.
+- B-41에서 `ASSET_DAILY_REQUEST_LIMIT` / `app.assets.daily-requests`를 제거했다. 기존 설정이 남아 있어도 무시한다. 한 마리의 33개 요청을 날짜별로 나누지 않고, 원본 검토와 각 요청의 완료를 기다리며 순서대로 처리한다. PixelLab 자체 한도·과금은 그대로 적용된다.
+- 이전 `DAILY_REQUEST_LIMIT` 때문에 다음 날로 미뤄진 실행 가능 작업은 다음 워커 실행에서 다시 처리한다. 활성 lease, 다른 예약 시간, 검토·실패·접수 불명 상태는 그대로 존중한다.
 - 접수된 작업 ID가 있으면 재시작 후 조회만 재개한다. Storage 장애는 DB에 임시 보관한 완료 응답부터 저장을 재개한다.
 - 요청 직후 연결이 끊겨 접수 여부가 불명확하면 `OUTCOME_UNKNOWN`으로 정지한다. 자동 재결제하지 않는다.
 - 운영자만 `POST /v1/operations/styled-asset-jobs/{jobId}/recover`를 사용한다. 결과 불명 시 PixelLab 대시보드에서 확인한 `providerJobId`가 필수다. 공급자가 실패를 확정한 작업만 명시적으로 새 요청을 허용하고 이전 ID·요청 해시를 이력에 남긴다. 일반 저장 실패는 `{}`로 기존 결과부터 재개한다.

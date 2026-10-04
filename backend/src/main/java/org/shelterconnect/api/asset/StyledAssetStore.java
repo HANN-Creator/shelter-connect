@@ -108,12 +108,13 @@ public class StyledAssetStore {
     @Transactional public Work claim() {
         var id=jdbc.sql("""
             SELECT id FROM shelter.asset_jobs WHERE pipeline_version=:v AND status IN ('QUEUED','RUNNING')
-              AND next_run_at<=now() AND (lease_until IS NULL OR lease_until<now()) ORDER BY next_run_at,id FOR UPDATE SKIP LOCKED LIMIT 1
+              AND (next_run_at<=now() OR failure_code='DAILY_REQUEST_LIMIT')
+              AND (lease_until IS NULL OR lease_until<now()) ORDER BY next_run_at,id FOR UPDATE SKIP LOCKED LIMIT 1
             """).param("v",StyledSpriteCodec.VERSION).query(UUID.class).optional();
         if(id.isEmpty())return null;
         if(!validOrCancel(id.get()))return null;
         UUID token=UUID.randomUUID();
-        jdbc.sql("UPDATE shelter.asset_jobs SET status='RUNNING',lease_token=:t,lease_until=now()+interval '5 minutes' WHERE id=:id").param("t",token).param("id",id.get()).update();
+        jdbc.sql("UPDATE shelter.asset_jobs SET status='RUNNING',lease_token=:t,lease_until=now()+interval '5 minutes',failure_code=CASE WHEN failure_code='DAILY_REQUEST_LIMIT' THEN NULL ELSE failure_code END WHERE id=:id").param("t",token).param("id",id.get()).update();
         var w=jdbc.sql("""
             SELECT j.id,j.dog_id,j.styled_input::text,s.*,b.storage_bucket,b.storage_key
             FROM shelter.asset_jobs j JOIN shelter.styled_asset_steps s ON s.job_id=j.id JOIN shelter.asset_photo_sources b ON b.photo_id=j.photo_id
@@ -133,11 +134,6 @@ public class StyledAssetStore {
     @Transactional public boolean authorized(Work w) { return owned(w) && validOrCancel(w.id()); }
     @Transactional public boolean reserve(Work w,JsonNode payload) {
         if(!authorized(w))return false;
-        jdbc.sql("SELECT pg_advisory_xact_lock(15150923)").query(Object.class).single();
-        long used=jdbc.sql("SELECT count(*) FROM shelter.asset_submissions WHERE submitted_at>=date_trunc('day',now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'").query(Long.class).single();
-        if(used>=properties.dailyRequests) {
-            jdbc.sql("UPDATE shelter.asset_jobs SET lease_token=NULL,lease_until=NULL,failure_code='DAILY_REQUEST_LIMIT',next_run_at=(date_trunc('day',now() AT TIME ZONE 'UTC')+interval '1 day') AT TIME ZONE 'UTC' WHERE id=:id").param("id",w.id()).update();return false;
-        }
         if(jdbc.sql("UPDATE shelter.styled_asset_steps SET status='SUBMITTING',submitted_at=now(),request_sha256=:h WHERE job_id=:id AND label=:l AND status='PENDING'")
             .param("h",StyledSpriteCodec.sha(json.writeValueAsBytes(payload))).param("id",w.id()).param("l",w.label()).update()!=1)return false;
         jdbc.sql("INSERT INTO shelter.asset_submissions(job_id,action) VALUES (:id,:a)").param("id",w.id()).param("a",w.action()).update();return true;

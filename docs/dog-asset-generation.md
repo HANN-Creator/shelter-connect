@@ -149,7 +149,7 @@ B-38부터 새 작업에 [32×32 맵용 도트](map-pixel-assets.md)를 함께 �
 - `ASSET_AUTO_IMPORT_ENABLED`: 허가된 사진 등록 이벤트에서 자동으로 작업 생성
 - `PIXELLAB_API_KEY`, `SUPABASE_SECRET_KEY`: 서버에만 보관
 - `ASSET_STORAGE_BUCKET=dog-assets`, `PHOTO_STORAGE_BUCKET=dog-photos`: 둘 다 비공개 버킷, 서로 다른 이름
-- `ASSET_DAILY_REQUEST_LIMIT=10`: UTC 기준 유료 요청 시도 수의 일일 상한. 금액·생성 단위 상한이 아니다. 명시적인 재시도도 센다.
+- 생성 요청의 자체 일일 횟수 제한은 없다. 이전 `ASSET_DAILY_REQUEST_LIMIT` 설정은 제거되어 남아 있어도 적용되지 않는다. 요청 시도는 `asset_submissions`에 계속 기록한다. PixelLab 계정의 한도·과금은 별도다.
 
 DB는 [V4](../backend/src/main/resources/db/migration/V4__dog_asset_generation.sql)와 [V5](../backend/src/main/resources/db/migration/V5__motion_harness.sql)를 기존 V1~V3 다음에 Flyway로 적용한다. 새 테이블 5개 모두 RLS와 클라이언트 접근 차단을 적용한다. 기존 사진을 허가하거나 자동 생성 대상으로 바꾸는 데이터 변경은 없다. `exportSupabaseUpgrade`는 기존 V1→V3 전용 도구이므로 V4를 적용하지 않는다.
 

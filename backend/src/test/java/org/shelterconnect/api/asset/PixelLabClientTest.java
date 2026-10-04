@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.*;
 class PixelLabClientTest {
     HttpServer server; PixelLabClient client; JsonMapper json=JsonMapper.builder().build();
     int status=202; String response;AtomicReference<JsonNode> submitted=new AtomicReference<>();
-    static AssetProperties properties() { return new AssetProperties(true,true,"test-secret","sb_secret_testing","dog-photos","dog-assets",10); }
+    static AssetProperties properties() { return new AssetProperties(true,true,"test-secret","sb_secret_testing","dog-photos","dog-assets"); }
     @BeforeEach void setup() throws Exception {
         server=HttpServer.create(new InetSocketAddress("127.0.0.1",0),0);
         server.createContext("/",exchange->{
