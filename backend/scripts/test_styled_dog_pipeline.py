@@ -148,8 +148,10 @@ class PipelineTest(unittest.TestCase):
             job = endpoint.split('/')[-1]
             return {'status':'completed','last_response':{'images':[jobs[job]]*9},'usage':{'generations':1}}
         with patch.object(client,'request',side_effect=request) as remote:
+            write(self.root/'failures.json',[{'error':'previous recovered failure'}])
             animate(self.root,client,None)
             self.assertEqual(len(jobs),32)
+            self.assertEqual(read(self.root/'failures.json'),[])
             self.assertEqual(len(list((self.root/'clips').glob('*.json'))),32)
             first_count = sum(c.args[0] == 'POST' for c in remote.call_args_list)
             animate(self.root,client,None)

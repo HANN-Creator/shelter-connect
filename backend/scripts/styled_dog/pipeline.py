@@ -219,6 +219,6 @@ def animate(root, client, actions):
                 failures.append({'clip':list(pending[future]),'error':str(error)})
                 print('CLIP FAILED',pending[future],str(error),flush=True)
     write(root/'balance-after.json',client.request('GET','balance'))
+    write(root/'failures.json',failures)
     if failures:
-        write(root/'failures.json',failures)
         raise RuntimeError('Some clips need inspection; paid requests were not duplicated')
