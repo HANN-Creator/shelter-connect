@@ -107,7 +107,7 @@ class Client:
             time.sleep(2 ** attempt)
 
     def generate(self, label, endpoint, body):
-        if not re.fullmatch(r'[a-z0-9-]+', label):
+        if not re.fullmatch(r'[a-z0-9_-]+', label):
             raise ValueError('Invalid job label')
         with (self.raw / (label + '.lock')).open('a') as lock:
             fcntl.flock(lock, fcntl.LOCK_EX)

@@ -9,7 +9,7 @@ from unittest.mock import patch
 from PIL import Image
 from styled_dog.client import Client, digest, native_image, read, write
 from styled_dog.pipeline import (STYLE, load_rules, prepare, verify_inputs, character_request,
-    record_review, require_review, motion_request, save_clip)
+    record_review, require_review, motion_request, save_clip, animate)
 from styled_dog.source import secure_photo_url, prepare_concept
 from styled_dog.package import package, sheet_for
 
@@ -131,6 +131,37 @@ class PipelineTest(unittest.TestCase):
                     'https://user@openapi.animal.go.kr/a','https://openapi.animal.go.kr:443/a'):
             with self.subTest(url=url), self.assertRaises(ValueError):
                 secure_photo_url(url)
+
+    def test_all_32_jobs_pass_the_real_journal_and_reuse_on_second_run(self):
+        import hashlib
+        import json
+        self.review()
+        client = Client(self.root,'test-only',True)
+        jobs = {}
+        def request(method, endpoint, body=None):
+            if method == 'POST':
+                job = hashlib.sha256(json.dumps(body,sort_keys=True).encode()).hexdigest()
+                jobs[job] = body['first_frame']
+                return {'background_job_id':job}
+            if endpoint == 'balance':
+                return {}
+            job = endpoint.split('/')[-1]
+            return {'status':'completed','last_response':{'images':[jobs[job]]*9},'usage':{'generations':1}}
+        with patch.object(client,'request',side_effect=request) as remote:
+            animate(self.root,client,None)
+            self.assertEqual(len(jobs),32)
+            self.assertEqual(len(list((self.root/'clips').glob('*.json'))),32)
+            first_count = sum(c.args[0] == 'POST' for c in remote.call_args_list)
+            animate(self.root,client,None)
+            self.assertEqual(sum(c.args[0] == 'POST' for c in remote.call_args_list),first_count)
+
+    def test_job_labels_cannot_escape_the_run_directory(self):
+        client = Client(self.root,'test-only',True)
+        with patch.object(client,'request') as remote:
+            for label in ('../other','/tmp/other','tail_wag/../../other',''):
+                with self.subTest(label=label), self.assertRaises(ValueError):
+                    client.generate(label,'animate-pixminimax',{})
+            remote.assert_not_called()
 
 
 class PaidJournalTest(unittest.TestCase):
