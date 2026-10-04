@@ -294,16 +294,30 @@ class AssetPostgresTest {
         tick(); assertThat(read(subject,job,200).at("/data/steps/0/status").asText()).isEqualTo("SUCCEEDED");
         verify(provider,times(1)).submitBase(any());
     }
-    @Test void concurrentImportsDeduplicateAndDailyLimitIncludesRetries() throws Exception {
+    @Test void concurrentImportsDeduplicateAndOldDailyDeferralResumesDespitePriorSubmissions() throws Exception {
         UUID grant=permission(true);
         try(var pool=Executors.newFixedThreadPool(2)) {
             var a=pool.submit(()->store.photoStored(photo,grant));var b=pool.submit(()->store.photoStored(photo,grant));
             assertThat(((AssetStore.Job)a.get().get("job")).id()).isEqualTo(((AssetStore.Job)b.get().get("job")).id());
         }
         UUID job=jdbc.queryForObject("SELECT id FROM shelter.asset_jobs WHERE dog_id=?",UUID.class,dog);
-        for(int i=0;i<10;i++)jdbc.update("INSERT INTO shelter.asset_submissions(job_id,action) VALUES (?,'BASE')",job);
-        tick();verifyNoInteractions(provider);
-        assertThat(read(subject,job,200).at("/data/failureCode").asText()).isEqualTo("DAILY_REQUEST_LIMIT");
+        jdbc.update("INSERT INTO shelter.asset_submissions(job_id,action) SELECT ?,'BASE' FROM generate_series(1,1000)",job);
+        jdbc.update("UPDATE shelter.asset_jobs SET failure_code='DAILY_REQUEST_LIMIT',next_run_at=now()+interval '1 day' WHERE id=?",job);
+        worker.tick();verify(provider,times(1)).submitBase(any());
+        assertThat(read(subject,job,200).at("/data/failureCode").isNull()).isTrue();
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.asset_submissions WHERE job_id=?",Integer.class,job)).isEqualTo(1001);
+    }
+    @Test void ordinaryDelayAndExistingLeaseStillPreventDuplicateReservations() throws Exception {
+        UUID job=importPhoto(permission(true));
+        jdbc.update("UPDATE shelter.asset_jobs SET next_run_at=now()+interval '1 day' WHERE id=?",job);
+        assertThat(store.claim()).isNull();
+        jdbc.update("UPDATE shelter.asset_jobs SET failure_code='DAILY_REQUEST_LIMIT',lease_token=?,lease_until=now()+interval '1 minute' WHERE id=?",UUID.randomUUID(),job);
+        assertThat(store.claim()).isNull();
+        jdbc.update("UPDATE shelter.asset_jobs SET lease_token=NULL,lease_until=NULL WHERE id=?",job);
+        var work=store.claim();assertThat(work).isNotNull();
+        assertThat(store.reserve(work)).isTrue();assertThat(store.reserve(work)).isFalse();
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.asset_submissions WHERE job_id=?",Integer.class,job)).isEqualTo(1);
+        verifyNoInteractions(provider);
     }
     @Test void permissionIsRecheckedAfterProviderCompletionAndSignedUrlCreation() throws Exception {
         UUID job=importPhoto(permission(true));tick();

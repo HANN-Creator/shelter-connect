@@ -175,13 +175,14 @@ public class AssetStore {
     @Transactional
     public Work claim() {
         var id=jdbc.sql("""
-            SELECT id FROM shelter.asset_jobs WHERE status IN ('QUEUED','RUNNING') AND next_run_at<=now()
+            SELECT id FROM shelter.asset_jobs WHERE status IN ('QUEUED','RUNNING')
+              AND (next_run_at<=now() OR failure_code='DAILY_REQUEST_LIMIT')
               AND pipeline_version=:version AND (lease_until IS NULL OR lease_until<now()) ORDER BY next_run_at,id FOR UPDATE SKIP LOCKED LIMIT 1
             """).param("version",AssetAction.VERSION).query(UUID.class).optional();
         if(id.isEmpty()) return null;
         try { valid(id.get(),true); } catch(AssetException e) { cancel(id.get());return null; }
         UUID token=UUID.randomUUID();
-        jdbc.sql("UPDATE shelter.asset_jobs SET status='RUNNING',lease_token=:t,lease_until=now()+interval '3 minutes' WHERE id=:id")
+        jdbc.sql("UPDATE shelter.asset_jobs SET status='RUNNING',lease_token=:t,lease_until=now()+interval '3 minutes',failure_code=CASE WHEN failure_code='DAILY_REQUEST_LIMIT' THEN NULL ELSE failure_code END WHERE id=:id")
             .param("t",token).param("id",id.get()).update();
         var work=jdbc.sql("""
             SELECT j.id,j.dog_id,j.photo_id,j.lease_token,t.action,t.status,t.provider_job_id,t.submitted_at,p.storage_bucket,p.storage_key
@@ -196,14 +197,9 @@ public class AssetStore {
     public boolean reserve(Work work) {
         if(!owned(work)) return false;
         try { valid(work.id(),true); } catch(AssetException e) { cancel(work.id());return false; }
-        jdbc.sql("SELECT pg_advisory_xact_lock(15150923)").query(Object.class).single();
-        long used=jdbc.sql("SELECT count(*) FROM shelter.asset_submissions WHERE submitted_at >= date_trunc('day',now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'").query(Long.class).single();
-        if(used>=properties.dailyRequests) {
-            jdbc.sql("UPDATE shelter.asset_jobs SET lease_token=NULL,lease_until=NULL,failure_code='DAILY_REQUEST_LIMIT',next_run_at=(date_trunc('day',now() AT TIME ZONE 'UTC')+interval '1 day') AT TIME ZONE 'UTC' WHERE id=:id").param("id",work.id()).update();return false;
-        }
+        if(jdbc.sql("UPDATE shelter.asset_steps SET status='SUBMITTING',submitted_at=now() WHERE job_id=:id AND action=:a AND status='PENDING'")
+            .param("id",work.id()).param("a",work.action().name()).update()!=1)return false;
         jdbc.sql("INSERT INTO shelter.asset_submissions(job_id,action) VALUES (:id,:action)").param("id",work.id()).param("action",work.action().name()).update();
-        jdbc.sql("UPDATE shelter.asset_steps SET status='SUBMITTING',submitted_at=now() WHERE job_id=:id AND action=:a AND status='PENDING'")
-            .param("id",work.id()).param("a",work.action().name()).update();
         return true;
     }
     @Transactional
