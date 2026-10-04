@@ -8,6 +8,22 @@ group = 'org.shelterconnect'
 version = '0.0.1-SNAPSHOT'
 description = 'Shelter Connect API'
 
+// Explicit backend-operated generation harness. Never invoked by build, CI or bootRun.
+// JSON argument arrays avoid shell expansion of paths and never contain secret values.
+tasks.register('generateStyledDog', Exec) {
+	description = 'Runs the versioned photo + approved-style PixelLab review pipeline.'
+	group = 'application'
+	doFirst {
+		def pipelineArgs = new groovy.json.JsonSlurper().parseText(
+			providers.gradleProperty('dogPipelineArgs').getOrElse('["--help"]'))
+		if (!(pipelineArgs instanceof List) || !pipelineArgs.every { it instanceof String }) {
+			throw new GradleException('dogPipelineArgs must be a JSON array of strings')
+		}
+		commandLine([System.getenv('ASSET_HARNESS_PYTHON') ?: 'python3',
+			'scripts/generate_styled_dog.py'] + pipelineArgs)
+	}
+}
+
 // Boot 4.1.1 manages 11.0.24; retain the compatible patch with September fixes.
 ext['tomcat.version'] = '11.0.26'
 // Keep both Jackson families aligned; 2.x serves Swagger and 3.x serves the API.

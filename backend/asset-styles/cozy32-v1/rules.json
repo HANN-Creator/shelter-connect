@@ -1,0 +1,77 @@
+{
+  "version": "cozy32-photo-style-v1",
+  "styleSha256": "8582f9e73ac74abee1b4619ec4ef878bb1e2cf173c5ee44dbf71bf13c4fe4320",
+  "approvedAt": "2026-10-05",
+  "approval": "User approved the photo-plus-original-style sample and requested backend persistence.",
+  "styleOrigin": "PixelLab generated sprite, first public dog trial 426333202601081; style only, not identity.",
+  "characterEndpoint": "create-character-pro",
+  "characterMethod": "create_from_concept",
+  "animationEndpoint": "animate-pixminimax",
+  "size": 32,
+  "directions": [
+    "south",
+    "north",
+    "west",
+    "east"
+  ],
+  "generatedFrames": 8,
+  "returnedFrames": 9,
+  "anchor": [
+    16,
+    30
+  ],
+  "styleDescription": "Copy the attached pixel sprite's rounded cute proportions, compact silhouette, large head/small body balance, short readable paws, friendly natural small eyes, one-pixel dark outline, soft stepped highlights and shadows, cozy game-sprite finish, and pixel cluster density. Preserve its style across every rotation. ONLY change the dog's identity and markings to match the photos. Do not copy the reference dog's tricolor palette, white forehead stripe, floppy ears or tail unless those are visible in the actual photo. Crisp native pixels, no blur, no photorealism, no elongated realistic proportions.",
+  "actions": {
+    "IDLE": {
+      "motion": "Stand in place with subtle breathing and one gentle blink. All four paws stay planted.",
+      "durationMs": 140,
+      "loop": true
+    },
+    "WALK": {
+      "motion": "Walk in place using a natural alternating four-legged canine gait. Lift and plant the paws in a readable slow walk.",
+      "durationMs": 120,
+      "loop": true
+    },
+    "RUN": {
+      "motion": "Run in place using a coordinated four-legged canine gallop, flexing front and hind legs.",
+      "durationMs": 75,
+      "loop": true
+    },
+    "SNIFF": {
+      "motion": "Lower the head to sniff the ground by the front paws, gently move the nose, then return to the starting pose. Keep paws planted.",
+      "durationMs": 140,
+      "loop": true
+    },
+    "TAIL_WAG": {
+      "motion": "Gently wag only the tail from side to side. All four paws planted; body and head stay still.",
+      "durationMs": 100,
+      "loop": true
+    },
+    "BACK_OFF": {
+      "motion": "Take small cautious backward steps in place while continuing to look in the original direction. Alternate paws in a reverse walking gait.",
+      "durationMs": 130,
+      "loop": true
+    },
+    "SIT": {
+      "motion": "Bend the hind legs and lower the hips into a natural seated dog pose. Front paws stay planted. End sitting and hold; do not stand again. Keep tail tucked beside the body.",
+      "durationMs": 130,
+      "loop": false
+    },
+    "LIE_DOWN": {
+      "motion": "Bend the legs, tuck front paws close under the chest, and lower chest and belly into a compact natural resting pose. Tail stays close to rump. End lying down and hold; do not stand again.",
+      "durationMs": 150,
+      "loop": false
+    }
+  },
+  "invariants": [
+    "Actual full-body photo and a reviewed face crop are mandatory concept inputs.",
+    "The fixed style reference controls design only; photo controls identity only.",
+    "Never use text-only generation as an automatic fallback.",
+    "Review all four native seeds before animation; bind approval to their hashes.",
+    "Native 32x32 RGBA pixels are never blurred, resized or independently recentered.",
+    "Unknown rear/tail details remain identified as inference.",
+    "Repeated/uncertain paid requests are never submitted automatically.",
+    "Photo appearance must not be treated as verified temperament.",
+    "Assets remain local review outputs; production publication is a separate approval."
+  ]
+}

@@ -1,0 +1,224 @@
+"""Approved photo/style separation and native-pixel motion generation."""
+import base64
+import hashlib
+import io
+from pathlib import Path
+import shutil
+import uuid
+import zipfile
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+from PIL import Image, ImageDraw
+from .client import API, digest, download, image_argument, native_image, read, write
+from .source import prepare_concept
+
+STYLE = Path(__file__).resolve().parents[2] / 'asset-styles' / 'cozy32-v1'
+FACING = {'south':'facing the viewer, front view', 'north':'facing away, rear view',
+          'west':'facing left, left side view', 'east':'facing right, right side view'}
+
+
+def load_rules():
+    rules = read(STYLE / 'rules.json')
+    if digest(STYLE / 'style.png') != rules['styleSha256']:
+        raise ValueError('Approved style changed; a new reviewed version is required')
+    native_image((STYLE / 'style.png').read_bytes())
+    return rules
+
+
+def character_request(root, traits, rules):
+    identity = traits['identityDescription'].strip()
+    if not identity or len(identity) > 850:
+        raise ValueError('Identity description must contain 1–850 characters')
+    for key in ('motionDescription', 'rearDescription'):
+        if not traits.get(key, '').strip() or len(traits[key]) > 300:
+            raise ValueError(key + ' must contain 1–300 characters')
+    description = (
+        'Create the photographed rescue dog as a NEW CHARACTER IN EXACTLY THE SAME GAME ART STYLE AS THE PIXEL SPRITE REFERENCE. '
+        'The concept image contains a full-body photo and a face close-up of ONE dog. Use those PHOTOS ONLY for identity: '
+        + identity + ' '
+        'The uploaded PIXEL SPRITE defines visual DESIGN: preserve its charming rounded compact body, large softly rounded head, '
+        'short readable paws, friendly natural small eyes, carefully shaded pixel clusters, dark outline and stepped highlights. '
+        'Keep stylized proportions; do NOT turn it into a long-legged realistic or thin angular dog. '
+        'Replace the style sprite\'s dog identity with the actual photo\'s ears, coat and markings. '
+        'Do not invent tricolor patches, a white forehead blaze, floppy ears or a curled white-tipped tail from the style reference. '
+        'Neutral gently closed mouth, no laughing grin. Four-legged standing pose. Full character inside 32x32 transparent canvas '
+        'with margin for ears, muzzle, paws and tail. No text, scenery, collar, number, floor or props.')
+    if len(description) > 2000:
+        raise ValueError('Character prompt exceeds provider limit')
+    return {'description':description, 'image_size':{'width':32,'height':32},
+            'method':rules['characterMethod'], 'concept_image':image_argument(root/'photo-concept.png'),
+            'reference_image':image_argument(root/'style-reference.png'), 'template_id':'dog',
+            'view':'low top-down', 'style_description':rules['styleDescription'],
+            'seed':traits['seed'], 'no_background':True}
+
+
+def prepare(root, traits_path):
+    rules = load_rules()
+    traits = read(traits_path)
+    # Immutable inputs bind later stages to the actual photograph, rules and seed.
+    provenance = {'animalId':traits['animalId'], 'traitsSha256':digest(traits_path),
+                  'styleVersion':rules['version'], 'styleSha256':rules['styleSha256'],
+                  'rulesSha256':digest(STYLE/'rules.json'), 'sourcePhotoSha256':traits['sourcePhotoSha256'],
+                  'actualPhotoIncluded':True, 'approvedStyleIncluded':True,
+                  'conceptRole':'Photographed identity, ears and coat markings only',
+                  'styleRole':'Approved rounded proportions, outlines and pixel shading only',
+                  'unknownFeatures':traits.get('unknownFeatures', [])}
+    if (root/'reference-provenance.json').exists():
+        previous = read(root/'reference-provenance.json')
+        if any(previous.get(k) != v for k,v in provenance.items()):
+            raise ValueError('Prepared inputs changed; use a new run directory')
+    prepare_concept(root, traits)
+    shutil.copyfile(STYLE/'style.png', root/'style-reference.png')
+    if traits_path.resolve() != (root/'traits.json').resolve():
+        shutil.copyfile(traits_path, root/'traits.json')
+    provenance['conceptSha256'] = digest(root/'photo-concept.png')
+    write(root/'reference-provenance.json', provenance)
+    shutil.copyfile(STYLE/'rules.json', root/'rules.json')
+    request = character_request(root, traits, rules)
+    (root/'character-prompt.txt').write_text(request['description'])
+    (root/'style-prompt.txt').write_text(request['style_description'])
+    write(root/'plan'/'character.json', request)
+    return request
+
+
+def verify_inputs(root):
+    provenance = read(root/'reference-provenance.json')
+    checks = {'traitsSha256':root/'traits.json', 'styleSha256':root/'style-reference.png',
+              'rulesSha256':root/'rules.json', 'conceptSha256':root/'photo-concept.png',
+              'sourcePhotoSha256':root/read(root/'traits.json')['sourcePhoto']}
+    if any(digest(path) != provenance[key] for key,path in checks.items()):
+        raise ValueError('Pipeline inputs changed since preparation')
+    rules = load_rules()
+    if provenance['styleVersion'] != rules['version'] or provenance['rulesSha256'] != digest(STYLE/'rules.json'):
+        raise ValueError('Run uses another pipeline version')
+    return rules
+
+
+def generate_character(root, client):
+    rules = verify_inputs(root)
+    body = character_request(root, read(root/'traits.json'), rules)
+    if body != read(root/'plan'/'character.json'):
+        raise ValueError('Character request changed since preparation')
+    if not (root/'balance-before.json').exists():
+        write(root/'balance-before.json', client.request('GET','balance'))
+    result = client.generate('character', rules['characterEndpoint'], body)
+    character_id = str(uuid.UUID(result.get('last_response',result)['character_id']))
+    write(root/'character.json', client.request('GET','characters/'+character_id))
+    archive = root/'character-export.zip'
+    if not archive.exists():
+        data = download(API+'characters/'+character_id+'/zip', client.context, 20_000_000)
+        archive.write_bytes(data)
+    folder = root/'directions'
+    folder.mkdir(exist_ok=True)
+    # Extract exact bounded image members only. Never extractall an external ZIP.
+    with zipfile.ZipFile(archive) as z:
+        for direction in rules['directions']:
+            names = [n for n in z.namelist() if n == 'rotations/'+direction+'.png' or n.endswith('/rotations/'+direction+'.png')]
+            if len(names) != 1 or z.getinfo(names[0]).file_size > 100_000:
+                raise ValueError('Unexpected character rotation archive')
+            native_image(z.read(names[0])).save(folder/(direction+'.png'))
+    shutil.copyfile(folder/'south.png', root/'base.png')
+    preview = Image.new('RGB',(4*192,224),'#e8f0d8')
+    draw = ImageDraw.Draw(preview)
+    for i,d in enumerate(rules['directions']):
+        frame = Image.open(folder/(d+'.png')).resize((192,192),Image.Resampling.NEAREST)
+        preview.paste(frame,(i*192,32),frame)
+        draw.text((i*192+12,10),d,fill='#435237')
+    preview.save(root/'seed-directions.png')
+    write(root/'balance-after.json',client.request('GET','balance'))
+
+
+def review_binding(root):
+    rules = verify_inputs(root)
+    return {'animalId':read(root/'source.json')['desertionNo'],
+            'provenanceSha256':digest(root/'reference-provenance.json'),
+            'directionSha256':{d:digest(root/'directions'/(d+'.png')) for d in rules['directions']}}
+
+
+def record_review(root, note):
+    if len(note.strip()) < 20:
+        raise ValueError('Describe the visual likeness, style, directions and limitations reviewed')
+    write(root/'seed-review.json',dict(review_binding(root), approvedForAnimations=True,
+          reviewer='operator visual review', note=note, productionApproved=False))
+
+
+def require_review(root):
+    review = read(root/'seed-review.json')
+    if review.get('approvedForAnimations') is not True or any(review.get(k) != v for k,v in review_binding(root).items()):
+        raise ValueError('Missing or stale visual review for these four direction images')
+
+
+def motion_request(root, action, direction):
+    rules = verify_inputs(root)
+    traits = read(root/'traits.json')
+    spec = rules['actions'][action]
+    motion = spec['motion']
+    if spec['loop']:
+        motion += ' Complete one seamless cycle and return to the initial stance.'
+    motion += (' Keep camera and sprite position fixed. Keep the dog '+FACING[direction]+
+        ' throughout; never rotate or turn to another direction. Preserve the same face, markings, proportions, palette and crisp pixel clusters. '
+        'Keep ears, muzzle, paws and tail inside the canvas with margin. No scenery, props, effects, text, extra animals.')
+    if direction == 'north':
+        motion += ' Rear view in EVERY frame: back of head, back, rump and tail only. No visible eyes, nose, mouth or chest. Never turn around or look over a shoulder.'
+    if len(motion) > 1000:
+        raise ValueError('Animation prompt exceeds provider limit')
+    body = {'first_frame':image_argument(root/'directions'/(direction+'.png')),
+            'description':motion, 'frame_count':rules['generatedFrames'], 'seed':traits['seed'],
+            'no_background':True, 'enhance_prompt':False, 'direction':direction, 'view':'low top-down',
+            'subject_description':traits['rearDescription' if direction == 'north' else 'motionDescription'],
+            'initial_pose':'Standing on all four legs, tail close to rump, '+FACING[direction]+'. Clear transparent margin. Face hidden from rear.'}
+    if spec['loop']:
+        body['last_frame'] = body['first_frame']
+    return body
+
+
+def save_clip(root, action, direction, result):
+    rules = verify_inputs(root)
+    label = action.lower()+'-'+direction
+    frames = result['last_response']['images']
+    if len(frames) != rules['returnedFrames']:
+        raise ValueError('Expected input + 8 generated frames')
+    folder = root/'frames'/label
+    folder.mkdir(parents=True,exist_ok=True)
+    decoded = []
+    for i, frame in enumerate(frames):
+        encoded = frame['base64'].split(',')[-1]
+        image = native_image(base64.b64decode(encoded,validate=True))
+        decoded.append(image)
+        image.save(folder/f'{i:02}.png')
+    seed = native_image((root/'directions'/(direction+'.png')).read_bytes())
+    if seed.tobytes() != decoded[0].tobytes():
+        raise ValueError('Provider changed input frame; review before packaging')
+    write(root/'clips'/(label+'.json'),{'label':label,'action':action,'direction':direction,
+        'frameCount':len(decoded),'durationMs':rules['actions'][action]['durationMs'],
+        'loop':rules['actions'][action]['loop'],'sourceSha256':digest(root/'directions'/(direction+'.png')),
+        'frameSha256':[digest(folder/f'{i:02}.png') for i in range(len(decoded))]})
+
+
+def animate(root, client, actions):
+    rules = verify_inputs(root)
+    require_review(root)
+    actions = actions or list(rules['actions'])
+    if not actions or len(set(actions)) != len(actions) or any(a not in rules['actions'] for a in actions):
+        raise ValueError('Invalid action selection')
+    plan = [(a,d) for a in actions for d in rules['directions']]
+    for a,d in plan:
+        write(root/'plan'/(a.lower()+'-'+d+'.json'), motion_request(root,a,d))
+    # At most four accepted jobs; the account used for this pipeline permits four.
+    def run(a,d):
+        require_review(root)
+        result = client.generate(a.lower()+'-'+d,rules['animationEndpoint'],motion_request(root,a,d))
+        save_clip(root,a,d,result)
+    failures = []
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        pending = {pool.submit(run,a,d):(a,d) for a,d in plan}
+        for future in as_completed(pending):
+            try:
+                future.result()
+            except Exception as error:
+                failures.append({'clip':list(pending[future]),'error':str(error)})
+                print('CLIP FAILED',pending[future],str(error),flush=True)
+    write(root/'balance-after.json',client.request('GET','balance'))
+    write(root/'failures.json',failures)
+    if failures:
+        raise RuntimeError('Some clips need inspection; paid requests were not duplicated')

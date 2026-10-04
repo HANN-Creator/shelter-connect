@@ -125,3 +125,7 @@ B-35A: [Jackson 신규 보안 공지 대응](jackson-security-update.md). B-35 C
 B-38: [강아지별 32×32 맵 도트 하네스](https://app.notion.com/p/3ee5b2d1a55f80499c12cb1560cb9850). B-16/B-28 기반으로 원본 팔레트·타임라인을 보존하는 서버 변환과 `variants.MAP_32`를 추가한다. [연결 명세](map-pixel-assets.md).
 
 B-39: [32×32 도트 얼굴·다리 자동 보정](https://app.notion.com/p/3ef5b2d1a55f8051b96cc1e57e0c8f87). B-38 변환의 진한 외곽선·눈 하이라이트 과장을 없애고 원본의 국소 명암을 보존한다. v1 호환과 v2 버전 일관성, 실제 두 강아지 250프레임 검증을 포함한다. [연결 명세](map-pixel-assets.md).
+
+## 2026-10-05 승인 도트 스타일 후속
+
+B-15 후속: [사진 + 승인 스타일 32px 생성 파이프라인](styled-dog-pipeline.md). 기준 도트와 규칙을 버전·해시로 저장하고 공공 API의 새 개체를 동일 경로로 생성한다. 브랜치 `backend/b-15-approved-style-pipeline`. 기존 B-15 사진 등록 API와 분리된 백엔드 명시 실행 도구이며, 운영 큐의 자동 전환·DB 변경은 포함하지 않는다.
