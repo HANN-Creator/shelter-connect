@@ -842,6 +842,14 @@
           "items": {
             "$ref": "#/components/schemas/AssetFrame"
           }
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "worldMotion": {
+          "type": "object",
+          "description": "방향 단위 벡터. BACK_OFF는 바라보는 방향의 반대. 이동 속도는 기존 behavior 설정 사용."
         }
       },
       "required": [
@@ -909,12 +917,12 @@
           "properties": {
             "width": {
               "type": "integer",
-              "minimum": 64,
+              "minimum": 32,
               "maximum": 64
             },
             "height": {
               "type": "integer",
-              "minimum": 64,
+              "minimum": 32,
               "maximum": 64
             }
           },
@@ -929,12 +937,12 @@
           "properties": {
             "x": {
               "type": "integer",
-              "minimum": 32,
+              "minimum": 16,
               "maximum": 32
             },
             "y": {
               "type": "integer",
-              "minimum": 60,
+              "minimum": 30,
               "maximum": 60
             }
           },
@@ -947,7 +955,8 @@
         "facing": {
           "type": "string",
           "enum": [
-            "right-three-quarter"
+            "right-three-quarter",
+            "four-directions"
           ]
         },
         "baseUrl": {
@@ -973,6 +982,45 @@
             }
           },
           "additionalProperties": false
+        },
+        "mapDirections": {
+          "type": "object",
+          "properties": {
+            "DOWN": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/components/schemas/AssetAnimation"
+              }
+            },
+            "UP": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/components/schemas/AssetAnimation"
+              }
+            },
+            "LEFT": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/components/schemas/AssetAnimation"
+              }
+            },
+            "RIGHT": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/components/schemas/AssetAnimation"
+              }
+            }
+          },
+          "description": "cozy32-photo-style-v1 원본 32px 4방향. 각 방향 8행동, 각 9프레임. LEFT도 자체 그림 사용."
+        },
+        "generatorVersion": {
+          "type": "string"
+        },
+        "sampling": {
+          "type": "string",
+          "enum": [
+            "nearest"
+          ]
         }
       },
       "required": [
@@ -982,7 +1030,6 @@
         "provider",
         "availableActions",
         "fallbackAction",
-        "behaviorRevision",
         "frameSize",
         "anchorPixels",
         "facing",
@@ -1043,6 +1090,14 @@
                   "enum": [
                     "REGISTERED"
                   ]
+                },
+                "sourcePhotoSha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$",
+                  "description": "직접 업로드 후 서버가 정규화해 저장한 PNG 해시. styled-assets 요청에 사용."
+                },
+                "automaticGenerationEnabled": {
+                  "type": "boolean"
                 }
               },
               "required": [
@@ -1060,6 +1115,11 @@
                 },
                 "job": {
                   "$ref": "#/components/schemas/AssetJob"
+                },
+                "sourcePhotoSha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$",
+                  "description": "직접 업로드 후 서버가 정규화해 저장한 PNG 해시. styled-assets 요청에 사용."
                 }
               },
               "required": [
@@ -1840,6 +1900,142 @@
         "sampling"
       ],
       "additionalProperties": false
+    },
+    "StyledTraitsInput": {
+      "type": "object",
+      "properties": {
+        "sourcePhotoSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "faceBox": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "identityDescription": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 850
+        },
+        "motionDescription": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "rearDescription": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "reviewNote": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 2000
+        }
+      },
+      "required": [
+        "sourcePhotoSha256",
+        "faceBox",
+        "identityDescription",
+        "motionDescription",
+        "rearDescription",
+        "seed",
+        "reviewNote"
+      ],
+      "additionalProperties": false
+    },
+    "StyledAssetInput": {
+      "type": "object",
+      "properties": {
+        "photoId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "traits": {
+          "$ref": "#/components/schemas/StyledTraitsInput"
+        }
+      },
+      "required": [
+        "photoId",
+        "traits"
+      ],
+      "additionalProperties": false
+    },
+    "StyledSeedHashes": {
+      "type": "object",
+      "properties": {
+        "south": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "north": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "west": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "east": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "south",
+        "north",
+        "west",
+        "east"
+      ],
+      "additionalProperties": false
+    },
+    "StyledReviewInput": {
+      "type": "object",
+      "properties": {
+        "decision": {
+          "type": "string",
+          "enum": [
+            "APPROVE",
+            "REJECT"
+          ]
+        },
+        "note": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 2000
+        },
+        "expectedSeedHashes": {
+          "$ref": "#/components/schemas/StyledSeedHashes"
+        }
+      },
+      "required": [
+        "decision",
+        "note",
+        "expectedSeedHashes"
+      ],
+      "additionalProperties": false
+    },
+    "StyledRecoverInput": {
+      "type": "object",
+      "properties": {
+        "providerJobId": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
     }
   },
   "operations": {
@@ -2470,7 +2666,7 @@
     "POST /v1/shelter-admin/dogs/{dogId}/photos": {
       "summary": "보호소 사진 직접 업로드",
       "tag": "04. 사진",
-      "description": "metadata 파트를 application/json으로 전송. 실제 허가를 확인한 SHELTER 출처 ID 필요. 같은 clientUploadId/사진/허가 내용은 중복 등록하지 않습니다. 생성·Storage·AI 기능 활성화가 필요합니다. 서버가 Luna로 보이는 외형과 얼굴 영역을 분석하고 전체 사진·얼굴 크롭·외형 설명을 PixelLab에 전달합니다. 얼굴을 확인할 수 없으면 작업이 FAILED로 멈추며 failureCode를 확인합니다. 기본 도트와 동작은 기존 검토 후 공개됩니다.",
+      "description": "metadata 파트를 application/json으로 전송. 실제 허가를 확인한 SHELTER 출처 ID 필요. 같은 clientUploadId/사진/허가 내용은 중복 등록하지 않습니다. 생성·Storage·AI 기능 활성화가 필요합니다. 서버가 Luna로 보이는 외형과 얼굴 영역을 분석하고 전체 사진·얼굴 크롭·외형 설명을 PixelLab에 전달합니다. 얼굴을 확인할 수 없으면 작업이 FAILED로 멈추며 failureCode를 확인합니다. 기본 도트와 동작은 기존 검토 후 공개됩니다. 직접 업로드 응답 sourcePhotoSha256은 서버에 저장된 정규화 PNG 해시입니다. 새 styled-assets 요청에는 이 값을 사용합니다. 자동 생성이 꺼진 경우 사진만 등록하고 명시적 생성 요청을 기다립니다.",
       "success": [
         200
       ],
@@ -2493,7 +2689,7 @@
     "GET /v1/shelter-admin/dogs/{dogId}/photos": {
       "summary": "등록 사진 관리 목록",
       "tag": "04. 사진",
-      "description": "원본 URL 없이 사진 ID·권리·업로드 상태를 반환합니다.",
+      "description": "원본 URL 없이 사진 ID·권리·업로드 상태·sourcePhotoSha256을 반환합니다. 직접 업로드한 PNG의 서버 해시이며 외부 등록 사진에는 null일 수 있습니다.",
       "success": [
         200
       ],
@@ -3355,6 +3551,108 @@
         "example": {
           "upToSequence": 1
         }
+      }
+    },
+    "POST /v1/shelter-admin/dogs/{dogId}/styled-assets": {
+      "summary": "32px 4방향 생성 작업 접수",
+      "description": "허가된 사진만 처리. 동일 사진·스타일·입력 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 32개 동작 생성, REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수.",
+      "tag": "32px 에셋",
+      "success": [
+        "202"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "422",
+        "503"
+      ],
+      "request": {
+        "schema": "StyledAssetInput"
+      }
+    },
+    "GET /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}": {
+      "summary": "32px 생성 상태 조회",
+      "description": "허가된 사진만 처리. 동일 사진·스타일·입력 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 32개 동작 생성, REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수.",
+      "tag": "32px 에셋",
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "422",
+        "503"
+      ]
+    },
+    "GET /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/preview": {
+      "summary": "저장된 4방향·동작 검토 주소",
+      "description": "허가된 사진만 처리. 동일 사진·스타일·입력 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 32개 동작 생성, REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수.",
+      "tag": "32px 에셋",
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "422",
+        "503"
+      ]
+    },
+    "POST /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/seed-review": {
+      "summary": "4방향 원본 확인 후 동작 생성 승인",
+      "description": "허가된 사진만 처리. 동일 사진·스타일·입력 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 32개 동작 생성, REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수.",
+      "tag": "32px 에셋",
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "422",
+        "503"
+      ],
+      "request": {
+        "schema": "StyledReviewInput"
+      }
+    },
+    "POST /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/review": {
+      "summary": "32개 동작 검토 후 공개 승인",
+      "description": "허가된 사진만 처리. 동일 사진·스타일·입력 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 32개 동작 생성, REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수.",
+      "tag": "32px 에셋",
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "422",
+        "503"
+      ],
+      "request": {
+        "schema": "StyledReviewInput"
+      }
+    },
+    "POST /v1/operations/styled-asset-jobs/{jobId}/recover": {
+      "summary": "실패 작업 재개·결과 불명 작업 ID 연결",
+      "description": "허가된 사진만 처리. 동일 사진·스타일·입력 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 32개 동작 생성, REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수.",
+      "tag": "32px 에셋",
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "422",
+        "503"
+      ],
+      "request": {
+        "schema": "StyledRecoverInput"
       }
     }
   }

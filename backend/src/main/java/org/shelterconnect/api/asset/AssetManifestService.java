@@ -9,14 +9,17 @@ import tools.jackson.databind.JsonNode;
 public class AssetManifestService {
     private final AssetStore store;
     private final AssetStorage storage;
-    public AssetManifestService(AssetStore store,AssetStorage storage) { this.store=store;this.storage=storage; }
+    private final StyledAssetManifest styled;
+    @org.springframework.beans.factory.annotation.Autowired
+    public AssetManifestService(AssetStore store,AssetStorage storage,StyledAssetManifest styled) { this.store=store;this.storage=storage;this.styled=styled; }
+    AssetManifestService(AssetStore store,AssetStorage storage) { this(store,storage,null); }
     public Map<String,Object> preview(UUID subject,UUID dog,UUID id) {
         store.checkPreview(subject,dog,id);
         var result=manifest(store.read(subject,dog,id));
         store.checkPreview(subject,dog,id);return result;
     }
     public Map<String,Object> published(UUID dog) {
-        var before=store.available(dog);var result=manifest(before);
+        var before=store.available(dog);var result=styled!=null && styled.handles(before.id())?styled.published(before.id()):manifest(before);
         if(!store.available(dog).id().equals(before.id())) throw new AssetException(409,"ASSET_CHANGED");
         return result;
     }

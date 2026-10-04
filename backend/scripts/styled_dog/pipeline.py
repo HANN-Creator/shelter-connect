@@ -151,6 +151,11 @@ def require_review(root):
 def motion_request(root, action, direction):
     rules = verify_inputs(root)
     traits = read(root/'traits.json')
+    return motion_payload(traits, rules, action, direction, image_argument(root/'directions'/(direction+'.png')))
+
+
+def motion_payload(traits, rules, action, direction, first_frame):
+    """Shared by the CLI and the durable server worker; no file/network side effects."""
     spec = rules['actions'][action]
     motion = spec['motion']
     if spec['loop']:
@@ -162,7 +167,7 @@ def motion_request(root, action, direction):
         motion += ' Rear view in EVERY frame: back of head, back, rump and tail only. No visible eyes, nose, mouth or chest. Never turn around or look over a shoulder.'
     if len(motion) > 1000:
         raise ValueError('Animation prompt exceeds provider limit')
-    body = {'first_frame':image_argument(root/'directions'/(direction+'.png')),
+    body = {'first_frame':first_frame,
             'description':motion, 'frame_count':rules['generatedFrames'], 'seed':traits['seed'],
             'no_background':True, 'enhance_prompt':False, 'direction':direction, 'view':'low top-down',
             'subject_description':traits['rearDescription' if direction == 'north' else 'motionDescription'],

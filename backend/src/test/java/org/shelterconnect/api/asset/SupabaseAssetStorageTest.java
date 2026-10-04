@@ -45,8 +45,8 @@ class SupabaseAssetStorageTest {
         assertThat(objects).hasValue(0);
     }
     @Test void signsTwoBoundedVariantsWithoutAllowingUnboundedBatches() {
-        var keys=java.util.stream.IntStream.range(0,18).mapToObj(i->"dog/job/map-32/clip"+i+".png").toList();
-        assertThat(storage.sign(keys)).hasSize(18);
+        var keys=java.util.stream.IntStream.range(0,36).mapToObj(i->"dog/job/map-32/clip"+i+".png").toList();
+        assertThat(storage.sign(keys)).hasSize(36);
         var tooMany=new ArrayList<>(keys);tooMany.add("dog/job/extra.png");
         assertThatThrownBy(()->storage.sign(tooMany)).isInstanceOf(AssetException.class);
     }

@@ -12,10 +12,11 @@ import org.springframework.scheduling.annotation.*;
 public class AssetScheduler {
     private static final Logger log=LoggerFactory.getLogger(AssetScheduler.class);
     private final AssetWorker worker;
-    public AssetScheduler(AssetWorker worker) { this.worker=worker; }
+    private final StyledAssetWorker styled;
+    public AssetScheduler(AssetWorker worker,StyledAssetWorker styled) { this.worker=worker;this.styled=styled; }
     @Scheduled(fixedDelay=5000,initialDelay=10000)
     public void advance() {
-        try { worker.tick(); }
+        try { styled.tick();worker.tick(); }
         catch(RuntimeException e) { log.warn("Asset worker tick interrupted; type={}",e.getClass().getSimpleName()); }
     }
 }
