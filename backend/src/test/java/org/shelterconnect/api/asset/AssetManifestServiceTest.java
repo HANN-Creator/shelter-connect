@@ -22,6 +22,7 @@ class AssetManifestServiceTest {
     }
     @Test void completeMapVariantKeepsTimelineButHalvesTextureCoordinatesAndAnchor() {
         var response=published(steps(3),mock(AssetStorage.class));var map=response.at("/variants/MAP_32");
+        assertThat(map.path("generatorVersion").asText()).isEqualTo("map-pixel-v2");
         assertThat(map.at("/frameSize/width").asInt()).isEqualTo(32);
         assertThat(map.at("/anchorPixels/x").asInt()).isEqualTo(16);
         assertThat(map.at("/anchorPixels/y").asInt()).isEqualTo(30);
@@ -33,6 +34,22 @@ class AssetManifestServiceTest {
             assertThat(frames.get(i).path("durationMs")).isEqualTo(old.get(i).path("durationMs"));
         }
         assertThat(map.toString()).doesNotContain("paletteSha256","validation","renderedSource");
+    }
+    @Test void existingV1MapsRemainReadableWithTheirActualVersion() {
+        var steps=steps(3);
+        for(var step:steps) ((tools.jackson.databind.node.ObjectNode)step.result().at("/mapPixel/validation")).put("converterVersion","map-pixel-v1");
+        var map=published(steps,mock(AssetStorage.class)).at("/variants/MAP_32");
+        assertThat(map.path("generatorVersion").asText()).isEqualTo("map-pixel-v1");
+        assertThat(map.at("/animations/WALK/frameCount").asInt()).isEqualTo(48);
+    }
+    @Test void rollingDeployMixturesAndUnknownVersionsFallBackWithoutSigningMapAssets() {
+        for(String version:List.of("map-pixel-v1","map-pixel-v99","")) {
+            var steps=steps(3);
+            ((tools.jackson.databind.node.ObjectNode)steps.get(1).result().at("/mapPixel/validation")).put("converterVersion",version);
+            var storage=mock(AssetStorage.class);
+            assertThat(published(steps,storage).path("variants").isEmpty()).isTrue();
+            verify(storage).sign(List.of("job/BASE.png","job/IDLE.png","job/WALK.png"));
+        }
     }
     private tools.jackson.databind.JsonNode published(List<AssetStore.Step> steps,AssetStorage storage) {
         var store=mock(AssetStore.class);var dog=UUID.randomUUID();
@@ -49,7 +66,7 @@ class AssetManifestServiceTest {
             var meta=new LinkedHashMap<String,Object>(Map.of("key","job/"+action+".png","frameCount",count,
                 "width",64,"height",64,"durationMs",30,"loop",true,"holdLastFrame",false,"returnToIdle","DIRECT"));
             if(result.size()<maps) meta.put("mapPixel",Map.of("key","job/map-32/"+action+".png","frameCount",count,"width",32,"height",32,
-                "validation",Map.of("converterVersion","map-pixel-v1","paletteSha256","a".repeat(64),"paletteChecked",true,"boundsChecked",true,"transparencyChecked",true)));
+                "validation",Map.of("converterVersion","map-pixel-v2","paletteSha256","a".repeat(64),"paletteChecked",true,"boundsChecked",true,"transparencyChecked",true)));
             result.add(new AssetStore.Step(action,"SUCCEEDED",json.valueToTree(meta)));
         }
         return result;

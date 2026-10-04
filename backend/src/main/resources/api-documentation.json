@@ -1817,7 +1817,8 @@
         "generatorVersion": {
           "type": "string",
           "enum": [
-            "map-pixel-v1"
+            "map-pixel-v1",
+            "map-pixel-v2"
           ]
         },
         "sampling": {

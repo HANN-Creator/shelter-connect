@@ -103,6 +103,7 @@ class AssetPostgresTest {
         }
         assertThat(elapsed).isEqualTo(1440);
         var mapped=published.at("/data/variants/MAP_32");
+        assertThat(mapped.path("generatorVersion").asText()).isEqualTo("map-pixel-v2");
         assertThat(mapped.at("/frameSize/width").asInt()).isEqualTo(32);
         assertThat(mapped.at("/anchorPixels/x").asInt()).isEqualTo(16);
         assertThat(mapped.at("/anchorPixels/y").asInt()).isEqualTo(30);

@@ -35,7 +35,9 @@ class MapPixelsTest(unittest.TestCase):
                 allowed = {tuple(p[:3]) for p in src.reshape(-1, 4) if p[3]}
                 used = {tuple(p[:3]) for p in pixels.reshape(-1, 4) if p[3]}
                 self.assertTrue(used <= allowed)
-                self.assertIn((255, 255, 255), used)  # single-pixel eye glint survives
+                # A 1/4-cell eye glint must not become a full white target pixel.
+                self.assertNotEqual(result.getpixel((24, 8))[:3], (255, 255, 255))
+                self.assertEqual(meta['converterVersion'], 'map-pixel-v2')
                 self.assertEqual(set(np.unique(pixels[:, :, 3])), {0, 255})
                 self.assertTrue((pixels[pixels[:, :, 3] == 0, :3] == 0).all())
                 self.assertEqual(meta['anchorPixels'], {'x': 16, 'y': 30})
@@ -49,10 +51,44 @@ class MapPixelsTest(unittest.TestCase):
             for x in range(10, 54):
                 a[y, x] = [x * 4, y * 4, (x + y) * 2, 255]
         base = Image.fromarray(a)
-        palette, _ = source_palette(base)
+        palette = source_palette(base)
         self.assertEqual(len(palette), 16)
         self.assertTrue({tuple(c) for c in palette} <= {tuple(p[:3]) for p in a.reshape(-1, 4) if p[3]})
         self.assertEqual(convert_sheet(base, base, 1)[1], convert_sheet(base, base, 1)[1])
+
+    def test_local_outline_shades_and_leg_gap_are_not_replaced_by_darkest_edge(self):
+        base = dog('#faf6ed', '#736e67')
+        d = ImageDraw.Draw(base)
+        d.rectangle((38, 8, 55, 9), fill='#302820')  # darkest ear outline
+        d.rectangle((14, 56, 15, 59), fill='#a29888')  # softer near paw edge
+        result, _ = convert_sheet(base, base, 1)
+        self.assertEqual(result.getpixel((19, 4)), (48, 40, 32, 255))
+        self.assertEqual(result.getpixel((7, 29)), (162, 152, 136, 255))
+        self.assertEqual(result.getpixel((15, 29)), (0, 0, 0, 0))
+
+    def test_small_highlights_and_mouth_lines_keep_their_area_without_corner_bias(self):
+        base = dog('#faf6ed', '#302820')
+        d = ImageDraw.Draw(base)
+        d.rectangle((20, 24, 27, 31), fill='#746960')  # intermediate source shade
+        for point in [(0, 0), (1, 0), (0, 1), (1, 1)]:
+            with self.subTest(point=point):
+                source = base.copy(); draw = ImageDraw.Draw(source)
+                draw.rectangle((46, 16, 47, 17), fill='#302820')
+                draw.point((46 + point[0], 16 + point[1]), fill='#ffffff')
+                draw.rectangle((40, 26, 41, 27), fill='#faf6ed')
+                draw.point((40 + point[0], 26 + point[1]), fill='#302820')
+                result, _ = convert_sheet(base, source, 1)
+                self.assertEqual(result.getpixel((23, 8))[:3], (116, 105, 96))
+                self.assertEqual(result.getpixel((20, 13))[:3], (250, 246, 237))
+
+    def test_hidden_rgb_does_not_darken_edges_or_fill_transparent_gaps(self):
+        base = dog('#faf6ed', '#736e67')
+        a = np.asarray(base).copy()
+        # Identical coverage with arbitrary hidden RGB must produce identical PNGs.
+        a[a[:, :, 3] == 0, :3] = [255, 0, 255]
+        changed, _ = convert_sheet(base, Image.fromarray(a), 1)
+        original, _ = convert_sheet(base, base, 1)
+        self.assertEqual(original.tobytes(), changed.tobytes())
 
     def test_all_frames_share_palette_and_keep_offsets_without_sheet_seam_bleed(self):
         base = dog('#d7a256', '#513925')
