@@ -75,7 +75,9 @@ def package(root):
     ledger = [{k:s.get(k) for k in ('label','endpoint','status','jobId','usage')} for s in
               (read(p) for p in sorted((root/'raw').glob('*-state.json')))]
     # Per-job billing is authoritative; balance can include other account activity.
-    charged = sum((s['usage'] or {}).get('generations') or 0 for s in ledger)
+    usage_complete = bool(ledger) and all(s['status'] == 'COMPLETED' and
+        isinstance((s['usage'] or {}).get('generations'), (int,float)) for s in ledger)
+    charged = sum(s['usage']['generations'] for s in ledger) if usage_complete else None
     manifest = {'schemaVersion':'cozy32-photo-style-v1','styleVersion':rules['version'],
         'frameSize':{'width':32,'height':32},'anchorPixels':{'x':16,'y':30},
         'generator':rules['characterEndpoint'],'animationProvider':rules['animationEndpoint'],
