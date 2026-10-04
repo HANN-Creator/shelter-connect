@@ -11,7 +11,7 @@ from styled_dog.client import Client, digest, native_image, read, write
 from styled_dog.pipeline import (STYLE, load_rules, prepare, verify_inputs, character_request,
     record_review, require_review, motion_request, save_clip, animate)
 from styled_dog.source import secure_photo_url, prepare_concept
-from styled_dog.package import package, sheet_for
+from styled_dog.package import package, sheet_for, reviewed_frames
 
 
 class PipelineTest(unittest.TestCase):
@@ -164,6 +164,20 @@ class PipelineTest(unittest.TestCase):
                 with self.subTest(label=label), self.assertRaises(ValueError):
                     client.generate(label,'animate-pixminimax',{})
             remote.assert_not_called()
+
+    def test_reviewed_one_shot_holds_native_pose_without_altering_raw_frames(self):
+        frames = [Image.new('RGBA',(32,32),(i,0,0,255)) for i in range(9)]
+        clip = {'label':'sit-north','loop':False,'frameSha256':list(range(9))}
+        review = {'holdFromFrame':7,'rawFrameSha256':list(range(9)),
+                  'reason':'Frame 8 turns toward camera; reviewed seated frame 7 still faces away.'}
+        write(self.root/'frame-reviews.json',{'clips':{'sit-north':review}})
+        selected, indices, _ = reviewed_frames(self.root,clip,frames)
+        self.assertEqual(indices,[0,1,2,3,4,5,6,7,7])
+        self.assertIs(selected[-1],frames[7])
+        self.assertEqual(frames[8].getpixel((0,0)),(8,0,0,255))
+        for change in ({'loop':True},{'frameSha256':['changed']*9}):
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                reviewed_frames(self.root,dict(clip,**change),frames)
 
 
 class PaidJournalTest(unittest.TestCase):

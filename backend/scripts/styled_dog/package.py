@@ -34,6 +34,25 @@ def gif_for(frames, target, duration, loop):
                     loop=0,disposal=2,optimize=False)
 
 
+def reviewed_frames(root, clip, frames):
+    """A reviewed one-shot may hold a valid final pose before a bad trailing frame.
+
+    No pixels are painted, scaled or recentered. Raw frames remain in the bundle,
+    and the exact source index of every displayed frame is recorded.
+    """
+    indices = list(range(len(frames)))
+    path = root/'frame-reviews.json'
+    review = read(path).get('clips',{}).get(clip['label']) if path.exists() else None
+    if review:
+        hold = review.get('holdFromFrame')
+        if clip['loop'] or type(hold) is not int or not 1 <= hold < len(frames):
+            raise ValueError('Pose hold is only allowed for a reviewed one-shot end frame')
+        if review.get('rawFrameSha256') != clip['frameSha256'] or not review.get('reason','').strip():
+            raise ValueError('Frame review is missing or stale')
+        indices = [min(i,hold) for i in indices]
+    return [frames[i] for i in indices], indices, review
+
+
 def package(root):
     import json
     rules = verify_inputs(root)
@@ -53,6 +72,7 @@ def package(root):
         seed = native_image((root/'directions'/(clip['direction']+'.png')).read_bytes())
         if frames[0].tobytes() != seed.tobytes():
             raise ValueError('First frame differs from seed')
+        frames, indices, frame_review = reviewed_frames(root,clip,frames)
         path = root/'sheets'/(label+'.png')
         sheet_for(frames).save(path)
         gif_for(frames,root/'gifs'/(label+'.gif'),clip['durationMs'],clip['loop'])
@@ -60,6 +80,7 @@ def package(root):
         vector = {'south':(0,1),'north':(0,-1),'west':(-1,0),'east':(1,0)}[clip['direction']]
         factor = -1 if clip['action'] == 'BACK_OFF' else int(clip['action'] in ('WALK','RUN'))
         clip.update(spritesheetUrl='sheets/'+label+'.png',gifUrl='gifs/'+label+'.gif',
+            sourceFrameIndices=indices,frameReview=frame_review,
             sha256=digest(path),transform={'scale':1,'offset':[0,0],'perFrameCentering':False},
             firstFrameMatchesSeed=True,rawFramesTouchingEdge=edges,
             loopJoinChangedPixels=sum(a != b for a,b in zip(frames[0].get_flattened_data(),frames[-1].get_flattened_data())),
@@ -125,7 +146,7 @@ def package(root):
     # Explicit allowlist; never include raw requests, balance, keys, logs or arbitrary files.
     files = ['index.html','manifest.js','manifest.json','README.md','source.json','style-reference.png',
              'reference-provenance.json','seed-review.json','rules.json','photo-1.png','photo-2.png',
-             'face.png','photo-concept.png','base.png','seed-directions.png','comparison.png','quality-review.json']
+             'face.png','photo-concept.png','base.png','seed-directions.png','comparison.png','quality-review.json','frame-reviews.json']
     with zipfile.ZipFile(root/'styled-dog-assets.zip','w',zipfile.ZIP_DEFLATED) as z:
         for name in files:
             if (root/name).exists():
