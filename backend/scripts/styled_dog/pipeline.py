@@ -210,10 +210,10 @@ def save_clip(root, action, direction, result):
         'frameCount':len(decoded),'durationMs':rules['actions'][action]['durationMs'],
         'loop':rules['actions'][action]['loop'],'sourceSha256':digest(root/'directions'/(direction+'.png')),
         'frameSha256':[digest(folder/f'{i:02}.png') for i in range(len(decoded))]})
-    audit = frame_audit(decoded,seed)
+    audit = frame_audit(decoded,seed,action,direction,read(root/'seed-review.json')['tailCarriage'])
     write(root/'audits'/(label+'.json'),audit)
     if not audit['structuralPassed']:
-        raise ValueError('CANVAS_CLIPPING: raw frames retained for repair, not approved')
+        raise ValueError(','.join(audit['issues'])+': raw frames retained for repair, not approved')
 
 
 def animate(root, client, actions):

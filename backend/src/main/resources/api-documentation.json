@@ -2467,6 +2467,30 @@
         "expectedSeedHashes"
       ],
       "additionalProperties": false
+    },
+    "StyledQualityRecheck": {
+      "type": "object",
+      "properties": {
+        "note": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 2000
+        },
+        "expectedSeedHashes": {
+          "$ref": "#/components/schemas/StyledSeedHashes"
+        },
+        "expectedRulesSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "현재 작업의 qualityPolicy.rulesSha256. 서버의 새 규칙 해시가 아니라 재검사 전 작업에 고정된 값."
+        }
+      },
+      "required": [
+        "note",
+        "expectedSeedHashes",
+        "expectedRulesSha256"
+      ],
+      "additionalProperties": false
     }
   },
   "operations": {
@@ -4103,6 +4127,24 @@
       ],
       "request": {
         "schema": "StyledRepairInput"
+      }
+    },
+    "POST /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/quality-recheck": {
+      "summary": "변경된 규칙으로 미승인 스프라이트 재검사",
+      "description": "같은 보호소 담당자 전용. 완료된 미승인 팩의 규칙 해시가 실제로 변경된 경우만 재검수합니다. 기준 이미지·이전 판정·제출 이력을 보존하고 기존 시트별 최대 2회 보완 횟수를 초기화하지 않습니다. 동일 요청 재전송은 작업을 재사용합니다. 승인 팩·진행 중 규칙 교체·같은 규칙 재검수는 허용하지 않습니다. QUALITY_RECHECK_STALE, QUALITY_RULES_UNCHANGED, QUALITY_RECHECK_NOT_ALLOWED는 409입니다.",
+      "tag": "32px 에셋",
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "403",
+        "404",
+        "409",
+        "503"
+      ],
+      "request": {
+        "schema": "StyledQualityRecheck"
       }
     }
   }

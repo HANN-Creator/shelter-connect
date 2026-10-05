@@ -1,5 +1,7 @@
 {
-  "revision": "sprite-regressions-2026-10-05-v1",
+  "revision": "sprite-regressions-2026-10-05-v2",
+  "frontalLowTail": {"upperBandPercent": 65, "seedTolerancePixels": 1, "minimumNewPixels": 3},
+  "frontalLowTailPrompt": "Tail stays BELOW the rump: hidden or beside HIND PAWS in front view, never by shoulders/head. Still body/head.",
   "seedMargin": "Leave TWO clear pixels on all four canvas edges for animation; keep the silhouette compact and centered.",
   "commonMotion": "Keep all pixels inside 32x32 with one clear pixel at ALL edges. Small inward motion. Fixed camera, size, position, markings and crisp palette. No props or text.",
   "rearView": "No visible eyes, nose, mouth or chest. Rear head only in ALL frames, including the final hold; no shoulder glance.",
@@ -43,6 +45,7 @@
       "direction": "south",
       "issue": "TAIL_CARRIAGE",
       "check": "vision",
+      "deterministicCheck": "frontalLowTail",
       "expected": "LOW contract must reject a tail above the back"
     },
     {

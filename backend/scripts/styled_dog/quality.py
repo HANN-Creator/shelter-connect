@@ -1,9 +1,10 @@
 """Shared, versioned prevention rules and lossless offline quality gates.
 
-Alpha checks are deterministic. This module never claims to visually recognize
-tail posture or face direction; those require the server's Luna review.
+Alpha and a narrowly scoped frontal silhouette check are deterministic.
+General anatomy and face direction still require visual review.
 """
 from pathlib import Path
+from PIL import ImageFilter
 from .client import digest, native_image, read, write
 
 POLICY = Path(__file__).resolve().parents[2]/'asset-styles/cozy32-v1/quality-rules.json'
@@ -29,7 +30,8 @@ def motion_guidance(action, direction, quality):
         raise ValueError('Invalid quality contract or issue codes')
     if quality.get('rulesSha256') and quality['rulesSha256'] != digest(POLICY):
         raise ValueError('Quality rules changed; do not silently resume paid generation')
-    parts = [rules['actions'][action], rules['tailCarriage'][tail], rules['commonMotion'],
+    tail_prompt = rules['frontalLowTailPrompt'] if (action,direction,tail)==('TAIL_WAG','south','LOW') else rules['tailCarriage'][tail]
+    parts = [rules['actions'][action], tail_prompt, rules['commonMotion'],
              'Remain '+direction+' facing in ALL frames including the final hold.']
     if direction == 'north':
         parts.append(rules['rearView'])
@@ -38,7 +40,28 @@ def motion_guidance(action, direction, quality):
     return ' '.join(parts)
 
 
-def frame_audit(frames, seed):
+def frontal_tail_frames(frames, seed, action, direction, tail):
+    """Reject clear new upper appendages in a stationary LOW-tail frontal wag.
+
+    This is not general tail segmentation. It deliberately excludes bowing,
+    walking and non-LOW tails; one-pixel outline jitter is tolerated.
+    """
+    if (action,direction,tail) != ('TAIL_WAG','south','LOW'):
+        return []
+    rules=load_quality()['frontalLowTail']
+    alpha=seed.getchannel('A')
+    box=alpha.getbbox()
+    if box is None:
+        raise ValueError('Empty seed')
+    cutoff=box[1]+(box[3]-box[1])*rules['upperBandPercent']//100
+    allowed=alpha.point(lambda value:255 if value else 0).filter(
+        ImageFilter.MaxFilter(2*rules['seedTolerancePixels']+1))
+    return [i for i,frame in enumerate(frames)
+            if sum(frame.getpixel((x,y))[3]>0 and allowed.getpixel((x,y))==0
+                   for y in range(cutoff) for x in range(32))>=rules['minimumNewPixels']]
+
+
+def frame_audit(frames, seed, action=None, direction=None, tail=None):
     if len(frames) != 9 or frames[0].tobytes() != seed.tobytes():
         raise ValueError('Expected nine frames and an unchanged approved first frame')
     edges = []
@@ -50,13 +73,16 @@ def frame_audit(frames, seed):
             raise ValueError('Empty frame')
         if box[0] == 0 or box[1] == 0 or box[2] == 32 or box[3] == 32:
             edges.append(i)
-    return {'structuralPassed':not edges, 'issues':['CANVAS_CLIPPING'] if edges else [],
+    upper=frontal_tail_frames(frames,seed,action,direction,tail)
+    issues=(['CANVAS_CLIPPING'] if edges else [])+(['TAIL_CARRIAGE'] if upper else [])
+    return {'structuralPassed':not issues, 'issues':issues, 'silhouetteFrames':upper,
             'edgeFrames':edges, 'visualReviewRequired':True, 'qualityRules':quality_binding()}
 
 
 def audit_run(root):
     """Inspect every RAW frame before holds/packaging can hide a bad final pose."""
     clips = {}
+    review=read(root/'seed-review.json') if (root/'seed-review.json').exists() else {}
     for path in sorted((root/'clips').glob('*.json')):
         clip = read(path); label = clip['label']
         if label != clip['action'].lower()+'-'+clip['direction'] or clip['action'] not in load_quality()['actions'] or clip['direction'] not in DIRECTIONS:
@@ -67,7 +93,10 @@ def audit_run(root):
         seed_path = root/'directions'/(clip['direction']+'.png')
         if clip['sourceSha256'] != digest(seed_path):
             raise ValueError('Direction seed changed')
-        clips[label] = frame_audit([native_image(p.read_bytes()) for p in files], native_image(seed_path.read_bytes()))
+        if clip['action']=='TAIL_WAG' and clip['direction']=='south' and review.get('tailCarriage') not in TAILS:
+            raise ValueError('Shared tail review required for frontal wag audit')
+        clips[label] = frame_audit([native_image(p.read_bytes()) for p in files], native_image(seed_path.read_bytes()),
+                                  clip['action'],clip['direction'],review.get('tailCarriage'))
     if not clips:
         raise ValueError('No clips to audit')
     passed = all(c['structuralPassed'] for c in clips.values())
