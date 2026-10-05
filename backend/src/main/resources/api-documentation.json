@@ -2449,6 +2449,24 @@
         "data"
       ],
       "additionalProperties": false
+    },
+    "StyledRepairInput": {
+      "type": "object",
+      "properties": {
+        "note": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 2000
+        },
+        "expectedSeedHashes": {
+          "$ref": "#/components/schemas/StyledSeedHashes"
+        }
+      },
+      "required": [
+        "note",
+        "expectedSeedHashes"
+      ],
+      "additionalProperties": false
     }
   },
   "operations": {
@@ -3969,7 +3987,7 @@
     },
     "POST /v1/shelter-admin/dogs/{dogId}/styled-assets": {
       "summary": "32px 4방향 생성 작업 접수",
-      "description": "허가된 사진만 처리. 동일 사진·스타일·입력·확인된 행동 버전 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 기본3개+양수 비중 선택 행동만 각각 4방향 생성(총13~33단계), REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수. actionPlan/generationPlan은 작업 접수 당시 고정. 기존 33단계는 변경 없이 재개. 공개 assets.behavior는 현재 유효한 행동과 실제 시트의 교집합.",
+      "description": "허가된 사진만 처리. 동일 사진·스타일·입력·확인된 행동 버전 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 기본3개+양수 비중 선택 행동만 각각 4방향 생성(총13~33단계), REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수. actionPlan/generationPlan은 작업 접수 당시 고정. 기존 33단계는 변경 없이 재개. 공개 assets.behavior는 현재 유효한 행동과 실제 시트의 교집합. 새 작업은 sprite-quality-v1 자동 검수 적용: 사진 기준 공통 꼬리 자세, 프레임 잘림과 Luna 시각 검사, 불합격 시트별 최대2회 수정 생성. qualityPolicy·steps.qualityReport·repairCount 제공. 최종 승인은 전 시트 품질 통과가 필요. 기존 작업은 repair 명시 호출로 적용. 생성 단계 수는 최초 계획이며 보완 제출 수와 Generations는 별도.",
       "tag": "32px 에셋",
       "success": [
         "202"
@@ -3987,7 +4005,7 @@
     },
     "GET /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}": {
       "summary": "32px 생성 상태 조회",
-      "description": "허가된 사진만 처리. 동일 사진·스타일·입력·확인된 행동 버전 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 기본3개+양수 비중 선택 행동만 각각 4방향 생성(총13~33단계), REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수. actionPlan/generationPlan은 작업 접수 당시 고정. 기존 33단계는 변경 없이 재개. 공개 assets.behavior는 현재 유효한 행동과 실제 시트의 교집합.",
+      "description": "허가된 사진만 처리. 동일 사진·스타일·입력·확인된 행동 버전 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 기본3개+양수 비중 선택 행동만 각각 4방향 생성(총13~33단계), REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수. actionPlan/generationPlan은 작업 접수 당시 고정. 기존 33단계는 변경 없이 재개. 공개 assets.behavior는 현재 유효한 행동과 실제 시트의 교집합. 새 작업은 sprite-quality-v1 자동 검수 적용: 사진 기준 공통 꼬리 자세, 프레임 잘림과 Luna 시각 검사, 불합격 시트별 최대2회 수정 생성. qualityPolicy·steps.qualityReport·repairCount 제공. 최종 승인은 전 시트 품질 통과가 필요. 기존 작업은 repair 명시 호출로 적용. 생성 단계 수는 최초 계획이며 보완 제출 수와 Generations는 별도.",
       "tag": "32px 에셋",
       "success": [
         "200"
@@ -4002,7 +4020,7 @@
     },
     "GET /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/preview": {
       "summary": "저장된 4방향·동작 검토 주소",
-      "description": "허가된 사진만 처리. 동일 사진·스타일·입력·확인된 행동 버전 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 기본3개+양수 비중 선택 행동만 각각 4방향 생성(총13~33단계), REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수. actionPlan/generationPlan은 작업 접수 당시 고정. 기존 33단계는 변경 없이 재개. 공개 assets.behavior는 현재 유효한 행동과 실제 시트의 교집합.",
+      "description": "허가된 사진만 처리. 동일 사진·스타일·입력·확인된 행동 버전 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 기본3개+양수 비중 선택 행동만 각각 4방향 생성(총13~33단계), REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수. actionPlan/generationPlan은 작업 접수 당시 고정. 기존 33단계는 변경 없이 재개. 공개 assets.behavior는 현재 유효한 행동과 실제 시트의 교집합. 새 작업은 sprite-quality-v1 자동 검수 적용: 사진 기준 공통 꼬리 자세, 프레임 잘림과 Luna 시각 검사, 불합격 시트별 최대2회 수정 생성. qualityPolicy·steps.qualityReport·repairCount 제공. 최종 승인은 전 시트 품질 통과가 필요. 기존 작업은 repair 명시 호출로 적용. 생성 단계 수는 최초 계획이며 보완 제출 수와 Generations는 별도.",
       "tag": "32px 에셋",
       "success": [
         "200"
@@ -4017,7 +4035,7 @@
     },
     "POST /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/seed-review": {
       "summary": "4방향 원본 확인 후 동작 생성 승인",
-      "description": "허가된 사진만 처리. 동일 사진·스타일·입력·확인된 행동 버전 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 기본3개+양수 비중 선택 행동만 각각 4방향 생성(총13~33단계), REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수. actionPlan/generationPlan은 작업 접수 당시 고정. 기존 33단계는 변경 없이 재개. 공개 assets.behavior는 현재 유효한 행동과 실제 시트의 교집합.",
+      "description": "허가된 사진만 처리. 동일 사진·스타일·입력·확인된 행동 버전 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 기본3개+양수 비중 선택 행동만 각각 4방향 생성(총13~33단계), REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수. actionPlan/generationPlan은 작업 접수 당시 고정. 기존 33단계는 변경 없이 재개. 공개 assets.behavior는 현재 유효한 행동과 실제 시트의 교집합. 새 작업은 sprite-quality-v1 자동 검수 적용: 사진 기준 공통 꼬리 자세, 프레임 잘림과 Luna 시각 검사, 불합격 시트별 최대2회 수정 생성. qualityPolicy·steps.qualityReport·repairCount 제공. 최종 승인은 전 시트 품질 통과가 필요. 기존 작업은 repair 명시 호출로 적용. 생성 단계 수는 최초 계획이며 보완 제출 수와 Generations는 별도.",
       "tag": "32px 에셋",
       "success": [
         "200"
@@ -4035,7 +4053,7 @@
     },
     "POST /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/review": {
       "summary": "선택된 동작 검토 후 공개 승인",
-      "description": "허가된 사진만 처리. 동일 사진·스타일·입력·확인된 행동 버전 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 기본3개+양수 비중 선택 행동만 각각 4방향 생성(총13~33단계), REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수. actionPlan/generationPlan은 작업 접수 당시 고정. 기존 33단계는 변경 없이 재개. 공개 assets.behavior는 현재 유효한 행동과 실제 시트의 교집합.",
+      "description": "허가된 사진만 처리. 동일 사진·스타일·입력·확인된 행동 버전 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 기본3개+양수 비중 선택 행동만 각각 4방향 생성(총13~33단계), REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수. actionPlan/generationPlan은 작업 접수 당시 고정. 기존 33단계는 변경 없이 재개. 공개 assets.behavior는 현재 유효한 행동과 실제 시트의 교집합. 새 작업은 sprite-quality-v1 자동 검수 적용: 사진 기준 공통 꼬리 자세, 프레임 잘림과 Luna 시각 검사, 불합격 시트별 최대2회 수정 생성. qualityPolicy·steps.qualityReport·repairCount 제공. 최종 승인은 전 시트 품질 통과가 필요. 기존 작업은 repair 명시 호출로 적용. 생성 단계 수는 최초 계획이며 보완 제출 수와 Generations는 별도.",
       "tag": "32px 에셋",
       "success": [
         "200"
@@ -4067,6 +4085,24 @@
       ],
       "request": {
         "schema": "StyledRecoverInput"
+      }
+    },
+    "POST /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/repair": {
+      "summary": "기존 미승인 시트 자동 검수·보완 시작",
+      "description": "같은 보호소 담당자만. REVIEW 상태의 기존 품질 검사 미적용 팩을 검사한다. 원본 사진에서 꼬리 자세를 한 번 정하고 잘림·방향·꼬리·행동을 검사, 불합격 시트만 최대2회 자동 재생성. 정상 시트와 기준 이미지 유지. 반복 요청은 예산을 초기화하지 않는다. 기존 APPROVED 팩 변경 불가. 품질 문제 잔존 시 최종 승인409 QUALITY_REVIEW_REQUIRED.",
+      "tag": "32px 에셋",
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "403",
+        "404",
+        "409",
+        "503"
+      ],
+      "request": {
+        "schema": "StyledRepairInput"
       }
     }
   }

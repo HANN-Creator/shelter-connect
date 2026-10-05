@@ -15,10 +15,10 @@ import tools.jackson.databind.json.JsonMapper;
 @Service
 public class StyledAssetStore {
     @io.swagger.v3.oas.annotations.media.Schema(name="StyledAssetStep")
-    public record Step(String label,String action,String direction,String status,JsonNode result) {}
+    public record Step(String label,String action,String direction,String status,JsonNode result,JsonNode qualityReport,int repairCount) {}
     @io.swagger.v3.oas.annotations.media.Schema(name="StyledAssetJob")
     public record Job(UUID id,UUID dogId,String status,String failureCode,String pipelineVersion,List<Step> steps,JsonNode seedReview,
-                      List<String> actionPlan,JsonNode generationPlan) {
+                      List<String> actionPlan,JsonNode generationPlan,JsonNode qualityPolicy) {
         public List<String> availableActions() { return actionPlan.stream().filter(a->!a.equals("BASE")).toList(); }
         public boolean complete() {
             if(actionPlan.size()<4 || !actionPlan.getFirst().equals("BASE") || new HashSet<>(actionPlan).size()!=actionPlan.size()
@@ -31,7 +31,7 @@ public class StyledAssetStore {
         }
     }
     record Work(UUID id,UUID dogId,UUID token,String label,String action,String direction,String status,UUID providerId,
-                Instant submittedAt,String bucket,String key,JsonNode traits,JsonNode providerResult) {
+                Instant submittedAt,String bucket,String key,JsonNode traits,JsonNode providerResult,JsonNode result,JsonNode qualityReport,int repairCount,JsonNode qualityPolicy) {
         boolean character() { return action.equals("BASE"); }
         String prefix() { return dogId+"/"+id+"/native-32/"; }
     }
@@ -61,13 +61,13 @@ public class StyledAssetStore {
         if(existing.isPresent()) return job(existing.get());
         var plan=selected.actions();
         UUID id=jdbc.sql("""
-            INSERT INTO shelter.asset_jobs(photo_id,dog_id,shelter_id,permission_id,pipeline_version,selection_key,action_plan,styled_input,behavior_revision,behavior_plan)
-            SELECT p.id,p.dog_id,d.shelter_id,b.permission_id,:v,:s,CAST(:plan AS jsonb),CAST(:input AS jsonb),:revision,CAST(:behavior AS jsonb)
+            INSERT INTO shelter.asset_jobs(photo_id,dog_id,shelter_id,permission_id,pipeline_version,selection_key,action_plan,styled_input,behavior_revision,behavior_plan,quality_policy)
+            SELECT p.id,p.dog_id,d.shelter_id,b.permission_id,:v,:s,CAST(:plan AS jsonb),CAST(:input AS jsonb),:revision,CAST(:behavior AS jsonb),CAST(:quality AS jsonb)
             FROM shelter.dog_photos p JOIN shelter.dogs d ON d.id=p.dog_id JOIN shelter.asset_photo_sources b ON b.photo_id=p.id WHERE p.id=:p
             ON CONFLICT(photo_id,pipeline_version,selection_key) DO UPDATE SET photo_id=EXCLUDED.photo_id RETURNING id
             """).param("p",photo).param("v",StyledSpriteCodec.VERSION).param("s",selection).param("plan",json.writeValueAsString(plan))
             .param("input",json.writeValueAsString(traits)).param("revision",selected.revision(),java.sql.Types.INTEGER)
-            .param("behavior",json.writeValueAsString(selected.generationPlan())).query(UUID.class).single();
+            .param("behavior",json.writeValueAsString(selected.generationPlan())).param("quality",json.writeValueAsString(qualityPolicy())).query(UUID.class).single();
         insert(id,0,"character","BASE",null);int ordinal=1;
         for(String action:selected.generationPlan().selectedActions()) for(String direction:StyledSpriteCodec.DIRECTIONS)
             insert(id,ordinal++,action.toLowerCase(Locale.ROOT)+"-"+direction,action,direction);
@@ -97,6 +97,7 @@ public class StyledAssetStore {
         var base=j.steps().getFirst().result();
         if(base==null || !base.path("hashes").equals(body.path("expectedSeedHashes")))throw new AssetException(409,"SEED_REVIEW_STALE");
         if(!seed && !j.complete()) throw new AssetException(409,"ASSET_NOT_READY");
+        if(!seed && decision.equals("APPROVE") && !qualityPassed(j))throw new AssetException(409,"QUALITY_REVIEW_REQUIRED");
         if(seed && decision.equals("APPROVE")) {
             jdbc.sql("UPDATE shelter.asset_jobs SET seed_review=CAST(:r AS jsonb),status='QUEUED',next_run_at=now() WHERE id=:id")
                 .param("r",json.writeValueAsString(Map.of("hashes",base.path("hashes"),"reviewedBy",actor.userId(),"note",note,"reviewedAt",Instant.now())))
@@ -105,6 +106,21 @@ public class StyledAssetStore {
             .param("s",decision.equals("APPROVE")?"APPROVED":"REJECTED").param("u",actor.userId()).param("id",id).update();
         return job(id);
     }
+    /** Existing unapproved packs are audited once, with successful clips reused byte-for-byte. */
+    @Transactional public Job repair(UUID subject,UUID dog,UUID id,JsonNode body) {
+        access.requireDogForWrite(subject,dog);properties.requireEnabled();AssetInput.fields(body,"note","expectedSeedHashes");
+        if(AssetInput.text(body,"note",2000).length()<20)throw AssetException.invalid();
+        lock(id);var j=job(id);if(!j.dogId().equals(dog))throw missing();legacy.valid(id,true);
+        if(j.steps().isEmpty() || j.steps().getFirst().result()==null || !j.steps().getFirst().result().path("hashes").equals(body.path("expectedSeedHashes")))throw new AssetException(409,"SEED_REVIEW_STALE");
+        if(j.qualityPolicy()!=null)return j; // Replay never resets the paid repair budget.
+        if(!j.status().equals("REVIEW") || !j.complete())throw new AssetException(409,"ASSET_REPAIR_NOT_ALLOWED");
+        jdbc.sql("UPDATE shelter.asset_jobs SET quality_policy=CAST(:q AS jsonb),status='QUEUED',failure_code=NULL,next_run_at=now() WHERE id=:id")
+            .param("q",json.writeValueAsString(qualityPolicy())).param("id",id).update();
+        jdbc.sql("UPDATE shelter.styled_asset_steps SET status='CHECKING' WHERE job_id=:id AND action<>'BASE'").param("id",id).update();
+        return job(id);
+    }
+    private Map<String,Object> qualityPolicy(){return Map.of("version",StyledQualityAgent.VERSION,"maxRepairsPerClip",2);}
+    private boolean qualityPassed(Job j) {return j.qualityPolicy()==null || j.steps().stream().skip(1).allMatch(s->s.qualityReport()!=null && s.qualityReport().path("passed").asBoolean());}
     @Transactional public Job recover(UUID subject,UUID id,JsonNode body) {
         operator(subject);properties.requireEnabled();lock(id);legacy.valid(id,true);var j=job(id);
         AssetInput.fields(body,"providerJobId");
@@ -113,6 +129,10 @@ public class StyledAssetStore {
             jdbc.sql("UPDATE shelter.styled_asset_steps SET status='WAITING',provider_job_id=:p,submitted_at=now() WHERE job_id=:id AND status='OUTCOME_UNKNOWN'")
                 .param("p",provider).param("id",id).update();
         } else if(j.status().equals("FAILED") && !body.has("providerJobId")) {
+            if(j.failureCode()!=null && j.failureCode().startsWith("QUALITY_")) {
+                jdbc.sql("UPDATE shelter.asset_jobs SET quality_policy=quality_policy-'contractStarted' WHERE id=:id").param("id",id).update();
+                jdbc.sql("UPDATE shelter.styled_asset_steps SET quality_report=NULL WHERE job_id=:id AND status='FAILED' AND quality_report->>'status'='STARTED'").param("id",id).update();
+            }
             if("PROVIDER_JOB_FAILED".equals(j.failureCode())) jdbc.sql("""
                 UPDATE shelter.styled_asset_steps SET attempt_history=attempt_history || jsonb_build_array(jsonb_build_object(
                   'providerJobId',provider_job_id,'submittedAt',submitted_at,'requestSha256',request_sha256,'status','FAILED')),
@@ -121,6 +141,7 @@ public class StyledAssetStore {
                 """).param("id",id).update();
             jdbc.sql("""
                 UPDATE shelter.styled_asset_steps SET status=CASE WHEN provider_result IS NOT NULL THEN 'PERSISTING'
+                  WHEN result IS NOT NULL THEN 'CHECKING'
                   WHEN provider_job_id IS NOT NULL THEN 'WAITING' ELSE 'PENDING' END
                 WHERE job_id=:id AND status='FAILED'
                 """).param("id",id).update();
@@ -139,13 +160,13 @@ public class StyledAssetStore {
         UUID token=UUID.randomUUID();
         jdbc.sql("UPDATE shelter.asset_jobs SET status='RUNNING',lease_token=:t,lease_until=now()+interval '5 minutes',failure_code=CASE WHEN failure_code='DAILY_REQUEST_LIMIT' THEN NULL ELSE failure_code END WHERE id=:id").param("t",token).param("id",id.get()).update();
         var w=jdbc.sql("""
-            SELECT j.id,j.dog_id,j.styled_input::text,s.*,b.storage_bucket,b.storage_key
+            SELECT j.id,j.dog_id,j.styled_input::text,j.quality_policy::text,s.*,b.storage_bucket,b.storage_key
             FROM shelter.asset_jobs j JOIN shelter.styled_asset_steps s ON s.job_id=j.id JOIN shelter.asset_photo_sources b ON b.photo_id=j.photo_id
             WHERE j.id=:id AND s.status<>'SUCCEEDED' ORDER BY s.ordinal LIMIT 1
             """).param("id",id.get()).query((r,n)->new Work(id.get(),r.getObject("dog_id",UUID.class),token,r.getString("label"),r.getString("action"),r.getString("direction"),r.getString("status"),r.getObject("provider_job_id",UUID.class),
-                r.getTimestamp("submitted_at")==null?null:r.getTimestamp("submitted_at").toInstant(),r.getString("storage_bucket"),r.getString("storage_key"),json.readTree(r.getString("styled_input")),r.getString("provider_result")==null?null:json.readTree(r.getString("provider_result")))).optional();
+                r.getTimestamp("submitted_at")==null?null:r.getTimestamp("submitted_at").toInstant(),r.getString("storage_bucket"),r.getString("storage_key"),json.readTree(r.getString("styled_input")),node(r.getString("provider_result")),node(r.getString("result")),node(r.getString("quality_report")),r.getInt("repair_count"),node(r.getString("quality_policy")))).optional();
         if(w.isEmpty()) {
-            boolean complete=job(id.get()).complete();status(id.get(),complete?"REVIEW":"FAILED",complete?null:"ACTION_PLAN_INCOMPLETE");return null;
+            var j=job(id.get());boolean complete=j.complete();status(id.get(),complete?"REVIEW":"FAILED",complete?(qualityPassed(j)?null:"QUALITY_REPAIR_EXHAUSTED"):"ACTION_PLAN_INCOMPLETE");return null;
         }
         if(w.get().status().equals("SUBMITTING")) { fail(w.get(),true,"SUBMISSION_INTERRUPTED");return null; }
         if(!w.get().character()) {
@@ -179,12 +200,47 @@ public class StyledAssetStore {
         if(!authorized(w))throw new AssetException(409,"ASSET_LEASE_LOST");
         return job(w.id()).steps().getFirst().result();
     }
+    @Transactional public boolean startContract(Work w) {
+        if(!authorized(w))return false;
+        if(w.qualityPolicy().has("contractStarted"))throw new AssetException(409,"QUALITY_CONTRACT_INTERRUPTED");
+        return jdbc.sql("UPDATE shelter.asset_jobs SET quality_policy=quality_policy || '{\"contractStarted\":true}'::jsonb WHERE id=:id AND NOT jsonb_exists(quality_policy,'contractStarted')")
+            .param("id",w.id()).update()==1;
+    }
+    @Transactional public void contract(Work w,JsonNode contract) {
+        if(!authorized(w))return;
+        jdbc.sql("UPDATE shelter.asset_jobs SET quality_policy=(quality_policy-'contractStarted') || jsonb_build_object('contract',CAST(:c AS jsonb)) WHERE id=:id")
+            .param("c",json.writeValueAsString(contract)).param("id",w.id()).update();
+    }
+    @Transactional public boolean startQuality(Work w) {
+        if(!authorized(w))return false;
+        if(w.qualityReport()!=null && w.qualityReport().path("status").asText().equals("STARTED"))throw new AssetException(409,"QUALITY_REVIEW_INTERRUPTED");
+        jdbc.sql("UPDATE shelter.styled_asset_steps SET quality_report='{\"status\":\"STARTED\"}'::jsonb WHERE job_id=:id AND label=:l")
+            .param("id",w.id()).param("l",w.label()).update();return true;
+    }
+    @Transactional public void quality(Work w,JsonNode report) {
+        if(!authorized(w))return;
+        jdbc.sql("UPDATE shelter.styled_asset_steps SET quality_report=CAST(:r AS jsonb) WHERE job_id=:id AND label=:l")
+            .param("r",json.writeValueAsString(report)).param("id",w.id()).param("l",w.label()).update();
+    }
+    @Transactional public boolean retryQuality(Work w,JsonNode report,JsonNode result) {
+        if(!authorized(w))return true;
+        if(report.path("passed").asBoolean() || w.repairCount()>=2)return false;
+        // The provider finished definitively. Archive the receipt and image before buying a corrective attempt.
+        jdbc.sql("""
+            UPDATE shelter.styled_asset_steps SET attempt_history=attempt_history || jsonb_build_array(jsonb_build_object(
+              'providerJobId',provider_job_id,'submittedAt',submitted_at,'requestSha256',request_sha256,
+              'result',CAST(:r AS jsonb),'quality',CAST(:q AS jsonb),'repairCount',repair_count)),
+              repair_count=repair_count+1,status='PENDING',provider_job_id=NULL,submitted_at=NULL,provider_result=NULL,
+              result=NULL,quality_report=CAST(:q AS jsonb) WHERE job_id=:id AND label=:l
+            """).param("r",json.writeValueAsString(result)).param("q",json.writeValueAsString(report)).param("id",w.id()).param("l",w.label()).update();
+        defer(w,0);return true;
+    }
     @Transactional public void success(Work w,JsonNode result) {
         if(!authorized(w))return;
-        jdbc.sql("UPDATE shelter.styled_asset_steps SET result=CAST(:r AS jsonb),provider_result=NULL,status='SUCCEEDED' WHERE job_id=:id AND label=:l AND status='PERSISTING'")
+        jdbc.sql("UPDATE shelter.styled_asset_steps SET result=CAST(:r AS jsonb),provider_result=NULL,status='SUCCEEDED' WHERE job_id=:id AND label=:l AND status IN ('PERSISTING','CHECKING')")
             .param("r",json.writeValueAsString(result)).param("id",w.id()).param("l",w.label()).update();
         if(w.character())status(w.id(),"SEED_REVIEW",null);
-        else if(job(w.id()).complete())status(w.id(),"REVIEW",null);
+        else if(job(w.id()).complete())status(w.id(),"REVIEW",qualityPassed(job(w.id()))?null:"QUALITY_REPAIR_EXHAUSTED");
         else defer(w,0);
     }
     @Transactional public void defer(Work w,int seconds) {
@@ -211,11 +267,12 @@ public class StyledAssetStore {
     private void lock(UUID id) { if(jdbc.sql("SELECT id FROM shelter.asset_jobs WHERE id=:id AND pipeline_version=:v FOR UPDATE").param("id",id).param("v",StyledSpriteCodec.VERSION).query(UUID.class).optional().isEmpty())throw missing(); }
     private void operator(UUID subject) { if(!accounts.lockProfile(subject,false).role().equals("OPERATOR"))throw new AssetException(403,"FORBIDDEN"); }
     private Job job(UUID id) {
-        var steps=jdbc.sql("SELECT label,action,direction,status,result::text FROM shelter.styled_asset_steps WHERE job_id=:id ORDER BY ordinal").param("id",id)
-            .query((r,n)->new Step(r.getString(1),r.getString(2),r.getString(3),r.getString(4),r.getString(5)==null?null:json.readTree(r.getString(5)))).list();
-        return jdbc.sql("SELECT dog_id,status,failure_code,seed_review::text,action_plan::text,behavior_plan::text FROM shelter.asset_jobs WHERE id=:id AND pipeline_version=:v")
+        var steps=jdbc.sql("SELECT label,action,direction,status,result::text,quality_report::text,repair_count FROM shelter.styled_asset_steps WHERE job_id=:id ORDER BY ordinal").param("id",id)
+            .query((r,n)->new Step(r.getString(1),r.getString(2),r.getString(3),r.getString(4),node(r.getString(5)),node(r.getString(6)),r.getInt(7))).list();
+        return jdbc.sql("SELECT dog_id,status,failure_code,seed_review::text,action_plan::text,behavior_plan::text,quality_policy::text FROM shelter.asset_jobs WHERE id=:id AND pipeline_version=:v")
             .param("id",id).param("v",StyledSpriteCodec.VERSION).query((r,n)->new Job(id,r.getObject(1,UUID.class),r.getString(2),r.getString(3),StyledSpriteCodec.VERSION,steps,r.getString(4)==null?null:json.readTree(r.getString(4)),
-                json.readTree(r.getString(5)).valueStream().map(JsonNode::asText).toList(),r.getString(6)==null?null:json.readTree(r.getString(6)))).optional().orElseThrow(StyledAssetStore::missing);
+                json.readTree(r.getString(5)).valueStream().map(JsonNode::asText).toList(),node(r.getString(6)),node(r.getString(7)))).optional().orElseThrow(StyledAssetStore::missing);
     }
+    private JsonNode node(String value){return value==null?null:json.readTree(value);}
     private static AssetException missing() { return new AssetException(404,"ASSET_NOT_FOUND"); }
 }

@@ -17,7 +17,7 @@ def main():
         payload = prepare(root, root / 'traits.json')
     elif request['mode'] == 'motion':
         payload = motion_payload(request['traits'], load_rules(), request['action'],
-                                 request['direction'], image_argument(root / 'seed.png'))
+                                 request['direction'], image_argument(root / 'seed.png'), request.get('quality'))
     else:
         raise ValueError('Unknown mode')
     write(root / 'payload.json', payload)

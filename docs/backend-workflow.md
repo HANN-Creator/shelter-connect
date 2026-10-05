@@ -133,3 +133,5 @@ B-15 후속: [사진 + 승인 스타일 32px 생성 파이프라인](styled-dog-
 B-40: [32px 4방향 에셋 영구 저장·조회 연결](https://app.notion.com/p/3ef5b2d1a55f8077ace5d78b52dfecb8). B-15 승인 스타일 파이프라인을 기존 서버 작업 큐·비공개 Storage·DB에 통합한다. [생성·검토·프론트 조회 명세](persistent-styled-assets.md). 브랜치 `backend/b-40-persistent-native-sprites`.
 
 B-41: [에셋 생성 일일 요청 제한 제거](https://app.notion.com/p/3ef5b2d1a55f807da1e5dc3b8ff4e19e). 사용자 요청으로 기존64·native32 생성의 자체 일일 요청 제한을 제거한다. 기존 제한 대기는 재개하고, 중복 생성·접수 불명 보호·검토·요청 이력은 유지한다. API·DB 구조 변경 없음. 브랜치 `backend/b-41-remove-asset-daily-limit`.
+
+B-43: [스프라이트 자동 품질 검수·선택 보완](sprite-quality-repair.md). B-40/B-42 후속. 브랜치 `backend/b-43-sprite-quality-repair`. 완료 기준: 사진 기준 공통 꼬리 자세, 잘림·방향·꼬리 Luna 검수, 불합격 시트만 최대2회 자동 재생성, 중복·접수 불명 보호와 기록 보존, 실제 기존 강아지 보완 재검증. 노션 신규 카드 생성은 자동 승인 검토에서 거절되어 로컬·PR 기록으로 진행 중이며 노션 동기화는 별도 승인 필요.

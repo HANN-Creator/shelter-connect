@@ -22,5 +22,7 @@ public class StyledAssetController {
     public Item<StyledAssetStore.Job> review(@AuthenticationPrincipal Jwt jwt,@PathVariable String dogId,@PathVariable String jobId,@RequestBody JsonNode body) { return new Item<>(store.review(subject(jwt),AssetInput.id(dogId),AssetInput.id(jobId),body,false)); }
     @PostMapping("/operations/styled-asset-jobs/{jobId}/recover")
     public Item<StyledAssetStore.Job> recover(@AuthenticationPrincipal Jwt jwt,@PathVariable String jobId,@RequestBody JsonNode body) { return new Item<>(store.recover(subject(jwt),AssetInput.id(jobId),body)); }
+    @PostMapping("/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/repair")
+    public Item<StyledAssetStore.Job> repair(@AuthenticationPrincipal Jwt jwt,@PathVariable String dogId,@PathVariable String jobId,@RequestBody JsonNode body) {return new Item<>(store.repair(subject(jwt),AssetInput.id(dogId),AssetInput.id(jobId),body));}
     private UUID subject(Jwt jwt) { return UUID.fromString(jwt.getSubject()); }
 }
