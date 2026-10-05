@@ -13,6 +13,43 @@ class StyledQualityAgentTest {
     final JsonMapper json=JsonMapper.builder().build();
     final OpenAiResponsesClient client=mock(OpenAiResponsesClient.class);
     final StyledQualityAgent agent=new StyledQualityAgent(client,new AiProperties(true,"test-key","gpt-5.6-luna",30),json);
+    @Test void actualSeatedTailClippingOverridesVisionPassIncludingTheFinalHold()throws Exception {
+        var fixture=json.readTree(java.nio.file.Files.readString(java.nio.file.Path.of("scripts/fixtures/sit-tail-alpha.json")));
+        when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(json.readTree("{\"issues\":[],\"frames\":[],\"note\":\"Mock pass to exercise deterministic border gate, not live visual accuracy\"}"));
+        var clips=new LinkedHashMap<String,List<byte[]>>();
+        for(String name:List.of("original","corrected")) {
+            var frames=new ArrayList<byte[]>();
+            for(var rows:fixture.path("clips").path(name).path("frames")) {
+                var frame=new BufferedImage(32,32,BufferedImage.TYPE_INT_ARGB);
+                for(int y=0;y<32;y++)for(int x=0;x<32;x++)
+                    if((Long.parseLong(rows.get(y).asText(),16)&(1L<<(31-x)))!=0)frame.setRGB(x,y,0xff464646);
+                var out=new ByteArrayOutputStream();ImageIO.write(frame,"png",out);frames.add(out.toByteArray());
+            }
+            assertThat(frames).hasSize(9);
+            var hashes=frames.stream().map(StyledSpriteCodec::sha).toList();
+            var report=agent.review(json.readTree("{\"tailCarriage\":\"UNKNOWN\"}"),Collections.nCopies(4,frames.getFirst()),frames,"SIT","west");
+            assertThat(report.path("passed").asBoolean()).isEqualTo(name.equals("corrected"));
+            assertThat(report.path("edgeFrames")).isEqualTo(json.valueToTree(name.equals("original")?List.of(3,4,5,6,7,8):List.of()));
+            if(name.equals("original"))assertThat(report.path("issues").toString()).contains("CANVAS_CLIPPING");
+            assertThat(frames.stream().map(StyledSpriteCodec::sha).toList()).isEqualTo(hashes);
+            clips.put(name,frames);
+        }
+        var lastBad=new ArrayList<>(clips.get("corrected"));lastBad.set(8,clips.get("original").get(8));
+        var report=agent.review(json.readTree("{\"tailCarriage\":\"UNKNOWN\"}"),Collections.nCopies(4,lastBad.getFirst()),lastBad,"SIT","west");
+        assertThat(report.path("passed").asBoolean()).isFalse();assertThat(report.path("edgeFrames").toString()).isEqualTo("[8]");
+    }
+    @Test void serverCodecKeepsFullSeatedTailPreventionOnInitialAndRepairRequests()throws Exception {
+        var codec=new StyledSpriteCodec(json,System.getenv().getOrDefault("ASSET_HARNESS_PYTHON","python3"));
+        var traits=json.valueToTree(Map.of("seed",123,"rearDescription","black dog rear","motionDescription","black dog"));
+        for(int attempt:List.of(0,1,2)) {
+            var quality=json.valueToTree(Map.of("contract",Map.of("tailCarriage","UNKNOWN"),"attempt",attempt,
+                "rulesSha256",StyledSpriteCodec.qualityRulesSha(),"issues",attempt==0?List.of():List.of("CANVAS_CLIPPING")));
+            var payload=codec.motion(traits,"SIT","west",png(false),quality);
+            assertThat(payload.path("description").asText()).contains("Tuck tail beside haunch, complete tip INSIDE frame through final hold");
+            assertThat(payload.has("last_frame")).isFalse();
+            assertThat(payload.path("description").asText().length()).isLessThanOrEqualTo(1000);
+        }
+    }
     @Test void realIdleDefectsOverrideVisionPassAndUseTheCorrectDirectionSeed()throws Exception {
         var fixture=json.readTree(java.nio.file.Files.readString(java.nio.file.Path.of("scripts/fixtures/idle-motion-alpha.json")));
         var expected=Map.of("south",List.of(1,2,3,6,7,8),"north",List.of(4,5,6),"west",List.of(1,2,3,4,5,6,7),"east",List.of(2,4,5,6,7));
