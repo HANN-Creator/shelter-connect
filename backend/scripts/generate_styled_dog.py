@@ -15,7 +15,7 @@ from styled_dog.pipeline import prepare, generate_character, record_review, anim
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('stage',choices=['source','prepare','character','review','animate','package'])
+    parser.add_argument('stage',choices=['source','prepare','character','review','animate','audit','package'])
     parser.add_argument('--output',type=Path,required=True)
     parser.add_argument('--env-file',type=Path)
     parser.add_argument('--data-env-file',type=Path)
@@ -24,6 +24,7 @@ def main():
     parser.add_argument('--exclude',nargs='*',default=[])
     parser.add_argument('--traits',type=Path)
     parser.add_argument('--review-note')
+    parser.add_argument('--tail-carriage', choices=['LOW','LEVEL','HIGH','CURLED','UNKNOWN'])
     parser.add_argument('--actions',nargs='+')
     parser.add_argument('--allow-paid-calls',action='store_true')
     args = parser.parse_args()
@@ -38,7 +39,13 @@ def main():
                 parser.error('--traits is required for prepare')
             prepare(root,args.traits)
         elif args.stage == 'review':
-            record_review(root,args.review_note or '')
+            record_review(root,args.review_note or '',args.tail_carriage)
+        elif args.stage == 'audit':
+            from styled_dog.quality import audit_run
+            report = audit_run(root)
+            print(report['status'])
+            if report['status'] != 'STRUCTURAL_PASS':
+                raise SystemExit(1)
         elif args.stage == 'package':
             from styled_dog.package import package
             package(root)

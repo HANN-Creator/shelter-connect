@@ -1,0 +1,93 @@
+{
+  "revision": "sprite-regressions-2026-10-05-v1",
+  "seedMargin": "Leave TWO clear pixels on all four canvas edges for animation; keep the silhouette compact and centered.",
+  "commonMotion": "Keep all pixels inside 32x32 with one clear pixel at ALL edges. Small inward motion. Fixed camera, size, position, markings and crisp palette. No props or text.",
+  "rearView": "No visible eyes, nose, mouth or chest. Rear head only in ALL frames, including the final hold; no shoulder glance.",
+  "tailCarriage": {
+    "LOW": "Tail stays BELOW the rump, never over the back. Front view: hidden behind hind legs, only a low tip may show.",
+    "LEVEL": "Tail stays at rump height in every view; wag laterally, never over the back.",
+    "HIGH": "Keep the same raised tail height in all views; wag laterally around that height.",
+    "CURLED": "Keep the same curled-over-back tail in all views; only a small lateral wag.",
+    "UNKNOWN": "Keep approved tail anatomy; never invent a curl or raised tail. Hidden parts may remain hidden."
+  },
+  "actions": {
+    "IDLE": "Subtle breathing and blink; planted feet and still tail.",
+    "WALK": "Slow four-legged walk IN PLACE. Small alternating steps, paws lift above the planted baseline, never below.",
+    "RUN": "Compact four-legged run IN PLACE, short coordinated strides above the planted paw baseline.",
+    "SNIFF": "Tuck chin inward, lower nose BETWEEN front paws, sniff, lift head. Never extend muzzle forward.",
+    "TAIL_WAG": "Tail alone wags left-right in DOG BODY coordinates, no vertical pumping. Still body/paws. Side view: subtle foreshortening.",
+    "BACK_OFF": "Small reverse walking steps IN PLACE, same facing; paws lift upward, centered body.",
+    "SIT": "Fold hind legs inward, lower rump between planted paws. End seated, hold. Locked head orientation; tail close.",
+    "LIE_DOWN": "Tuck legs inward, lower chest. End lying, hold. Locked head orientation and close tail."
+  },
+  "corrections": {
+    "CANVAS_CLIPPING": "Reduce outward reach; tuck tail/muzzle/paws away from ALL edges.",
+    "DIRECTION_DRIFT": "Lock head facing through the final frame; rear face stays hidden.",
+    "TAIL_CARRIAGE": "Fix tail height to the shared carriage; wag sideways, not upward.",
+    "IDENTITY_DRIFT": "Restore approved ears, muzzle, markings and proportions.",
+    "ACTION_MISSING": "Show readable requested motion within the safe silhouette.",
+    "DISCONTINUITY": "Smooth neighboring poses; remove scale/position jumps."
+  },
+  "reviewInstructions": [
+    "DIRECTION_DRIFT: a different facing direction, including a north SIT final frame showing eyes or muzzle. North hides the face through the final hold.",
+    "TAIL_CARRIAGE: tail contradicts the shared carriage; LOW must stay below rump/back. A front low tail may be occluded; side-view wagging is subtle foreshortening. Wag along the dog's lateral body axis, not up/down.",
+    "IDENTITY_DRIFT: changed coat, ears, face or unexplained body proportions. Expected sitting/lying posture changes are acceptable.",
+    "ACTION_MISSING: requested motion absent. Subtle IDLE breathing and occluded or foreshortened tail motion are acceptable; do not require an invented raised tail.",
+    "DISCONTINUITY: large pose, position or scale jump between neighbors. SIT ends seated and holds; WALK is an in-place gait.",
+    "Canvas clipping is checked separately from original alpha pixels. Never infer cropping from the contact sheet grid."
+  ],
+  "regressions": [
+    {
+      "id": "front-tail-raised",
+      "action": "TAIL_WAG",
+      "direction": "south",
+      "issue": "TAIL_CARRIAGE",
+      "check": "vision",
+      "expected": "LOW contract must reject a tail above the back"
+    },
+    {
+      "id": "left-tail-clipped",
+      "action": "TAIL_WAG",
+      "direction": "west",
+      "issue": "CANVAS_CLIPPING",
+      "check": "alpha",
+      "pixel": [
+        31,
+        18
+      ],
+      "frame": 4
+    },
+    {
+      "id": "right-muzzle-clipped",
+      "action": "SNIFF",
+      "direction": "east",
+      "issue": "CANVAS_CLIPPING",
+      "check": "alpha",
+      "pixel": [
+        31,
+        13
+      ],
+      "frame": 5
+    },
+    {
+      "id": "rear-paw-clipped",
+      "action": "WALK",
+      "direction": "north",
+      "issue": "CANVAS_CLIPPING",
+      "check": "alpha",
+      "pixel": [
+        17,
+        31
+      ],
+      "frame": 3
+    },
+    {
+      "id": "rear-sit-turns-face",
+      "action": "SIT",
+      "direction": "north",
+      "issue": "DIRECTION_DRIFT",
+      "check": "vision",
+      "expected": "Reject visible eyes/muzzle in final frame 8; do not delete that frame"
+    }
+  ]
+}

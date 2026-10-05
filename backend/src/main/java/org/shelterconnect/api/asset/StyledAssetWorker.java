@@ -18,6 +18,9 @@ public class StyledAssetWorker {
         var w=store.claim();if(w==null)return;boolean submitted=false;
         try {
             if(!store.authorized(w))return;
+            if(w.qualityPolicy()!=null && w.qualityPolicy().has("rulesSha256")
+                && !StyledSpriteCodec.qualityRulesSha().equals(w.qualityPolicy().path("rulesSha256").asText()))
+                throw new AssetException(409,"QUALITY_RULES_CHANGED");
             if(!w.character() && w.qualityPolicy()!=null && !w.qualityPolicy().has("contract")) {
                 if(!store.startContract(w))return;
                 var contract=quality.contract(storage.photo(w.dogId(),w.bucket(),w.key()),w.traits());
@@ -32,7 +35,9 @@ public class StyledAssetWorker {
             if(w.status().equals("PENDING")) {
                 JsonNode payload=w.character()?codec.character(w.dogId(),w.traits(),storage.photo(w.dogId(),w.bucket(),w.key())):
                     codec.motion(w.traits(),w.action(),w.direction(),seed(w),w.qualityPolicy()==null?json.createObjectNode():
-                        json.valueToTree(Map.of("contract",w.qualityPolicy().path("contract"),"attempt",w.repairCount())));
+                        json.valueToTree(Map.of("contract",w.qualityPolicy().path("contract"),"attempt",w.repairCount(),
+                            "rulesSha256",w.qualityPolicy().path("rulesSha256").asText(),
+                            "issues",w.qualityReport()!=null && w.qualityReport().path("issues").isArray()?w.qualityReport().path("issues"):json.createArrayNode())));
                 if(!store.reserve(w,payload))return;
                 submitted=true;
                 UUID id=provider.submit(w.character(),payload);store.accepted(w,id);return;
@@ -71,7 +76,8 @@ public class StyledAssetWorker {
     private void inspect(StyledAssetStore.Work w,List<byte[]> frames,JsonNode metadata) {
         if(w.qualityPolicy()==null){store.success(w,metadata);return;}
         var report=w.qualityReport();String sha=metadata.path("sha256").asText();
-        if(report==null || !sha.equals(report.path("inputSha256").asText())) {
+        if(report==null || !sha.equals(report.path("inputSha256").asText())
+            || !StyledSpriteCodec.qualityRulesSha().equals(report.path("rulesSha256").asText())) {
             if(!store.startQuality(w))return;
             var base=store.seed(w);var seeds=new ArrayList<byte[]>();
             for(String d:StyledSpriteCodec.DIRECTIONS) {
