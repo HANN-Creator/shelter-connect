@@ -328,6 +328,48 @@ class StyledAssetPostgresTest {
         assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
         verify(provider,times(13)).submit(anyBoolean(),any());
     }
+    UUID tailPlan() throws Exception {
+        UUID id=request();
+        jdbc.update("UPDATE shelter.asset_jobs SET action_plan=action_plan || '[\"TAIL_WAG\"]'::jsonb WHERE id=?",id);
+        int ordinal=13;for(String d:List.of("south","north","west","east"))jdbc.update(
+            "INSERT INTO shelter.styled_asset_steps(job_id,ordinal,label,action,direction) VALUES (?,?,?,'TAIL_WAG',?)",id,ordinal++,"tail_wag-"+d,d);
+        when(codec.tailEdit(anyString(),any(),anyInt())).thenAnswer(c->{outsideTransaction();return json.valueToTree(Map.of("edited",true));});
+        when(provider.editAnimation(any())).thenAnswer(c->{outsideTransaction();return UUID.randomUUID();});
+        return id;
+    }
+    @Test void secondLowTailRepairEditsPriorStripOnceAndKeepsRawVerdictAfterSeedLock() throws Exception {
+        var count=new java.util.concurrent.atomic.AtomicInteger();
+        when(quality.review(any(),anyList(),anyList(),eq("TAIL_WAG"),eq("west"))).thenAnswer(c->{
+            int n=count.incrementAndGet();boolean ok=n==3; // restored result passes, raw edited strip still fails
+            return json.valueToTree(Map.of("passed",ok,"issues",ok?List.of():List.of("CANVAS_CLIPPING")));
+        });
+        UUID id=tailPlan();tick();tick();review(id,true,"APPROVE",200);finish(id);
+        var j=read(id);assertThat(j.path("failureCode").asText()).isEqualTo("QUALITY_REPAIR_EXHAUSTED");
+        verify(provider,times(18)).submit(anyBoolean(),any());verify(provider,times(1)).editAnimation(any());
+        verify(codec,times(1)).tailEdit(eq("west"),any(),anyInt());
+        var step=j.path("steps").valueStream().filter(n->n.path("label").asText().equals("tail_wag-west")).findFirst().orElseThrow();
+        assertThat(step.path("repairCount").asInt()).isEqualTo(2);
+        assertThat(step.at("/result/rawEdit/sha256").asText()).matches("[a-f0-9]{64}");
+        assertThat(step.at("/qualityReport/rawEditReview/passed").asBoolean()).isFalse();
+        assertThat(step.at("/qualityReport/passed").asBoolean()).isFalse();review(id,false,"APPROVE",409);
+        assertThat(jdbc.queryForObject("SELECT attempt_history::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='tail_wag-west'",String.class,id)).contains("providerJobId","CANVAS_CLIPPING");
+        tick();verify(provider,times(1)).editAnimation(any());
+    }
+    @Test void passingRawAndRestoredEditCanBeReviewedAndReadWithoutExtraGeneration() throws Exception {
+        var count=new java.util.concurrent.atomic.AtomicInteger();
+        when(quality.review(any(),anyList(),anyList(),eq("TAIL_WAG"),eq("east"))).thenAnswer(c->{
+            boolean ok=count.incrementAndGet()>2;return json.valueToTree(Map.of("passed",ok,"issues",ok?List.of():List.of("TAIL_CARRIAGE")));
+        });
+        UUID id=tailPlan();tick();tick();review(id,true,"APPROVE",200);finish(id);review(id,false,"APPROVE",200);
+        verify(provider,times(1)).editAnimation(any());publicStatus(200);publicStatus(200);verify(provider,times(1)).editAnimation(any());
+        assertThat(objects.keySet().stream().filter(k->k.contains("raw-edits/"))).hasSize(1);
+    }
+    @Test void unknownTailKeepsExistingBoundedRegenerationAndNeverBuysEdit() throws Exception {
+        when(quality.contract(any(),any())).thenReturn(json.valueToTree(Map.of("tailCarriage","UNKNOWN")));
+        when(quality.review(any(),anyList(),anyList(),eq("TAIL_WAG"),eq("west"))).thenReturn(json.valueToTree(Map.of("passed",false,"issues",List.of("CANVAS_CLIPPING"))));
+        UUID id=tailPlan();tick();tick();review(id,true,"APPROVE",200);finish(id);verify(provider,never()).editAnimation(any());
+        verify(provider,times(19)).submit(anyBoolean(),any());review(id,false,"APPROVE",409);
+    }
     Map<String,Object> input() {return Map.of("photoId",photo,"traits",Map.of("sourcePhotoSha256","a".repeat(64),"faceBox",List.of(.1,.1,.8,.8),"identityDescription","brown dog","motionDescription","brown dog","rearDescription","unknown markings","seed",42,"reviewNote","Reviewed full body photo and face crop for this dog"));}
     UUID request() throws Exception {return UUID.fromString(post(subject,"/v1/shelter-admin/dogs/"+dog+"/styled-assets",input(),202).at("/data/id").asText());}
     String path(UUID id) {return "/v1/shelter-admin/dogs/"+dog+"/styled-assets/"+id;}

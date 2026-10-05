@@ -8,7 +8,7 @@ import base64
 import hashlib
 import io
 from PIL import Image, ImageOps
-from .quality import frame_audit, frontal_tail_frames, load_quality, quality_binding
+from .quality import frame_audit, frontal_tail_frames, load_quality, quality_binding, components
 
 
 def pixel_hash(image):
@@ -38,26 +38,6 @@ def sheet_for(frames):
     return sheet
 
 
-def components(frame):
-    """8-connectivity permits diagonal pixel outlines but rejects floating debris."""
-    pixels = {(x,y) for y in range(32) for x in range(32) if frame.getpixel((x,y))[3]}
-    sizes = []
-    while pixels:
-        stack = [pixels.pop()]
-        size = 0
-        while stack:
-            x,y = stack.pop()
-            size += 1
-            for dx in (-1,0,1):
-                for dy in (-1,0,1):
-                    point = (x+dx,y+dy)
-                    if point in pixels:
-                        pixels.remove(point)
-                        stack.append(point)
-        sizes.append(size)
-    return sorted(sizes, reverse=True)
-
-
 def audit_edit(frames, approved_seed, direction):
     sheet_for(frames)
     if direction not in ('south','north','west','east'):
@@ -69,7 +49,7 @@ def audit_edit(frames, approved_seed, direction):
         result['issues'].append('TAIL_CARRIAGE')
     result['silhouetteFrames'] = sorted(set(upper + result['silhouetteFrames']))
     result['detachedFrames'] = [i for i,f in enumerate(frames) if len(components(f)) != 1]
-    if result['detachedFrames']:
+    if result['detachedFrames'] and 'DETACHED_PIXELS' not in result['issues']:
         result['issues'].append('DETACHED_PIXELS')
     result['structuralPassed'] = not result['issues']
     return result

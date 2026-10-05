@@ -151,7 +151,8 @@ public class StyledAssetStore {
         return job(id);
     }
     private Map<String,Object> qualityPolicy(){return Map.of("version",StyledQualityAgent.VERSION,"maxRepairsPerClip",2,
-        "rulesRevision",StyledSpriteCodec.qualityRules(json).path("revision").asText(),"rulesSha256",StyledSpriteCodec.qualityRulesSha());}
+        "rulesRevision",StyledSpriteCodec.qualityRules(json).path("revision").asText(),"rulesSha256",StyledSpriteCodec.qualityRulesSha(),
+        "lowTailRepair", "REGENERATE_THEN_EDIT_ONCE");}
     private boolean qualityPassed(Job j) {return j.qualityPolicy()==null || j.steps().stream().skip(1).allMatch(s->s.qualityReport()!=null && s.qualityReport().path("passed").asBoolean());}
     @Transactional public Job recover(UUID subject,UUID id,JsonNode body) {
         operator(subject);properties.requireEnabled();lock(id);legacy.valid(id,true);var j=job(id);
@@ -231,6 +232,16 @@ public class StyledAssetStore {
     @Transactional public JsonNode seed(Work w) {
         if(!authorized(w))throw new AssetException(409,"ASSET_LEASE_LOST");
         return job(w.id()).steps().getFirst().result();
+    }
+    @Transactional public JsonNode previousAttempt(Work w) {
+        if(!authorized(w))throw new AssetException(409,"ASSET_LEASE_LOST");
+        var previous=jdbc.sql("SELECT attempt_history->-1 FROM shelter.styled_asset_steps WHERE job_id=:id AND label=:l")
+            .param("id",w.id()).param("l",w.label()).query(String.class).single();
+        if(previous==null)throw new AssetException(409,"TAIL_EDIT_INPUT_MISSING");
+        var result=json.readTree(previous).path("result");
+        if(!result.path("key").asText().startsWith(w.prefix()+"sheets/") || !result.path("sha256").asText().matches("[a-f0-9]{64}"))
+            throw new AssetException(409,"TAIL_EDIT_INPUT_INVALID");
+        return result;
     }
     @Transactional public boolean startContract(Work w) {
         if(!authorized(w))return false;

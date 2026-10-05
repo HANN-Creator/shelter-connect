@@ -1,5 +1,5 @@
 {
-  "revision": "sprite-regressions-2026-10-05-v3",
+  "revision": "sprite-regressions-2026-10-05-v4",
   "frontalLowTail": {
     "upperBandPercent": 65,
     "seedTolerancePixels": 1,
@@ -7,7 +7,7 @@
   },
   "frontalLowTailPrompt": "Tail stays BELOW the rump: hidden or beside HIND PAWS in front view, never by shoulders/head. Still body/head.",
   "seedMargin": "Leave TWO clear pixels on all four canvas edges for animation; keep the silhouette compact and centered.",
-  "commonMotion": "Keep all pixels inside 32x32 with one clear pixel at ALL edges. Small inward motion. Fixed camera, size, position, markings and crisp palette. No props or text.",
+  "commonMotion": "one clear pixel at ALL 32x32 edges. Small inward motion. Fixed camera, size, position, markings and crisp palette. No props or text.",
   "rearView": "No visible eyes, nose, mouth or chest. Rear head only in ALL frames, including the final hold; no shoulder glance.",
   "tailCarriage": {
     "LOW": "Tail stays BELOW the rump, never over the back. Front view: hidden behind hind legs, only a low tip may show.",
@@ -32,7 +32,8 @@
     "TAIL_CARRIAGE": "Fix tail height to the shared carriage; wag sideways, not upward.",
     "IDENTITY_DRIFT": "Restore approved ears, muzzle, markings and proportions.",
     "ACTION_MISSING": "Show readable requested motion within the safe silhouette.",
-    "DISCONTINUITY": "Smooth neighboring poses; remove scale/position jumps."
+    "DISCONTINUITY": "Smooth neighboring poses; remove scale/position jumps.",
+    "DETACHED_PIXELS": "No detached pixels; keep tail connected."
   },
   "reviewInstructions": [
     "DIRECTION_DRIFT: a different facing direction, including a north SIT final frame showing eyes or muzzle. North hides the face through the final hold.",
@@ -104,6 +105,15 @@
       "check": "recorded-alpha",
       "fixture": "tail-repair-alpha.json",
       "expected": "Reject the whole edited strip before masking or replacing frame 0. Recorded edit has edge contact on all nine frames; frames 1, 5, 8 also contain detached pixels. Reuse only a separately reviewed passing opposite-side tail, preserving the target body."
+    },
+    {
+      "id": "edited-first-frame-cannot-hide-clipping",
+      "action": "TAIL_WAG",
+      "direction": "east",
+      "issue": "CANVAS_CLIPPING",
+      "check": "recorded-alpha",
+      "fixture": "tail-repair-alpha.json",
+      "expected": "Server combines raw edit and restored seed/palette verdicts; raw frame 0 failure blocks final approval. Rechecking retains the raw edit hash."
     }
   ],
   "tailEdit": {
@@ -112,5 +122,12 @@
     "north": "Rear: tail stays below the rump and wags sideways close to the hind legs. Face stays hidden.",
     "west": "The tail is on the right. Keep its entire curve inside the frame close to the rear leg.",
     "east": "The tail is on the left. Keep its entire curve inside the frame close to the rear leg."
+  },
+  "automaticTailEdit": {
+    "contract": "LOW",
+    "action": "TAIL_WAG",
+    "repairAttempt": 2,
+    "maxEditRequestsPerClip": 1,
+    "rawAndRestoredReviewRequired": true
   }
 }

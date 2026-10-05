@@ -18,6 +18,10 @@ def main():
     elif request['mode'] == 'motion':
         payload = motion_payload(request['traits'], load_rules(), request['action'],
                                  request['direction'], image_argument(root / 'seed.png'), request.get('quality'))
+    elif request['mode'] == 'tail-edit':
+        from .tail_repair import read_sheet, edit_payload
+        payload = edit_payload(read_sheet(root / 'sheet.png'), request['direction'])
+        payload['seed'] = request['seed']
     else:
         raise ValueError('Unknown mode')
     write(root / 'payload.json', payload)

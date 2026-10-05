@@ -26,7 +26,7 @@ def motion_guidance(action, direction, quality):
         raise ValueError('Unsupported quality action/direction')
     tail = quality['contract']['tailCarriage']
     issues = quality.get('issues', [])
-    if tail not in TAILS or not isinstance(issues, list) or len(issues)>6 or any(i not in rules['corrections'] for i in issues):
+    if tail not in TAILS or not isinstance(issues, list) or len(issues)>len(rules['corrections']) or any(i not in rules['corrections'] for i in issues):
         raise ValueError('Invalid quality contract or issue codes')
     if quality.get('rulesSha256') and quality['rulesSha256'] != digest(POLICY):
         raise ValueError('Quality rules changed; do not silently resume paid generation')
@@ -61,6 +61,27 @@ def frontal_tail_frames(frames, seed, action, direction, tail):
                    for y in range(cutoff) for x in range(32))>=rules['minimumNewPixels']]
 
 
+def components(frame):
+    """8-connectivity permits diagonal pixel outlines but rejects floating debris."""
+    pixels = {(x,y) for y in range(32) for x in range(32) if frame.getpixel((x,y))[3]}
+    sizes = []
+    while pixels:
+        stack = [pixels.pop()]
+        size = 0
+        while stack:
+            x,y = stack.pop()
+            size += 1
+            for dx in (-1,0,1):
+                for dy in (-1,0,1):
+                    point = (x+dx,y+dy)
+                    if point in pixels:
+                        pixels.remove(point)
+                        stack.append(point)
+        sizes.append(size)
+    return sorted(sizes, reverse=True)
+
+
+
 def frame_audit(frames, seed, action=None, direction=None, tail=None):
     if len(frames) != 9 or frames[0].tobytes() != seed.tobytes():
         raise ValueError('Expected nine frames and an unchanged approved first frame')
@@ -74,9 +95,10 @@ def frame_audit(frames, seed, action=None, direction=None, tail=None):
         if box[0] == 0 or box[1] == 0 or box[2] == 32 or box[3] == 32:
             edges.append(i)
     upper=frontal_tail_frames(frames,seed,action,direction,tail)
-    issues=(['CANVAS_CLIPPING'] if edges else [])+(['TAIL_CARRIAGE'] if upper else [])
+    detached=[i for i,frame in enumerate(frames) if len(components(frame))!=1] if action=='TAIL_WAG' else []
+    issues=(['CANVAS_CLIPPING'] if edges else [])+(['TAIL_CARRIAGE'] if upper else [])+(['DETACHED_PIXELS'] if detached else [])
     return {'structuralPassed':not issues, 'issues':issues, 'silhouetteFrames':upper,
-            'edgeFrames':edges, 'visualReviewRequired':True, 'qualityRules':quality_binding()}
+            'edgeFrames':edges, 'detachedFrames':detached, 'visualReviewRequired':True, 'qualityRules':quality_binding()}
 
 
 def audit_run(root):

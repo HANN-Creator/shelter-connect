@@ -54,10 +54,14 @@ public class StyledQualityAgent {
         if(!edges.isEmpty())issues.add("CANVAS_CLIPPING");
         var upper=frontalTailFrames(seeds.getFirst(),frames,action,direction,contract.path("tailCarriage").asText(),rules.path("frontalLowTail"));
         if(!upper.isEmpty())issues.add("TAIL_CARRIAGE");
+        var detached=new ArrayList<Integer>();
+        if(action.equals("TAIL_WAG"))for(int i=0;i<frames.size();i++)if(detachedPixels(StyledSpriteCodec.nativeFrame(frames.get(i))))detached.add(i);
+        if(!detached.isEmpty())issues.add("DETACHED_PIXELS");
         JsonNode result=json.valueToTree(Map.of("version",VERSION,"passed",issues.isEmpty(),"issues",issues,"frames",r.path("frames"),
             "edgeFrames",edges,"note",r.path("note").asText(),"model",properties.model(),"reviewedAt",Instant.now(),
             "rulesRevision",rules.path("revision").asText(),"rulesSha256",StyledSpriteCodec.qualityRulesSha()));
         ((tools.jackson.databind.node.ObjectNode)result).set("silhouetteFrames",json.valueToTree(upper));
+        ((tools.jackson.databind.node.ObjectNode)result).set("detachedFrames",json.valueToTree(detached));
         return result;
     }
     static List<Integer> frontalTailFrames(byte[] approved,List<byte[]> frames,String action,String direction,String tail,JsonNode rules) {
@@ -80,6 +84,17 @@ public class StyledQualityAgent {
             if(added>=minimum)result.add(i);
         }
         return result;
+    }
+    static boolean detachedPixels(BufferedImage im) {
+        var remaining=new HashSet<Integer>();for(int y=0;y<32;y++)for(int x=0;x<32;x++)if((im.getRGB(x,y)>>>24)!=0)remaining.add(y*32+x);
+        var stack=new ArrayDeque<Integer>();if(!remaining.isEmpty()){int first=remaining.iterator().next();remaining.remove(first);stack.add(first);}
+        while(!stack.isEmpty()) {
+            int p=stack.removeLast(),x=p%32,y=p/32;
+            for(int dy=-1;dy<=1;dy++)for(int dx=-1;dx<=1;dx++) {
+                int nx=x+dx,ny=y+dy;if(nx>=0 && nx<32 && ny>=0 && ny<32 && remaining.remove(ny*32+nx))stack.add(ny*32+nx);
+            }
+        }
+        return !remaining.isEmpty();
     }
     static boolean touchesEdge(BufferedImage im) {
         for(int i=0;i<32;i++)if((im.getRGB(i,0)>>>24)!=0 || (im.getRGB(i,31)>>>24)!=0 || (im.getRGB(0,i)>>>24)!=0 || (im.getRGB(31,i)>>>24)!=0)return true;
