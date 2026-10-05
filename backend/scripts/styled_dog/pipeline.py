@@ -154,7 +154,7 @@ def motion_request(root, action, direction):
     return motion_payload(traits, rules, action, direction, image_argument(root/'directions'/(direction+'.png')))
 
 
-def motion_payload(traits, rules, action, direction, first_frame):
+def motion_payload(traits, rules, action, direction, first_frame, quality=None):
     """Shared by the CLI and the durable server worker; no file/network side effects."""
     spec = rules['actions'][action]
     motion = spec['motion']
@@ -174,6 +174,39 @@ def motion_payload(traits, rules, action, direction, first_frame):
             'initial_pose':'Standing on all four legs, tail close to rump, '+FACING[direction]+'. Clear transparent margin. Face hidden from rear.'}
     if spec['loop']:
         body['last_frame'] = body['first_frame']
+    if quality:
+        tail = quality['contract']['tailCarriage']
+        tail_rule = {
+            'LOW': 'Tail hangs BELOW the rump throughout; swing laterally low, never lift over the back. Front view: mostly hidden behind hind legs, only a low tip may peek out.',
+            'LEVEL': 'Tail stays at rump height throughout, swinging laterally without lifting above the back.',
+            'HIGH': 'Preserve the same raised tail carriage in every view; wag laterally around that height.',
+            'CURLED': 'Preserve the same curled-over-back tail shape in every view; only a small lateral wag.',
+            'UNKNOWN': 'Preserve the approved tail anatomy and carriage; do not invent a new curl or raise the tail.'
+        }[tail]
+        actions = {
+            'IDLE': 'Subtle breathing and blink. Feet and tail remain still.',
+            'WALK': 'Slow natural four-legged walk in place. Small alternating steps; lift feet upward from planted baseline, never below it.',
+            'RUN': 'Compact four-legged run in place with short strides; lift paws upward from their planted baseline.',
+            'SNIFF': 'Tuck chin inward and lower nose BETWEEN the planted front paws, sniff briefly, then lift head. Do not reach muzzle forward.',
+            'TAIL_WAG': 'Only tail wags gently left-right in DOG BODY coordinates; no raising or vertical pumping. Head, body and paws still. Side view uses subtle foreshortening.',
+            'BACK_OFF': 'Small reverse walking steps in place; retain facing, lift paws upward and keep body centered.',
+            'SIT': 'Fold hind legs and lower rump straight down between planted paws; finish seated and hold. Head orientation locked, no sideways glance. Tail close beside hindquarters.',
+            'LIE_DOWN': 'Tuck legs inward and lower chest to ground, finish lying still. Head orientation locked. Keep tail close.'
+        }
+        motion = actions[action] + ' ' + tail_rule
+        motion += ' Keep every pixel inside the 32x32 canvas with one clear pixel at ALL edges. Small motion amplitude; do not extend silhouette outward. Fixed position, scale, camera, colors and markings. '
+        motion += 'Remain '+FACING[direction]+' in ALL frames including the final hold.'
+        if direction == 'north':
+            motion += ' No visible eyes, nose, mouth or chest. Back of head only; never turn head or look over shoulder.'
+        if spec['loop']:
+            motion += ' Complete a smooth cycle and return to the initial pose.'
+        attempt = quality.get('attempt', 0)
+        if attempt:
+            motion += ' CORRECTION: use an even smaller motion range; keep tail and paws tucked inside the original silhouette.'
+        if len(motion)>1000:raise ValueError('Quality animation prompt exceeds provider limit')
+        body['description']=motion
+        body['seed']=(traits['seed']+7919*attempt)%2147483647
+        body['initial_pose']=('Approved four-legged standing dog, '+FACING[direction]+'. Tail carriage '+tail.lower()+'. Preserve this exact starting pose and foot baseline.')
     return body
 
 

@@ -43,6 +43,9 @@ public class StyledAssetManifest {
             "expiresAt",Instant.now().plusSeconds(60),"baseUrl",directions.get("south"),"sampling","nearest"));
         if(job.generationPlan()!=null)result.put("generationPlan",job.generationPlan());
         result.put("availableActions",job.availableActions());
+        if(job.qualityPolicy()!=null)result.put("quality",Map.of("policyVersion",job.qualityPolicy().path("version"),
+            "passed",job.complete() && job.steps().stream().skip(1).allMatch(s->s.qualityReport()!=null && s.qualityReport().path("passed").asBoolean()),
+            "repairCount",job.steps().stream().mapToInt(StyledAssetStore.Step::repairCount).sum()));
         if(seedsOnly) { result.put("directions",directions);result.put("seedHashes",base.path("hashes"));return result; }
         var clips=new LinkedHashMap<String,Map<String,Object>>();
         var names=Map.of("south","DOWN","north","UP","west","LEFT","east","RIGHT");

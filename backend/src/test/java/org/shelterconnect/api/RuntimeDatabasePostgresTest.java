@@ -27,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class RuntimeDatabasePostgresTest {
     private static final String RUNTIME_PASSWORD=UUID.randomUUID().toString();
     @Autowired MockMvc mvc; @Autowired JdbcTemplate jdbc; @Autowired JwtTestSupport tokens; @Autowired JsonMapper json;
+    @MockitoBean org.shelterconnect.api.asset.StyledQualityAgent spriteQuality;
     @MockitoBean AiProvider provider;
     @MockitoBean org.shelterconnect.api.asset.PhotoAppearanceProvider appearance;
     @MockitoBean org.shelterconnect.api.behavior.BehaviorSuggestionProvider suggestions;

@@ -64,9 +64,13 @@ public class OpenAiResponsesClient implements AiProvider {
 	}
 	/** Analyze an already normalized image without exposing a storage URL to the provider. */
 	public JsonNode structuredImage(String instructions,byte[] png,Map<String,Object> schema) {
+		return structuredImage(instructions,"Describe only this dog's visible appearance and locate its entire head, including ears and muzzle.",png,schema);
+	}
+	/** Task-specific vision input; callers validate the structured result before taking action. */
+	public JsonNode structuredImage(String instructions,String task,byte[] png,Map<String,Object> schema) {
 		if(!properties.enabled()) throw new AiFailure("AI_UNAVAILABLE");
 		if(png.length==0 || png.length>8*1024*1024) throw new AiFailure("AI_INVALID_IMAGE");
-		var content=List.of(Map.of("type","input_text","text","Describe only this dog's visible appearance and locate its entire head, including ears and muzzle."),
+		var content=List.of(Map.of("type","input_text","text",task),
 			Map.of("type","input_image","image_url","data:image/png;base64,"+Base64.getEncoder().encodeToString(png),"detail","high"));
 		var payload=json.writeValueAsString(Map.of("model",properties.model(),"store",false,"max_output_tokens",3000,
 			"reasoning",Map.of("effort","low"),"instructions",instructions,"input",List.of(Map.of("role","user","content",content)),

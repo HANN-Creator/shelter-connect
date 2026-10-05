@@ -37,9 +37,12 @@ public class StyledSpriteCodec {
         return payload(Map.of("mode","character","dogId",dog,"traits",traits),"photo-1.png",photo);
     }
     public JsonNode motion(JsonNode traits,String action,String direction,byte[] seed) {
+        return motion(traits,action,direction,seed,json.createObjectNode());
+    }
+    public JsonNode motion(JsonNode traits,String action,String direction,byte[] seed,JsonNode quality) {
         nativeFrame(seed);
         if(!ACTIONS.contains(action) || !DIRECTIONS.contains(direction)) throw AssetException.invalid();
-        return payload(Map.of("mode","motion","traits",traits,"action",action,"direction",direction),"seed.png",seed);
+        return payload(Map.of("mode","motion","traits",traits,"action",action,"direction",direction,"quality",quality),"seed.png",seed);
     }
     private JsonNode payload(Object input,String imageName,byte[] image) {
         Path dir=null; Process process=null;
@@ -93,6 +96,14 @@ public class StyledSpriteCodec {
         }
         try { var out=new ByteArrayOutputStream();ImageIO.write(sheet,"png",out);return out.toByteArray(); }
         catch(IOException e) { throw AssetException.unavailable(); }
+    }
+    static List<byte[]> frames(byte[] sheet) {
+        if(sheet==null || sheet.length>900_000 || !Arrays.equals(SpriteNormalizer.dimensions(sheet,288),new int[]{288,32}))throw new AssetException(422,"STYLED_SHEET_INVALID");
+        try {
+            var im=ImageIO.read(new ByteArrayInputStream(sheet));var frames=new ArrayList<byte[]>();
+            for(int i=0;i<9;i++){var out=new ByteArrayOutputStream();ImageIO.write(im.getSubimage(i*32,0,32,32),"png",out);frames.add(out.toByteArray());}
+            return frames;
+        }catch(IOException e){throw new AssetException(422,"STYLED_SHEET_INVALID");}
     }
     static String sha(byte[] bytes) {
         try { return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes)); }

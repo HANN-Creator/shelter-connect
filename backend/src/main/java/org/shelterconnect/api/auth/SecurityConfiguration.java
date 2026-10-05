@@ -72,7 +72,7 @@ public class SecurityConfiguration {
 						.requestMatchers(HttpMethod.GET, "/v1/shelter-admin/shelters/{shelterId}/dogs",
 								"/v1/shelter-admin/dogs/{dogId}",
 								"/v1/shelter-admin/dogs/{dogId}/observations").authenticated()
-						.requestMatchers(HttpMethod.POST, "/v1/shelter-admin/dogs/{dogId}/styled-assets", "/v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/seed-review", "/v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/review", "/v1/operations/styled-asset-jobs/{jobId}/recover").authenticated()
+						.requestMatchers(HttpMethod.POST, "/v1/shelter-admin/dogs/{dogId}/styled-assets", "/v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/seed-review", "/v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/review", "/v1/operations/styled-asset-jobs/{jobId}/recover", "/v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/repair").authenticated()
                         .requestMatchers(HttpMethod.GET, "/v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}", "/v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/preview").authenticated()
                         .requestMatchers(HttpMethod.GET, "/v1/me", "/v1/me/shelters",
 								"/v1/shelter-admin/shelters/{shelterId}/access",

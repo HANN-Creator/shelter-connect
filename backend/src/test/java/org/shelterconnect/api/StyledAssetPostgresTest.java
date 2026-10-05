@@ -32,6 +32,7 @@ class StyledAssetPostgresTest {
     @Autowired StyledAssetWorker worker;@Autowired StyledAssetStore store;
     @MockitoBean StyledAssetProvider provider;@MockitoBean AssetStorage storage;
     @MockitoBean StyledSpriteCodec codec;@MockitoBean BehaviorSuggestionProvider suggestions;
+    @MockitoBean StyledQualityAgent quality;
     UUID op,user,opSubject,subject,shelter,dog,photo,permission;byte[] png;
     Map<String,byte[]> objects=new ConcurrentHashMap<>();
     @BeforeAll static void migrate() throws Exception { SchemaMigrationTest.migratePostgres(); }
@@ -50,6 +51,9 @@ class StyledAssetPostgresTest {
         when(storage.sign(anyList())).thenAnswer(c->{outsideTransaction();var result=new HashMap<String,String>();for(String key:c.<List<String>>getArgument(0))result.put(key,"https://assets.example.invalid/"+key);return result;});
         when(codec.character(any(),any(),any())).thenAnswer(c->{outsideTransaction();return json.readTree("{\"character\":true}");});
         when(codec.motion(any(),anyString(),anyString(),any())).thenAnswer(c->{outsideTransaction();return json.valueToTree(Map.of("action",c.getArgument(1),"direction",c.getArgument(2)));});
+        when(codec.motion(any(),anyString(),anyString(),any(),any())).thenAnswer(c->{outsideTransaction();return json.valueToTree(Map.of("action",c.getArgument(1),"direction",c.getArgument(2),"quality",c.getArgument(4)));});
+        when(quality.contract(any(),any())).thenAnswer(c->{outsideTransaction();return json.valueToTree(Map.of("tailCarriage","LOW","version",StyledQualityAgent.VERSION));});
+        when(quality.review(any(),anyList(),anyList(),anyString(),anyString())).thenAnswer(c->{outsideTransaction();return json.valueToTree(Map.of("passed",true,"issues",List.of()));});
         when(provider.submit(anyBoolean(),any())).thenAnswer(c->{outsideTransaction();return UUID.randomUUID();});
         when(provider.poll(any(),eq(true))).thenAnswer(c->{outsideTransaction();String b=Base64.getEncoder().encodeToString(png);return json.valueToTree(Map.of("status","COMPLETED","directions",Map.of("south",b,"north",b,"west",b,"east",b)));});
         when(provider.poll(any(),eq(false))).thenAnswer(c->{outsideTransaction();return json.valueToTree(Map.of("status","COMPLETED","frames",Collections.nCopies(9,Base64.getEncoder().encodeToString(png))));});
@@ -231,12 +235,58 @@ class StyledAssetPostgresTest {
         assertThat(read(id).path("failureCode").asText()).isEqualTo("ACTION_PLAN_INCOMPLETE");
         review(id,false,"APPROVE",409);publicStatus(404);
     }
+    @Test void qualityFailureRegeneratesOnlyDefectiveClipAndRetainsPriorReceipt() throws Exception {
+        var calls=new java.util.concurrent.atomic.AtomicInteger();
+        var generated=new java.util.concurrent.atomic.AtomicInteger();
+        when(provider.poll(any(),eq(false))).thenAnswer(c->{
+            var changed=ImageIO.read(new ByteArrayInputStream(png));changed.setRGB(12,12,0xffa07800|generated.incrementAndGet());
+            var out=new ByteArrayOutputStream();ImageIO.write(changed,"png",out);
+            var frames=new ArrayList<>(Collections.nCopies(9,Base64.getEncoder().encodeToString(out.toByteArray())));frames.set(0,Base64.getEncoder().encodeToString(png));
+            return json.valueToTree(Map.of("status","COMPLETED","frames",frames));
+        });
+        when(quality.review(any(),anyList(),anyList(),eq("WALK"),eq("north"))).thenAnswer(c->json.valueToTree(Map.of(
+            "passed",calls.incrementAndGet()>1,"issues",calls.get()==1?List.of("DIRECTION_DRIFT"):List.of())));
+        UUID id=request();tick();tick();review(id,true,"APPROVE",200);finish(id);
+        assertThat(read(id).path("status").asText()).isEqualTo("REVIEW");
+        verify(provider,times(14)).submit(anyBoolean(),any());verify(quality,times(1)).contract(any(),any());
+        assertThat(jdbc.queryForObject("SELECT repair_count FROM shelter.styled_asset_steps WHERE job_id=? AND label='walk-north'",Integer.class,id)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT attempt_history::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='walk-north'",String.class,id)).contains("DIRECTION_DRIFT","providerJobId","sha256");
+        review(id,false,"APPROVE",200);publicStatus(200);
+    }
+    @Test void exhaustedRepairBudgetBlocksApprovalAndReplayCannotBuyMoreAttempts() throws Exception {
+        when(quality.review(any(),anyList(),anyList(),eq("SIT"),eq("north"))).thenReturn(json.valueToTree(Map.of("passed",false,"issues",List.of("DIRECTION_DRIFT"))));
+        UUID id=request();tick();tick();review(id,true,"APPROVE",200);finish(id);
+        assertThat(read(id).path("failureCode").asText()).isEqualTo("QUALITY_REPAIR_EXHAUSTED");
+        verify(provider,times(15)).submit(anyBoolean(),any());review(id,false,"APPROVE",409);publicStatus(404);
+        var body=Map.of("note","Run the bounded quality repair without resetting paid attempts","expectedSeedHashes",read(id).at("/steps/0/result/hashes"));
+        post(subject,path(id)+"/repair",body,200);assertThat(request()).isEqualTo(id);tick();
+        verify(provider,times(15)).submit(anyBoolean(),any());
+    }
+    @Test void legacyReviewPackAuditsAndReusesGoodClipsWithoutAnyNewPixelLabCall() throws Exception {
+        UUID id=request();jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=NULL WHERE id=?",id);
+        tick();tick();review(id,true,"APPROVE",200);finish(id);var before=new HashMap<>(objects);
+        var body=Map.of("note","Audit this old pack and automatically repair only defective clips","expectedSeedHashes",read(id).at("/steps/0/result/hashes"));
+        post(UUID.randomUUID(),path(id)+"/repair",body,403);
+        post(subject,path(id)+"/repair",body,200);post(subject,path(id)+"/repair",body,200);finish(id);
+        verify(provider,times(13)).submit(anyBoolean(),any());verify(quality,times(12)).review(any(),anyList(),anyList(),anyString(),anyString());
+        for(var e:before.entrySet())assertThat(objects.get(e.getKey())).isEqualTo(e.getValue());
+        review(id,false,"APPROVE",200);
+    }
+    @Test void interruptedAiReviewRequiresRecoveryAndDoesNotResubmitPixelLab() throws Exception {
+        UUID id=request();tick();tick();review(id,true,"APPROVE",200);tick(); // shared tail contract
+        tick(); // first clip accepted
+        when(quality.review(any(),anyList(),anyList(),anyString(),anyString())).thenThrow(new AssetProvider.Failure("QUALITY_AI_TIMEOUT",false));
+        tick();assertThat(read(id).path("failureCode").asText()).isEqualTo("QUALITY_AI_TIMEOUT");tick();verify(provider,times(2)).submit(anyBoolean(),any());
+        doReturn(json.valueToTree(Map.of("passed",true,"issues",List.of()))).when(quality).review(any(),anyList(),anyList(),anyString(),anyString());
+        post(opSubject,"/v1/operations/styled-asset-jobs/"+id+"/recover",Map.of(),200);finish(id);
+        verify(provider,times(13)).submit(anyBoolean(),any());review(id,false,"APPROVE",200);
+    }
     Map<String,Object> input() {return Map.of("photoId",photo,"traits",Map.of("sourcePhotoSha256","a".repeat(64),"faceBox",List.of(.1,.1,.8,.8),"identityDescription","brown dog","motionDescription","brown dog","rearDescription","unknown markings","seed",42,"reviewNote","Reviewed full body photo and face crop for this dog"));}
     UUID request() throws Exception {return UUID.fromString(post(subject,"/v1/shelter-admin/dogs/"+dog+"/styled-assets",input(),202).at("/data/id").asText());}
     String path(UUID id) {return "/v1/shelter-admin/dogs/"+dog+"/styled-assets/"+id;}
     JsonNode read(UUID id) throws Exception {return get(subject,path(id),200).path("data");}
     void review(UUID id,boolean seed,String decision,int expected) throws Exception {post(subject,path(id)+(seed?"/seed-review":"/review"),Map.of("decision",decision,"note","Reviewed all directions, identity and motion quality","expectedSeedHashes",read(id).at("/steps/0/result/hashes")),expected);}
-    void finish(UUID id) throws Exception {for(int i=0;i<70 && !read(id).path("status").asText().equals("REVIEW");i++)tick();}
+    void finish(UUID id) throws Exception {for(int i=0;i<220 && !Set.of("REVIEW","FAILED","OUTCOME_UNKNOWN").contains(read(id).path("status").asText());i++)tick();}
     void tick() {jdbc.update("UPDATE shelter.asset_jobs SET next_run_at=now() WHERE dog_id=?",dog);worker.tick();}
     void publicStatus(int status) throws Exception {get(null,"/v1/dogs/"+dog+"/assets",status);}
     String bearer(UUID subject) {return "Bearer "+tokens.token(subject);}

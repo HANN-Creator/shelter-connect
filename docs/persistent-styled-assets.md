@@ -20,7 +20,7 @@
 2. `GET /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}`로 상태 조회.
 3. `SEED_REVIEW`에서 `GET .../{jobId}/preview`로 앞·뒤·좌·우 기준 이미지 확인.
 4. `POST .../{jobId}/seed-review`에 `decision`, 20자 이상 `note`, 미리보기의 `expectedSeedHashes` 4개를 전달. 승인해야 actionPlan에 있는 행동 × 4방향 생성이 시작된다.
-5. 모든 시트 저장 후 `REVIEW`. 동일 preview 경로에서 4방향·선택 행동을 검토한다.
+5. 새 작업은 각 시트 저장 후 Luna·픽셀 검사와 최대2회 자동 보완을 수행한다. 모두 처리되면 `REVIEW`. 실패 잔존 시 최종 승인은 차단된다. [자동 검수·보완](sprite-quality-repair.md) 참조. 동일 preview 경로에서 4방향·선택 행동을 검토한다.
 6. `POST .../{jobId}/review`에 같은 형식으로 최종 승인. 사진 허가·강아지·보호소 공개 조건도 만족해야 공개 조회가 가능하다.
 
 요청 예시 (실제 사진 해시와 설명으로 교체):
@@ -72,3 +72,5 @@
 V12는 테이블 1개와 기존 작업 컬럼 2개, V13은 선택 계획 스냅샷 컬럼 1개를 추가한다. 기존 33단계 작업은 계획 변경 없이 계속 조회·재개된다. 고객용 Supabase `anon`/`authenticated`는 새 테이블에 접근할 수 없다. 기존 최소 권한 `shelter_runtime`만 서버에서 사용한다.
 
 단위 검사: 사진·스타일 payload, 프레임 픽셀 보존, 실제 HTTP 응답/ZIP/9프레임 검증. PostgreSQL 검사: 동시 요청·선점, 재시작·접수 불명, 저장 장애 복구, 검토 전 차단, 공개 후 재사용, 허가 철회, 전역 예산과 RLS. 실제 개발 DB·배포·저장소 적용 결과는 B-40 노션 카드와 PR 기록을 기준으로 확인한다.
+
+B-43: V14와 `sprite-quality-v1` 자동 검수·보완을 추가했다. 기존 작업은 `/repair` 명시 요청 시 검사하며, 정상 시트와 기준 이미지는 재사용한다. [세부 계약](sprite-quality-repair.md).
