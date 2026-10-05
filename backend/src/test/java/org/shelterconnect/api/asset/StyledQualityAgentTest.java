@@ -84,4 +84,12 @@ class StyledQualityAgentTest {
         var invalid=json.valueToTree(Map.of("contract",Map.of("tailCarriage","LOW"),"issues",List.of("RUN_SHELL")));
         assertThatThrownBy(()->codec.motion(traits,"SIT","north",png(false),invalid)).hasMessage("STYLED_INPUT_REQUIRES_REVIEW");
     }
+    @Test void floatingTailPixelOverridesAiPassWithoutChangingAnyPixel() throws Exception {
+        when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(json.readTree("{\"issues\":[],\"frames\":[],\"note\":\"missed fragment\"}"));
+        byte[] seed=silhouette(-1);var image=StyledSpriteCodec.nativeFrame(seed);image.setRGB(2,28,0xff123456);
+        var out=new ByteArrayOutputStream();ImageIO.write(image,"png",out);var frames=new ArrayList<>(Collections.nCopies(9,seed));frames.set(8,out.toByteArray());
+        var report=agent.review(json.readTree("{\"tailCarriage\":\"LOW\"}"),Collections.nCopies(4,seed),frames,"TAIL_WAG","west");
+        assertThat(report.path("passed").asBoolean()).isFalse();assertThat(report.path("detachedFrames").toString()).isEqualTo("[8]");
+        assertThat(report.path("issues").toString()).contains("DETACHED_PIXELS");assertThat(frames.get(8)).isEqualTo(out.toByteArray());
+    }
 }

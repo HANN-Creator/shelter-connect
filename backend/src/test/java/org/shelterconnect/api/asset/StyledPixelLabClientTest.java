@@ -21,6 +21,7 @@ class StyledPixelLabClientTest {
         UUID id=UUID.randomUUID();body=json.writeValueAsString(Map.of("background_job_id",id));
         assertThat(client.submit(true,json.readTree("{}"))).isEqualTo(id);assertThat(requestPath).isEqualTo("/create-character-pro");
         assertThat(client.submit(false,json.readTree("{}"))).isEqualTo(id);assertThat(requestPath).isEqualTo("/animate-pixminimax");
+        assertThat(client.editAnimation(json.readTree("{}"))).isEqualTo(id);assertThat(requestPath).isEqualTo("/edit-animation-v2");
         body="{}";assertThatThrownBy(()->client.submit(true,json.readTree("{}"))).isInstanceOfSatisfying(AssetProvider.Failure.class,e->assertThat(e.uncertain).isTrue());
         status=429;assertThatThrownBy(()->client.submit(true,json.readTree("{}"))).isInstanceOfSatisfying(AssetProvider.Failure.class,e->assertThat(e.uncertain).isFalse());
     }

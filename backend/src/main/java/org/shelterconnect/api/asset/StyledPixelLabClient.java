@@ -20,8 +20,12 @@ public class StyledPixelLabClient implements StyledAssetProvider {
     }
     StyledPixelLabClient(AssetProperties properties,JsonMapper json,HttpClient http,URI base) { this.properties=properties;this.json=json;this.http=http;this.base=base; }
     public UUID submit(boolean character,JsonNode payload) {
+        return submitEndpoint(character?"create-character-pro":"animate-pixminimax",payload);
+    }
+    public UUID editAnimation(JsonNode payload) { return submitEndpoint("edit-animation-v2",payload); }
+    private UUID submitEndpoint(String endpoint,JsonNode payload) {
         properties.requireEnabled();
-        var response=json.readTree(send(character?"create-character-pro":"animate-pixminimax",json.writeValueAsBytes(payload),4_000_000));
+        var response=json.readTree(send(endpoint,json.writeValueAsBytes(payload),4_000_000));
         try { return UUID.fromString(response.path("background_job_id").asText()); }
         catch(Exception e) { throw new AssetProvider.Failure("PROVIDER_ACK_INVALID",true); }
     }
@@ -36,7 +40,10 @@ public class StyledPixelLabClient implements StyledAssetProvider {
             if(!images.isArray() || images.size()!=9) throw new AssetException(422,"STYLED_FRAME_COUNT_INVALID");
             var encoded=new ArrayList<String>();
             for(var image:images) encoded.add(Base64.getEncoder().encodeToString(decode(image.path("base64").asText())));
-            return json.valueToTree(Map.of("status","COMPLETED","frames",encoded));
+            var completed=json.createObjectNode().put("status","COMPLETED");completed.set("frames",json.valueToTree(encoded));
+            var usage=response.path("usage");if(usage.isMissingNode() || usage.isNull())usage=response.at("/last_response/billing_usage");
+            if(!usage.isMissingNode() && !usage.isNull())completed.set("usage",usage);
+            return completed;
         }
         UUID characterId;
         try { characterId=UUID.fromString(response.at("/last_response/character_id").asText()); }

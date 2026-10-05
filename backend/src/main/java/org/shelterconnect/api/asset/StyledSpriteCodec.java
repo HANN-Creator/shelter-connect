@@ -44,12 +44,17 @@ public class StyledSpriteCodec {
         if(!ACTIONS.contains(action) || !DIRECTIONS.contains(direction)) throw AssetException.invalid();
         return payload(Map.of("mode","motion","traits",traits,"action",action,"direction",direction,"quality",quality),"seed.png",seed);
     }
+    public JsonNode tailEdit(String direction,byte[] sheet,int seed) {
+        if(!DIRECTIONS.contains(direction) || seed<0)throw AssetException.invalid();
+        frames(sheet); // Bounded nine native frames; defective geometry is the edit input.
+        return payload(Map.of("mode","tail-edit","direction",direction,"seed",seed),"sheet.png",sheet);
+    }
     private JsonNode payload(Object input,String imageName,byte[] image) {
         Path dir=null; Process process=null;
         try {
             dir=Files.createTempDirectory("styled-sprite-");
             for(String name:List.of("scripts/styled_dog/__init__.py","scripts/styled_dog/client.py","scripts/styled_dog/source.py",
-                "scripts/styled_dog/pipeline.py","scripts/styled_dog/quality.py","scripts/styled_dog/server_bridge.py",
+                "scripts/styled_dog/pipeline.py","scripts/styled_dog/quality.py","scripts/styled_dog/tail_repair.py","scripts/styled_dog/server_bridge.py",
                 "asset-styles/cozy32-v1/style.png","asset-styles/cozy32-v1/rules.json","asset-styles/cozy32-v1/quality-rules.json")) {
                 Path file=dir.resolve(name);Files.createDirectories(file.getParent());
                 try(var in=getClass().getResourceAsStream("/styled-pipeline/"+name)) {
@@ -83,6 +88,28 @@ public class StyledSpriteCodec {
             if(!visible || !clear) throw new AssetException(422,"STYLED_ALPHA_INVALID");
             return image;
         } catch(IOException e) { throw new AssetException(422,"STYLED_FRAME_INVALID"); }
+    }
+    static byte[] rawSheet(List<byte[]> frames) { return sheet(frames,frames.getFirst()); }
+    static List<byte[]> restoreEditPalette(List<byte[]> frames,byte[] seed) {
+        if(frames.size()!=9)throw new AssetException(422,"STYLED_FRAME_COUNT_INVALID");
+        var original=nativeFrame(seed);var colors=new TreeSet<Integer>();
+        for(int y=0;y<32;y++)for(int x=0;x<32;x++)if((original.getRGB(x,y)>>>24)!=0)colors.add(original.getRGB(x,y)&0xffffff);
+        var result=new ArrayList<byte[]>();result.add(seed);
+        for(int i=1;i<9;i++) {
+            var image=nativeFrame(frames.get(i));
+            for(int y=0;y<32;y++)for(int x=0;x<32;x++) {
+                int pixel=image.getRGB(x,y);if((pixel>>>24)==0)continue;
+                int best=0,distance=Integer.MAX_VALUE;
+                for(int color:colors) {
+                    int r=((pixel>>16)&255)-((color>>16)&255),g=((pixel>>8)&255)-((color>>8)&255),b=(pixel&255)-(color&255);
+                    int next=r*r+g*g+b*b;if(next<distance){distance=next;best=color;}
+                }
+                image.setRGB(x,y,(pixel&0xff000000)|best);
+            }
+            try {var out=new ByteArrayOutputStream();ImageIO.write(image,"png",out);result.add(out.toByteArray());}
+            catch(IOException e){throw new AssetException(422,"STYLED_FRAME_INVALID");}
+        }
+        return result;
     }
     static byte[] sheet(List<byte[]> frames,byte[] seed) {
         if(frames.size()!=9) throw new AssetException(422,"STYLED_FRAME_COUNT_INVALID");

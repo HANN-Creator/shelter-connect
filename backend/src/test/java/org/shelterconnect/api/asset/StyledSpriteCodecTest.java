@@ -36,4 +36,21 @@ class StyledSpriteCodecTest {
         var changed=ImageIO.read(new ByteArrayInputStream(seed));changed.setRGB(8,5,0xff998877);var out=new ByteArrayOutputStream();ImageIO.write(changed,"png",out);
         frames.set(0,out.toByteArray());assertThatThrownBy(()->StyledSpriteCodec.sheet(frames,seed)).hasMessage("STYLED_SOURCE_FRAME_CHANGED");
     }
+    @Test void tailEditUsesAllNineFramesAndPaletteLockPreservesRawEvidence() throws Exception {
+        var codec=new StyledSpriteCodec(json,System.getenv().getOrDefault("ASSET_HARNESS_PYTHON","python3"));
+        byte[] seed=image(32);var changed=ImageIO.read(new ByteArrayInputStream(seed));
+        changed.setRGB(31,18,0xffdca122);changed.setRGB(10,10,0xff884422);
+        var out=new ByteArrayOutputStream();ImageIO.write(changed,"png",out);
+        var raw=new ArrayList<>(Collections.nCopies(9,out.toByteArray()));byte[] before=raw.getFirst().clone();
+        var payload=codec.tailEdit("east",StyledSpriteCodec.rawSheet(raw),123);
+        assertThat(payload.path("frames").size()).isEqualTo(9);assertThat(payload.path("seed").asInt()).isEqualTo(123);
+        assertThat(payload.path("description").asText()).contains("COMPLETE","ONE transparent pixel");
+        assertThat(StyledSpriteCodec.nativeFrame(StyledPixelLabClient.decode(payload.at("/frames/0/image/base64").asText())).getRGB(31,18)).isEqualTo(0xffdca122);
+        var restored=StyledSpriteCodec.restoreEditPalette(raw,seed);
+        assertThat(restored.getFirst()).isEqualTo(seed);assertThat(raw.getFirst()).isEqualTo(before);
+        assertThat(StyledSpriteCodec.nativeFrame(raw.getFirst()).getRGB(31,18)>>>24).isEqualTo(255);
+        // Geometry is not erased to force a pass: the bad edge survives frames 1–8.
+        assertThat(StyledSpriteCodec.nativeFrame(restored.get(8)).getRGB(31,18)).isEqualTo(0xff123456);
+        assertThat(restored).hasSize(9);
+    }
 }
