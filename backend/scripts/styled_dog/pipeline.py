@@ -11,6 +11,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from PIL import Image, ImageDraw
 from .client import API, digest, download, image_argument, native_image, read, write
 from .source import prepare_concept
+from .quality import TAILS, POLICY, load_quality, quality_binding, motion_guidance, frame_audit
 
 STYLE = Path(__file__).resolve().parents[2] / 'asset-styles' / 'cozy32-v1'
 FACING = {'south':'facing the viewer, front view', 'north':'facing away, rear view',
@@ -42,7 +43,8 @@ def character_request(root, traits, rules):
         'Replace the style sprite\'s dog identity with the actual photo\'s ears, coat and markings. '
         'Do not invent tricolor patches, a white forehead blaze, floppy ears or a curled white-tipped tail from the style reference. '
         'Neutral gently closed mouth, no laughing grin. Four-legged standing pose. Full character inside 32x32 transparent canvas '
-        'with margin for ears, muzzle, paws and tail. No text, scenery, collar, number, floor or props.')
+        'with room for ears, muzzle, paws and tail. '+load_quality()['seedMargin']+
+        ' No text, scenery, collar, number, floor or props.')
     if len(description) > 2000:
         raise ValueError('Character prompt exceeds provider limit')
     return {'description':description, 'image_size':{'width':32,'height':32},
@@ -59,7 +61,7 @@ def prepare(root, traits_path):
     provenance = {'animalId':traits['animalId'], 'traitsSha256':digest(traits_path),
                   'styleVersion':rules['version'], 'styleSha256':rules['styleSha256'],
                   'rulesSha256':digest(STYLE/'rules.json'), 'sourcePhotoSha256':traits['sourcePhotoSha256'],
-                  'actualPhotoIncluded':True, 'approvedStyleIncluded':True,
+                  'actualPhotoIncluded':True, 'approvedStyleIncluded':True, 'qualityRules':quality_binding(),
                   'conceptRole':'Photographed identity, ears and coat markings only',
                   'styleRole':'Approved rounded proportions, outlines and pixel shading only',
                   'unknownFeatures':traits.get('unknownFeatures', [])}
@@ -74,6 +76,7 @@ def prepare(root, traits_path):
     provenance['conceptSha256'] = digest(root/'photo-concept.png')
     write(root/'reference-provenance.json', provenance)
     shutil.copyfile(STYLE/'rules.json', root/'rules.json')
+    shutil.copyfile(POLICY, root/'quality-rules.json')
     request = character_request(root, traits, rules)
     (root/'character-prompt.txt').write_text(request['description'])
     (root/'style-prompt.txt').write_text(request['style_description'])
@@ -89,6 +92,8 @@ def verify_inputs(root):
     if any(digest(path) != provenance[key] for key,path in checks.items()):
         raise ValueError('Pipeline inputs changed since preparation')
     rules = load_rules()
+    if provenance.get('qualityRules') != quality_binding() or digest(root/'quality-rules.json') != digest(POLICY):
+        raise ValueError('Quality rules changed; prepare and review a new run')
     if provenance['styleVersion'] != rules['version'] or provenance['rulesSha256'] != digest(STYLE/'rules.json'):
         raise ValueError('Run uses another pipeline version')
     return rules
@@ -131,82 +136,56 @@ def generate_character(root, client):
 def review_binding(root):
     rules = verify_inputs(root)
     return {'animalId':read(root/'source.json')['desertionNo'],
-            'provenanceSha256':digest(root/'reference-provenance.json'),
+            'provenanceSha256':digest(root/'reference-provenance.json'), 'qualityRules':quality_binding(),
             'directionSha256':{d:digest(root/'directions'/(d+'.png')) for d in rules['directions']}}
 
 
-def record_review(root, note):
+def record_review(root, note, tail_carriage=None):
+    if tail_carriage not in TAILS:
+        raise ValueError('Record one shared tail carriage (UNKNOWN if not visible) before animation')
     if len(note.strip()) < 20:
         raise ValueError('Describe the visual likeness, style, directions and limitations reviewed')
     write(root/'seed-review.json',dict(review_binding(root), approvedForAnimations=True,
-          reviewer='operator visual review', note=note, productionApproved=False))
+          reviewer='operator visual review', note=note, tailCarriage=tail_carriage, productionApproved=False))
 
 
 def require_review(root):
     review = read(root/'seed-review.json')
-    if review.get('approvedForAnimations') is not True or any(review.get(k) != v for k,v in review_binding(root).items()):
+    if review.get('tailCarriage') not in TAILS or review.get('approvedForAnimations') is not True or any(review.get(k) != v for k,v in review_binding(root).items()):
         raise ValueError('Missing or stale visual review for these four direction images')
 
 
 def motion_request(root, action, direction):
     rules = verify_inputs(root)
     traits = read(root/'traits.json')
-    return motion_payload(traits, rules, action, direction, image_argument(root/'directions'/(direction+'.png')))
+    require_review(root)
+    review = read(root/'seed-review.json')
+    return motion_payload(traits, rules, action, direction, image_argument(root/'directions'/(direction+'.png')),
+                          {'contract':{'tailCarriage':review['tailCarriage']}, 'rulesSha256':review['qualityRules']['sha256']})
 
 
 def motion_payload(traits, rules, action, direction, first_frame, quality=None):
     """Shared by the CLI and the durable server worker; no file/network side effects."""
     spec = rules['actions'][action]
-    motion = spec['motion']
-    if spec['loop']:
-        motion += ' Complete one seamless cycle and return to the initial stance.'
-    motion += (' Keep camera and sprite position fixed. Keep the dog '+FACING[direction]+
-        ' throughout; never rotate or turn to another direction. Preserve the same face, markings, proportions, palette and crisp pixel clusters. '
-        'Keep ears, muzzle, paws and tail inside the canvas with margin. No scenery, props, effects, text, extra animals.')
-    if direction == 'north':
-        motion += ' Rear view in EVERY frame: back of head, back, rump and tail only. No visible eyes, nose, mouth or chest. Never turn around or look over a shoulder.'
-    if len(motion) > 1000:
-        raise ValueError('Animation prompt exceeds provider limit')
     body = {'first_frame':first_frame,
-            'description':motion, 'frame_count':rules['generatedFrames'], 'seed':traits['seed'],
+            'frame_count':rules['generatedFrames'], 'seed':traits['seed'],
             'no_background':True, 'enhance_prompt':False, 'direction':direction, 'view':'low top-down',
-            'subject_description':traits['rearDescription' if direction == 'north' else 'motionDescription'],
-            'initial_pose':'Standing on all four legs, tail close to rump, '+FACING[direction]+'. Clear transparent margin. Face hidden from rear.'}
+            'subject_description':traits['rearDescription' if direction == 'north' else 'motionDescription']}
     if spec['loop']:
         body['last_frame'] = body['first_frame']
-    if quality:
-        tail = quality['contract']['tailCarriage']
-        tail_rule = {
-            'LOW': 'Tail hangs BELOW the rump throughout; swing laterally low, never lift over the back. Front view: mostly hidden behind hind legs, only a low tip may peek out.',
-            'LEVEL': 'Tail stays at rump height throughout, swinging laterally without lifting above the back.',
-            'HIGH': 'Preserve the same raised tail carriage in every view; wag laterally around that height.',
-            'CURLED': 'Preserve the same curled-over-back tail shape in every view; only a small lateral wag.',
-            'UNKNOWN': 'Preserve the approved tail anatomy and carriage; do not invent a new curl or raise the tail.'
-        }[tail]
-        actions = {
-            'IDLE': 'Subtle breathing and blink. Feet and tail remain still.',
-            'WALK': 'Slow natural four-legged walk in place. Small alternating steps; lift feet upward from planted baseline, never below it.',
-            'RUN': 'Compact four-legged run in place with short strides; lift paws upward from their planted baseline.',
-            'SNIFF': 'Tuck chin inward and lower nose BETWEEN the planted front paws, sniff briefly, then lift head. Do not reach muzzle forward.',
-            'TAIL_WAG': 'Only tail wags gently left-right in DOG BODY coordinates; no raising or vertical pumping. Head, body and paws still. Side view uses subtle foreshortening.',
-            'BACK_OFF': 'Small reverse walking steps in place; retain facing, lift paws upward and keep body centered.',
-            'SIT': 'Fold hind legs and lower rump straight down between planted paws; finish seated and hold. Head orientation locked, no sideways glance. Tail close beside hindquarters.',
-            'LIE_DOWN': 'Tuck legs inward and lower chest to ground, finish lying still. Head orientation locked. Keep tail close.'
-        }
-        motion = actions[action] + ' ' + tail_rule
-        motion += ' Keep every pixel inside the 32x32 canvas with one clear pixel at ALL edges. Small motion amplitude; do not extend silhouette outward. Fixed position, scale, camera, colors and markings. '
-        motion += 'Remain '+FACING[direction]+' in ALL frames including the final hold.'
-        if direction == 'north':
-            motion += ' No visible eyes, nose, mouth or chest. Back of head only; never turn head or look over shoulder.'
-        if spec['loop']:
-            motion += ' Complete a smooth cycle and return to the initial pose.'
-        attempt = quality.get('attempt', 0)
-        if attempt:
-            motion += ' CORRECTION: use an even smaller motion range; keep tail and paws tucked inside the original silhouette.'
-        if len(motion)>1000:raise ValueError('Quality animation prompt exceeds provider limit')
-        body['description']=motion
-        body['seed']=(traits['seed']+7919*attempt)%2147483647
-        body['initial_pose']=('Approved four-legged standing dog, '+FACING[direction]+'. Tail carriage '+tail.lower()+'. Preserve this exact starting pose and foot baseline.')
+    quality = quality or {'contract':{'tailCarriage':'UNKNOWN'}}
+    motion = motion_guidance(action, direction, quality)
+    if spec['loop']:
+        motion += ' Loop smoothly to the initial pose.'
+    if len(motion)>1000:
+        raise ValueError('Quality animation prompt exceeds provider limit')
+    attempt = quality.get('attempt', 0)
+    if type(attempt) is not int or not 0 <= attempt <= 2:
+        raise ValueError('Invalid repair attempt')
+    body['description'] = motion
+    body['seed'] = (traits['seed']+7919*attempt)%2147483647
+    body['initial_pose'] = ('Approved four-legged standing dog, '+FACING[direction]+'. Shared tail carriage '+
+        quality['contract']['tailCarriage']+'. Preserve exact starting pose and foot baseline.')
     return body
 
 
@@ -231,6 +210,10 @@ def save_clip(root, action, direction, result):
         'frameCount':len(decoded),'durationMs':rules['actions'][action]['durationMs'],
         'loop':rules['actions'][action]['loop'],'sourceSha256':digest(root/'directions'/(direction+'.png')),
         'frameSha256':[digest(folder/f'{i:02}.png') for i in range(len(decoded))]})
+    audit = frame_audit(decoded,seed)
+    write(root/'audits'/(label+'.json'),audit)
+    if not audit['structuralPassed']:
+        raise ValueError('CANVAS_CLIPPING: raw frames retained for repair, not approved')
 
 
 def animate(root, client, actions):

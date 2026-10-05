@@ -34,7 +34,7 @@ class PipelineTest(unittest.TestCase):
         (self.root/'base.png').write_bytes((STYLE/'style.png').read_bytes())
 
     def review(self):
-        record_review(self.root,'Reviewed photo likeness, ears, muzzle, rounded style and all four directions. Rear details inferred.')
+        record_review(self.root,'Reviewed photo likeness, ears, muzzle, rounded style and all four directions. Rear details inferred.', 'LOW')
 
     def test_both_images_are_transmitted_with_distinct_roles(self):
         body = character_request(self.root,self.traits,load_rules())
@@ -68,7 +68,7 @@ class PipelineTest(unittest.TestCase):
             require_review(self.root)
 
     def test_changed_style_or_photo_cannot_silently_resume(self):
-        for file in ('style-reference.png','photo-1.png','rules.json','traits.json'):
+        for file in ('style-reference.png','photo-1.png','rules.json','traits.json','quality-rules.json'):
             with self.subTest(file=file):
                 path = self.root/file
                 previous = path.read_bytes()
@@ -78,6 +78,7 @@ class PipelineTest(unittest.TestCase):
                 path.write_bytes(previous)
 
     def test_all_32_requests_have_correct_view_and_loop_semantics(self):
+        self.review()
         rules = load_rules()
         for a in rules['actions']:
             for d in rules['directions']:
@@ -132,6 +133,24 @@ class PipelineTest(unittest.TestCase):
             with self.subTest(url=url), self.assertRaises(ValueError):
                 secure_photo_url(url)
 
+    def test_failed_raw_clip_cannot_be_published_by_holding_an_earlier_frame(self):
+        self.review()
+        seed=(STYLE/'style.png').read_bytes()
+        bad=Image.open(io.BytesIO(seed)).convert('RGBA');bad.putpixel((31,16),(1,2,3,128))
+        encoded=io.BytesIO();bad.save(encoded,format='PNG')
+        frames=[{'base64':base64.b64encode(seed).decode()} for _ in range(9)]
+        frames[-1]={'base64':base64.b64encode(encoded.getvalue()).decode()}
+        with self.assertRaisesRegex(ValueError,'CANVAS_CLIPPING'):
+            save_clip(self.root,'SIT','north',{'last_response':{'images':frames}})
+        clip=read(self.root/'clips/sit-north.json')
+        write(self.root/'frame-reviews.json',{'clips':{'sit-north':{'holdFromFrame':7,
+            'rawFrameSha256':clip['frameSha256'],'reason':'Hide a clipped final frame'}}})
+        with self.assertRaisesRegex(ValueError,'CANVAS_CLIPPING'):
+            package(self.root)
+        self.assertEqual(read(self.root/'quality-audit.json')['clips']['sit-north']['edgeFrames'],[8])
+        self.assertTrue((self.root/'frames/sit-north/08.png').exists())
+        self.assertFalse((self.root/'styled-dog-assets.zip').exists())
+
     def test_all_32_jobs_pass_the_real_journal_and_reuse_on_second_run(self):
         import hashlib
         import json
@@ -165,19 +184,16 @@ class PipelineTest(unittest.TestCase):
                     client.generate(label,'animate-pixminimax',{})
             remote.assert_not_called()
 
-    def test_reviewed_one_shot_holds_native_pose_without_altering_raw_frames(self):
+    def test_frame_hold_cannot_hide_a_known_bad_trailing_pose(self):
         frames = [Image.new('RGBA',(32,32),(i,0,0,255)) for i in range(9)]
         clip = {'label':'sit-north','loop':False,'frameSha256':list(range(9))}
-        review = {'holdFromFrame':7,'rawFrameSha256':list(range(9)),
-                  'reason':'Frame 8 turns toward camera; reviewed seated frame 7 still faces away.'}
-        write(self.root/'frame-reviews.json',{'clips':{'sit-north':review}})
-        selected, indices, _ = reviewed_frames(self.root,clip,frames)
-        self.assertEqual(indices,[0,1,2,3,4,5,6,7,7])
-        self.assertIs(selected[-1],frames[7])
-        self.assertEqual(frames[8].getpixel((0,0)),(8,0,0,255))
-        for change in ({'loop':True},{'frameSha256':['changed']*9}):
-            with self.subTest(change=change), self.assertRaises(ValueError):
-                reviewed_frames(self.root,dict(clip,**change),frames)
+        write(self.root/'frame-reviews.json',{'clips':{'sit-north':{'holdFromFrame':7,
+            'rawFrameSha256':list(range(9)), 'reason':'Frame 8 incorrectly shows the face'}}})
+        before=[f.tobytes() for f in frames]
+        with self.assertRaisesRegex(ValueError,'Frame substitution cannot hide'):
+            reviewed_frames(self.root,clip,frames)
+        self.assertEqual([f.tobytes() for f in frames],before)
+
 
 
 class PaidJournalTest(unittest.TestCase):

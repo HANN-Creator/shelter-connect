@@ -251,7 +251,21 @@ class StyledAssetPostgresTest {
         verify(provider,times(14)).submit(anyBoolean(),any());verify(quality,times(1)).contract(any(),any());
         assertThat(jdbc.queryForObject("SELECT repair_count FROM shelter.styled_asset_steps WHERE job_id=? AND label='walk-north'",Integer.class,id)).isEqualTo(1);
         assertThat(jdbc.queryForObject("SELECT attempt_history::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='walk-north'",String.class,id)).contains("DIRECTION_DRIFT","providerJobId","sha256");
+        var payloads=org.mockito.ArgumentCaptor.forClass(JsonNode.class);
+        verify(provider,times(14)).submit(anyBoolean(),payloads.capture());
+        var repairs=payloads.getAllValues().stream().filter(p->p.at("/quality/attempt").asInt()>0).toList();
+        assertThat(repairs).hasSize(1);
+        assertThat(repairs.getFirst().at("/quality/issues").toString()).isEqualTo("[\"DIRECTION_DRIFT\"]");
+        assertThat(repairs.getFirst().at("/quality/rulesSha256").asText()).matches("[a-f0-9]{64}");
+        assertThat(read(id).at("/qualityPolicy/rulesSha256").asText()).isEqualTo(repairs.getFirst().at("/quality/rulesSha256").asText());
         review(id,false,"APPROVE",200);publicStatus(200);
+    }
+    @Test void aChangedPinnedPolicyStopsBeforeAnyPaidOrVisionCall() throws Exception {
+        UUID id=request();
+        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=jsonb_set(quality_policy,'{rulesSha256}',to_jsonb(CAST(? AS text))) WHERE id=?","0".repeat(64),id);
+        tick();assertThat(read(id).path("failureCode").asText()).isEqualTo("QUALITY_RULES_CHANGED");
+        verifyNoInteractions(provider,quality);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.asset_submissions WHERE job_id=?",Integer.class,id)).isZero();
     }
     @Test void exhaustedRepairBudgetBlocksApprovalAndReplayCannotBuyMoreAttempts() throws Exception {
         when(quality.review(any(),anyList(),anyList(),eq("SIT"),eq("north"))).thenReturn(json.valueToTree(Map.of("passed",false,"issues",List.of("DIRECTION_DRIFT"))));

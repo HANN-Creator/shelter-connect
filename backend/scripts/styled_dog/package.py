@@ -6,6 +6,7 @@ import zipfile
 from PIL import Image, ImageDraw
 from .client import digest, native_image, read, write
 from .pipeline import require_review, verify_inputs
+from .quality import audit_run
 
 
 def sheet_for(frames):
@@ -35,28 +36,20 @@ def gif_for(frames, target, duration, loop):
 
 
 def reviewed_frames(root, clip, frames):
-    """A reviewed one-shot may hold a valid final pose before a bad trailing frame.
-
-    No pixels are painted, scaled or recentered. Raw frames remain in the bundle,
-    and the exact source index of every displayed frame is recorded.
-    """
-    indices = list(range(len(frames)))
+    """A bad trailing frame is a repair case, never a license to hide the raw pose."""
     path = root/'frame-reviews.json'
-    review = read(path).get('clips',{}).get(clip['label']) if path.exists() else None
-    if review:
-        hold = review.get('holdFromFrame')
-        if clip['loop'] or type(hold) is not int or not 1 <= hold < len(frames):
-            raise ValueError('Pose hold is only allowed for a reviewed one-shot end frame')
-        if review.get('rawFrameSha256') != clip['frameSha256'] or not review.get('reason','').strip():
-            raise ValueError('Frame review is missing or stale')
-        indices = [min(i,hold) for i in indices]
-    return [frames[i] for i in indices], indices, review
+    if path.exists() and read(path).get('clips',{}).get(clip['label']):
+        raise ValueError('Frame substitution cannot hide a failed clip; regenerate and recheck all nine frames')
+    return frames, list(range(len(frames))), None
 
 
 def package(root):
     import json
     rules = verify_inputs(root)
     require_review(root)
+    quality = audit_run(root)
+    if quality['status'] != 'STRUCTURAL_PASS':
+        raise ValueError('CANVAS_CLIPPING: inspect quality-audit.json; do not package a failed clip')
     for name in ('sheets','gifs','contact-sheets'):
         (root/name).mkdir(exist_ok=True)
     animations = {}
@@ -108,7 +101,7 @@ def package(root):
         'visualReviewStatus':'PENDING','published':False,'productionApproved':False,
         'totalFrames':len(animations)*9,'newClips':len(animations),'generationsCharged':charged,
         'jobLedger':ledger,'referenceProvenance':read(root/'reference-provenance.json'),
-        'seedReview':read(root/'seed-review.json'),
+        'seedReview':read(root/'seed-review.json'), 'structuralQuality':quality,
         'behaviorBasis':'Action demonstrations; not verified temperament or behavior of this dog.'}
     if (root/'quality-review.json').exists():
         manifest['qualityReview'] = read(root/'quality-review.json')
@@ -145,7 +138,7 @@ def package(root):
         'raw/와 plan/은 요청·응답 감사 기록이므로 공개 묶음에서 제외합니다.\n')
     # Explicit allowlist; never include raw requests, balance, keys, logs or arbitrary files.
     files = ['index.html','manifest.js','manifest.json','README.md','source.json','style-reference.png',
-             'reference-provenance.json','seed-review.json','rules.json','photo-1.png','photo-2.png',
+             'reference-provenance.json','seed-review.json','rules.json','quality-rules.json','quality-audit.json','photo-1.png','photo-2.png',
              'face.png','photo-concept.png','base.png','seed-directions.png','comparison.png','quality-review.json','frame-reviews.json']
     with zipfile.ZipFile(root/'styled-dog-assets.zip','w',zipfile.ZIP_DEFLATED) as z:
         for name in files:

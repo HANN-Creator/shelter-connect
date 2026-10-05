@@ -119,7 +119,8 @@ public class StyledAssetStore {
         jdbc.sql("UPDATE shelter.styled_asset_steps SET status='CHECKING' WHERE job_id=:id AND action<>'BASE'").param("id",id).update();
         return job(id);
     }
-    private Map<String,Object> qualityPolicy(){return Map.of("version",StyledQualityAgent.VERSION,"maxRepairsPerClip",2);}
+    private Map<String,Object> qualityPolicy(){return Map.of("version",StyledQualityAgent.VERSION,"maxRepairsPerClip",2,
+        "rulesRevision",StyledSpriteCodec.qualityRules(json).path("revision").asText(),"rulesSha256",StyledSpriteCodec.qualityRulesSha());}
     private boolean qualityPassed(Job j) {return j.qualityPolicy()==null || j.steps().stream().skip(1).allMatch(s->s.qualityReport()!=null && s.qualityReport().path("passed").asBoolean());}
     @Transactional public Job recover(UUID subject,UUID id,JsonNode body) {
         operator(subject);properties.requireEnabled();lock(id);legacy.valid(id,true);var j=job(id);

@@ -14,7 +14,7 @@
 - `animate-pixminimax`: 방향마다 입력 프레임 + 생성 8프레임 = 9프레임. 기본 전체 계획은 8행동 × 4방향 = 32클립/288프레임. `--actions WALK`로 부분 생성도 가능하지만 전체 완료라고 표시하지 않는다.
 - `IDLE, WALK, RUN, SNIFF, TAIL_WAG, BACK_OFF`는 첫/마지막 프레임 참조를 동일하게 전달. `SIT, LIE_DOWN`은 마지막 자세 유지, 프론트 복귀 시 역순 재생. 뒷모습에서는 눈·주둥이 등이 나오지 않도록 별도 제약.
 - 결과는 native 32×32 RGBA. 블러, 강제 축소, 프레임별 재중앙 정렬 없음. PNG 시트는 원본 픽셀을 보존한다. GIF는 보기용. 고정 렌더 기준점 `(16,30)`, 실제 이동 속도는 프론트가 처리하며 BACK_OFF는 바라보는 방향의 반대 벡터를 제공한다.
-- 앉기/눕기 끝부분에서 고개가 다른 방향으로 돌아가는 등 결함이 있으면, 시각 검토한 정상 마지막 자세를 유지할 수 있다. `frame-reviews.json`에 클립별 `holdFromFrame`, 원본 9장의 `rawFrameSha256`, 이유를 기록해야 하며 반복 동작에는 허용하지 않는다. 원본 파일은 보존하고, 시트의 `sourceFrameIndices`에 사용한 원본 번호를 기록한다. 픽셀을 그리거나 수정하지 않는다.
+- 앉기/눕기 끝부분에서 고개가 돌아가면 불합격 시트를 재생성한다. B-44 이후 새 패키징은 `frame-reviews.json`으로 마지막 프레임을 숨기는 우회를 거절하며 원본 9프레임을 검사한다. 과거 생성된 미리보기 파일은 그대로 보존한다.
 - 사진으로 확인되지 않는 뒷면은 추정이라고 기록. 움직임 라이브러리는 기능 예시이며 사진으로 실제 성격이나 행동을 추정한 것이 아니다.
 
 ## 실행
@@ -29,8 +29,9 @@ python3 scripts/generate_styled_dog.py source --output /absolute/review/run \
 python3 scripts/generate_styled_dog.py prepare --output /absolute/review/run --traits /absolute/traits.json
 python3 scripts/generate_styled_dog.py character --output /absolute/review/run --env-file .env.pixellab --allow-paid-calls
 # 사진·스타일·4방향 PNG를 시각 검토한 후에만 실행
-python3 scripts/generate_styled_dog.py review --output /absolute/review/run --review-note '확인한 귀·무늬·그림체·방향과 남은 한계를 구체적으로 기록'
+python3 scripts/generate_styled_dog.py review --output /absolute/review/run --review-note '확인한 귀·무늬·그림체·방향과 남은 한계를 구체적으로 기록' --tail-carriage LOW
 python3 scripts/generate_styled_dog.py animate --output /absolute/review/run --env-file .env.pixellab --allow-paid-calls
+python3 scripts/generate_styled_dog.py audit --output /absolute/review/run
 python3 scripts/generate_styled_dog.py package --output /absolute/review/run
 ```
 
@@ -59,3 +60,7 @@ Gradle에서도 동일 도구를 호출한다. 예: `./gradlew generateStyledDog
 ## 서버 저장·조회 연결
 
 B-40에서 이 파이프라인을 기존 서버 작업 큐와 비공개 Storage·DB에 연결했다. [생성·검토·저장·프론트 조회 API](persistent-styled-assets.md)를 따른다. CLI는 기존 샘플 비교·명시 실행 도구로 유지한다.
+
+## 재발 방지 하네스
+
+B-44의 [공통 품질 규칙과 회귀 검사](sprite-quality-repair.md)를 함께 적용한다. CLI `review`의 공통 꼬리 값은 사진에서 확인하고, 보이지 않으면 `UNKNOWN`을 명시한다. 기존 규칙·꼬리 검토가 없는 생성 폴더는 새 폴더로 준비하고 검토해야 한다. 구조 검사에서 실패한 원본을 보존하지만 정상 패키지로 만들지 않는다. 실제 Luna 검수·자동 유료 보완은 서버 워커 경로이며, CLI 구조 검사만으로 시각 통과를 선언하지 않는다.

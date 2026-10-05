@@ -49,7 +49,8 @@ public class StyledSpriteCodec {
         try {
             dir=Files.createTempDirectory("styled-sprite-");
             for(String name:List.of("scripts/styled_dog/__init__.py","scripts/styled_dog/client.py","scripts/styled_dog/source.py",
-                "scripts/styled_dog/pipeline.py","scripts/styled_dog/server_bridge.py","asset-styles/cozy32-v1/style.png","asset-styles/cozy32-v1/rules.json")) {
+                "scripts/styled_dog/pipeline.py","scripts/styled_dog/quality.py","scripts/styled_dog/server_bridge.py",
+                "asset-styles/cozy32-v1/style.png","asset-styles/cozy32-v1/rules.json","asset-styles/cozy32-v1/quality-rules.json")) {
                 Path file=dir.resolve(name);Files.createDirectories(file.getParent());
                 try(var in=getClass().getResourceAsStream("/styled-pipeline/"+name)) {
                     if(in==null) throw new IOException("Missing pipeline");Files.copy(in,file);
@@ -114,4 +115,11 @@ public class StyledSpriteCodec {
             return json.readTree(in.readAllBytes());
         } catch(IOException e) { throw new IllegalStateException(e); }
     }
+    static byte[] qualityRulesBytes() {
+        try(var in=StyledSpriteCodec.class.getResourceAsStream("/styled-pipeline/asset-styles/cozy32-v1/quality-rules.json")) {
+            if(in==null)throw new IOException("Missing quality rules");return in.readAllBytes();
+        }catch(IOException e){throw new IllegalStateException(e);}
+    }
+    static JsonNode qualityRules(JsonMapper json) {return json.readTree(qualityRulesBytes());}
+    static String qualityRulesSha() {return sha(qualityRulesBytes());}
 }
