@@ -23,6 +23,40 @@ def dog_frame():
 
 
 class QualityRegressionTest(unittest.TestCase):
+    def test_actual_sit_tail_clipping_is_replayed_through_final_hold(self):
+        fixture=read(Path(__file__).parent/'fixtures/sit-tail-alpha.json')
+        clips={}
+        for name,clip in fixture['clips'].items():
+            frames=[]
+            for rows in clip['frames']:
+                frame=Image.new('RGBA',(32,32))
+                for y,row in enumerate(rows):
+                    for x in range(32):
+                        if int(row,16)&(1<<(31-x)):frame.putpixel((x,y),(70,70,70,255))
+                frames.append(frame)
+            self.assertEqual(len(frames),9)
+            before=[f.tobytes() for f in frames]
+            audit=frame_audit(frames,frames[0],'SIT','west','UNKNOWN')
+            self.assertEqual(audit['edgeFrames'],[3,4,5,6,7,8] if name=='original' else [])
+            self.assertEqual(audit['structuralPassed'],name=='corrected')
+            self.assertTrue(audit['visualReviewRequired'])
+            self.assertEqual(before,[f.tobytes() for f in frames])
+            clips[name]=frames
+        # Reintroduce only the true final frame, not a preview's substituted hold.
+        last_bad=clips['corrected'][:8]+clips['original'][8:]
+        self.assertEqual(frame_audit(last_bad,last_bad[0],'SIT','west','UNKNOWN')['edgeFrames'],[8])
+        with self.assertRaisesRegex(ValueError,'nine frames'):
+            frame_audit(clips['corrected'][:8],clips['corrected'][0],'SIT','west','UNKNOWN')
+
+    def test_sit_tail_prevention_reaches_initial_and_repair_prompts_in_all_directions(self):
+        for direction,tail,attempt in product(load_rules()['directions'],TAILS,[0,1,2]):
+            payload=motion_payload({'seed':0,'motionDescription':'dog','rearDescription':'rear'},load_rules(),
+                'SIT',direction,{}, {'contract':{'tailCarriage':tail},'attempt':attempt,
+                                     'issues':['CANVAS_CLIPPING'] if attempt else []})
+            self.assertIn('Tuck tail beside haunch, complete tip INSIDE frame through final hold',payload['description'])
+            self.assertNotIn('last_frame',payload)
+            if attempt:self.assertIn(load_quality()['corrections']['CANVAS_CLIPPING'],payload['description'])
+
     def test_actual_idle_wags_are_rejected_without_altering_frames_or_other_actions(self):
         fixture=read(Path(__file__).parent/'fixtures/idle-motion-alpha.json')
         expected={'south':[1,2,3,6,7,8],'north':[4,5,6],'west':[1,2,3,4,5,6,7],'east':[2,4,5,6,7]}

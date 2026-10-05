@@ -1,5 +1,5 @@
 {
-  "revision": "sprite-regressions-2026-10-05-v5",
+  "revision": "sprite-regressions-2026-10-05-v6",
   "frontalLowTail": {
     "upperBandPercent": 65,
     "seedTolerancePixels": 1,
@@ -23,7 +23,7 @@
     "SNIFF": "Tuck chin inward, lower nose BETWEEN front paws, sniff, lift head. Never extend muzzle forward.",
     "TAIL_WAG": "Tail alone wags left-right in DOG BODY coordinates, no vertical pumping. Still body/paws. Side view: subtle foreshortening.",
     "BACK_OFF": "Small reverse walking steps IN PLACE, same facing; paws lift upward, centered body.",
-    "SIT": "Fold hind legs inward, lower rump between planted paws. End seated, hold. Locked head orientation; tail close.",
+    "SIT": "Fold hind legs; lower rump between planted paws. End seated, head fixed. Tuck tail beside haunch, complete tip INSIDE frame through final hold; never stretch outward.",
     "LIE_DOWN": "Tuck legs inward, lower chest. End lying, hold. Locked head orientation and close tail."
   },
   "corrections": {
@@ -43,7 +43,8 @@
     "IDLE_MOTION: IDLE is quiet breathing/blinking with planted paws and a stationary tail matching the seed. Reject repeated tail swishing, tail lifting or a new tail appearing above the head. At most one native pixel of breathing is allowed; subtle color changes are acceptable. This restriction does not apply to TAIL_WAG or other actions.",
     "ACTION_MISSING: requested motion absent. IDLE may use subtle breathing only. TAIL_WAG may be occluded or foreshortened; do not require an invented raised tail.",
     "DISCONTINUITY: large pose, position or scale jump between neighbors. SIT ends seated and holds; WALK is an in-place gait.",
-    "Canvas clipping is checked separately from original alpha pixels. Never infer cropping from the contact sheet grid."
+    "Canvas clipping is checked separately from original alpha pixels. Never infer cropping from the contact sheet grid.",
+    "SIT: inspect the tail through descent AND the final seated hold. Keep the approved anatomy tucked beside the haunch. A missing or bluntly amputated tip is IDENTITY_DRIFT even when the remaining pixels clear the border. Never fix a tail by shrinking the whole dog or replacing seated frames with a standing pose."
   ],
   "regressions": [
     {
@@ -125,6 +126,15 @@
       "check": "recorded-idle",
       "fixture": "idle-motion-alpha.json",
       "expected": "Replay all nine original frames in all four directions. Reject large silhouette excursions even when vision reports no issues; retain original defects. Never slow the entire clip or drop frames to hide wagging. A tail-only fix must not conceal remaining body motion findings."
+    },
+    {
+      "id": "actual-sit-left-tail-clipped-through-hold",
+      "action": "SIT",
+      "direction": "west",
+      "issue": "CANVAS_CLIPPING",
+      "check": "recorded-sit",
+      "fixture": "sit-tail-alpha.json",
+      "expected": "Original frames 3–8 touch the right edge; reject all six including final hold frame 8, even after a vision pass. Reviewed local tail-only repair clears the border while preserving body pixels and all nine frames. The dog-specific mask is not a generic automatic repair; future generation must tuck the full tail beside the seated haunch."
     }
   ],
   "tailEdit": {
