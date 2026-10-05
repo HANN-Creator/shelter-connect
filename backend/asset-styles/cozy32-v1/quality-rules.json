@@ -1,6 +1,10 @@
 {
-  "revision": "sprite-regressions-2026-10-05-v2",
-  "frontalLowTail": {"upperBandPercent": 65, "seedTolerancePixels": 1, "minimumNewPixels": 3},
+  "revision": "sprite-regressions-2026-10-05-v3",
+  "frontalLowTail": {
+    "upperBandPercent": 65,
+    "seedTolerancePixels": 1,
+    "minimumNewPixels": 3
+  },
   "frontalLowTailPrompt": "Tail stays BELOW the rump: hidden or beside HIND PAWS in front view, never by shoulders/head. Still body/head.",
   "seedMargin": "Leave TWO clear pixels on all four canvas edges for animation; keep the silhouette compact and centered.",
   "commonMotion": "Keep all pixels inside 32x32 with one clear pixel at ALL edges. Small inward motion. Fixed camera, size, position, markings and crisp palette. No props or text.",
@@ -91,6 +95,22 @@
       "issue": "DIRECTION_DRIFT",
       "check": "vision",
       "expected": "Reject visible eyes/muzzle in final frame 8; do not delete that frame"
+    },
+    {
+      "id": "actual-tail-edit-recurrence",
+      "action": "TAIL_WAG",
+      "direction": "east",
+      "issue": "CANVAS_CLIPPING",
+      "check": "recorded-alpha",
+      "fixture": "tail-repair-alpha.json",
+      "expected": "Reject the whole edited strip before masking or replacing frame 0. Recorded edit has edge contact on all nine frames; frames 1, 5, 8 also contain detached pixels. Reuse only a separately reviewed passing opposite-side tail, preserving the target body."
     }
-  ]
+  ],
+  "tailEdit": {
+    "common": "Repair ONLY this dog tail-wag animation. Preserve its exact face, ears, coat, body, feet, size and direction. Redraw a COMPLETE short gently curved DOWNWARD tail attached to the rump, with full dark outline and tip visible in EVERY frame. Small sideways wag below the rump, never horizontal or above the back. Tuck the tip toward the hind paws and body. ONE transparent pixel at ALL edges in every frame. Native 32x32, transparent, no resizing, blur, scenery or detached pixels. Fixed body/camera. Smooth cyclic tail motion.",
+    "south": "Front: tail stays behind the hind legs, only a tiny low tip at ankle height may show. Never attach a tail to neck or chest.",
+    "north": "Rear: tail stays below the rump and wags sideways close to the hind legs. Face stays hidden.",
+    "west": "The tail is on the right. Keep its entire curve inside the frame close to the rear leg.",
+    "east": "The tail is on the left. Keep its entire curve inside the frame close to the rear leg."
+  }
 }
