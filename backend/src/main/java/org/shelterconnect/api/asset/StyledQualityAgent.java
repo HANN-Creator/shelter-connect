@@ -16,7 +16,7 @@ import tools.jackson.databind.json.JsonMapper;
 @Component
 public class StyledQualityAgent {
     public static final String VERSION="sprite-quality-v1";
-    static final Set<String> ISSUES=Set.of("DIRECTION_DRIFT","TAIL_CARRIAGE","IDENTITY_DRIFT","ACTION_MISSING","DISCONTINUITY");
+    static final Set<String> ISSUES=Set.of("DIRECTION_DRIFT","TAIL_CARRIAGE","IDENTITY_DRIFT","ACTION_MISSING","DISCONTINUITY","IDLE_MOTION");
     static final Set<String> TAILS=Set.of("LOW","LEVEL","HIGH","CURLED","UNKNOWN");
     private final OpenAiResponsesClient client;private final AiProperties properties;private final JsonMapper json;
     public StyledQualityAgent(OpenAiResponsesClient client,AiProperties properties,JsonMapper json) {this.client=client;this.properties=properties;this.json=json;}
@@ -33,7 +33,8 @@ public class StyledQualityAgent {
         return json.valueToTree(Map.of("tailCarriage",r.path("tailCarriage").asText(),"evidence",r.path("evidence").asText(),"model",properties.model(),"version",VERSION));
     }
     public JsonNode review(JsonNode contract,List<byte[]> seeds,List<byte[]> frames,String action,String direction) {
-        var schema=object(Map.of("issues",Map.of("type","array","maxItems",5,"items",Map.of("type","string","enum",ISSUES.stream().sorted().toList())),
+        var allowedIssues=new TreeSet<>(ISSUES);if(!action.equals("IDLE"))allowedIssues.remove("IDLE_MOTION");
+        var schema=object(Map.of("issues",Map.of("type","array","maxItems",allowedIssues.size(),"items",Map.of("type","string","enum",allowedIssues)),
             "frames",Map.of("type","array","maxItems",9,"items",Map.of("type","integer","minimum",0,"maximum",8)),
             "note",Map.of("type","string","maxLength",400)));
         String task="Top row: approved seeds SOUTH, NORTH, WEST, EAST. Remaining rows: current clip frames 0–8 in reading order. "
@@ -44,10 +45,10 @@ public class StyledQualityAgent {
             +"Report only clear visible defects. Report frame numbers 0–8. No issues means an empty array. "
             +String.join(" ",rules.path("reviewInstructions").valueStream().map(JsonNode::asText).toList());
         JsonNode r=call(instructions,task,board(seeds,frames),schema);
-        if(!r.path("issues").isArray() || r.path("issues").size()>5 || !r.path("frames").isArray() || r.path("frames").size()>9
+        if(!r.path("issues").isArray() || r.path("issues").size()>allowedIssues.size() || !r.path("frames").isArray() || r.path("frames").size()>9
             || !r.path("note").isString() || r.path("note").asText().length()>400)throw invalid();
         var issues=new TreeSet<String>();
-        for(var n:r.path("issues")) {if(!n.isString() || !ISSUES.contains(n.asText()))throw invalid();issues.add(n.asText());}
+        for(var n:r.path("issues")) {if(!n.isString() || !allowedIssues.contains(n.asText()))throw invalid();issues.add(n.asText());}
         for(var n:r.path("frames"))if(!n.isIntegralNumber() || n.asInt()<0 || n.asInt()>8)throw invalid();
         var edges=new ArrayList<Integer>();
         for(int i=0;i<frames.size();i++)if(touchesEdge(StyledSpriteCodec.nativeFrame(frames.get(i))))edges.add(i);
@@ -57,12 +58,39 @@ public class StyledQualityAgent {
         var detached=new ArrayList<Integer>();
         if(action.equals("TAIL_WAG"))for(int i=0;i<frames.size();i++)if(detachedPixels(StyledSpriteCodec.nativeFrame(frames.get(i))))detached.add(i);
         if(!detached.isEmpty())issues.add("DETACHED_PIXELS");
+        int directionIndex=List.of("south","north","west","east").indexOf(direction);
+        if(directionIndex<0)throw invalid();
+        var idle=idleMotionFrames(seeds.get(directionIndex),frames,action,rules.path("idleMotion"));
+        if(!idle.isEmpty())issues.add("IDLE_MOTION");
         JsonNode result=json.valueToTree(Map.of("version",VERSION,"passed",issues.isEmpty(),"issues",issues,"frames",r.path("frames"),
             "edgeFrames",edges,"note",r.path("note").asText(),"model",properties.model(),"reviewedAt",Instant.now(),
             "rulesRevision",rules.path("revision").asText(),"rulesSha256",StyledSpriteCodec.qualityRulesSha()));
         ((tools.jackson.databind.node.ObjectNode)result).set("silhouetteFrames",json.valueToTree(upper));
         ((tools.jackson.databind.node.ObjectNode)result).set("detachedFrames",json.valueToTree(detached));
+        ((tools.jackson.databind.node.ObjectNode)result).set("idleMotionFrames",json.valueToTree(idle));
         return result;
+    }
+    static List<Integer> idleMotionFrames(byte[] approved,List<byte[]> frames,String action,JsonNode rules) {
+        if(!action.equals("IDLE"))return List.of();
+        var seed=StyledSpriteCodec.nativeFrame(approved);
+        int radius=rules.path("seedTolerancePixels").asInt(),minimum=rules.path("minimumChangedPixels").asInt();
+        var result=new ArrayList<Integer>();
+        for(int i=0;i<frames.size();i++) {
+            var frame=StyledSpriteCodec.nativeFrame(frames.get(i));int changed=0;
+            for(int y=0;y<32;y++)for(int x=0;x<32;x++) {
+                boolean added=(frame.getRGB(x,y)>>>24)!=0 && !nearOpaque(seed,x,y,radius);
+                boolean removed=(seed.getRGB(x,y)>>>24)!=0 && !nearOpaque(frame,x,y,radius);
+                if(added || removed)changed++;
+            }
+            if(changed>=minimum)result.add(i);
+        }
+        return result;
+    }
+    static boolean nearOpaque(BufferedImage image,int x,int y,int radius) {
+        for(int sy=Math.max(0,y-radius);sy<=Math.min(31,y+radius);sy++)
+            for(int sx=Math.max(0,x-radius);sx<=Math.min(31,x+radius);sx++)
+                if((image.getRGB(sx,sy)>>>24)!=0)return true;
+        return false;
     }
     static List<Integer> frontalTailFrames(byte[] approved,List<byte[]> frames,String action,String direction,String tail,JsonNode rules) {
         if(!action.equals("TAIL_WAG") || !direction.equals("south") || !tail.equals("LOW"))return List.of();
