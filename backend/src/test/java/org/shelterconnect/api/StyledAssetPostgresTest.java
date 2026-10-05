@@ -260,6 +260,31 @@ class StyledAssetPostgresTest {
         assertThat(read(id).at("/qualityPolicy/rulesSha256").asText()).isEqualTo(repairs.getFirst().at("/quality/rulesSha256").asText());
         review(id,false,"APPROVE",200);publicStatus(200);
     }
+    @Test void excessiveIdleMotionUsesBoundedRepairAndRetainsTheOriginalVerdict() throws Exception {
+        var calls=new java.util.concurrent.atomic.AtomicInteger();
+        var generated=new java.util.concurrent.atomic.AtomicInteger();
+        when(provider.poll(any(),eq(false))).thenAnswer(c->{
+            var changed=ImageIO.read(new ByteArrayInputStream(png));changed.setRGB(12,12,0xffa07800|generated.incrementAndGet());
+            var out=new ByteArrayOutputStream();ImageIO.write(changed,"png",out);
+            var frames=new ArrayList<>(Collections.nCopies(9,Base64.getEncoder().encodeToString(out.toByteArray())));frames.set(0,Base64.getEncoder().encodeToString(png));
+            return json.valueToTree(Map.of("status","COMPLETED","frames",frames));
+        });
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("west"))).thenAnswer(c->json.valueToTree(Map.of(
+            "passed",calls.incrementAndGet()>1,"issues",calls.get()==1?List.of("IDLE_MOTION"):List.of())));
+        UUID id=request();tick();tick();review(id,true,"APPROVE",200);finish(id);
+        assertThat(read(id).path("status").asText()).isEqualTo("REVIEW");
+        verify(provider,times(14)).submit(anyBoolean(),any());verify(quality,times(1)).contract(any(),any());
+        assertThat(jdbc.queryForObject("SELECT repair_count FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-west'",Integer.class,id)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT attempt_history::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-west'",String.class,id)).contains("IDLE_MOTION","providerJobId","sha256");
+        var payloads=org.mockito.ArgumentCaptor.forClass(JsonNode.class);
+        verify(provider,times(14)).submit(anyBoolean(),payloads.capture());
+        var repairs=payloads.getAllValues().stream().filter(p->p.at("/quality/attempt").asInt()>0).toList();
+        assertThat(repairs).hasSize(1);
+        assertThat(repairs.getFirst().at("/quality/issues").toString()).isEqualTo("[\"IDLE_MOTION\"]");
+        assertThat(repairs.getFirst().at("/quality/rulesSha256").asText()).matches("[a-f0-9]{64}");
+        assertThat(read(id).at("/qualityPolicy/rulesSha256").asText()).isEqualTo(repairs.getFirst().at("/quality/rulesSha256").asText());
+        review(id,false,"APPROVE",200);publicStatus(200);
+    }
     @Test void aChangedPinnedPolicyStopsBeforeAnyPaidOrVisionCall() throws Exception {
         UUID id=request();
         jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=jsonb_set(quality_policy,'{rulesSha256}',to_jsonb(CAST(? AS text))) WHERE id=?","0".repeat(64),id);

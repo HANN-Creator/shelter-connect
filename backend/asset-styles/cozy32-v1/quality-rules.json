@@ -1,5 +1,5 @@
 {
-  "revision": "sprite-regressions-2026-10-05-v4",
+  "revision": "sprite-regressions-2026-10-05-v5",
   "frontalLowTail": {
     "upperBandPercent": 65,
     "seedTolerancePixels": 1,
@@ -17,7 +17,7 @@
     "UNKNOWN": "Keep approved tail anatomy; never invent a curl or raised tail. Hidden parts may remain hidden."
   },
   "actions": {
-    "IDLE": "Subtle breathing and blink; planted feet and still tail.",
+    "IDLE": "Quiet breath/blink only, at most 1px. Fixed tail and planted paws; NO wag cycle. Hidden tail stays hidden.",
     "WALK": "Slow four-legged walk IN PLACE. Small alternating steps, paws lift above the planted baseline, never below.",
     "RUN": "Compact four-legged run IN PLACE, short coordinated strides above the planted paw baseline.",
     "SNIFF": "Tuck chin inward, lower nose BETWEEN front paws, sniff, lift head. Never extend muzzle forward.",
@@ -29,17 +29,19 @@
   "corrections": {
     "CANVAS_CLIPPING": "Reduce outward reach; tuck tail/muzzle/paws away from ALL edges.",
     "DIRECTION_DRIFT": "Lock head facing through the final frame; rear face stays hidden.",
-    "TAIL_CARRIAGE": "Fix tail height to the shared carriage; wag sideways, not upward.",
-    "IDENTITY_DRIFT": "Restore approved ears, muzzle, markings and proportions.",
-    "ACTION_MISSING": "Show readable requested motion within the safe silhouette.",
-    "DISCONTINUITY": "Smooth neighboring poses; remove scale/position jumps.",
-    "DETACHED_PIXELS": "No detached pixels; keep tail connected."
+    "TAIL_CARRIAGE": "Restore shared tail height; never pump it vertically.",
+    "IDENTITY_DRIFT": "Restore approved coat, ears, muzzle and proportions.",
+    "ACTION_MISSING": "Show requested motion inside the safe silhouette.",
+    "DISCONTINUITY": "Smooth poses; no scale/position jumps.",
+    "DETACHED_PIXELS": "No detached pixels; keep tail connected.",
+    "IDLE_MOTION": "IDLE: fix tail to seed; only tiny breath/blink."
   },
   "reviewInstructions": [
     "DIRECTION_DRIFT: a different facing direction, including a north SIT final frame showing eyes or muzzle. North hides the face through the final hold.",
-    "TAIL_CARRIAGE: tail contradicts the shared carriage; LOW must stay below rump/back. A front low tail may be occluded; side-view wagging is subtle foreshortening. Wag along the dog's lateral body axis, not up/down.",
+    "TAIL_CARRIAGE: tail contradicts shared carriage; LOW stays below rump/back. A front low tail may be occluded. For TAIL_WAG only, wag along the dog lateral body axis, not up/down; side-view motion is subtle foreshortening.",
     "IDENTITY_DRIFT: changed coat, ears, face or unexplained body proportions. Expected sitting/lying posture changes are acceptable.",
-    "ACTION_MISSING: requested motion absent. Subtle IDLE breathing and occluded or foreshortened tail motion are acceptable; do not require an invented raised tail.",
+    "IDLE_MOTION: IDLE is quiet breathing/blinking with planted paws and a stationary tail matching the seed. Reject repeated tail swishing, tail lifting or a new tail appearing above the head. At most one native pixel of breathing is allowed; subtle color changes are acceptable. This restriction does not apply to TAIL_WAG or other actions.",
+    "ACTION_MISSING: requested motion absent. IDLE may use subtle breathing only. TAIL_WAG may be occluded or foreshortened; do not require an invented raised tail.",
     "DISCONTINUITY: large pose, position or scale jump between neighbors. SIT ends seated and holds; WALK is an in-place gait.",
     "Canvas clipping is checked separately from original alpha pixels. Never infer cropping from the contact sheet grid."
   ],
@@ -114,6 +116,15 @@
       "check": "recorded-alpha",
       "fixture": "tail-repair-alpha.json",
       "expected": "Server combines raw edit and restored seed/palette verdicts; raw frame 0 failure blocks final approval. Rechecking retains the raw edit hash."
+    },
+    {
+      "id": "idle-becomes-tail-wag",
+      "action": "IDLE",
+      "direction": "west",
+      "issue": "IDLE_MOTION",
+      "check": "recorded-idle",
+      "fixture": "idle-motion-alpha.json",
+      "expected": "Replay all nine original frames in all four directions. Reject large silhouette excursions even when vision reports no issues; retain original defects. Never slow the entire clip or drop frames to hide wagging. A tail-only fix must not conceal remaining body motion findings."
     }
   ],
   "tailEdit": {
@@ -129,5 +140,16 @@
     "repairAttempt": 2,
     "maxEditRequestsPerClip": 1,
     "rawAndRestoredReviewRequired": true
+  },
+  "idleMotion": {
+    "seedTolerancePixels": 1,
+    "minimumChangedPixels": 3
+  },
+  "idleTailCarriage": {
+    "LOW": "Keep the low seed tail still below rump; hidden in front or beside hind paws.",
+    "LEVEL": "Keep the level seed tail fixed at rump height.",
+    "HIGH": "Keep the raised seed tail fixed at its approved height.",
+    "CURLED": "Keep the seed tail curl and position fixed.",
+    "UNKNOWN": "Keep seed tail shape and position fixed. If hidden, keep hidden; never add a tail above the head."
   }
 }

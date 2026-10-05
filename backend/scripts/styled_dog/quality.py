@@ -31,6 +31,10 @@ def motion_guidance(action, direction, quality):
     if quality.get('rulesSha256') and quality['rulesSha256'] != digest(POLICY):
         raise ValueError('Quality rules changed; do not silently resume paid generation')
     tail_prompt = rules['frontalLowTailPrompt'] if (action,direction,tail)==('TAIL_WAG','south','LOW') else rules['tailCarriage'][tail]
+    if action == 'IDLE':
+        tail_prompt = rules['idleTailCarriage'][tail]
+    elif 'IDLE_MOTION' in issues:
+        raise ValueError('IDLE motion correction is only valid for IDLE')
     parts = [rules['actions'][action], tail_prompt, rules['commonMotion'],
              'Remain '+direction+' facing in ALL frames including the final hold.']
     if direction == 'north':
@@ -81,6 +85,31 @@ def components(frame):
     return sorted(sizes, reverse=True)
 
 
+def idle_motion_frames(frames, seed, action):
+    """Bound quiet IDLE silhouette motion, without guessing where a dog's tail is.
+
+    Both extension and retraction are checked against the approved pose. Blinks,
+    color-only breathing and one-pixel outline motion are allowed. This cannot
+    identify a wag contained entirely inside the body; vision checks that too.
+    """
+    if action != 'IDLE':
+        return []
+    rules = load_quality()['idleMotion']
+    radius = rules['seedTolerancePixels']
+    original = seed.getchannel('A').point(lambda value: 255 if value else 0)
+    allowed = original.filter(ImageFilter.MaxFilter(2 * radius + 1))
+    failed = []
+    for i, frame in enumerate(frames):
+        alpha = frame.getchannel('A').point(lambda value: 255 if value else 0)
+        expanded = alpha.filter(ImageFilter.MaxFilter(2 * radius + 1))
+        changed = sum(bool(alpha.getpixel((x, y))) and not allowed.getpixel((x, y))
+                      or bool(original.getpixel((x, y))) and not expanded.getpixel((x, y))
+                      for y in range(32) for x in range(32))
+        if changed >= rules['minimumChangedPixels']:
+            failed.append(i)
+    return failed
+
+
 
 def frame_audit(frames, seed, action=None, direction=None, tail=None):
     if len(frames) != 9 or frames[0].tobytes() != seed.tobytes():
@@ -95,10 +124,11 @@ def frame_audit(frames, seed, action=None, direction=None, tail=None):
         if box[0] == 0 or box[1] == 0 or box[2] == 32 or box[3] == 32:
             edges.append(i)
     upper=frontal_tail_frames(frames,seed,action,direction,tail)
+    idle=idle_motion_frames(frames,seed,action)
     detached=[i for i,frame in enumerate(frames) if len(components(frame))!=1] if action=='TAIL_WAG' else []
-    issues=(['CANVAS_CLIPPING'] if edges else [])+(['TAIL_CARRIAGE'] if upper else [])+(['DETACHED_PIXELS'] if detached else [])
+    issues=(['CANVAS_CLIPPING'] if edges else [])+(['TAIL_CARRIAGE'] if upper else [])+(['DETACHED_PIXELS'] if detached else [])+(['IDLE_MOTION'] if idle else [])
     return {'structuralPassed':not issues, 'issues':issues, 'silhouetteFrames':upper,
-            'edgeFrames':edges, 'detachedFrames':detached, 'visualReviewRequired':True, 'qualityRules':quality_binding()}
+            'idleMotionFrames':idle, 'edgeFrames':edges, 'detachedFrames':detached, 'visualReviewRequired':True, 'qualityRules':quality_binding()}
 
 
 def audit_run(root):

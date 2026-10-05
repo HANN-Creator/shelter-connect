@@ -13,6 +13,45 @@ class StyledQualityAgentTest {
     final JsonMapper json=JsonMapper.builder().build();
     final OpenAiResponsesClient client=mock(OpenAiResponsesClient.class);
     final StyledQualityAgent agent=new StyledQualityAgent(client,new AiProperties(true,"test-key","gpt-5.6-luna",30),json);
+    @Test void realIdleDefectsOverrideVisionPassAndUseTheCorrectDirectionSeed()throws Exception {
+        var fixture=json.readTree(java.nio.file.Files.readString(java.nio.file.Path.of("scripts/fixtures/idle-motion-alpha.json")));
+        var expected=Map.of("south",List.of(1,2,3,6,7,8),"north",List.of(4,5,6),"west",List.of(1,2,3,4,5,6,7),"east",List.of(2,4,5,6,7));
+        when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(json.readTree("{\"issues\":[],\"frames\":[],\"note\":\"Recorded AI pass, deterministic gate must override\"}"));
+        var directions=List.of("south","north","west","east");var clips=new LinkedHashMap<String,List<byte[]>>();
+        for(String direction:directions) {
+            var frames=new ArrayList<byte[]>();
+            for(var rows:fixture.path("clips").path(direction).path("frames")) {
+                var frame=new BufferedImage(32,32,BufferedImage.TYPE_INT_ARGB);
+                for(int y=0;y<32;y++)for(int x=0;x<32;x++)
+                    if((Long.parseLong(rows.get(y).asText(),16)&(1L<<(31-x)))!=0)frame.setRGB(x,y,0xff464646);
+                var out=new ByteArrayOutputStream();ImageIO.write(frame,"png",out);frames.add(out.toByteArray());
+            }
+            clips.put(direction,frames);
+        }
+        var seeds=directions.stream().map(d->clips.get(d).getFirst()).toList();
+        for(String direction:directions) {
+            var frames=clips.get(direction);var hashes=frames.stream().map(StyledSpriteCodec::sha).toList();
+            var report=agent.review(json.readTree("{\"tailCarriage\":\"UNKNOWN\"}"),seeds,frames,"IDLE",direction);
+            assertThat(report.path("passed").asBoolean()).isFalse();
+            assertThat(report.path("issues").toString()).contains("IDLE_MOTION");
+            assertThat(report.path("idleMotionFrames")).isEqualTo(json.valueToTree(expected.get(direction)));
+            assertThat(StyledQualityAgent.idleMotionFrames(seeds.get(directions.indexOf(direction)),frames,"TAIL_WAG",StyledSpriteCodec.qualityRules(json).path("idleMotion"))).isEmpty();
+            assertThat(frames.stream().map(StyledSpriteCodec::sha).toList()).isEqualTo(hashes);
+        }
+    }
+    @Test void idleVisionCanRejectMotionInsideTheSilhouetteButCannotFreezeWalking()throws Exception {
+        when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(json.readTree("{\"issues\":[\"IDLE_MOTION\"],\"frames\":[2,3],\"note\":\"Tail swishes inside body silhouette\"}"));
+        var seed=png(false);var frames=Collections.nCopies(9,seed);
+        var report=agent.review(json.readTree("{\"tailCarriage\":\"UNKNOWN\"}"),Collections.nCopies(4,seed),frames,"IDLE","north");
+        assertThat(report.path("passed").asBoolean()).isFalse();assertThat(report.path("idleMotionFrames").isEmpty()).isTrue();
+        assertThatThrownBy(()->agent.review(json.readTree("{\"tailCarriage\":\"UNKNOWN\"}"),Collections.nCopies(4,seed),frames,"WALK","north")).hasMessage("QUALITY_RESPONSE_INVALID");
+    }
+    @Test void onePixelIdleBreathingIsAllowed()throws Exception {
+        var seed=StyledSpriteCodec.nativeFrame(silhouette(-1));var shifted=new BufferedImage(32,32,BufferedImage.TYPE_INT_ARGB);
+        var g=shifted.createGraphics();g.drawImage(seed,0,-1,null);g.dispose();var out=new ByteArrayOutputStream();ImageIO.write(shifted,"png",out);
+        var frames=new ArrayList<>(Collections.nCopies(9,silhouette(-1)));frames.set(4,out.toByteArray());
+        assertThat(StyledQualityAgent.idleMotionFrames(silhouette(-1),frames,"IDLE",StyledSpriteCodec.qualityRules(json).path("idleMotion"))).isEmpty();
+    }
     byte[] silhouette(int extensionY)throws Exception{
         var im=new BufferedImage(32,32,BufferedImage.TYPE_INT_ARGB);
         var g=im.createGraphics();g.setColor(new java.awt.Color(138,87,55));

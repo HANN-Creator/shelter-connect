@@ -9,7 +9,7 @@ import unittest
 from PIL import Image, ImageDraw
 from styled_dog.client import digest, read, write
 from styled_dog.pipeline import load_rules, motion_payload, record_review
-from styled_dog.quality import load_quality, quality_binding, frame_audit, audit_run, TAILS
+from styled_dog.quality import load_quality, quality_binding, frame_audit, audit_run, idle_motion_frames, TAILS
 
 
 def dog_frame():
@@ -23,6 +23,43 @@ def dog_frame():
 
 
 class QualityRegressionTest(unittest.TestCase):
+    def test_actual_idle_wags_are_rejected_without_altering_frames_or_other_actions(self):
+        fixture=read(Path(__file__).parent/'fixtures/idle-motion-alpha.json')
+        expected={'south':[1,2,3,6,7,8],'north':[4,5,6],'west':[1,2,3,4,5,6,7],'east':[2,4,5,6,7]}
+        for direction,clip in fixture['clips'].items():
+            frames=[]
+            for rows in clip['frames']:
+                frame=Image.new('RGBA',(32,32))
+                for y,row in enumerate(rows):
+                    for x in range(32):
+                        if int(row,16)&(1<<(31-x)):frame.putpixel((x,y),(70,70,70,255))
+                frames.append(frame)
+            before=[frame.tobytes() for frame in frames]
+            report=frame_audit(frames,frames[0],'IDLE',direction,'UNKNOWN')
+            self.assertEqual(report['idleMotionFrames'],expected[direction])
+            self.assertIn('IDLE_MOTION',report['issues'])
+            self.assertEqual(idle_motion_frames(frames,frames[0],'TAIL_WAG'),[])
+            self.assertEqual(before,[frame.tobytes() for frame in frames])
+
+    def test_idle_allows_one_pixel_breath_blink_and_rejects_tail_retraction(self):
+        seed=dog_frame();shift=Image.new('RGBA',(32,32));shift.paste(seed,(0,-1))
+        blink=seed.copy();blink.putpixel((15,12),(0,0,0,255))
+        self.assertEqual(idle_motion_frames([seed,shift,blink]+[seed]*6,seed,'IDLE'),[])
+        tail=seed.copy();ImageDraw.Draw(tail).rectangle((25,16,29,18),fill='#8a5737')
+        self.assertEqual(idle_motion_frames([tail]+[seed]*8,tail,'IDLE'),list(range(1,9)))
+
+    def test_idle_never_inherits_wag_instructions_from_tail_carriage(self):
+        for tail,direction in product(TAILS,load_rules()['directions']):
+            prompt=motion_payload({'seed':0,'motionDescription':'dog','rearDescription':'rear'},load_rules(),
+                                  'IDLE',direction,{}, {'contract':{'tailCarriage':tail},'issues':['IDLE_MOTION','TAIL_CARRIAGE']})['description']
+            self.assertIn('NO wag cycle',prompt)
+            self.assertIn(load_quality()['idleTailCarriage'][tail],prompt)
+            self.assertNotIn('wag laterally',prompt)
+            self.assertNotIn('wag sideways',prompt)
+        with self.assertRaisesRegex(ValueError,'only valid for IDLE'):
+            motion_payload({'seed':0,'motionDescription':'dog','rearDescription':'rear'},load_rules(),
+                           'TAIL_WAG','west',{}, {'contract':{'tailCarriage':'LOW'},'issues':['IDLE_MOTION']})
+
     def test_front_low_wag_rejects_upper_appendage_without_vision_and_keeps_lower_wag(self):
         seed=dog_frame();frames=[seed.copy() for _ in range(9)]
         ImageDraw.Draw(frames[4]).rectangle((3,12,8,14),fill='#bf8c51')
@@ -65,6 +102,7 @@ class QualityRegressionTest(unittest.TestCase):
         traits={'seed':10,'motionDescription':'tan dog','rearDescription':'tan dog rear'}
         first={'base64':'offline-placeholder'}
         for action,direction,tail,attempt,failed in product(rules['actions'],rules['directions'],TAILS,[0,2],[[],issues]):
+            failed = [issue for issue in failed if action == 'IDLE' or issue != 'IDLE_MOTION']
             with self.subTest(action=action,direction=direction,tail=tail,attempt=attempt,failed=failed):
                 p=motion_payload(traits,rules,action,direction,first,{'contract':{'tailCarriage':tail},
                     'attempt':attempt,'issues':failed,'rulesSha256':quality_binding()['sha256']})
