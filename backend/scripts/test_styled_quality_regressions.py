@@ -23,6 +23,22 @@ def dog_frame():
 
 
 class QualityRegressionTest(unittest.TestCase):
+    def test_front_low_wag_rejects_upper_appendage_without_vision_and_keeps_lower_wag(self):
+        seed=dog_frame();frames=[seed.copy() for _ in range(9)]
+        ImageDraw.Draw(frames[4]).rectangle((3,12,8,14),fill='#bf8c51')
+        before=[f.tobytes() for f in frames]
+        result=frame_audit(frames,seed,'TAIL_WAG','south','LOW')
+        self.assertEqual(result['issues'],['TAIL_CARRIAGE'])
+        self.assertEqual(result['silhouetteFrames'],[4])
+        self.assertEqual(before,[f.tobytes() for f in frames])
+        for action,direction,tail in [('SNIFF','south','LOW'),('TAIL_WAG','north','LOW'),
+                                      ('TAIL_WAG','south','HIGH'),('TAIL_WAG','south','UNKNOWN')]:
+            self.assertTrue(frame_audit(frames,seed,action,direction,tail)['structuralPassed'])
+        normal=[seed.copy() for _ in range(9)]
+        ImageDraw.Draw(normal[4]).rectangle((3,25,8,26),fill='#bf8c51')
+        normal[5].putpixel((6,17),(1,2,3,255)) # tolerated one-pixel outline motion
+        self.assertTrue(frame_audit(normal,seed,'TAIL_WAG','south','LOW')['structuralPassed'])
+
     def test_known_border_defects_are_rejected_but_one_pixel_inset_is_preserved(self):
         rules=load_quality();seed=dog_frame()
         cases=[c for c in rules['regressions'] if c['check']=='alpha']

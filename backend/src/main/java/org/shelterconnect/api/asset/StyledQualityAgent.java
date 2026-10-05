@@ -52,9 +52,34 @@ public class StyledQualityAgent {
         var edges=new ArrayList<Integer>();
         for(int i=0;i<frames.size();i++)if(touchesEdge(StyledSpriteCodec.nativeFrame(frames.get(i))))edges.add(i);
         if(!edges.isEmpty())issues.add("CANVAS_CLIPPING");
-        return json.valueToTree(Map.of("version",VERSION,"passed",issues.isEmpty(),"issues",issues,"frames",r.path("frames"),
+        var upper=frontalTailFrames(seeds.getFirst(),frames,action,direction,contract.path("tailCarriage").asText(),rules.path("frontalLowTail"));
+        if(!upper.isEmpty())issues.add("TAIL_CARRIAGE");
+        JsonNode result=json.valueToTree(Map.of("version",VERSION,"passed",issues.isEmpty(),"issues",issues,"frames",r.path("frames"),
             "edgeFrames",edges,"note",r.path("note").asText(),"model",properties.model(),"reviewedAt",Instant.now(),
             "rulesRevision",rules.path("revision").asText(),"rulesSha256",StyledSpriteCodec.qualityRulesSha()));
+        ((tools.jackson.databind.node.ObjectNode)result).set("silhouetteFrames",json.valueToTree(upper));
+        return result;
+    }
+    static List<Integer> frontalTailFrames(byte[] approved,List<byte[]> frames,String action,String direction,String tail,JsonNode rules) {
+        if(!action.equals("TAIL_WAG") || !direction.equals("south") || !tail.equals("LOW"))return List.of();
+        var seed=StyledSpriteCodec.nativeFrame(approved);int top=32,bottom=0;
+        for(int y=0;y<32;y++)for(int x=0;x<32;x++)if((seed.getRGB(x,y)>>>24)!=0){top=Math.min(top,y);bottom=Math.max(bottom,y+1);}
+        if(top==32)throw invalid();
+        int cutoff=top+(bottom-top)*rules.path("upperBandPercent").asInt()/100;
+        int radius=rules.path("seedTolerancePixels").asInt(),minimum=rules.path("minimumNewPixels").asInt();
+        var result=new ArrayList<Integer>();
+        for(int i=0;i<frames.size();i++){
+            var frame=StyledSpriteCodec.nativeFrame(frames.get(i));int added=0;
+            for(int y=0;y<cutoff;y++)for(int x=0;x<32;x++)if((frame.getRGB(x,y)>>>24)!=0){
+                boolean allowed=false;
+                for(int sy=Math.max(0,y-radius);sy<=Math.min(31,y+radius);sy++)
+                    for(int sx=Math.max(0,x-radius);sx<=Math.min(31,x+radius);sx++)
+                        if((seed.getRGB(sx,sy)>>>24)!=0)allowed=true;
+                if(!allowed)added++;
+            }
+            if(added>=minimum)result.add(i);
+        }
+        return result;
     }
     static boolean touchesEdge(BufferedImage im) {
         for(int i=0;i<32;i++)if((im.getRGB(i,0)>>>24)!=0 || (im.getRGB(i,31)>>>24)!=0 || (im.getRGB(0,i)>>>24)!=0 || (im.getRGB(31,i)>>>24)!=0)return true;

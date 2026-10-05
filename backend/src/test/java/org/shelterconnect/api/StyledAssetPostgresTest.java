@@ -295,6 +295,39 @@ class StyledAssetPostgresTest {
         post(opSubject,"/v1/operations/styled-asset-jobs/"+id+"/recover",Map.of(),200);finish(id);
         verify(provider,times(13)).submit(anyBoolean(),any());review(id,false,"APPROVE",200);
     }
+    @Test void changedRuleRecheckKeepsExhaustedBudgetHistoryAndReplayDoesNotBuyMore() throws Exception {
+        when(quality.review(any(),anyList(),anyList(),eq("SIT"),eq("north"))).thenReturn(json.valueToTree(Map.of("passed",false,"issues",List.of("DIRECTION_DRIFT"))));
+        UUID id=request();tick();tick();review(id,true,"APPROVE",200);finish(id);
+        var body=new HashMap<String,Object>();
+        body.put("note","Recheck stored images with the newly deployed quality rule");
+        body.put("expectedSeedHashes",read(id).at("/steps/0/result/hashes"));
+        body.put("expectedRulesSha256",read(id).at("/qualityPolicy/rulesSha256").asText());
+        post(subject,path(id)+"/quality-recheck",body,409); // same rules cannot reset budget
+        String old="0".repeat(64);
+        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=jsonb_set(quality_policy,'{rulesSha256}',to_jsonb(CAST(? AS text))) WHERE id=?",old,id);
+        body.put("expectedRulesSha256",old);
+        post(UUID.randomUUID(),path(id)+"/quality-recheck",body,403);
+        body.put("expectedRulesSha256","1".repeat(64));post(subject,path(id)+"/quality-recheck",body,409);
+        body.put("expectedRulesSha256",old);
+        var result=post(subject,path(id)+"/quality-recheck",body,200).path("data");
+        assertThat(result.path("status").asText()).isEqualTo("QUEUED");
+        assertThat(result.at("/qualityPolicy/recheckFromRulesSha256").asText()).isEqualTo(old);
+        post(subject,path(id)+"/quality-recheck",body,200);
+        assertThat(jdbc.queryForObject("SELECT repair_count FROM shelter.styled_asset_steps WHERE job_id=? AND label='sit-north'",Integer.class,id)).isEqualTo(2);
+        assertThat(jdbc.queryForObject("SELECT attempt_history::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='sit-north'",String.class,id)).contains("qualityRecheck","DIRECTION_DRIFT");
+        finish(id);verify(provider,times(15)).submit(anyBoolean(),any());
+        assertThat(read(id).path("failureCode").asText()).isEqualTo("QUALITY_REPAIR_EXHAUSTED");
+        post(subject,path(id)+"/quality-recheck",body,200);tick();verify(provider,times(15)).submit(anyBoolean(),any());
+        review(id,false,"APPROVE",409);
+    }
+    @Test void approvedPackCannotBeRecheckedWithChangedRules() throws Exception {
+        UUID id=request();tick();tick();review(id,true,"APPROVE",200);finish(id);review(id,false,"APPROVE",200);
+        String old="0".repeat(64);
+        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=jsonb_set(quality_policy,'{rulesSha256}',to_jsonb(CAST(? AS text))) WHERE id=?",old,id);
+        post(subject,path(id)+"/quality-recheck",Map.of("note","Do not change already approved public outputs","expectedSeedHashes",read(id).at("/steps/0/result/hashes"),"expectedRulesSha256",old),409);
+        assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
+        verify(provider,times(13)).submit(anyBoolean(),any());
+    }
     Map<String,Object> input() {return Map.of("photoId",photo,"traits",Map.of("sourcePhotoSha256","a".repeat(64),"faceBox",List.of(.1,.1,.8,.8),"identityDescription","brown dog","motionDescription","brown dog","rearDescription","unknown markings","seed",42,"reviewNote","Reviewed full body photo and face crop for this dog"));}
     UUID request() throws Exception {return UUID.fromString(post(subject,"/v1/shelter-admin/dogs/"+dog+"/styled-assets",input(),202).at("/data/id").asText());}
     String path(UUID id) {return "/v1/shelter-admin/dogs/"+dog+"/styled-assets/"+id;}

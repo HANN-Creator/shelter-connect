@@ -13,6 +13,25 @@ class StyledQualityAgentTest {
     final JsonMapper json=JsonMapper.builder().build();
     final OpenAiResponsesClient client=mock(OpenAiResponsesClient.class);
     final StyledQualityAgent agent=new StyledQualityAgent(client,new AiProperties(true,"test-key","gpt-5.6-luna",30),json);
+    byte[] silhouette(int extensionY)throws Exception{
+        var im=new BufferedImage(32,32,BufferedImage.TYPE_INT_ARGB);
+        var g=im.createGraphics();g.setColor(new java.awt.Color(138,87,55));
+        g.fillRect(9,4,13,11);g.fillRect(7,14,18,11);g.fillRect(9,23,4,7);g.fillRect(20,23,4,7);
+        if(extensionY>=0)g.fillRect(3,extensionY,6,3);
+        g.dispose();var out=new ByteArrayOutputStream();ImageIO.write(im,"png",out);return out.toByteArray();
+    }
+    @Test void realFrontalSilhouetteGateOverridesWrongAiPassAndExcludesBowingAndRaisedTails()throws Exception{
+        when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(json.readTree("{\"issues\":[],\"frames\":[],\"note\":\"AI missed the high tail\"}"));
+        var seed=silhouette(-1);var frames=new ArrayList<>(Collections.nCopies(9,seed));frames.set(4,silhouette(12));
+        byte[] before=frames.get(4).clone();
+        var r=agent.review(json.readTree("{\"tailCarriage\":\"LOW\"}"),Collections.nCopies(4,seed),frames,"TAIL_WAG","south");
+        assertThat(r.path("passed").asBoolean()).isFalse();assertThat(r.path("issues").toString()).isEqualTo("[\"TAIL_CARRIAGE\"]");
+        assertThat(r.path("silhouetteFrames").toString()).isEqualTo("[4]");assertThat(frames.get(4)).isEqualTo(before);
+        assertThat(agent.review(json.readTree("{\"tailCarriage\":\"LOW\"}"),Collections.nCopies(4,seed),frames,"SNIFF","south").path("passed").asBoolean()).isTrue();
+        assertThat(agent.review(json.readTree("{\"tailCarriage\":\"HIGH\"}"),Collections.nCopies(4,seed),frames,"TAIL_WAG","south").path("passed").asBoolean()).isTrue();
+        frames.set(4,silhouette(25));
+        assertThat(agent.review(json.readTree("{\"tailCarriage\":\"LOW\"}"),Collections.nCopies(4,seed),frames,"TAIL_WAG","south").path("passed").asBoolean()).isTrue();
+    }
     byte[] png(boolean edge)throws Exception{var im=new BufferedImage(32,32,BufferedImage.TYPE_INT_ARGB);im.setRGB(edge?31:16,20,0xffcc9955);var out=new ByteArrayOutputStream();ImageIO.write(im,"png",out);return out.toByteArray();}
     @Test void deterministicCroppingOverridesAiPassAndPreservesNativePixels()throws Exception{
         when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(json.readTree("{\"issues\":[],\"frames\":[],\"note\":\"no semantic defect\"}"));
