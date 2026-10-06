@@ -30,11 +30,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class StyledAssetPostgresTest {
     @Autowired JdbcTemplate jdbc;@Autowired MockMvc mvc;@Autowired JsonMapper json;@Autowired JwtTestSupport tokens;
     @Autowired StyledAssetWorker worker;@Autowired StyledAssetStore store;
+    @Autowired StyledLessonWorker lessonWorker;@Autowired StyledLessonStore lessonStore;
+    @MockitoBean StyledLessonAgent lessonAgent;
     @MockitoBean StyledAssetProvider provider;@MockitoBean AssetStorage storage;
     @MockitoBean StyledSpriteCodec codec;@MockitoBean BehaviorSuggestionProvider suggestions;
     @MockitoBean StyledQualityAgent quality;
     UUID op,user,opSubject,subject,shelter,dog,photo,permission;byte[] png;
     Map<String,byte[]> objects=new ConcurrentHashMap<>();
+    List<UUID> extraDogs=new ArrayList<>();
     @BeforeAll static void migrate() throws Exception { SchemaMigrationTest.migratePostgres(); }
     @BeforeEach void setup() throws Exception {
         op=UUID.randomUUID();user=UUID.randomUUID();opSubject=UUID.randomUUID();subject=UUID.randomUUID();shelter=UUID.randomUUID();dog=UUID.randomUUID();photo=UUID.randomUUID();
@@ -61,18 +64,22 @@ class StyledAssetPostgresTest {
         post(opSubject,"/v1/operations/asset-imports",Map.of("photoId",photo,"permissionId",permission),200);
     }
     @AfterEach void cleanup() {
+        var dogs=new ArrayList<>(extraDogs);dogs.add(dog);
+        for(UUID target:dogs)cleanupDog(target);
+        jdbc.update("DELETE FROM shelter.asset_source_permissions WHERE shelter_id=?",shelter);
+        jdbc.update("DELETE FROM shelter.shelter_memberships WHERE shelter_id=?",shelter);jdbc.update("DELETE FROM shelter.shelters WHERE id=?",shelter);
+        jdbc.update("DELETE FROM shelter.app_users WHERE id IN (?,?)",op,user);
+    }
+    void cleanupDog(UUID dog) {
         jdbc.update("DELETE FROM shelter.asset_submissions WHERE job_id IN (SELECT id FROM shelter.asset_jobs WHERE dog_id=?)",dog);
         jdbc.update("DELETE FROM shelter.styled_asset_steps WHERE job_id IN (SELECT id FROM shelter.asset_jobs WHERE dog_id=?)",dog);
         jdbc.update("DELETE FROM shelter.asset_jobs WHERE dog_id=?",dog);
-        jdbc.update("DELETE FROM shelter.asset_photo_sources WHERE photo_id=?",photo);
-        jdbc.update("DELETE FROM shelter.asset_source_permissions WHERE shelter_id=?",shelter);
+        jdbc.update("DELETE FROM shelter.asset_photo_sources WHERE photo_id IN (SELECT id FROM shelter.dog_photos WHERE dog_id=?)",dog);
         jdbc.update("DELETE FROM shelter.behavior_suggestions WHERE dog_id=?",dog);
         jdbc.update("DELETE FROM shelter.dog_behavior_evidence WHERE dog_id=?",dog);
         jdbc.update("DELETE FROM shelter.dog_behavior_profiles WHERE dog_id=?",dog);
         jdbc.update("DELETE FROM shelter.dog_observations WHERE dog_id=?",dog);
         jdbc.update("DELETE FROM shelter.dog_photos WHERE dog_id=?",dog);jdbc.update("DELETE FROM shelter.dogs WHERE id=?",dog);
-        jdbc.update("DELETE FROM shelter.shelter_memberships WHERE shelter_id=?",shelter);jdbc.update("DELETE FROM shelter.shelters WHERE id=?",shelter);
-        jdbc.update("DELETE FROM shelter.app_users WHERE id IN (?,?)",op,user);
     }
     @Test void allDirectionsPersistAndOnlyReviewedAssetsAreReusedWithoutGeneration() throws Exception {
         UUID id=request();assertThat(request()).isEqualTo(id);assertThat(read(id).path("steps").size()).isEqualTo(13);
@@ -177,6 +184,14 @@ class StyledAssetPostgresTest {
     @Test void readOnlyRuntimeCanUseNewTableButClientsCannot() {
         assertThat(jdbc.queryForObject("SELECT has_table_privilege('shelter_runtime','shelter.styled_asset_steps','INSERT')",Boolean.class)).isTrue();
         assertThat(jdbc.queryForObject("SELECT has_table_privilege('authenticated','shelter.styled_asset_steps','SELECT')",Boolean.class)).isFalse();
+    }
+    @Test void learnedRuleTablesArePrivateAndEvidenceIsAppendOnlyForRuntime() {
+        for(String table:List.of("styled_quality_examples","styled_quality_lessons","styled_quality_lesson_events")) {
+            for(String role:List.of("anon","authenticated"))assertThat(jdbc.queryForObject("SELECT has_table_privilege(?,?,'SELECT')",Boolean.class,role,"shelter."+table)).isFalse();
+            assertThat(jdbc.queryForObject("SELECT has_table_privilege('shelter_runtime',?,'INSERT')",Boolean.class,"shelter."+table)).isTrue();
+            assertThat(jdbc.queryForObject("SELECT has_table_privilege('shelter_runtime',?,'DELETE')",Boolean.class,"shelter."+table)).isFalse();
+        }
+        for(String table:List.of("styled_quality_examples","styled_quality_lesson_events"))assertThat(jdbc.queryForObject("SELECT has_table_privilege('shelter_runtime',?,'UPDATE')",Boolean.class,"shelter."+table)).isFalse();
     }
     @Test void lunaDraftOnlyChangesGenerationAfterConfirmationAndReadsNeverCallAi() throws Exception {
         UUID evidence=UUID.randomUUID();String content="사람을 좋아하고 산책을 좋아해요. 누워서 쉬는 것도 좋아해요.";
@@ -394,6 +409,152 @@ class StyledAssetPostgresTest {
         when(quality.review(any(),anyList(),anyList(),eq("TAIL_WAG"),eq("west"))).thenReturn(json.valueToTree(Map.of("passed",false,"issues",List.of("CANVAS_CLIPPING"))));
         UUID id=tailPlan();tick();tick();review(id,true,"APPROVE",200);finish(id);verify(provider,never()).editAnimation(any());
         verify(provider,times(19)).submit(anyBoolean(),any());review(id,false,"APPROVE",409);
+    }
+    @Test void automaticLessonsReplayFailuresAndPassesThenReachAnotherDogsFirstGeneration() throws Exception {
+        UUID first=learningPair();UUID lesson=onlyLesson();
+        assertThat(lessonStatus(lesson)).isEqualTo("WAITING_EVIDENCE");
+        lessonWorker.tick();assertThat(lessonStatus(lesson)).isEqualTo("CANDIDATE");
+        lessonWorker.tick();assertThat(lessonStatus(lesson)).isEqualTo("ACTIVE");
+        assertThat(read(first).path("status").asText()).isEqualTo("REVIEW"); // learning never publishes a dog
+        var rule=get(opSubject,"/v1/operations/styled-quality-lessons/"+lesson,200).path("data");
+        assertThat(rule.at("/validation/passed").asBoolean()).isTrue();
+        assertThat(rule.path("events").valueStream().map(n->n.path("event").asText())).contains("OBSERVED","PROPOSING","PROPOSED","VALIDATING","ACTIVATED");
+        get(subject,"/v1/operations/styled-quality-lessons",403);get(null,"/v1/operations/styled-quality-lessons",401);
+        nextLearningDog();UUID next=request();tick();tick();review(next,true,"APPROVE",200);finish(next);
+        String reports=jdbc.queryForObject("SELECT quality_report::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='sit-west'",String.class,next);
+        assertThat(reports).contains(lesson.toString(),"learnedLessons");
+        var captured=org.mockito.ArgumentCaptor.forClass(JsonNode.class);verify(provider,atLeastOnce()).submit(eq(false),captured.capture());
+        assertThat(captured.getAllValues().stream().anyMatch(n->n.path("description").asText().contains(learnedPrevention()))).isTrue();
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_asset_steps WHERE job_id=? AND label<>'sit-west' AND learned_lessons<>'[]'::jsonb",Integer.class,next)).isZero();
+        post(subject,"/v1/operations/styled-quality-lessons/"+lesson+"/disable",Map.of("note","Stop this lesson for later generations"),403);
+        post(opSubject,"/v1/operations/styled-quality-lessons/"+lesson+"/disable",Map.of("note","Stop this lesson for later generations"),200);
+        clearInvocations(provider);var request=json.valueToTree(input());((tools.jackson.databind.node.ObjectNode)request.path("traits")).put("seed",43);
+        UUID after=UUID.fromString(post(subject,"/v1/shelter-admin/dogs/"+dog+"/styled-assets",request,202).at("/data/id").asText());
+        tick();tick();review(after,true,"APPROVE",200);finish(after);
+        var afterPayloads=org.mockito.ArgumentCaptor.forClass(JsonNode.class);verify(provider,atLeastOnce()).submit(eq(false),afterPayloads.capture());
+        assertThat(afterPayloads.getAllValues().stream().anyMatch(n->n.path("description").asText().contains(learnedPrevention()))).isFalse();
+        verify(lessonAgent,times(1)).propose(any(),any());verify(lessonAgent,times(1)).replay(any(),any(),anyList());
+    }
+    @Test void lessonThatRejectsKnownGoodFramesNeverBecomesActive() throws Exception {
+        learningPair();UUID lesson=onlyLesson();
+        when(lessonAgent.replay(any(),any(),anyList())).thenAnswer(c->replayAnswer(c.getArgument(2),true));
+        lessonWorker.tick();lessonWorker.tick();assertThat(lessonStatus(lesson)).isEqualTo("REJECTED");
+        lessonWorker.tick();verify(lessonAgent,times(1)).replay(any(),any(),anyList());
+    }
+    @Test void learnerWaitsForPositiveEvidenceWithoutAnyModelCall() throws Exception {
+        learningPair();UUID lesson=onlyLesson();
+        jdbc.update("DELETE FROM shelter.styled_quality_examples WHERE job_id IN (SELECT id FROM shelter.asset_jobs WHERE dog_id=?) AND passed",dog);
+        lessonWorker.tick();verifyNoInteractions(lessonAgent);assertThat(lessonStatus(lesson)).isEqualTo("WAITING_EVIDENCE");
+    }
+    @Test void concurrentLearningClaimsAndInterruptionsDoNotRepeatModelCalls() throws Exception {
+        learningPair();UUID lesson=onlyLesson();var pool=Executors.newFixedThreadPool(2);
+        try {
+            var a=pool.submit(()->lessonStore.claim());var b=pool.submit(()->lessonStore.claim());
+            assertThat(java.util.stream.Stream.of(a.get(),b.get()).filter(Objects::nonNull).count()).isEqualTo(1);
+        }finally{pool.shutdownNow();}
+        jdbc.update("UPDATE shelter.styled_quality_lessons SET lease_until=now()-interval '1 second' WHERE id=?",lesson);
+        lessonWorker.tick();lessonWorker.tick();assertThat(lessonStatus(lesson)).isEqualTo("FAILED");verifyNoInteractions(lessonAgent);
+    }
+    @Test void replayThatMissesOnlyTheFinalBadFrameIsRejected() throws Exception {
+        learningPair();UUID lesson=onlyLesson();
+        when(lessonAgent.replay(any(),any(),anyList())).thenAnswer(c->{var result=replayAnswer(c.getArgument(2),false);
+            for(var item:result.path("cases"))if(item.path("violates").asBoolean())((tools.jackson.databind.node.ObjectNode)item).set("frames",json.valueToTree(List.of(3,4,5,6,7)));
+            return result;});
+        lessonWorker.tick();lessonWorker.tick();assertThat(lessonStatus(lesson)).isEqualTo("REJECTED");
+    }
+    @Test void disabledDuringPayloadConstructionNeverReachesProvider() throws Exception {
+        learningPair();UUID lesson=onlyLesson();lessonWorker.tick();lessonWorker.tick();
+        nextLearningDog();UUID next=request();tick();tick();review(next,true,"APPROVE",200);
+        var realCodec=new StyledSpriteCodec(json,System.getenv().getOrDefault("ASSET_HARNESS_PYTHON","python3"));
+        doAnswer(c->{var payload=realCodec.motion(c.getArgument(0),c.getArgument(1),c.getArgument(2),c.getArgument(3),c.getArgument(4));
+            if(!c.<JsonNode>getArgument(4).path("lessons").isEmpty())lessonStore.disable(opSubject,lesson,json.valueToTree(Map.of("note","Disabled during pending request construction")));
+            return payload;}).when(codec).motion(any(),anyString(),anyString(),any(),any());
+        clearInvocations(provider);finish(next);
+        var calls=org.mockito.ArgumentCaptor.forClass(JsonNode.class);verify(provider,atLeastOnce()).submit(eq(false),calls.capture());
+        assertThat(calls.getAllValues().stream().anyMatch(n->n.path("description").asText().contains(learnedPrevention()))).isFalse();
+        assertThat(lessonStatus(lesson)).isEqualTo("DISABLED");assertThat(read(next).path("status").asText()).isEqualTo("REVIEW");
+    }
+    @Test void revokedEvidencePreventsLearningWithoutAnyModelUpload() throws Exception {
+        learningPair();UUID lesson=onlyLesson();
+        jdbc.update("UPDATE shelter.asset_source_permissions SET revoked_at=now() WHERE id=?",permission);
+        lessonWorker.tick();assertThat(lessonStatus(lesson)).isEqualTo("DISABLED");verifyNoInteractions(lessonAgent);
+    }
+    java.nio.file.Path liveFixtures;
+    @Test @org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable(named="RUN_STYLED_LESSON_LIVE",matches="true")
+    void liveLunaLearnsFromPreviouslyReviewedClipsAndPinsTheLesson() throws Exception {
+        liveFixtures=java.nio.file.Path.of(System.getenv("STYLED_LESSON_FIXTURES"));
+        when(quality.contract(any(),any())).thenReturn(json.valueToTree(Map.of("tailCarriage","UNKNOWN")));
+        UUID first=learningPair();UUID lesson=onlyLesson();
+        var props=new org.shelterconnect.api.chat.AiProperties(true,System.getenv("OPENAI_API_KEY"),System.getenv("OPENAI_MODEL"),60);
+        var live=new StyledLessonAgent(new org.shelterconnect.api.chat.OpenAiResponsesClient(props,json),json);
+        doAnswer(c->live.propose(c.getArgument(0),c.getArgument(1))).when(lessonAgent).propose(any(),any());
+        doAnswer(c->live.replay(c.getArgument(0),c.getArgument(1),c.getArgument(2))).when(lessonAgent).replay(any(),any(),anyList());
+        lessonWorker.tick();lessonWorker.tick();
+        var report=(tools.jackson.databind.node.ObjectNode)lessonStore.read(opSubject,lesson);
+        report.put("mode","real Luna proposal and blinded replay; local PostgreSQL; recorded sprites; PixelLab mocked");
+        report.put("model",props.model());
+        var destination=java.nio.file.Path.of(System.getenv("STYLED_LESSON_LIVE_REPORT"));
+        java.nio.file.Files.createDirectories(destination.toAbsolutePath().getParent());
+        java.nio.file.Files.writeString(destination,json.writerWithDefaultPrettyPrinter().writeValueAsString(report));
+        assertThat(lessonStatus(lesson)).isEqualTo("ACTIVE");
+        nextLearningDog();UUID next=request();tick();tick();review(next,true,"APPROVE",200);finish(next);
+        var pinned=json.readTree(jdbc.queryForObject("SELECT learned_lessons::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='sit-west'",String.class,next));
+        assertThat(pinned.get(0).path("id").asText()).isEqualTo(lesson.toString());
+        report.set("nextGenerationSnapshot",pinned);report.put("nextPayloadVerified",true);
+        java.nio.file.Files.writeString(destination,json.writerWithDefaultPrettyPrinter().writeValueAsString(report));
+    }
+    String learnedPrevention(){return "Keep the entire seated tail tip tucked beside the hind paw, away from the canvas edge.";}
+    JsonNode replayAnswer(List<StyledLessonAgent.Case> cases,boolean falsePositive) {
+        return json.valueToTree(Map.of("safeAndGeneral",true,"reason","Offline wiring replay, not live model accuracy", "cases",cases.stream().map(c->{
+            boolean bad=falsePositive || !c.report().path("passed").asBoolean();
+            return Map.of("key",c.key(),"violates",bad,"frames",bad?List.of(3,4,5,6,7,8):List.of());}).toList()));
+    }
+    UUID onlyLesson(){return jdbc.queryForObject("SELECT id FROM shelter.styled_quality_lessons WHERE source_job_id IN (SELECT id FROM shelter.asset_jobs WHERE dog_id=?)",UUID.class,dog);}
+    String lessonStatus(UUID id){return jdbc.queryForObject("SELECT status FROM shelter.styled_quality_lessons WHERE id=?",String.class,id);}
+    UUID learningPair() throws Exception {
+        var fixture=json.readTree(java.nio.file.Files.readString(java.nio.file.Path.of("scripts/fixtures/sit-tail-alpha.json")));
+        var original=alphaFrames(fixture.at("/clips/original/frames"));var corrected=alphaFrames(fixture.at("/clips/corrected/frames"));
+        List<byte[]> seedImages=Collections.nCopies(4,original.getFirst());
+        if(liveFixtures!=null) {
+            original=sheetFrames(java.nio.file.Files.readAllBytes(liveFixtures.resolve("sheets/sit-left.png")));
+            corrected=sheetFrames(java.nio.file.Files.readAllBytes(liveFixtures.resolve("sit-left-adjustment/sit-left.png")));
+            seedImages=new ArrayList<>();for(String d:List.of("south","north","west","east"))seedImages.add(java.nio.file.Files.readAllBytes(liveFixtures.resolve("directions/"+d+".png")));
+        }
+        final var badFrames=original;final var goodFrames=corrected;
+        var source=original.getFirst();var motion=new java.util.concurrent.atomic.AtomicReference<>("BASE");
+        var attempts=new java.util.concurrent.atomic.AtomicInteger();var checks=new java.util.concurrent.atomic.AtomicInteger();
+        var realCodec=new StyledSpriteCodec(json,System.getenv().getOrDefault("ASSET_HARNESS_PYTHON","python3"));
+        doAnswer(c->{outsideTransaction();
+            motion.set(c.<String>getArgument(1)+"-"+c.<String>getArgument(2));return realCodec.motion(c.getArgument(0),c.getArgument(1),c.getArgument(2),c.getArgument(3),c.getArgument(4));}).when(codec).motion(any(),anyString(),anyString(),any(),any());
+        when(provider.poll(any(),eq(true))).thenReturn(json.valueToTree(Map.of("status","COMPLETED","directions",Map.of(
+            "south",Base64.getEncoder().encodeToString(seedImages.get(0)),"north",Base64.getEncoder().encodeToString(seedImages.get(1)),
+            "west",Base64.getEncoder().encodeToString(seedImages.get(2)),"east",Base64.getEncoder().encodeToString(seedImages.get(3))))));
+        when(provider.poll(any(),eq(false))).thenAnswer(c->{outsideTransaction();var frames=motion.get().equals("SIT-west")?
+            (attempts.getAndIncrement()==0?badFrames:goodFrames):Collections.nCopies(9,source);
+            return json.valueToTree(Map.of("status","COMPLETED","frames",frames.stream().map(Base64.getEncoder()::encodeToString).toList()));});
+        when(quality.review(any(),anyList(),anyList(),eq("SIT"),eq("west"))).thenAnswer(c->{outsideTransaction();boolean passed=checks.getAndIncrement()>0;
+            return json.valueToTree(Map.of("passed",passed,"issues",passed?List.of():List.of("CANVAS_CLIPPING"),"edgeFrames",passed?List.of():List.of(3,4,5,6,7,8),"note","Recorded tail edge replay"));});
+        when(quality.review(any(),anyList(),anyList(),anyString(),anyString(),any())).thenAnswer(c->{outsideTransaction();return json.valueToTree(Map.of("passed",true,"issues",List.of()));});
+        when(lessonAgent.propose(any(),any())).thenAnswer(c->{outsideTransaction();return json.valueToTree(Map.of("prevention",learnedPrevention(),"criterion","The seated tail tip crosses the right frame boundary during descent or final hold."));});
+        when(lessonAgent.replay(any(),any(),anyList())).thenAnswer(c->{outsideTransaction();return replayAnswer(c.getArgument(2),false);});
+        UUID id=request();tick();tick();review(id,true,"APPROVE",200);finish(id);
+        assertThat(read(id).path("status").asText()).isEqualTo("REVIEW");return id;
+    }
+    List<byte[]> sheetFrames(byte[] png)throws Exception {
+        var sheet=ImageIO.read(new ByteArrayInputStream(png));assertThat(sheet.getWidth()).isEqualTo(288);assertThat(sheet.getHeight()).isEqualTo(32);
+        var result=new ArrayList<byte[]>();for(int i=0;i<9;i++){var out=new ByteArrayOutputStream();ImageIO.write(sheet.getSubimage(i*32,0,32,32),"png",out);result.add(out.toByteArray());}return result;
+    }
+    List<byte[]> alphaFrames(JsonNode values)throws Exception {
+        var frames=new ArrayList<byte[]>();for(var rows:values){var image=new BufferedImage(32,32,BufferedImage.TYPE_INT_ARGB);
+            for(int y=0;y<32;y++)for(int x=0;x<32;x++)if((Long.parseLong(rows.get(y).asText(),16)&(1L<<(31-x)))!=0)image.setRGB(x,y,0xff464646);
+            var out=new ByteArrayOutputStream();ImageIO.write(image,"png",out);frames.add(out.toByteArray());}
+        return frames;
+    }
+    void nextLearningDog() throws Exception {
+        extraDogs.add(dog);dog=UUID.randomUUID();photo=UUID.randomUUID();
+        jdbc.update("INSERT INTO shelter.dogs(id,shelter_id,name,avatar_key,is_public,adoption_status) VALUES (?,?,'다음 테스트 강아지','sample',false,'AVAILABLE')",dog,shelter);
+        jdbc.update("INSERT INTO shelter.dog_photos(id,dog_id,storage_bucket,storage_key,sort_order,rights_status,rights_note,rights_confirmed_by,rights_confirmed_at) VALUES (?,?,'dog-photos',?,0,'GRANTED','local test only',?,now())",photo,dog,dog+"/source.png",op);
+        post(opSubject,"/v1/operations/asset-imports",Map.of("photoId",photo,"permissionId",permission),200);
     }
     Map<String,Object> input() {return Map.of("photoId",photo,"traits",Map.of("sourcePhotoSha256","a".repeat(64),"faceBox",List.of(.1,.1,.8,.8),"identityDescription","brown dog","motionDescription","brown dog","rearDescription","unknown markings","seed",42,"reviewNote","Reviewed full body photo and face crop for this dog"));}
     UUID request() throws Exception {return UUID.fromString(post(subject,"/v1/shelter-admin/dogs/"+dog+"/styled-assets",input(),202).at("/data/id").asText());}

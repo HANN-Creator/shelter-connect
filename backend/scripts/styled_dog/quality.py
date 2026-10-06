@@ -4,12 +4,35 @@ Alpha and a narrowly scoped frontal silhouette check are deterministic.
 General anatomy and face direction still require visual review.
 """
 from pathlib import Path
+import re
 from PIL import ImageFilter
 from .client import digest, native_image, read, write
 
 POLICY = Path(__file__).resolve().parents[2]/'asset-styles/cozy32-v1/quality-rules.json'
 TAILS = ('LOW', 'LEVEL', 'HIGH', 'CURLED', 'UNKNOWN')
 DIRECTIONS = ('south', 'north', 'west', 'east')
+
+
+def learned_guidance(action, direction, quality):
+    """Validated runtime lessons are additive prompt data, never Python or shell code."""
+    lessons = quality.get('lessons', [])
+    if not isinstance(lessons, list) or len(lessons) > 2:
+        raise ValueError('Invalid learned lessons')
+    text=[]
+    for lesson in lessons:
+        if (not isinstance(lesson, dict) or lesson.get('action') != action or lesson.get('direction') != direction
+            or lesson.get('tail') != quality['contract']['tailCarriage'] or lesson.get('rulesSha256') != digest(POLICY)
+            or lesson.get('issue') not in load_quality()['corrections']
+            or (action != 'IDLE' and lesson.get('issue') == 'IDLE_MOTION')
+            or not re.fullmatch(r'[a-f0-9]{64}', str(lesson.get('sha256', '')))
+            or not re.fullmatch(r'[a-f0-9-]{36}', str(lesson.get('id', '')))):
+            raise ValueError('Stale or mismatched learned lesson')
+        for field, minimum, maximum in [('prevention',15,120),('criterion',20,240)]:
+            value=lesson.get(field)
+            if not isinstance(value,str) or not minimum <= len(value) <= maximum or not re.fullmatch(r"[A-Za-z ,.;:'()!?-]+", value):
+                raise ValueError('Invalid learned lesson text')
+        text.append(lesson['prevention'])
+    return ' Lessons: '+' '.join(text) if text else ''
 
 
 def load_quality():

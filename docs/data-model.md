@@ -212,3 +212,7 @@ Flyway가 새 테이블을 만들므로 기본 구성(B-00)의 단순 DB 접속�
 통합 검사는 `TEST_DB_URL`, `TEST_DB_USERNAME`, `TEST_DB_PASSWORD`가 필요하다. 로컬 호스트의 `shelter_test` DB만 허용하며, 역할 생성·권한 검증을 위해 **임시 테스트 DB의 관리자**로 실행한다. 접속 값이 없으면 조용히 건너뛰지 않고 실패한다. 테스트 행과 권한 변경은 매번 롤백하고, 스키마·Flyway 이력·로그인 불가 테스트 역할은 남는다.
 
 다음 작업 B-02에서는 가상 보호소 2곳과 강아지 5마리를 이 구조에 넣는다. B-03에서는 DB 행 전체를 반환하지 않고, 합의한 공개 필드만 DTO로 만든다.
+
+## V15 · 자동 품질 규칙
+
+`styled_quality_examples`는 비공개 이미지 해시·검사 결과, `styled_quality_lessons`는 범위가 제한된 후보·상태·재검증 결과, `styled_quality_lesson_events`는 변경 이력을 보관한다. `styled_asset_steps.learned_lessons`는 제출별 적용 규칙의 스냅샷이다. 공개 클라이언트 접근은 RLS로 차단하고 서버는 근거/이력을 추가만 한다. [자동 규칙 상세](automatic-quality-lessons.md).

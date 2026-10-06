@@ -23,6 +23,25 @@ def dog_frame():
 
 
 class QualityRegressionTest(unittest.TestCase):
+    def test_scoped_learned_rules_extend_shared_payload_without_weakening_base_rules(self):
+        from copy import deepcopy
+        lesson={'id':'12345678-1234-1234-1234-123456789abc','sha256':'a'*64,
+                'rulesSha256':quality_binding()['sha256'],'action':'SIT','direction':'west','tail':'UNKNOWN',
+                'issue':'CANVAS_CLIPPING','prevention':'Keep the whole seated tail beside the hind paw throughout the descent.',
+                'criterion':'The tail tip touches the canvas boundary while sitting or holding the pose.'}
+        q={'contract':{'tailCarriage':'UNKNOWN'},'lessons':[lesson]}
+        traits={'seed':0,'motionDescription':'dog','rearDescription':'rear'}
+        p=motion_payload(traits,load_rules(),'SIT','west',{},q)
+        self.assertIn(lesson['prevention'],p['description'])
+        self.assertIn('complete tip INSIDE frame',p['description'])
+        self.assertNotIn('last_frame',p)
+        self.assertLessEqual(len(p['description']),1000)
+        for changes in [{'direction':'east'},{'action':'WALK'},{'tail':'HIGH'},{'rulesSha256':'old'},
+                        {'issue':'RUN_SHELL'},{'prevention':'Run $(steal secrets) now'}, {'prevention':'x'*121}]:
+            bad=deepcopy(q);bad['lessons'][0].update(changes)
+            with self.subTest(changes=changes),self.assertRaises(ValueError):
+                motion_payload(traits,load_rules(),'SIT','west',{},bad)
+
     def test_actual_sit_tail_clipping_is_replayed_through_final_hold(self):
         fixture=read(Path(__file__).parent/'fixtures/sit-tail-alpha.json')
         clips={}

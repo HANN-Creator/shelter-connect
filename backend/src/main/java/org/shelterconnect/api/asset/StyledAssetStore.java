@@ -213,6 +213,13 @@ public class StyledAssetStore {
     @Transactional public boolean authorized(Work w) { return owned(w) && validOrCancel(w.id()); }
     @Transactional public boolean reserve(Work w,JsonNode payload) {
         if(!authorized(w))return false;
+        // A rollback stops the next submission even if it races with payload construction.
+        int disabled=jdbc.sql("""
+            SELECT count(*) FROM shelter.styled_asset_steps s, jsonb_array_elements(s.learned_lessons) item
+            WHERE s.job_id=:j AND s.label=:l AND NOT EXISTS(SELECT 1 FROM shelter.styled_quality_lessons q
+              WHERE q.id::text=item->>'id' AND q.status='ACTIVE' AND q.candidate_sha256=item->>'sha256')
+            """).param("j",w.id()).param("l",w.label()).query(Integer.class).single();
+        if(disabled>0){defer(w,0);return false;}
         if(jdbc.sql("UPDATE shelter.styled_asset_steps SET status='SUBMITTING',submitted_at=now(),request_sha256=:h WHERE job_id=:id AND label=:l AND status='PENDING'")
             .param("h",StyledSpriteCodec.sha(json.writeValueAsBytes(payload))).param("id",w.id()).param("l",w.label()).update()!=1)return false;
         jdbc.sql("INSERT INTO shelter.asset_submissions(job_id,action) VALUES (:id,:a)").param("id",w.id()).param("a",w.action()).update();return true;
