@@ -189,7 +189,7 @@ public class StyledAssetStore {
     }
     private Map<String,Object> qualityPolicy(){return Map.of("version",StyledQualityAgent.VERSION,"maxRepairsPerClip",2,
         "rulesRevision",StyledSpriteCodec.qualityRules(json).path("revision").asText(),"rulesSha256",StyledSpriteCodec.qualityRulesSha(),
-        "lowTailRepair", "REGENERATE_THEN_EDIT_ONCE");}
+        "lowTailRepair", "REGENERATE_THEN_EDIT_ONCE", "idleRepair",StyledSpriteCodec.IDLE_EDIT_VERSION);}
     private Map<String,Object> newSeedQualityPolicy(){var p=new HashMap<String,Object>(qualityPolicy());p.put("seedQualityVersion",StyledSeedQualityAgent.VERSION);return p;}
     private boolean seedQualityPassed(Job j) {
         var step=j.steps().getFirst();return StyledSeedQualityAgent.passed(step.qualityReport(),step.result()==null?json.createObjectNode():step.result().path("hashes"),j.qualityPolicy());

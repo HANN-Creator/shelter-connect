@@ -101,6 +101,38 @@ class QualityRegressionTest(unittest.TestCase):
         tail=seed.copy();ImageDraw.Draw(tail).rectangle((25,16,29,18),fill='#8a5737')
         self.assertEqual(idle_motion_frames([tail]+[seed]*8,tail,'IDLE'),list(range(1,9)))
 
+    def test_repeated_live_idle_failures_are_retained_and_sent_complete_to_edit(self):
+        import base64
+        import io
+        from styled_dog.tail_repair import idle_edit_payload
+        cases=read(Path(__file__).parent/'fixtures/idle-motion-alpha.json')['repeatedGenerations']['clips']
+        self.assertEqual(len(cases),3)
+        for case in cases:
+            frames=[]
+            for rows in case['frames']:
+                frame=Image.new('RGBA',(32,32))
+                for y,row in enumerate(rows):
+                    for x in range(32):
+                        if int(row,16)&(1<<(31-x)):frame.putpixel((x,y),(70,70,70,255))
+                frames.append(frame)
+            before=[f.tobytes() for f in frames]
+            report=frame_audit(frames,frames[0],'IDLE','south','UNKNOWN')
+            self.assertEqual(report['idleMotionFrames'],case['expectedIdleMotionFrames'])
+            self.assertIn('IDLE_MOTION',report['issues'])
+            for direction in ('south','north','west','east'):
+                payload=idle_edit_payload(frames,direction)
+                self.assertEqual(len(payload['frames']),9)
+                self.assertLessEqual(len(payload['description']),2000)
+                self.assertIn('Frame zero is the approved',payload['description'])
+                self.assertIn('Remove the invented moving appendage',payload['description'])
+                self.assertIn('Preserve any genuine visible tail',payload['description'])
+                self.assertIn(direction+' facing',payload['description'])
+                for original,item in zip(frames,payload['frames']):
+                    decoded=Image.open(io.BytesIO(base64.b64decode(item['image']['base64']))).convert('RGBA')
+                    self.assertEqual(original.tobytes(),decoded.tobytes())
+            self.assertEqual(before,[f.tobytes() for f in frames])
+            with self.assertRaises(ValueError):idle_edit_payload(frames[:8],'south')
+
     def test_idle_never_inherits_wag_instructions_from_tail_carriage(self):
         for tail,direction in product(TAILS,load_rules()['directions']):
             prompt=motion_payload({'seed':0,'motionDescription':'dog','rearDescription':'rear'},load_rules(),
