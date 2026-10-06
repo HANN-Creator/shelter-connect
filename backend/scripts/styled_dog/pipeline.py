@@ -26,32 +26,42 @@ def load_rules():
     return rules
 
 
-def character_request(root, traits, rules):
+def character_request(root, traits, rules, quality=None):
     identity = traits['identityDescription'].strip()
     if not identity or len(identity) > 850:
         raise ValueError('Identity description must contain 1–850 characters')
     for key in ('motionDescription', 'rearDescription'):
         if not traits.get(key, '').strip() or len(traits[key]) > 300:
             raise ValueError(key + ' must contain 1–300 characters')
+    eye_rules = load_quality()['seedEyes']
     description = (
-        'Create the photographed rescue dog as a NEW CHARACTER IN EXACTLY THE SAME GAME ART STYLE AS THE PIXEL SPRITE REFERENCE. '
-        'The concept image contains a full-body photo and a face close-up of ONE dog. Use those PHOTOS ONLY for identity: '
+        'Create the photographed rescue dog in the attached PIXEL SPRITE GAME ART STYLE. '
+        'The concept shows one dog full-body and face close-up; PHOTOS define IDENTITY: '
         + identity + ' '
-        'The uploaded PIXEL SPRITE defines visual DESIGN: preserve its charming rounded compact body, large softly rounded head, '
-        'short readable paws, friendly natural small eyes, carefully shaded pixel clusters, dark outline and stepped highlights. '
-        'Keep stylized proportions; do NOT turn it into a long-legged realistic or thin angular dog. '
-        'Replace the style sprite\'s dog identity with the actual photo\'s ears, coat and markings. '
-        'Do not invent tricolor patches, a white forehead blaze, floppy ears or a curled white-tipped tail from the style reference. '
-        'Neutral gently closed mouth, no laughing grin. Four-legged standing pose. Full character inside 32x32 transparent canvas '
-        'with room for ears, muzzle, paws and tail. '+load_quality()['seedMargin']+
-        ' No text, scenery, collar, number, floor or props.')
+        'STYLE defines rounded compact proportions, softly rounded large head, short paws, dark outline, '
+        'crisp shaded pixel clusters and stepped highlights. Preserve stylized proportions. '
+        + eye_rules['prevention'] + ' '
+        'Copy photo ears, coat and markings; never borrow the style dog identity. '
+        'Closed neutral mouth, no grin. Four-legged standing pose, low top-down view. '
+        'Full character in transparent 32x32. '+load_quality()['seedMargin']+
+        ' No text, scenery, collar, props, blur or realistic long legs.')
+    attempt = 0
+    if quality:
+        attempt = quality.get('attempt', 0)
+        if type(attempt) is not int or not 0 <= attempt <= 2 or quality.get('rulesSha256') != digest(POLICY):
+            raise ValueError('Invalid or stale seed quality policy')
+        issues = quality.get('issues', [])
+        if not isinstance(issues, list) or len(issues) > 5 or any(i not in ('EYE_READABILITY','EYE_STYLE','EYE_DIRECTION','SEED_IDENTITY','CANVAS_CLIPPING') for i in issues):
+            raise ValueError('Invalid seed defect codes')
+        if attempt:
+            description += ' '+eye_rules['correction']
     if len(description) > 2000:
         raise ValueError('Character prompt exceeds provider limit')
     return {'description':description, 'image_size':{'width':32,'height':32},
             'method':rules['characterMethod'], 'concept_image':image_argument(root/'photo-concept.png'),
             'reference_image':image_argument(root/'style-reference.png'), 'template_id':'dog',
             'view':'low top-down', 'style_description':rules['styleDescription'],
-            'seed':traits['seed'], 'no_background':True}
+            'seed':(traits['seed'] + 7919 * attempt) % 2147483647, 'no_background':True}
 
 
 def prepare(root, traits_path):

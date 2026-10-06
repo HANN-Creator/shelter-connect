@@ -33,8 +33,11 @@ public class StyledSpriteCodec {
         return t.deepCopy();
     }
     public JsonNode character(UUID dog,JsonNode traits,byte[] photo) {
+        return character(dog,traits,photo,json.createObjectNode());
+    }
+    public JsonNode character(UUID dog,JsonNode traits,byte[] photo,JsonNode quality) {
         if(!sha(photo).equals(traits.path("sourcePhotoSha256").asText())) throw new AssetException(409,"SOURCE_PHOTO_CHANGED");
-        return payload(Map.of("mode","character","dogId",dog,"traits",traits),"photo-1.png",photo);
+        return payload(Map.of("mode","character","dogId",dog,"traits",traits,"quality",quality),"photo-1.png",photo);
     }
     public JsonNode motion(JsonNode traits,String action,String direction,byte[] seed) {
         return motion(traits,action,direction,seed,json.createObjectNode());

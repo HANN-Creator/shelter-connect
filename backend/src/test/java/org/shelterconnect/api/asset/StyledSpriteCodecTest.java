@@ -18,7 +18,7 @@ class StyledSpriteCodecTest {
         var request=codec.character(UUID.randomUUID(),traits,photo);
         assertThat(request.path("method").asText()).isEqualTo("create_from_concept");
         assertThat(request.at("/image_size/width").asInt()).isEqualTo(32);
-        assertThat(request.path("description").asText()).contains("short brown fur and upright ears","gently closed mouth");
+        assertThat(request.path("description").asText()).contains("short brown fur and upright ears","Closed neutral mouth");
         assertThat(request.path("concept_image")).isNotEqualTo(request.path("reference_image"));
         assertThatThrownBy(()->codec.character(UUID.randomUUID(),traits,new byte[]{1})).isInstanceOf(AssetException.class).hasMessage("SOURCE_PHOTO_CHANGED");
         var motion=codec.motion(traits,"WALK","north",image(32));

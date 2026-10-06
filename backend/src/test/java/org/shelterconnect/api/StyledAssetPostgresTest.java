@@ -35,6 +35,7 @@ class StyledAssetPostgresTest {
     @MockitoBean StyledAssetProvider provider;@MockitoBean AssetStorage storage;
     @MockitoBean StyledSpriteCodec codec;@MockitoBean BehaviorSuggestionProvider suggestions;
     @MockitoBean StyledQualityAgent quality;
+    @MockitoBean StyledSeedQualityAgent seedQuality;
     UUID op,user,opSubject,subject,shelter,dog,photo,permission;byte[] png;
     Map<String,byte[]> objects=new ConcurrentHashMap<>();
     List<UUID> extraDogs=new ArrayList<>();
@@ -52,9 +53,10 @@ class StyledAssetPostgresTest {
         when(storage.asset(anyString())).thenAnswer(c->{outsideTransaction();return objects.get(c.getArgument(0));});
         doAnswer(c->{outsideTransaction();objects.put(c.getArgument(0),c.getArgument(1));return null;}).when(storage).put(anyString(),any());
         when(storage.sign(anyList())).thenAnswer(c->{outsideTransaction();var result=new HashMap<String,String>();for(String key:c.<List<String>>getArgument(0))result.put(key,"https://assets.example.invalid/"+key);return result;});
-        when(codec.character(any(),any(),any())).thenAnswer(c->{outsideTransaction();return json.readTree("{\"character\":true}");});
+        when(codec.character(any(),any(),any(),any())).thenAnswer(c->{outsideTransaction();var payload=json.createObjectNode().put("character",true);payload.set("quality",c.<JsonNode>getArgument(3));return payload;});
         when(codec.motion(any(),anyString(),anyString(),any())).thenAnswer(c->{outsideTransaction();return json.valueToTree(Map.of("action",c.getArgument(1),"direction",c.getArgument(2)));});
         when(codec.motion(any(),anyString(),anyString(),any(),any())).thenAnswer(c->{outsideTransaction();return json.valueToTree(Map.of("action",c.getArgument(1),"direction",c.getArgument(2),"quality",c.getArgument(4)));});
+        when(seedQuality.review(any(),anyList())).thenAnswer(c->{outsideTransaction();return seedReport(c.getArgument(1),true);});
         when(quality.contract(any(),any())).thenAnswer(c->{outsideTransaction();return json.valueToTree(Map.of("tailCarriage","LOW","version",StyledQualityAgent.VERSION));});
         when(quality.review(any(),anyList(),anyList(),anyString(),anyString())).thenAnswer(c->{outsideTransaction();return json.valueToTree(Map.of("passed",true,"issues",List.of()));});
         when(provider.submit(anyBoolean(),any())).thenAnswer(c->{outsideTransaction();return UUID.randomUUID();});
@@ -62,6 +64,55 @@ class StyledAssetPostgresTest {
         when(provider.poll(any(),eq(false))).thenAnswer(c->{outsideTransaction();return json.valueToTree(Map.of("status","COMPLETED","frames",Collections.nCopies(9,Base64.getEncoder().encodeToString(png))));});
         permission=UUID.fromString(post(opSubject,"/v1/operations/asset-permissions",Map.of("shelterId",shelter,"sourceKey","test-"+dog,"sourceKind","SHELTER","permissionNote","disposable fixture","crawlAllowed",false,"derivativesAllowed",true,"pixellabAllowed",true,"autoGenerate",false),201).at("/data/id").asText());
         post(opSubject,"/v1/operations/asset-imports",Map.of("photoId",photo,"permissionId",permission),200);
+    }
+    JsonNode seedReport(List<byte[]> images,boolean passed) {
+        try {
+            var hashes=new ArrayList<String>();
+            for(byte[] image:images)hashes.add(java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(image)));
+            String binding=java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(String.join("|",hashes).getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+            return json.valueToTree(Map.of("version",StyledSeedQualityAgent.VERSION,"passed",passed,"inputSha256",binding,
+                "rulesSha256",java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("asset-styles/cozy32-v1/quality-rules.json")))),"issues",passed?List.of():List.of("EYE_READABILITY")));
+        }catch(Exception e){throw new AssertionError(e);}
+    }
+    @Test void unreadableSeedsAreBoundedlyRegeneratedBeforeAnyMotion()throws Exception {
+        var attempts=new java.util.concurrent.atomic.AtomicInteger();
+        var generations=new java.util.concurrent.atomic.AtomicInteger();
+        when(provider.poll(any(),eq(true))).thenAnswer(c->{outsideTransaction();
+            if(generations.getAndIncrement()>0) {
+                var changed=ImageIO.read(new ByteArrayInputStream(png));changed.setRGB(12,9,0xffcdbbab);
+                var out=new ByteArrayOutputStream();ImageIO.write(changed,"png",out);png=out.toByteArray();
+            }
+            String b=Base64.getEncoder().encodeToString(png);return json.valueToTree(Map.of("status","COMPLETED","directions",Map.of("south",b,"north",b,"west",b,"east",b)));
+        });
+        when(seedQuality.review(any(),anyList())).thenAnswer(c->{outsideTransaction();return seedReport(c.getArgument(1),attempts.getAndIncrement()>0);});
+        UUID id=request();tick();tick();
+        assertThat(read(id).path("status").asText()).isEqualTo("RUNNING");
+        verify(provider,never()).submit(eq(false),any());
+        tick();tick();assertThat(read(id).path("status").asText()).isEqualTo("SEED_REVIEW");
+        verify(provider,times(2)).submit(eq(true),any());
+        String history=jdbc.queryForObject("SELECT attempt_history::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='character'",String.class,id);
+        assertThat(history).contains("EYE_READABILITY","providerJobId","hashes");
+        assertThat(objects.keySet()).anyMatch(k->k.contains("directions/repair-1/south.png"));
+        var payloads=org.mockito.ArgumentCaptor.forClass(JsonNode.class);verify(provider,times(2)).submit(eq(true),payloads.capture());
+        assertThat(payloads.getAllValues().get(1).at("/quality/attempt").asInt()).isEqualTo(1);
+        review(id,true,"APPROVE",200);finish(id);review(id,false,"APPROVE",200);
+    }
+    @Test void seedFailureOrUncertainEyesCannotBeApprovedOrBypassed()throws Exception {
+        when(seedQuality.review(any(),anyList())).thenAnswer(c->seedReport(c.getArgument(1),false));
+        UUID id=request();for(int i=0;i<6;i++)tick();
+        assertThat(read(id).path("status").asText()).isEqualTo("SEED_REVIEW");
+        assertThat(read(id).path("failureCode").asText()).isEqualTo("SEED_QUALITY_REVIEW_REQUIRED");
+        review(id,true,"APPROVE",409);for(int i=0;i<3;i++)tick();
+        verify(provider,times(3)).submit(eq(true),any());verify(provider,never()).submit(eq(false),any());
+        jdbc.update("UPDATE shelter.asset_jobs SET status='QUEUED',seed_review=jsonb_build_object('hashes',(SELECT result->'hashes' FROM shelter.styled_asset_steps WHERE job_id=? AND label='character')) WHERE id=?",id,id);
+        tick();assertThat(read(id).path("status").asText()).isEqualTo("SEED_REVIEW");verify(provider,never()).submit(eq(false),any());
+        review(id,true,"REJECT",200);
+    }
+    @Test void seedInspectionErrorNeverBuysAnotherCharacterAutomatically()throws Exception {
+        when(seedQuality.review(any(),anyList())).thenThrow(new RuntimeException("simulated AI failure"));
+        UUID id=request();tick();tick();tick();
+        assertThat(read(id).path("status").asText()).isEqualTo("FAILED");
+        verify(provider,times(1)).submit(eq(true),any());verify(provider,never()).submit(eq(false),any());
     }
     @AfterEach void cleanup() {
         var dogs=new ArrayList<>(extraDogs);dogs.add(dog);

@@ -1,0 +1,39 @@
+{
+  "scope": "BASE seed review",
+  "note": "Private source photos and sprite bytes remain in the approved test output. This fixture stores only fingerprints and observed defect labels; it is not an automated visual detector.",
+  "cases": [
+    {
+      "id": "recent-tan",
+      "expectedIssue": "EYE_STYLE",
+      "review": "Human visual finding from native seed comparison. No live AI pass claimed.",
+      "sha256": {
+        "south": "5f78551db6869da05a2a9b2a103528a6a6aaadb20338952235a76e77ef9b34e9",
+        "north": "18b87d5dda395b865cb49682ae821975df0315d2f62f77337e9e875d9db2085c",
+        "west": "79dff5824fd15bc152254281638e8c56752a98e61d1467b42b6edb0472cfe935",
+        "east": "2f34dbf429b2f51671175f0f0802ad466939d9da5ec09cbf9a1c2ba34c0918f0"
+      }
+    },
+    {
+      "id": "recent-black",
+      "expectedIssue": "EYE_READABILITY",
+      "review": "Human visual finding from native seed comparison. No live AI pass claimed.",
+      "sha256": {
+        "south": "d88af1d768c31af17bf3699b8986daeb6a43e06c433f429f3b3439756fac00fb",
+        "north": "575bf09fcfe085dba3c709484135010ffb409940e62d18873466e2b8ad2be333",
+        "west": "d083ea1de9ca34afe1696a51db3d38d5ccc74467aa81159f932662f2769fe492",
+        "east": "d8023778640c83ec4aeb1f54a9bfbd2fe81f4f665a45d13d513e9937dcd64b12"
+      }
+    },
+    {
+      "id": "recent-dark-sable",
+      "expectedIssue": "EYE_READABILITY",
+      "review": "Human visual finding from native seed comparison. No live AI pass claimed.",
+      "sha256": {
+        "south": "99e55b76dbea13baf85cde62e58e5e80fc1df3f9cc26d60a6f822d091c57ee5e",
+        "north": "7866d28f1c5c9ac3436841a4b845c757c2d4cb252d875dbe3c8c6c0a67467ab5",
+        "west": "79e2cea97854fcb02d2ef2ec4d357cb97e808d7f9195f3ea3d1dbc79a549a45c",
+        "east": "bd119349ffd961cb97af0916f00ed4c1af2f7342e7f97bab8093a6e3972a9b33"
+      }
+    }
+  ]
+}

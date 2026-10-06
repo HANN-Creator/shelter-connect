@@ -11,8 +11,9 @@ public class StyledAssetWorker {
     private final StyledAssetStore store;private final StyledAssetProvider provider;private final AssetStorage storage;
     private final StyledSpriteCodec codec;private final AssetProperties properties;private final JsonMapper json;private final StyledQualityAgent quality;
     private final StyledLessonStore lessons;
-    public StyledAssetWorker(StyledAssetStore store,StyledAssetProvider provider,AssetStorage storage,StyledSpriteCodec codec,AssetProperties properties,JsonMapper json,StyledQualityAgent quality,StyledLessonStore lessons) {
-        this.store=store;this.provider=provider;this.storage=storage;this.codec=codec;this.properties=properties;this.json=json;this.quality=quality;this.lessons=lessons;
+    private final StyledSeedQualityAgent seedQuality;
+    public StyledAssetWorker(StyledAssetStore store,StyledAssetProvider provider,AssetStorage storage,StyledSpriteCodec codec,AssetProperties properties,JsonMapper json,StyledQualityAgent quality,StyledLessonStore lessons,StyledSeedQualityAgent seedQuality) {
+        this.store=store;this.provider=provider;this.storage=storage;this.codec=codec;this.properties=properties;this.json=json;this.quality=quality;this.lessons=lessons;this.seedQuality=seedQuality;
     }
     public void tick() {
         if(!properties.enabled)return;
@@ -38,7 +39,7 @@ public class StyledAssetWorker {
                         json.valueToTree(Map.of("contract",w.qualityPolicy().path("contract"),"attempt",w.repairCount(),
                             "rulesSha256",w.qualityPolicy().path("rulesSha256").asText(),
                             "issues",w.qualityReport()!=null && w.qualityReport().path("issues").isArray()?w.qualityReport().path("issues"):json.createArrayNode()));
-                JsonNode payload=tailEdit(w)?tailEditPayload(w):w.character()?codec.character(w.dogId(),w.traits(),storage.photo(w.dogId(),w.bucket(),w.key())):
+                JsonNode payload=tailEdit(w)?tailEditPayload(w):w.character()?codec.character(w.dogId(),w.traits(),storage.photo(w.dogId(),w.bucket(),w.key()),policy):
                     codec.motion(w.traits(),w.action(),w.direction(),seed(w),policy);
                 if(!w.character()) {
                     var selected=lessons.pin(w,(tailEdit(w)?2000:1000)-payload.path("description").asText().length());
@@ -67,11 +68,24 @@ public class StyledAssetWorker {
             if(!store.authorized(w))return;
             if(w.character()) {
                 Map<String,String> keys=new LinkedHashMap<>(),hashes=new LinkedHashMap<>();
+                var seeds=new ArrayList<byte[]>();
                 for(String d:StyledSpriteCodec.DIRECTIONS) {
                     byte[] image=StyledPixelLabClient.decode(result.path("directions").path(d).asText());
-                    String key=w.prefix()+"directions/"+d+".png";storage.put(key,image);keys.put(d,key);hashes.put(d,StyledSpriteCodec.sha(image));
+                    String key=w.prefix()+"directions/"+(w.repairCount()==0?"":"repair-"+w.repairCount()+"/")+d+".png";
+                    storage.put(key,image);keys.put(d,key);hashes.put(d,StyledSpriteCodec.sha(image));seeds.add(image);
                 }
-                store.success(w,json.valueToTree(Map.of("keys",keys,"hashes",hashes)));
+                var metadata=json.valueToTree(Map.of("keys",keys,"hashes",hashes));
+                if(w.qualityPolicy()!=null && w.qualityPolicy().has("seedQualityVersion")) {
+                    var report=w.qualityReport();
+                    if(report==null || !StyledSeedQualityAgent.VERSION.equals(report.path("version").asText())
+                        || !StyledSeedQualityAgent.binding(seeds).equals(report.path("inputSha256").asText())
+                        || !StyledSpriteCodec.qualityRulesSha().equals(report.path("rulesSha256").asText())) {
+                        if(!store.startQuality(w))return;
+                        report=seedQuality.review(storage.photo(w.dogId(),w.bucket(),w.key()),seeds);store.quality(w,report);
+                    }
+                    if(store.retryQuality(w,report,metadata))return;
+                }
+                store.success(w,metadata);
             } else {
                 var frames=result.path("frames").valueStream().map(n->StyledPixelLabClient.decode(n.asText())).toList();
                 JsonNode rawEdit=null;

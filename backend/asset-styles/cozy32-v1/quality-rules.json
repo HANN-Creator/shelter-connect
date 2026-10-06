@@ -1,5 +1,5 @@
 {
-  "revision": "sprite-regressions-2026-10-05-v6",
+  "revision": "sprite-regressions-2026-10-06-v7",
   "frontalLowTail": {
     "upperBandPercent": 65,
     "seedTolerancePixels": 1,
@@ -7,7 +7,7 @@
   },
   "frontalLowTailPrompt": "Tail stays BELOW the rump: hidden or beside HIND PAWS in front view, never by shoulders/head. Still body/head.",
   "seedMargin": "Leave TWO clear pixels on all four canvas edges for animation; keep the silhouette compact and centered.",
-  "commonMotion": "one clear pixel at ALL 32x32 edges. Small inward motion. Fixed camera, size, position, markings and crisp palette. No props or text.",
+  "commonMotion": "one clear pixel at ALL 32x32 edges. Small inward motion. Fixed camera, size, position, markings, eyes and crisp palette. No props or text.",
   "rearView": "No visible eyes, nose, mouth or chest. Rear head only in ALL frames, including the final hold; no shoulder glance.",
   "tailCarriage": {
     "LOW": "Tail stays BELOW the rump, never over the back. Front view: hidden behind hind legs, only a low tip may show.",
@@ -30,7 +30,7 @@
     "CANVAS_CLIPPING": "Reduce outward reach; tuck tail/muzzle/paws away from ALL edges.",
     "DIRECTION_DRIFT": "Lock head facing through the final frame; rear face stays hidden.",
     "TAIL_CARRIAGE": "Restore shared tail height; never pump it vertically.",
-    "IDENTITY_DRIFT": "Restore approved coat, ears, muzzle and proportions.",
+    "IDENTITY_DRIFT": "Restore approved coat, ears, muzzle, eyes and proportions.",
     "ACTION_MISSING": "Show requested motion inside the safe silhouette.",
     "DISCONTINUITY": "Smooth poses; no scale/position jumps.",
     "DETACHED_PIXELS": "No detached pixels; keep tail connected.",
@@ -44,7 +44,8 @@
     "ACTION_MISSING: requested motion absent. IDLE may use subtle breathing only. TAIL_WAG may be occluded or foreshortened; do not require an invented raised tail.",
     "DISCONTINUITY: large pose, position or scale jump between neighbors. SIT ends seated and holds; WALK is an in-place gait.",
     "Canvas clipping is checked separately from original alpha pixels. Never infer cropping from the contact sheet grid.",
-    "SIT: inspect the tail through descent AND the final seated hold. Keep the approved anatomy tucked beside the haunch. A missing or bluntly amputated tip is IDENTITY_DRIFT even when the remaining pixels clear the border. Never fix a tail by shrinking the whole dog or replacing seated frames with a standing pose."
+    "SIT: inspect the tail through descent AND the final seated hold. Keep the approved anatomy tucked beside the haunch. A missing or bluntly amputated tip is IDENTITY_DRIFT even when the remaining pixels clear the border. Never fix a tail by shrinking the whole dog or replacing seated frames with a standing pose.",
+    "EYES: compare open-eye frames with the approved seed: keep pupil shape, position and local contrast. A brief natural blink is allowed. Eyes that stay erased, become hollow rings, or merge into fur in open-eye frames are IDENTITY_DRIFT. North has no face; do not invent eyes."
   ],
   "regressions": [
     {
@@ -135,6 +136,14 @@
       "check": "recorded-sit",
       "fixture": "sit-tail-alpha.json",
       "expected": "Original frames 3–8 touch the right edge; reject all six including final hold frame 8, even after a vision pass. Reviewed local tail-only repair clears the border while preserving body pixels and all nine frames. The dog-specific mask is not a generic automatic repair; future generation must tuck the full tail beside the seated haunch."
+    },
+    {
+      "id": "new-seed-eyes-unreadable-or-hollow",
+      "stage": "BASE",
+      "issue": "EYE_READABILITY",
+      "check": "vision-seed",
+      "fixture": "seed-eye-regressions.json",
+      "expected": "Block seed approval and all paid motion generation if any visible eye view fails or is uncertain. Recheck every regenerated seed independently; retain originals and receipts. The recorded examples are visual failures, not deterministic coordinate masks."
     }
   ],
   "tailEdit": {
@@ -161,5 +170,17 @@
     "HIGH": "Keep the raised seed tail fixed at its approved height.",
     "CURLED": "Keep the seed tail curl and position fixed.",
     "UNKNOWN": "Keep seed tail shape and position fixed. If hidden, keep hidden; never add a tail above the head."
+  },
+  "seedEyes": {
+    "version": "seed-eyes-v1",
+    "prevention": "Soft filled dark pupils, distinct from fur, with a tiny muted catchlight. No hollow eye rings, white eyeballs, angry slits or merged black sockets. Match eye size and placement across views; rear has no eyes.",
+    "correction": "Fix eye readability and rounded filled pupil shape before animation; preserve this dog and the approved art style.",
+    "reviewInstructions": [
+      "Judge new seeds independently against the approved STYLE and photographed IDENTITY. These seeds are unapproved; never treat a flawed seed as a correct reference.",
+      "In south, both eyes must read separately from the surrounding coat and muzzle. In west/east the visible eye must read clearly. Compare eye placement, scale and rounded filled pupil treatment across views. North must show no eyes or face.",
+      "Accept compact dark filled pupils and a restrained small catchlight. Reject hollow ring or socket eyes, large white eyeballs, angry slash-shaped eyes, misaligned pupils, or eyes that disappear into dark fur. A dark coat still needs readable local contrast without changing coat identity.",
+      "Do not demand photorealistic eyes, identical coat colors across dogs, or extra sparkle. Preserve the approved soft pixel-art style. Return UNCERTAIN when eye form cannot be confidently judged; uncertainty does not pass.",
+      "Identity compares visible coat/markings, ears, muzzle and puppy/body proportions with the real photo. Do not infer temperament. The style reference supplies rendering only, never the dog identity."
+    ]
   }
 }
