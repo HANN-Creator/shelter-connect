@@ -149,3 +149,5 @@ B-43: [스프라이트 자동 품질 검수·선택 보완](sprite-quality-repai
 - B-49 앉기 왼쪽 꼬리 여백 보존: [복원·예방·재현 검증](seated-tail-margin.md). 브랜치 `backend/b-49-sit-tail-margin`. 현재 미리보기의 앉기 꼬리만 복원하고, 실제 원본 9프레임·마지막 자세 잘림을 서버와 CLI 회귀 검사에 기록한다. SIT 초기·보완 생성과 Luna 검수 지침 강화. API·DB 변경 없음. 노션 외부 기록은 별도 승인 대기.
 
 - B-50 자동 품질 규칙 학습: [처리·API·검증 경계](automatic-quality-lessons.md). 브랜치 `backend/b-50-automatic-quality-lessons`. 실패/정상 사례 저장, Luna 후보 제안·정답을 숨긴 재검증, 범위별 다음 생성 적용, 운영자 중단과 이력. DB V15. 실제 이미지 외부 검증 및 노션 쓰기의 승인 상태는 각각 별도로 기록한다.
+
+- B-50A 실제 Luna 학습 검증: [실행 결과와 범위](automatic-quality-lessons.md#2026-10-06-실제-luna-검증). 브랜치 `backend/b-50a-live-lesson-verification`. 승인된 기존 도트의 실제 모델 제안·재검증·로컬 DB 활성화·다음 요청 반영을 확인한다. 방향별 테스트 첫 프레임 연결을 고치고 회귀 검사한다. API·DB·운영 코드 변경 없음. 노션 외부 기록은 별도 승인 대기.

@@ -480,6 +480,13 @@ class StyledAssetPostgresTest {
         lessonWorker.tick();assertThat(lessonStatus(lesson)).isEqualTo("DISABLED");verifyNoInteractions(lessonAgent);
     }
     java.nio.file.Path liveFixtures;
+    boolean distinctLearningSeeds;
+    @Test void learningFixturesPreserveEachDirectionsFirstFrame() throws Exception {
+        distinctLearningSeeds=true;
+        learningPair();
+        assertThat(onlyLesson()).isNotNull();
+        verifyNoInteractions(lessonAgent);
+    }
     @Test @org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable(named="RUN_STYLED_LESSON_LIVE",matches="true")
     void liveLunaLearnsFromPreviouslyReviewedClipsAndPinsTheLesson() throws Exception {
         liveFixtures=java.nio.file.Path.of(System.getenv("STYLED_LESSON_FIXTURES"));
@@ -497,9 +504,15 @@ class StyledAssetPostgresTest {
         java.nio.file.Files.createDirectories(destination.toAbsolutePath().getParent());
         java.nio.file.Files.writeString(destination,json.writerWithDefaultPrettyPrinter().writeValueAsString(report));
         assertThat(lessonStatus(lesson)).isEqualTo("ACTIVE");
-        nextLearningDog();UUID next=request();tick();tick();review(next,true,"APPROVE",200);finish(next);
+        nextLearningDog();UUID next=request();tick();tick();review(next,true,"APPROVE",200);
+        clearInvocations(provider,quality);finish(next);
         var pinned=json.readTree(jdbc.queryForObject("SELECT learned_lessons::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='sit-west'",String.class,next));
         assertThat(pinned.get(0).path("id").asText()).isEqualTo(lesson.toString());
+        var payloads=org.mockito.ArgumentCaptor.forClass(JsonNode.class);
+        verify(provider,atLeastOnce()).submit(eq(false),payloads.capture());
+        assertThat(payloads.getAllValues().stream().anyMatch(p->p.path("description").asText()
+            .contains(pinned.get(0).path("prevention").asText()))).isTrue();
+        verify(quality).review(any(),anyList(),anyList(),eq("SIT"),eq("west"),eq(pinned));
         report.set("nextGenerationSnapshot",pinned);report.put("nextPayloadVerified",true);
         java.nio.file.Files.writeString(destination,json.writerWithDefaultPrettyPrinter().writeValueAsString(report));
     }
@@ -514,23 +527,26 @@ class StyledAssetPostgresTest {
     UUID learningPair() throws Exception {
         var fixture=json.readTree(java.nio.file.Files.readString(java.nio.file.Path.of("scripts/fixtures/sit-tail-alpha.json")));
         var original=alphaFrames(fixture.at("/clips/original/frames"));var corrected=alphaFrames(fixture.at("/clips/corrected/frames"));
-        List<byte[]> seedImages=Collections.nCopies(4,original.getFirst());
+        // Distinct west and non-west seeds catch accidental reuse of the SIT source for every direction.
+        List<byte[]> seedImages=distinctLearningSeeds?List.of(png,png,original.getFirst(),png):Collections.nCopies(4,original.getFirst());
         if(liveFixtures!=null) {
             original=sheetFrames(java.nio.file.Files.readAllBytes(liveFixtures.resolve("sheets/sit-left.png")));
             corrected=sheetFrames(java.nio.file.Files.readAllBytes(liveFixtures.resolve("sit-left-adjustment/sit-left.png")));
             seedImages=new ArrayList<>();for(String d:List.of("south","north","west","east"))seedImages.add(java.nio.file.Files.readAllBytes(liveFixtures.resolve("directions/"+d+".png")));
         }
         final var badFrames=original;final var goodFrames=corrected;
-        var source=original.getFirst();var motion=new java.util.concurrent.atomic.AtomicReference<>("BASE");
+        var source=new java.util.concurrent.atomic.AtomicReference<>(original.getFirst());
+        var motion=new java.util.concurrent.atomic.AtomicReference<>("BASE");
         var attempts=new java.util.concurrent.atomic.AtomicInteger();var checks=new java.util.concurrent.atomic.AtomicInteger();
         var realCodec=new StyledSpriteCodec(json,System.getenv().getOrDefault("ASSET_HARNESS_PYTHON","python3"));
         doAnswer(c->{outsideTransaction();
+            source.set(c.getArgument(3));
             motion.set(c.<String>getArgument(1)+"-"+c.<String>getArgument(2));return realCodec.motion(c.getArgument(0),c.getArgument(1),c.getArgument(2),c.getArgument(3),c.getArgument(4));}).when(codec).motion(any(),anyString(),anyString(),any(),any());
         when(provider.poll(any(),eq(true))).thenReturn(json.valueToTree(Map.of("status","COMPLETED","directions",Map.of(
             "south",Base64.getEncoder().encodeToString(seedImages.get(0)),"north",Base64.getEncoder().encodeToString(seedImages.get(1)),
             "west",Base64.getEncoder().encodeToString(seedImages.get(2)),"east",Base64.getEncoder().encodeToString(seedImages.get(3))))));
         when(provider.poll(any(),eq(false))).thenAnswer(c->{outsideTransaction();var frames=motion.get().equals("SIT-west")?
-            (attempts.getAndIncrement()==0?badFrames:goodFrames):Collections.nCopies(9,source);
+            (attempts.getAndIncrement()==0?badFrames:goodFrames):Collections.nCopies(9,source.get());
             return json.valueToTree(Map.of("status","COMPLETED","frames",frames.stream().map(Base64.getEncoder()::encodeToString).toList()));});
         when(quality.review(any(),anyList(),anyList(),eq("SIT"),eq("west"))).thenAnswer(c->{outsideTransaction();boolean passed=checks.getAndIncrement()>0;
             return json.valueToTree(Map.of("passed",passed,"issues",passed?List.of():List.of("CANVAS_CLIPPING"),"edgeFrames",passed?List.of():List.of(3,4,5,6,7,8),"note","Recorded tail edge replay"));});
@@ -538,7 +554,8 @@ class StyledAssetPostgresTest {
         when(lessonAgent.propose(any(),any())).thenAnswer(c->{outsideTransaction();return json.valueToTree(Map.of("prevention",learnedPrevention(),"criterion","The seated tail tip crosses the right frame boundary during descent or final hold."));});
         when(lessonAgent.replay(any(),any(),anyList())).thenAnswer(c->{outsideTransaction();return replayAnswer(c.getArgument(2),false);});
         UUID id=request();tick();tick();review(id,true,"APPROVE",200);finish(id);
-        assertThat(read(id).path("status").asText()).isEqualTo("REVIEW");return id;
+        var result=read(id);
+        assertThat(result.path("status").asText()).as("Recorded fixture job: %s",result.path("failureCode")).isEqualTo("REVIEW");return id;
     }
     List<byte[]> sheetFrames(byte[] png)throws Exception {
         var sheet=ImageIO.read(new ByteArrayInputStream(png));assertThat(sheet.getWidth()).isEqualTo(288);assertThat(sheet.getHeight()).isEqualTo(32);
