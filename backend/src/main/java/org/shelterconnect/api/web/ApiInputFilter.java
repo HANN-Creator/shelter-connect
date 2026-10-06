@@ -3,6 +3,8 @@ package org.shelterconnect.api.web;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
+import java.util.Set;
+import java.util.stream.Collectors;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -13,6 +15,7 @@ import tools.jackson.databind.json.JsonMapper;
 /** Runs after authorization, before multipart/JSON conversion or controller side effects. */
 public final class ApiInputFilter extends OncePerRequestFilter {
     public static final int BODY_BYTES=64*1024, PHOTO_BYTES=5*1024*1024, MULTIPART_BYTES=6*1024*1024;
+    private static final Set<String> SEED_REFERENCE_PARTS=Set.of("metadata","south","north","west","east");
     private final ApiTrafficPolicy traffic;
     private final JsonMapper json;
     public ApiInputFilter(ApiTrafficPolicy traffic,JsonMapper json) { this.traffic=traffic; this.json=json; }
@@ -33,7 +36,13 @@ public final class ApiInputFilter extends OncePerRequestFilter {
             if(request.getContentLengthLong()>MULTIPART_BYTES) { tooLarge(request,response,"REQUEST_TOO_LARGE"); return; }
             try {
                 var parts=request.getParts();
-                if(parts.size()>4) { tooLarge(request,response,"REQUEST_TOO_LARGE"); return; }
+                boolean seedReference=request.getMethod().equals("POST") && request.getRequestURI().substring(request.getContextPath().length())
+                    .matches("/v1/shelter-admin/dogs/[^/]+/styled-seed-examples");
+                if(parts.size()>(seedReference?5:4)) { tooLarge(request,response,"REQUEST_TOO_LARGE"); return; }
+                // Four native images plus metadata; do not widen other upload routes or accept duplicate/unknown parts.
+                if(seedReference && (parts.size()!=5 || !parts.stream().map(Part::getName).collect(Collectors.toSet()).equals(SEED_REFERENCE_PARTS))) {
+                    ApiRequestFilter.error(json,request,response,400,"INVALID_REQUEST","metadata와 south·north·west·east 파일을 각각 하나씩 보내 주세요."); return;
+                }
                 long total=0;
                 for(var part:parts) {
                     total+=part.getSize();

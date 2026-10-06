@@ -527,9 +527,13 @@ class StyledAssetPostgresTest {
             "assessment",assessment,"issues",assessment.equals("NEGATIVE")?List.of("EYE_READABILITY"):List.of(),"note","Previously reviewed native reference; preserve source pixels and original AI judgment"));
     }
     JsonNode reference(UUID caller,byte[] frame,Object body,int expected)throws Exception {
-        var req=multipart("/v1/shelter-admin/dogs/"+dog+"/styled-seed-examples")
-            .file(new org.springframework.mock.web.MockMultipartFile("metadata","metadata.json","application/json",json.writeValueAsBytes(body)));
-        for(String d:List.of("south","north","west","east"))req.file(new org.springframework.mock.web.MockMultipartFile(d,d+".png","image/png",frame));
+        var metadata=new org.springframework.mock.web.MockPart("metadata",json.writeValueAsBytes(body));
+        metadata.getHeaders().setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+        var req=multipart("/v1/shelter-admin/dogs/"+dog+"/styled-seed-examples").part(metadata);
+        for(String d:List.of("south","north","west","east")) {
+            var part=new org.springframework.mock.web.MockPart(d,d+".png",frame);
+            part.getHeaders().setContentType(org.springframework.http.MediaType.IMAGE_PNG);req.part(part);
+        }
         if(caller!=null)req.header("Authorization",bearer(caller));
         return json.readTree(mvc.perform(req).andExpect(status().is(expected)).andReturn().getResponse().getContentAsString()).path("data");
     }

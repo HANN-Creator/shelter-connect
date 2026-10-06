@@ -159,3 +159,5 @@ B-43: [스프라이트 자동 품질 검수·선택 보완](sprite-quality-repai
 - B-52 기본 도트 자동 학습 연결: [처리·검증 범위](seed-quality-learning.md). 브랜치 `backend/b-52-seed-quality-learning`. 완료 기준: BASE 사례 보존, 담당자 승인 정상 예시 기반 재검증, 검증된 문구의 다음 기본 도트 생성·검수 전달, 동작 학습 분리와 권한·해시·중단 경계 확인. DB V16. 노션 외부 기록은 앞선 승인 대기로 미동기화.
 
 - B-53 기본 도트 학습 자료 등록: [API·평가·검증 범위](seed-learning-references.md). 브랜치 `backend/b-53-seed-learning-references`. 사용자 요청 실제 학습 검증의 선행 작업: 기존 승인본·실패본 등록, AI 원판정과 인간 평가 분리, 승인 후 생성·공개 차단, 실제 Luna 학습 및 다음 생성 연결 확인. DB V17. 노션 외부 기록은 앞선 승인 대기로 미동기화.
+
+- B-53A 실제 기본 도트 등록의 업로드 제한 수정: [실제 실패와 회귀 검사](seed-learning-references.md#b-53a-실제-등록-요청의-413-수정). 브랜치 `backend/b-53a-seed-reference-upload`. 5파트 학습 입력의 413 재현, 해당 경로만 제한 조정, 실제 HTTP의 정상·과대·중복 요청과 기존 업로드 경계 검증. DB·모델·품질 규칙 변경 없음. 실제 Luna 학습은 수정 배포 후 재개하며 노션 외부 기록은 앞선 승인 대기로 미동기화.
