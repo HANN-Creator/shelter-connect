@@ -99,6 +99,31 @@ def idle_edit_payload(frames, direction):
     return payload
 
 
+def margin_edit_payload(frames, action, direction):
+    """Keep the requested action while editing a repeatedly clipped full strip."""
+    rules = load_quality()
+    if action not in rules['actions']:
+        raise ValueError('Unsupported action')
+    payload = edit_payload(frames, direction)
+    payload['description'] = (
+        'Repair clipped extremities in this COMPLETE nine-frame ' + action + ' animation. '
+        'Frame zero is the approved identity and standing reference. Preserve its face, eyes, '
+        'ears, coat, body size and facing. Restore a complete connected tail tip, paws and muzzle '
+        'where clipped; tuck outward reach inward while keeping ONE transparent pixel at ALL edges '
+        'in EVERY frame, including the final hold. Keep the tail shape and carriage from frame zero; '
+        'if occluded, do not invent a raised tail. Do not amputate the tip, shrink the whole dog, '
+        'erase body parts, blur, resize, crop or drop any frame. Keep the requested action and '
+        'smooth phase progression; never replace all moving/seated poses with a standing still. '
+        'Native 32x32 crisp pixels, original palette, fixed camera, transparent background. '
+        + rules['actions'][action] + ' ' + rules['commonMotion']
+        + ' Remain ' + direction + ' facing in every frame. '
+        + (rules['rearView'] if direction == 'north' else '')
+    )
+    if len(payload['description']) > 2000:
+        raise ValueError('Margin edit prompt exceeds provider limit')
+    return payload
+
+
 def compose_tail(seed, source_seed, frames, mask, review):
     direction = review.get('direction')
     source_direction = review.get('sourceDirection')

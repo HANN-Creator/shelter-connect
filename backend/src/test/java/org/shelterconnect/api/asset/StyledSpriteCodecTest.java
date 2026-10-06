@@ -66,4 +66,18 @@ class StyledSpriteCodecTest {
         assertThat(StyledSpriteCodec.nativeFrame(restored.get(8)).getRGB(31,18)).isEqualTo(0xff123456);
         assertThat(restored).hasSize(9);
     }
+    @Test void marginEditKeepsRequestedWalkOrSitAndNeverCropsInputEdges() throws Exception {
+        var codec=new StyledSpriteCodec(json,System.getenv().getOrDefault("ASSET_HARNESS_PYTHON","python3"));
+        var image=ImageIO.read(new ByteArrayInputStream(image(32)));image.setRGB(31,18,0xff123456);
+        var out=new ByteArrayOutputStream();ImageIO.write(image,"png",out);
+        byte[] sheet=StyledSpriteCodec.rawSheet(Collections.nCopies(9,out.toByteArray()));
+        for(String action:List.of("WALK","SIT")) {
+            var payload=codec.marginEdit(action,"north",sheet,147);
+            assertThat(payload.path("description").asText()).contains(action,"ONE transparent pixel","Do not amputate","north facing","No visible eyes");
+            assertThat(payload.path("description").asText().length()).isLessThanOrEqualTo(2000);
+            assertThat(payload.path("frames").size()).isEqualTo(9);
+            for(var frame:payload.path("frames"))assertThat(StyledSpriteCodec.nativeFrame(StyledPixelLabClient.decode(frame.at("/image/base64").asText())).getRGB(31,18)).isEqualTo(0xff123456);
+        }
+        assertThatThrownBy(()->codec.marginEdit("BASE","north",sheet,147)).isInstanceOf(AssetException.class);
+    }
 }

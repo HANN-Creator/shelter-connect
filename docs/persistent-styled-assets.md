@@ -76,3 +76,5 @@ V12는 테이블 1개와 기존 작업 컬럼 2개, V13은 선택 계획 스냅�
 B-43: V14와 `sprite-quality-v1` 자동 검수·보완을 추가했다. 기존 작업은 `/repair` 명시 요청 시 검사하며, 정상 시트와 기준 이미지는 재사용한다. [세부 계약](sprite-quality-repair.md).
 
 B-54: 새 작업의 `qualityPolicy.idleRepair=calm-idle-edit-v1`은 반복 `IDLE_MOTION`의 마지막 보완을 9프레임 전체 편집으로 전환한다. 기존 작업 정책과 2회 보완 예산은 유지하며, 원본·복원 결과 모두 통과해야 한다. [처리·검증 경계](idle-edit-repair.md).
+
+B-55: 새 작업의 `qualityPolicy.marginRepair=frame-margin-edit-v1`은 일반 동작에서도 반복된 `CANVAS_CLIPPING`의 마지막 보완을 전체 프레임 편집으로 전환한다. 요청 행동과 방향을 유지하고 기존 IDLE·LOW TAIL_WAG 편집이 우선한다. 기존 정책·예산과 원본 검수 경계는 유지한다. [처리·검증 경계](motion-margin-edit.md).

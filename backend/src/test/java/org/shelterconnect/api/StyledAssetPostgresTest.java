@@ -505,6 +505,52 @@ class StyledAssetPostgresTest {
         assertThat(read(id).path("failureCode").asText()).isEqualTo("QUALITY_REPAIR_EXHAUSTED");
         review(id,false,"APPROVE",409);
     }
+    @Test void repeatedWalkClippingUsesOneCompleteEditWithinExistingBudget() throws Exception {
+        when(quality.contract(any(),any())).thenReturn(json.valueToTree(Map.of("tailCarriage","UNKNOWN")));
+        var calls=new java.util.concurrent.atomic.AtomicInteger();
+        when(quality.review(any(),anyList(),anyList(),eq("WALK"),eq("west"))).thenAnswer(c->{
+            boolean ok=calls.incrementAndGet()>2;
+            return json.valueToTree(Map.of("passed",ok,"issues",ok?List.of():List.of("CANVAS_CLIPPING")));
+        });
+        when(codec.marginEdit(anyString(),anyString(),any(),anyInt())).thenAnswer(c->{outsideTransaction();return json.valueToTree(Map.of("marginEdited",true));});
+        when(provider.editAnimation(any())).thenAnswer(c->{outsideTransaction();return UUID.randomUUID();});
+        UUID id=request();tick();tick();review(id,true,"APPROVE",200);finish(id);
+        assertThat(read(id).at("/qualityPolicy/marginRepair").asText()).isEqualTo(StyledSpriteCodec.MARGIN_EDIT_VERSION);
+        verify(provider,times(14)).submit(anyBoolean(),any());verify(provider,times(1)).editAnimation(any());
+        var source=org.mockito.ArgumentCaptor.forClass(byte[].class);
+        verify(codec).marginEdit(eq("WALK"),eq("west"),source.capture(),anyInt());
+        assertThat(ImageIO.read(new ByteArrayInputStream(source.getValue())).getWidth()).isEqualTo(288);
+        assertThat(calls.get()).isEqualTo(4);
+        var step=read(id).path("steps").valueStream().filter(n->n.path("label").asText().equals("walk-west")).findFirst().orElseThrow();
+        assertThat(step.path("repairCount").asInt()).isEqualTo(2);
+        assertThat(step.at("/qualityReport/rawEditReview/passed").asBoolean()).isTrue();
+        review(id,false,"APPROVE",200);
+    }
+    @Test void rawMarginEditFailureStillBlocksApprovalAfterRestoredResultPasses() throws Exception {
+        var calls=new java.util.concurrent.atomic.AtomicInteger();
+        when(quality.review(any(),anyList(),anyList(),eq("SIT"),eq("west"))).thenAnswer(c->{
+            boolean ok=calls.incrementAndGet()==3;
+            return json.valueToTree(Map.of("passed",ok,"issues",ok?List.of():List.of("CANVAS_CLIPPING")));
+        });
+        when(codec.marginEdit(anyString(),anyString(),any(),anyInt())).thenReturn(json.valueToTree(Map.of("marginEdited",true)));
+        when(provider.editAnimation(any())).thenReturn(UUID.randomUUID());
+        UUID id=request();tick();tick();review(id,true,"APPROVE",200);finish(id);
+        assertThat(read(id).path("failureCode").asText()).isEqualTo("QUALITY_REPAIR_EXHAUSTED");
+        var step=read(id).path("steps").valueStream().filter(n->n.path("label").asText().equals("sit-west")).findFirst().orElseThrow();
+        assertThat(step.at("/qualityReport/rawEditReview/passed").asBoolean()).isFalse();
+        assertThat(step.path("repairCount").asInt()).isEqualTo(2);
+        review(id,false,"APPROVE",409);publicStatus(404);
+        post(subject,path(id)+"/repair",Map.of("note","Do not reset the margin repair budget after the raw edit failed","expectedSeedHashes",read(id).at("/steps/0/result/hashes")),200);tick();
+        verify(provider,times(14)).submit(anyBoolean(),any());verify(provider,times(1)).editAnimation(any());
+    }
+    @Test void existingMotionJobsRetainRegenerationWhenMarginPolicyIsAbsent() throws Exception {
+        when(quality.review(any(),anyList(),anyList(),eq("WALK"),eq("west"))).thenReturn(json.valueToTree(Map.of("passed",false,"issues",List.of("CANVAS_CLIPPING"))));
+        UUID id=request();jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=quality_policy-'marginRepair' WHERE id=?",id);
+        tick();tick();review(id,true,"APPROVE",200);finish(id);
+        verify(provider,times(15)).submit(anyBoolean(),any());verify(provider,never()).editAnimation(any());
+        assertThat(read(id).path("failureCode").asText()).isEqualTo("QUALITY_REPAIR_EXHAUSTED");
+        review(id,false,"APPROVE",409);
+    }
     UUID tailPlan() throws Exception {
         UUID id=request();
         jdbc.update("UPDATE shelter.asset_jobs SET action_plan=action_plan || '[\"TAIL_WAG\"]'::jsonb WHERE id=?",id);
@@ -541,11 +587,26 @@ class StyledAssetPostgresTest {
         verify(provider,times(1)).editAnimation(any());publicStatus(200);publicStatus(200);verify(provider,times(1)).editAnimation(any());
         assertThat(objects.keySet().stream().filter(k->k.contains("raw-edits/"))).hasSize(1);
     }
-    @Test void unknownTailKeepsExistingBoundedRegenerationAndNeverBuysEdit() throws Exception {
+    @Test void existingUnknownTailWithoutMarginPolicyKeepsBoundedRegeneration() throws Exception {
         when(quality.contract(any(),any())).thenReturn(json.valueToTree(Map.of("tailCarriage","UNKNOWN")));
         when(quality.review(any(),anyList(),anyList(),eq("TAIL_WAG"),eq("west"))).thenReturn(json.valueToTree(Map.of("passed",false,"issues",List.of("CANVAS_CLIPPING"))));
-        UUID id=tailPlan();tick();tick();review(id,true,"APPROVE",200);finish(id);verify(provider,never()).editAnimation(any());
+        UUID id=tailPlan();jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=quality_policy-'marginRepair' WHERE id=?",id);
+        tick();tick();review(id,true,"APPROVE",200);finish(id);verify(provider,never()).editAnimation(any());
         verify(provider,times(19)).submit(anyBoolean(),any());review(id,false,"APPROVE",409);
+    }
+    @Test void newUnknownTailClippingUsesActionSpecificMarginEditWithoutForcingLowTail() throws Exception {
+        when(quality.contract(any(),any())).thenReturn(json.valueToTree(Map.of("tailCarriage","UNKNOWN")));
+        var calls=new java.util.concurrent.atomic.AtomicInteger();
+        when(quality.review(any(),anyList(),anyList(),eq("TAIL_WAG"),eq("west"))).thenAnswer(c->{
+            boolean ok=calls.incrementAndGet()>2;
+            return json.valueToTree(Map.of("passed",ok,"issues",ok?List.of():List.of("CANVAS_CLIPPING")));
+        });
+        when(codec.marginEdit(anyString(),anyString(),any(),anyInt())).thenReturn(json.valueToTree(Map.of("marginEdited",true)));
+        UUID id=tailPlan();tick();tick();review(id,true,"APPROVE",200);finish(id);
+        verify(codec).marginEdit(eq("TAIL_WAG"),eq("west"),any(),anyInt());
+        verify(codec,never()).tailEdit(anyString(),any(),anyInt());
+        verify(provider,times(18)).submit(anyBoolean(),any());verify(provider,times(1)).editAnimation(any());
+        review(id,false,"APPROVE",200);
     }
     @Test void seedLessonsWaitForHumanPositiveThenReachNextDogGenerationAndReview()throws Exception {
         UUID first=seedLearningPair();UUID lesson=onlyLesson();
