@@ -36,8 +36,9 @@ public class StyledSeedQualityAgent {
         JsonNode response;
         try { response=client.structuredImage(instructions,
             "Top: actual PHOTO for identity, approved STYLE for rendering. Bottom: unapproved SOUTH, NORTH, WEST, EAST seeds. "
-            +"Return each direction exactly once. NOT_VISIBLE is acceptable ONLY for the rear north view; "
-            +"a north view showing face or eyes must FAIL. Missing/unreadable eyes in front or side are not acceptable occlusion.",
+            +"Return each direction exactly once. For north with no face or eyes, readability is NOT_VISIBLE; "
+            +"style may be NOT_VISIBLE (no eyes to judge) or PASS (appropriate rendering). "
+            +"If north shows face or eyes, readability must FAIL. Missing/unreadable eyes in front or side are not acceptable occlusion.",
             board(photo,seeds),schema);
         } catch(AiFailure e) {throw new AssetException(502,"QUALITY_"+e.code());}
         if(!response.path("views").isArray() || response.path("views").size()!=4
@@ -49,7 +50,8 @@ public class StyledSeedQualityAgent {
             if(!StyledSpriteCodec.DIRECTIONS.contains(d) || !seen.add(d) || !VERDICTS.contains(read)
                 || !VERDICTS.contains(style) || !text(v.path("note"),240))throw invalid();
             if(d.equals("north")) {
-                if(!read.equals("NOT_VISIBLE") || !style.equals("NOT_VISIBLE"))issues.add("EYE_DIRECTION");
+                if(!read.equals("NOT_VISIBLE"))issues.add("EYE_DIRECTION");
+                if(!Set.of("NOT_VISIBLE","PASS").contains(style))issues.add("EYE_STYLE");
             } else {
                 if(!read.equals("PASS"))issues.add("EYE_READABILITY");
                 if(!style.equals("PASS"))issues.add("EYE_STYLE");

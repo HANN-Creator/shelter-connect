@@ -130,25 +130,29 @@ public class StyledAssetStore {
         if(j.steps().isEmpty() || j.steps().getFirst().result()==null ||
             !j.steps().getFirst().result().path("hashes").equals(body.path("expectedSeedHashes")))
             throw new AssetException(409,"SEED_REVIEW_STALE");
-        if(j.qualityPolicy()==null || !Set.of("REVIEW","QUEUED","RUNNING").contains(j.status()))
+        if(j.qualityPolicy()==null || !Set.of("SEED_REVIEW","REVIEW","QUEUED","RUNNING").contains(j.status()))
             throw new AssetException(409,"QUALITY_RECHECK_NOT_ALLOWED");
         String current=StyledSpriteCodec.qualityRulesSha(),pinned=j.qualityPolicy().path("rulesSha256").asText();
         if(current.equals(pinned) && expected.equals(j.qualityPolicy().path("recheckFromRulesSha256").asText()))return j;
         if(!expected.equals(pinned))throw new AssetException(409,"QUALITY_RECHECK_STALE");
         if(current.equals(pinned))throw new AssetException(409,"QUALITY_RULES_UNCHANGED");
-        if(!j.status().equals("REVIEW") || !j.complete())throw new AssetException(409,"QUALITY_RECHECK_NOT_ALLOWED");
+        boolean seedOnly=j.status().equals("SEED_REVIEW"),recheckSeed=j.qualityPolicy().has("seedQualityVersion");
+        if(seedOnly?(!recheckSeed || !j.steps().getFirst().status().equals("SUCCEEDED")):
+                (!j.status().equals("REVIEW") || !j.complete()))throw new AssetException(409,"QUALITY_RECHECK_NOT_ALLOWED");
         jdbc.sql("""
             UPDATE shelter.styled_asset_steps SET attempt_history=attempt_history || jsonb_build_array(jsonb_build_object(
               'qualityRecheck',true,'providerJobId',provider_job_id,'result',result,
               'quality',quality_report,'repairCount',repair_count)),
               quality_report=NULL,status='CHECKING'
-            WHERE job_id=:id AND action<>'BASE'
-            """).param("id",id).update();
+            WHERE job_id=:id AND ((:seedOnly AND action='BASE') OR (NOT :seedOnly AND (action<>'BASE' OR :recheckSeed)))
+            """).param("id",id).param("seedOnly",seedOnly).param("recheckSeed",recheckSeed).update();
         jdbc.sql("""
             UPDATE shelter.asset_jobs SET quality_policy=quality_policy || CAST(:policy AS jsonb) ||
               jsonb_build_object('recheckFromRulesSha256',:previous,'recheckNote',:note,'recheckedAt',now()),
+              seed_review=CASE WHEN :recheckSeed THEN NULL ELSE seed_review END,
               status='QUEUED',failure_code=NULL,next_run_at=now(),lease_token=NULL,lease_until=NULL WHERE id=:id
-            """).param("policy",json.writeValueAsString(qualityPolicy())).param("previous",expected).param("note",note).param("id",id).update();
+            """).param("policy",json.writeValueAsString(recheckSeed?newSeedQualityPolicy():qualityPolicy()))
+                .param("recheckSeed",recheckSeed).param("previous",expected).param("note",note).param("id",id).update();
         return job(id);
     }
     private Map<String,Object> qualityPolicy(){return Map.of("version",StyledQualityAgent.VERSION,"maxRepairsPerClip",2,
