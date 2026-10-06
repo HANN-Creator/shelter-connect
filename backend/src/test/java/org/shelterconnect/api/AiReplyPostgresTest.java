@@ -37,6 +37,7 @@ class AiReplyPostgresTest {
 	@Autowired JdbcTemplate jdbc; @Autowired MockMvc mvc; @Autowired JsonMapper json; @Autowired JwtTestSupport tokens;
 	@MockitoBean org.shelterconnect.api.behavior.BehaviorSuggestionProvider behaviorSuggestions;
 	@MockitoBean org.shelterconnect.api.asset.StyledQualityAgent spriteQuality;
+    @MockitoBean org.shelterconnect.api.asset.StyledSeedQualityAgent seedQuality;
     @MockitoBean org.shelterconnect.api.asset.StyledLessonAgent spriteLessons;
     @MockitoBean AiProvider provider; @MockitoSpyBean AiProperties properties;
 	@MockitoSpyBean AiBudgetProperties budgetProperties;
