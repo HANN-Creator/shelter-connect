@@ -147,3 +147,5 @@ B-43: [스프라이트 자동 품질 검수·선택 보완](sprite-quality-repai
 - B-48 가만히 쉬기 꼬리 움직임 축소: [동작 기준과 검증 경계](calm-idle.md). 브랜치 `backend/b-48-calm-idle`. 현재 미리보기 꼬리 고정, IDLE 전용 생성 문구와 실제 원본을 이용한 서버·CLI 윤곽 검사, IDLE 전용 보완 코드 연결. DB 변경·기존 작업 승인 우회 없음. 노션 외부 기록은 별도 승인 대기.
 
 - B-49 앉기 왼쪽 꼬리 여백 보존: [복원·예방·재현 검증](seated-tail-margin.md). 브랜치 `backend/b-49-sit-tail-margin`. 현재 미리보기의 앉기 꼬리만 복원하고, 실제 원본 9프레임·마지막 자세 잘림을 서버와 CLI 회귀 검사에 기록한다. SIT 초기·보완 생성과 Luna 검수 지침 강화. API·DB 변경 없음. 노션 외부 기록은 별도 승인 대기.
+
+- B-50 자동 품질 규칙 학습: [처리·API·검증 경계](automatic-quality-lessons.md). 브랜치 `backend/b-50-automatic-quality-lessons`. 실패/정상 사례 저장, Luna 후보 제안·정답을 숨긴 재검증, 범위별 다음 생성 적용, 운영자 중단과 이력. DB V15. 실제 이미지 외부 검증 및 노션 쓰기의 승인 상태는 각각 별도로 기록한다.

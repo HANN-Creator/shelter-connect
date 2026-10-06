@@ -11,7 +11,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from PIL import Image, ImageDraw
 from .client import API, digest, download, image_argument, native_image, read, write
 from .source import prepare_concept
-from .quality import TAILS, POLICY, load_quality, quality_binding, motion_guidance, frame_audit
+from .quality import TAILS, POLICY, load_quality, quality_binding, motion_guidance, learned_guidance, frame_audit
 
 STYLE = Path(__file__).resolve().parents[2] / 'asset-styles' / 'cozy32-v1'
 FACING = {'south':'facing the viewer, front view', 'north':'facing away, rear view',
@@ -177,6 +177,7 @@ def motion_payload(traits, rules, action, direction, first_frame, quality=None):
     motion = motion_guidance(action, direction, quality)
     if spec['loop']:
         motion += ' Loop smoothly to the initial pose.'
+    motion += learned_guidance(action, direction, quality)
     if len(motion)>1000:
         raise ValueError('Quality animation prompt exceeds provider limit')
     attempt = quality.get('attempt', 0)

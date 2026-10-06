@@ -2491,6 +2491,103 @@
         "expectedRulesSha256"
       ],
       "additionalProperties": false
+    },
+    "StyledLessonDisable": {
+      "type": "object",
+      "properties": {
+        "note": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "note"
+      ],
+      "additionalProperties": false
+    },
+    "StyledQualityLesson": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string"
+        },
+        "direction": {
+          "type": "string"
+        },
+        "tail": {
+          "type": "string"
+        },
+        "issue": {
+          "type": "string"
+        },
+        "rulesSha256": {
+          "type": "string"
+        },
+        "candidateSha256": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "candidate": {
+          "type": "object",
+          "properties": {
+            "prevention": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "criterion": {
+              "type": "string",
+              "maxLength": 240
+            }
+          }
+        },
+        "validation": {
+          "type": "object",
+          "description": "검증 결과·기준 버전·모델 판정. freshGenerationVerified=false: 과거 사례 재검증이며 신규 PixelLab 이미지 품질 증명은 아님."
+        },
+        "validationExamples": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "StyledQualityLessonResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/StyledQualityLesson"
+        }
+      }
+    },
+    "StyledQualityLessonListResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/StyledQualityLesson"
+          }
+        }
+      }
     }
   },
   "operations": {
@@ -4145,6 +4242,51 @@
       ],
       "request": {
         "schema": "StyledQualityRecheck"
+      }
+    },
+    "GET /v1/operations/styled-quality-lessons": {
+      "summary": "자동 품질 규칙 최근 100개 조회",
+      "description": "OPERATOR 전용. 불량·정상 사례 재검증을 통과한 규칙만 같은 행동·방향·꼬리 계약·기본 규칙 버전에 적용합니다. 비활성화는 다음 제출부터 적용하며 이미 승인한 에셋을 변경하지 않습니다. 활성화·강제 통과 API는 없습니다.",
+      "tag": "32px 에셋",
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "403",
+        "404"
+      ],
+      "responseSchema": "StyledQualityLessonListResponse"
+    },
+    "GET /v1/operations/styled-quality-lessons/{id}": {
+      "summary": "자동 품질 규칙 근거·검증·이력 조회",
+      "description": "OPERATOR 전용. 불량·정상 사례 재검증을 통과한 규칙만 같은 행동·방향·꼬리 계약·기본 규칙 버전에 적용합니다. 비활성화는 다음 제출부터 적용하며 이미 승인한 에셋을 변경하지 않습니다. 활성화·강제 통과 API는 없습니다.",
+      "tag": "32px 에셋",
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "403",
+        "404"
+      ],
+      "responseSchema": "StyledQualityLessonResponse"
+    },
+    "POST /v1/operations/styled-quality-lessons/{id}/disable": {
+      "summary": "자동 품질 규칙 비활성화",
+      "description": "OPERATOR 전용. 불량·정상 사례 재검증을 통과한 규칙만 같은 행동·방향·꼬리 계약·기본 규칙 버전에 적용합니다. 비활성화는 다음 제출부터 적용하며 이미 승인한 에셋을 변경하지 않습니다. 활성화·강제 통과 API는 없습니다.",
+      "tag": "32px 에셋",
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "403",
+        "404"
+      ],
+      "responseSchema": "StyledQualityLessonResponse",
+      "request": {
+        "schema": "StyledLessonDisable"
       }
     }
   }

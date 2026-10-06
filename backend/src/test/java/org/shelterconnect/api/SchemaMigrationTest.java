@@ -101,13 +101,13 @@ class SchemaMigrationTest {
 	@Test
 	void migrationCanRunAgainWithoutChangingTheSchema() {
 		assertThat(flyway.migrate().migrationsExecuted).isZero();
-		assertThat(flyway.info().current().getVersion().toString()).isEqualTo("14");
+		assertThat(flyway.info().current().getVersion().toString()).isEqualTo("15");
 	}
 
 	@Test
 	void allBusinessTablesHaveRowSecurityEnabled() throws Exception {
 		assertThat(number("SELECT count(*) FROM pg_tables WHERE schemaname = 'shelter' AND tablename <> 'flyway_schema_history' AND rowsecurity"))
-				.isEqualTo(30);
+				.isEqualTo(33);
 	}
 
 	@ParameterizedTest

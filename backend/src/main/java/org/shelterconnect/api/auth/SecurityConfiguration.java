@@ -84,6 +84,8 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.DELETE, "/v1/operations/asset-permissions/{permissionId}").authenticated()
                         .requestMatchers(HttpMethod.GET, "/v1/shelter-admin/dogs/{dogId}/assets/{jobId}",
                                 "/v1/shelter-admin/dogs/{dogId}/assets/{jobId}/preview", "/v1/shelter-admin/dogs/{dogId}/assets/{jobId}/rig").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/v1/operations/styled-quality-lessons", "/v1/operations/styled-quality-lessons/{id}").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/v1/operations/styled-quality-lessons/{id}/disable").authenticated()
                         .anyRequest().denyAll())
 				.exceptionHandling(handling -> handling.authenticationEntryPoint(errors).accessDeniedHandler(errors))
 				.oauth2ResourceServer(resource -> resource

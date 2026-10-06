@@ -13,10 +13,16 @@ public class AssetScheduler {
     private static final Logger log=LoggerFactory.getLogger(AssetScheduler.class);
     private final AssetWorker worker;
     private final StyledAssetWorker styled;
-    public AssetScheduler(AssetWorker worker,StyledAssetWorker styled) { this.worker=worker;this.styled=styled; }
+    private final StyledLessonWorker lessons;
+    public AssetScheduler(AssetWorker worker,StyledAssetWorker styled,StyledLessonWorker lessons) { this.worker=worker;this.styled=styled;this.lessons=lessons; }
     @Scheduled(fixedDelay=5000,initialDelay=10000)
     public void advance() {
         try { styled.tick();worker.tick(); }
         catch(RuntimeException e) { log.warn("Asset worker tick interrupted; type={}",e.getClass().getSimpleName()); }
+    }
+    @Scheduled(fixedDelay=10000,initialDelay=20000)
+    public void learn() {
+        try { lessons.tick(); }
+        catch(RuntimeException e) { log.warn("Asset lesson tick interrupted; type={}",e.getClass().getSimpleName()); }
     }
 }
