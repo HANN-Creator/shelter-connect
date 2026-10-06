@@ -54,7 +54,7 @@ class SupabaseBootstrapTest {
 						.schemas("shelter").defaultSchema("shelter").cleanDisabled(true)
 						.baselineOnMigrate(false).validateMigrationNaming(true).load();
 				assertThat(flyway.info().current().getVersion().toString()).isEqualTo("1");
-				assertThat(flyway.migrate().migrationsExecuted).isEqualTo(14);
+				assertThat(flyway.migrate().migrationsExecuted).isEqualTo(15);
 				flyway.validate();
 				assertThat(flyway.migrate().migrationsExecuted).isZero();
 				assertThat(flyway.info().current().getVersion().toString()).isEqualTo("16");
