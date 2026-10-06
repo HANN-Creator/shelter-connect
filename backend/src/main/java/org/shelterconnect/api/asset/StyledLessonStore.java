@@ -18,25 +18,32 @@ public class StyledLessonStore {
     private final JdbcClient jdbc;private final JsonMapper json;private final AssetStore assets;private final AccountService accounts;private final org.shelterconnect.api.chat.AiProperties ai;
     public StyledLessonStore(JdbcClient jdbc,JsonMapper json,AssetStore assets,AccountService accounts,org.shelterconnect.api.chat.AiProperties ai){this.jdbc=jdbc;this.json=json;this.assets=assets;this.accounts=accounts;this.ai=ai;}
     @Transactional public void record(StyledAssetStore.Work w,JsonNode report,JsonNode result,JsonNode seeds) {
-        if(w.character() || w.qualityPolicy()==null || !report.path("passed").isBoolean())return;
+        if(w.qualityPolicy()==null || !report.path("passed").isBoolean())return;
         if(!ownedAsset(w))return;assets.valid(w.id(),true);
-        String tail=w.qualityPolicy().at("/contract/tailCarriage").asText();
+        String tail=tail(w),direction=direction(w);
+        String input=w.character()?report.path("inputSha256").asText():result.path("sha256").asText();
+        if(w.character()) {
+            if(!input.equals(StyledSeedQualityAgent.hashBinding(seeds.path("hashes")))
+                || !report.path("photoSha256").asText().matches("[a-f0-9]{64}"))throw new AssetException(409,"LESSON_EVIDENCE_CHANGED");
+            seeds=seeds.deepCopy();
+            ((tools.jackson.databind.node.ObjectNode)seeds).set("photo",json.valueToTree(Map.of("dogId",w.dogId(),"bucket",w.bucket(),"key",w.key(),"sha256",report.path("photoSha256").asText())));
+        }
         if(!StyledQualityAgent.TAILS.contains(tail))return;
         String rules=w.qualityPolicy().path("rulesSha256").asText();
         UUID example=jdbc.sql("""
             INSERT INTO shelter.styled_quality_examples(job_id,label,action,direction,tail,rules_sha256,input_sha256,result,seeds,report,passed)
             VALUES (:j,:l,:a,:d,:t,:r,:h,CAST(:result AS jsonb),CAST(:seeds AS jsonb),CAST(:report AS jsonb),:passed)
             ON CONFLICT(job_id,label,input_sha256,rules_sha256) DO NOTHING RETURNING id
-            """).param("j",w.id()).param("l",w.label()).param("a",w.action()).param("d",w.direction()).param("t",tail)
-            .param("r",rules).param("h",result.path("sha256").asText()).param("result",json.writeValueAsString(result))
+            """).param("j",w.id()).param("l",w.label()).param("a",w.action()).param("d",direction).param("t",tail)
+            .param("r",rules).param("h",input).param("result",json.writeValueAsString(result))
             .param("seeds",json.writeValueAsString(seeds)).param("report",json.writeValueAsString(report))
             .param("passed",report.path("passed").asBoolean()).query(UUID.class).optional().orElse(null);
         if(example==null || report.path("passed").asBoolean())return;
-        for(var issue:report.path("issues"))if(StyledLessonAgent.ISSUES.contains(issue.asText())) {
+        for(var issue:report.path("issues"))if((w.character()?StyledLessonAgent.SEED_ISSUES:StyledLessonAgent.ISSUES).contains(issue.asText())) {
             var id=jdbc.sql("""
                 INSERT INTO shelter.styled_quality_lessons(source_example_id,source_job_id,source_label,action,direction,tail,issue,rules_sha256)
                 VALUES (:e,:j,:l,:a,:d,:t,:i,:r) ON CONFLICT(source_job_id,source_label,issue,rules_sha256) DO NOTHING RETURNING id
-                """).param("e",example).param("j",w.id()).param("l",w.label()).param("a",w.action()).param("d",w.direction())
+                """).param("e",example).param("j",w.id()).param("l",w.label()).param("a",w.action()).param("d",direction)
                 .param("t",tail).param("i",issue.asText()).param("r",rules).query(UUID.class).optional();
             id.ifPresent(value->event(value,"OBSERVED",Map.of("exampleId",example,"issue",issue.asText(),"status","WAITING_EVIDENCE")));
         }
@@ -54,7 +61,9 @@ public class StyledLessonStore {
             SELECT l.* FROM shelter.styled_quality_lessons l
             WHERE l.status IN ('WAITING_EVIDENCE','CANDIDATE') AND l.rules_sha256=:r
               AND EXISTS(SELECT 1 FROM shelter.styled_quality_examples e WHERE e.action=l.action AND e.direction=l.direction
-                AND e.tail=l.tail AND e.rules_sha256=l.rules_sha256 AND e.passed)
+                AND e.tail=l.tail AND e.rules_sha256=l.rules_sha256 AND e.passed
+                AND (e.action<>'BASE' OR EXISTS(SELECT 1 FROM shelter.asset_jobs j WHERE j.id=e.job_id
+                  AND j.seed_review->'hashes'=e.seeds->'hashes' AND j.status NOT IN ('REJECTED','CANCELLED'))))
             ORDER BY l.created_at,l.id FOR UPDATE OF l SKIP LOCKED LIMIT 1
             """).param("r",StyledSpriteCodec.qualityRulesSha()).query((r,n)->Map.of("id",r.getObject("id",UUID.class),
                 "source",r.getObject("source_example_id",UUID.class),"issue",r.getString("issue"),"candidate",Optional.ofNullable(r.getString("candidate")))).optional();
@@ -63,7 +72,9 @@ public class StyledLessonStore {
         Example source=example((UUID)row.get().get("source"));
         if(!valid(source)){terminal(id,"DISABLED","Source permission withdrawn");return null;}
         var others=jdbc.sql("""
-            SELECT id FROM shelter.styled_quality_examples WHERE action=:a AND direction=:d AND tail=:t AND rules_sha256=:r
+            SELECT e.id FROM shelter.styled_quality_examples e WHERE action=:a AND direction=:d AND tail=:t AND rules_sha256=:r
+              AND (action<>'BASE' OR NOT passed OR EXISTS(SELECT 1 FROM shelter.asset_jobs j WHERE j.id=e.job_id
+                AND j.seed_review->'hashes'=e.seeds->'hashes' AND j.status NOT IN ('REJECTED','CANCELLED')))
               AND input_sha256<>:h AND (passed OR report->'issues' @> CAST(:issue AS jsonb))
             ORDER BY passed DESC,created_at DESC LIMIT 32
             """).param("a",source.action()).param("d",source.direction()).param("t",source.tail()).param("r",source.rulesSha256())
@@ -100,6 +111,12 @@ public class StyledLessonStore {
         for(int i=0;i<w.examples().size();i++) {
             var e=w.examples().get(i);var v=results.get("CASE_"+i);
             if(v==null || v.path("violates").asBoolean()==e.passed())pass=false;
+            if(e.action().equals("BASE")) {
+                if(v==null || !v.path("directions").isArray())pass=false;
+                if(!e.passed() && v!=null && w.issue().equals("CANVAS_CLIPPING"))for(var direction:e.report().path("edgeDirections"))
+                    if(v.path("directions").valueStream().noneMatch(n->n.asText().equals(direction.asText())))pass=false;
+                continue;
+            }
             // Recorded deterministic findings, including frame 8, cannot be omitted by the replay model.
             String frames=switch(w.issue()){case "CANVAS_CLIPPING"->"edgeFrames";case "IDLE_MOTION"->"idleMotionFrames";case "DETACHED_PIXELS"->"detachedFrames";case "TAIL_CARRIAGE"->"silhouetteFrames";default->"none";};
             if(!e.passed() && v!=null)for(var index:e.report().path(frames))
@@ -115,11 +132,11 @@ public class StyledLessonStore {
     @Transactional public void failed(Work w,String code) {if(owned(w))terminal(w.id(),"FAILED",code);}
     /** Choose lessons afresh only before submission. A paid/in-flight attempt keeps its receipt. */
     @Transactional public JsonNode pin(StyledAssetStore.Work w,int promptBudget) {
-        var selected=json.createArrayNode();if(!ownedAsset(w) || w.character() || w.qualityPolicy()==null)return selected;assets.valid(w.id(),true);
+        var selected=json.createArrayNode();if(!ownedAsset(w) || w.qualityPolicy()==null)return selected;assets.valid(w.id(),true);
         var ids=jdbc.sql("""
             SELECT id FROM shelter.styled_quality_lessons WHERE status='ACTIVE' AND action=:a AND direction=:d AND tail=:t AND rules_sha256=:r
             ORDER BY updated_at DESC,id LIMIT 20
-            """).param("a",w.action()).param("d",w.direction()).param("t",w.qualityPolicy().at("/contract/tailCarriage").asText())
+            """).param("a",w.action()).param("d",direction(w)).param("t",tail(w))
             .param("r",StyledSpriteCodec.qualityRulesSha()).query(UUID.class).list();
         var issues=new HashSet<String>();
         for(UUID id:ids) {
@@ -134,8 +151,8 @@ public class StyledLessonStore {
             int length=c.path("prevention").asText().length()+1+(selected.isEmpty()?9:0);
             if(length>promptBudget)continue;promptBudget-=length;
             selected.add(json.valueToTree(Map.of("id",id.toString(),"sha256",row.path("candidateSha256").asText(),"issue",issue,
-                "prevention",c.path("prevention").asText(),"criterion",c.path("criterion").asText(),"action",w.action(),"direction",w.direction(),
-                "tail",w.qualityPolicy().at("/contract/tailCarriage").asText(),"rulesSha256",StyledSpriteCodec.qualityRulesSha())));
+                "prevention",c.path("prevention").asText(),"criterion",c.path("criterion").asText(),"action",w.action(),"direction",direction(w),
+                "tail",tail(w),"rulesSha256",StyledSpriteCodec.qualityRulesSha())));
             issues.add(issue);if(selected.size()==2)break;
         }
         jdbc.sql("UPDATE shelter.styled_asset_steps SET learned_lessons=CAST(:l AS jsonb) WHERE job_id=:j AND label=:label AND status='PENDING'")
@@ -173,7 +190,14 @@ public class StyledLessonStore {
             o.put("createdAt",r.getTimestamp("created_at").toInstant().toString());o.put("updatedAt",r.getTimestamp("updated_at").toInstant().toString());return (JsonNode)o;
         }).optional().orElseThrow(()->new AssetException(404,"LESSON_NOT_FOUND"));
     }
-    private boolean valid(Example e) {try {assets.valid(e.jobId(),false);return e.rulesSha256().equals(StyledSpriteCodec.qualityRulesSha());}catch(AssetException denied){return false;}}
+    private static String direction(StyledAssetStore.Work w){return w.character()?"all":w.direction();}
+    private static String tail(StyledAssetStore.Work w){return w.character()?"UNKNOWN":w.qualityPolicy().at("/contract/tailCarriage").asText();}
+    private boolean valid(Example e) {try {
+        assets.valid(e.jobId(),false);
+        if(e.action().equals("BASE") && e.passed() && jdbc.sql("SELECT count(*) FROM shelter.asset_jobs WHERE id=:id AND seed_review->'hashes'=CAST(:hashes AS jsonb) AND status NOT IN ('REJECTED','CANCELLED')")
+            .param("id",e.jobId()).param("hashes",json.writeValueAsString(e.seeds().path("hashes"))).query(Integer.class).single()!=1)return false;
+        return e.rulesSha256().equals(StyledSpriteCodec.qualityRulesSha());
+    }catch(AssetException denied){return false;}}
     private boolean owned(Work w) {return jdbc.sql("SELECT id FROM shelter.styled_quality_lessons WHERE id=:id AND lease_token=:t AND lease_until>now() AND status=:s FOR UPDATE")
         .param("id",w.id()).param("t",w.token()).param("s",w.status()).query(UUID.class).optional().isPresent();}
     private boolean ownedAsset(StyledAssetStore.Work w) {return jdbc.sql("SELECT id FROM shelter.asset_jobs WHERE id=:id AND lease_token=:t AND lease_until>now() AND status='RUNNING' FOR UPDATE")

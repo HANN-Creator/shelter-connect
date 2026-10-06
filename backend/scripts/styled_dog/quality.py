@@ -35,6 +35,26 @@ def learned_guidance(action, direction, quality):
     return ' Lessons: '+' '.join(text) if text else ''
 
 
+def learned_seed_guidance(quality):
+    lessons = quality.get('lessons', [])
+    if not isinstance(lessons, list) or len(lessons) > 2:
+        raise ValueError('Invalid seed lessons')
+    text = []
+    for lesson in lessons:
+        if (not isinstance(lesson, dict) or lesson.get('action') != 'BASE' or lesson.get('direction') != 'all'
+            or lesson.get('tail') != 'UNKNOWN' or lesson.get('rulesSha256') != digest(POLICY)
+            or lesson.get('issue') not in ('EYE_READABILITY','EYE_STYLE','EYE_DIRECTION','SEED_IDENTITY','CANVAS_CLIPPING')
+            or not re.fullmatch(r'[a-f0-9]{64}', str(lesson.get('sha256', '')))
+            or not re.fullmatch(r'[a-f0-9-]{36}', str(lesson.get('id', '')))):
+            raise ValueError('Stale or mismatched seed lesson')
+        for field, low, high in [('prevention',15,120),('criterion',20,240)]:
+            value = lesson.get(field)
+            if not isinstance(value,str) or not low <= len(value) <= high or not re.fullmatch(r"[A-Za-z ,.;:'()!?-]+", value):
+                raise ValueError('Invalid seed lesson text')
+        text.append(lesson['prevention'])
+    return ' Lessons: ' + ' '.join(text) if text else ''
+
+
 def load_quality():
     return read(POLICY)
 

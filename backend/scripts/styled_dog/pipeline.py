@@ -11,7 +11,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from PIL import Image, ImageDraw
 from .client import API, digest, download, image_argument, native_image, read, write
 from .source import prepare_concept
-from .quality import TAILS, POLICY, load_quality, quality_binding, motion_guidance, learned_guidance, frame_audit
+from .quality import TAILS, POLICY, load_quality, quality_binding, motion_guidance, learned_guidance, learned_seed_guidance, frame_audit
 
 STYLE = Path(__file__).resolve().parents[2] / 'asset-styles' / 'cozy32-v1'
 FACING = {'south':'facing the viewer, front view', 'north':'facing away, rear view',
@@ -55,6 +55,7 @@ def character_request(root, traits, rules, quality=None):
             raise ValueError('Invalid seed defect codes')
         if attempt:
             description += ' '+eye_rules['correction']
+        description += learned_seed_guidance(quality)
     if len(description) > 2000:
         raise ValueError('Character prompt exceeds provider limit')
     return {'description':description, 'image_size':{'width':32,'height':32},

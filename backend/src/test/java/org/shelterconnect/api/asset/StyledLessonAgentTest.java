@@ -62,4 +62,29 @@ class StyledLessonAgentTest {
         var task=ArgumentCaptor.forClass(String.class);verify(helper.client).structuredImage(anyString(),task.capture(),any(),anyMap());
         assertThat(task.getValue()).contains(lesson.path("criterion").asText());
     }
+    @Test void seedReplayUsesPhotoAndUnapprovedViewsWithoutLeakingLabels()throws Exception {
+        byte[] png=new StyledQualityAgentTest().png(false);
+        var cases=cases().stream().map(c->new StyledLessonAgent.Case(c.key(),c.report(),c.seeds(),List.<byte[]>of(),png)).toList();
+        var scope=json.readTree("{\"action\":\"BASE\",\"direction\":\"all\",\"tail\":\"UNKNOWN\",\"issue\":\"EYE_READABILITY\",\"sourceExampleId\":\"PRIVATE_SOURCE_ID\"}");
+        var response=json.readTree("{\"safeAndGeneral\":true,\"reason\":\"Mock test\",\"cases\":[{\"key\":\"CASE_0\",\"violates\":true,\"directions\":[\"south\"]},{\"key\":\"CASE_1\",\"violates\":false,\"directions\":[]}]}");
+        when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(response);
+        assertThat(agent.replaySeeds(scope,candidate(),cases)).isEqualTo(response);
+        var instruction=ArgumentCaptor.forClass(String.class);var task=ArgumentCaptor.forClass(String.class);
+        var board=ArgumentCaptor.forClass(byte[].class);
+        verify(client).structuredImage(instruction.capture(),task.capture(),board.capture(),anyMap());
+        assertThat(instruction.getValue()).contains("UNAPPROVED","all four directions","immutable");
+        assertThat(task.getValue()).doesNotContain("SECRET_BAD_LABEL","SECRET_GOOD_LABEL","PRIVATE_SOURCE_ID","passed");
+        var rendered=javax.imageio.ImageIO.read(new java.io.ByteArrayInputStream(board.getValue()));
+        assertThat(rendered.getWidth()).isEqualTo(1024);assertThat(rendered.getHeight()).isEqualTo(1348);
+        for(String mutation:List.of("missing","duplicate","unknown","empty","view")) {
+            var bad=response.deepCopy();var entries=(tools.jackson.databind.node.ArrayNode)bad.path("cases");
+            var first=(tools.jackson.databind.node.ObjectNode)entries.get(0);
+            switch(mutation) {
+                case "missing"->entries.remove(1);case "duplicate"->first.put("key","CASE_1");case "unknown"->first.put("key","OTHER");
+                case "empty"->first.set("directions",json.createArrayNode());case "view"->first.set("directions",json.valueToTree(List.of("frame-eight")));
+            }
+            when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(bad);
+            assertThatThrownBy(()->agent.replaySeeds(scope,candidate(),cases)).hasMessage("LESSON_RESPONSE_INVALID");
+        }
+    }
 }
