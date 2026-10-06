@@ -203,12 +203,20 @@ public class StyledAssetWorker {
             && w.qualityReport()!=null && w.qualityReport().path("issues").isArray()
             && w.qualityReport().path("issues").valueStream().anyMatch(i->i.asText().equals("IDLE_MOTION"));
     }
-    static boolean motionEdit(StyledAssetStore.Work w) {return tailEdit(w) || idleEdit(w);}
+    static boolean marginEdit(StyledAssetStore.Work w) {
+        return !w.character() && w.repairCount()==2 && w.qualityPolicy()!=null
+            && StyledSpriteCodec.MARGIN_EDIT_VERSION.equals(w.qualityPolicy().path("marginRepair").asText())
+            && w.qualityReport()!=null && w.qualityReport().path("issues").isArray()
+            && w.qualityReport().path("issues").valueStream().anyMatch(i->i.asText().equals("CANVAS_CLIPPING"));
+    }
+    static boolean motionEdit(StyledAssetStore.Work w) {return tailEdit(w) || idleEdit(w) || marginEdit(w);}
     private JsonNode motionEditPayload(StyledAssetStore.Work w) {
         var previous=store.previousAttempt(w);byte[] sheet=storage.asset(previous.path("key").asText());
         if(!StyledSpriteCodec.sha(sheet).equals(previous.path("sha256").asText()))throw new AssetException(409,"STYLED_SHEET_CHANGED");
         int seed=(int)(((long)w.traits().path("seed").asInt()+7919L*w.repairCount())%2147483647);
-        return idleEdit(w)?codec.idleEdit(w.direction(),sheet,seed):codec.tailEdit(w.direction(),sheet,seed);
+        if(idleEdit(w))return codec.idleEdit(w.direction(),sheet,seed);
+        if(tailEdit(w))return codec.tailEdit(w.direction(),sheet,seed);
+        return codec.marginEdit(w.action(),w.direction(),sheet,seed);
     }
     private byte[] seed(StyledAssetStore.Work w) {
         var base=store.seed(w);byte[] seed=storage.asset(base.path("keys").path(w.direction()).asText());

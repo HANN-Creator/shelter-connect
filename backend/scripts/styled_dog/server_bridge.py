@@ -27,6 +27,10 @@ def main():
         from .tail_repair import read_sheet, idle_edit_payload
         payload = idle_edit_payload(read_sheet(root / 'sheet.png'), request['direction'])
         payload['seed'] = request['seed']
+    elif request['mode'] == 'margin-edit':
+        from .tail_repair import read_sheet, margin_edit_payload
+        payload = margin_edit_payload(read_sheet(root / 'sheet.png'), request['action'], request['direction'])
+        payload['seed'] = request['seed']
     else:
         raise ValueError('Unknown mode')
     write(root / 'payload.json', payload)

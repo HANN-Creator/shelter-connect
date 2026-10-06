@@ -114,5 +114,35 @@ class TailRepairTest(unittest.TestCase):
         front=[decode(r) for r in fixture['strips']['before-south']]
         self.assertEqual(audit_edit(front,decode(fixture['seeds']['south']),'south')['silhouetteFrames'],[2,3,4,6,7])
 
+    def test_repeated_actual_walk_clipping_remains_visible_in_complete_edit_inputs(self):
+        from styled_dog.tail_repair import margin_edit_payload
+        from styled_dog.quality import frame_audit, load_quality
+        fixture=read(Path(__file__).parent/'fixtures/tail-repair-alpha.json')['repeatedWalkClipping']
+        self.assertEqual(len(fixture['clips']),3)
+        for case in fixture['clips']:
+            frames=[]
+            for rows in case['frames']:
+                frame=Image.new('RGBA',(32,32))
+                for y,row in enumerate(rows):
+                    for x in range(32):
+                        if int(row,16)&(1<<(31-x)):frame.putpixel((x,y),(50,50,50,255))
+                frames.append(frame)
+            self.assertEqual(frame_audit(frames,frames[0],'WALK','west','UNKNOWN')['edgeFrames'],case['expectedEdgeFrames'])
+            before=[f.tobytes() for f in frames]
+            for action in load_quality()['actions']:
+                for direction in ('south','north','west','east'):
+                    payload=margin_edit_payload(frames,action,direction)
+                    self.assertEqual(len(payload['frames']),9)
+                    self.assertLessEqual(len(payload['description']),2000)
+                    self.assertIn(load_quality()['actions'][action],payload['description'])
+                    self.assertIn('ONE transparent pixel at ALL edges',payload['description'])
+                    self.assertIn('Do not amputate',payload['description'])
+                    for original,item in zip(frames,payload['frames']):
+                        decoded=Image.open(io.BytesIO(base64.b64decode(item['image']['base64']))).convert('RGBA')
+                        self.assertEqual(decoded.tobytes(),original.tobytes())
+            self.assertEqual([f.tobytes() for f in frames],before)
+            with self.assertRaises(ValueError):margin_edit_payload(frames,'BASE','west')
+            with self.assertRaises(ValueError):margin_edit_payload(frames[:8],'WALK','west')
+
 
 if __name__=='__main__':unittest.main()
