@@ -36,6 +36,19 @@ class StyledSpriteCodecTest {
         var changed=ImageIO.read(new ByteArrayInputStream(seed));changed.setRGB(8,5,0xff998877);var out=new ByteArrayOutputStream();ImageIO.write(changed,"png",out);
         frames.set(0,out.toByteArray());assertThatThrownBy(()->StyledSpriteCodec.sheet(frames,seed)).hasMessage("STYLED_SOURCE_FRAME_CHANGED");
     }
+    @Test void idleEditKeepsNineDefectiveFramesAndOwnDirectionForProviderRepair() throws Exception {
+        var codec=new StyledSpriteCodec(json,System.getenv().getOrDefault("ASSET_HARNESS_PYTHON","python3"));
+        byte[] seed=image(32);var original=StyledSpriteCodec.rawSheet(Collections.nCopies(9,seed));
+        var payload=codec.idleEdit("north",original,147);
+        assertThat(payload.path("frames").size()).isEqualTo(9);
+        assertThat(payload.path("seed").asInt()).isEqualTo(147);
+        assertThat(payload.path("description").asText()).contains("Frame zero is the approved", "standing height", "No visible eyes", "north facing");
+        for(var frame:payload.path("frames")) {
+            var decoded=StyledSpriteCodec.nativeFrame(StyledPixelLabClient.decode(frame.at("/image/base64").asText()));
+            assertThat(decoded.getRGB(8,5)).isEqualTo(0xff123456);
+        }
+        assertThatThrownBy(()->codec.idleEdit("diagonal",original,147)).isInstanceOf(AssetException.class);
+    }
     @Test void tailEditUsesAllNineFramesAndPaletteLockPreservesRawEvidence() throws Exception {
         var codec=new StyledSpriteCodec(json,System.getenv().getOrDefault("ASSET_HARNESS_PYTHON","python3"));
         byte[] seed=image(32);var changed=ImageIO.read(new ByteArrayInputStream(seed));

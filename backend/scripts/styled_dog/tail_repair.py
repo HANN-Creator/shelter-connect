@@ -74,6 +74,31 @@ def edit_payload(frames, direction):
             'no_background':True,'seed':202610051}
 
 
+def idle_edit_payload(frames, direction):
+    """Edit the entire failed idle once, keeping its exact first frame as reference.
+
+    This creates a provider payload only. It does not mask pixels, drop frames,
+    change a stored verdict or reset the server's two-repair budget.
+    """
+    payload = edit_payload(frames, direction)
+    rules = load_quality()
+    payload['description'] = (
+        'Repair this COMPLETE nine-frame idle animation. Frame zero is the approved standing pose; '
+        'match its body height, face, eyes, ears, paws, tail visibility, outline and palette in every frame. '
+        'Remove the invented moving appendage above the head when absent in frame zero. '
+        'Preserve any genuine visible tail from frame zero, fixed in exactly that pose; do not amputate it. '
+        'Restore the same planted paws and standing height; no crouching, steps, bouncing or tail movement. '
+        'Allow only a tiny breath or brief natural blink. Keep all nine frames, native crisp pixels, '
+        'fixed camera and transparent background. Do not substitute sitting, blur, resize or crop. '
+        + rules['actions']['IDLE'] + ' ' + rules['commonMotion']
+        + ' Remain ' + direction + ' facing in every frame. '
+        + (rules['rearView'] if direction == 'north' else '')
+    )
+    if len(payload['description']) > 2000:
+        raise ValueError('Idle edit prompt exceeds provider limit')
+    return payload
+
+
 def compose_tail(seed, source_seed, frames, mask, review):
     direction = review.get('direction')
     source_direction = review.get('sourceDirection')

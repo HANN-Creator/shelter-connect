@@ -460,6 +460,51 @@ class StyledAssetPostgresTest {
         assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
         verify(provider,times(13)).submit(anyBoolean(),any());
     }
+    @Test void repeatedIdleFailureEditsAllFramesOnLastRepairIncludingUnknownTail() throws Exception {
+        when(quality.contract(any(),any())).thenReturn(json.valueToTree(Map.of("tailCarriage","UNKNOWN")));
+        var calls=new java.util.concurrent.atomic.AtomicInteger();
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("south"))).thenAnswer(c->{
+            boolean ok=calls.incrementAndGet()>2;
+            return json.valueToTree(Map.of("passed",ok,"issues",ok?List.of():List.of("IDLE_MOTION")));
+        });
+        when(codec.idleEdit(anyString(),any(),anyInt())).thenAnswer(c->{outsideTransaction();return json.valueToTree(Map.of("idleEdited",true));});
+        when(provider.editAnimation(any())).thenAnswer(c->{outsideTransaction();return UUID.randomUUID();});
+        UUID id=request();tick();tick();review(id,true,"APPROVE",200);finish(id);
+        assertThat(read(id).path("failureCode").isNull()).isTrue();
+        verify(provider,times(14)).submit(anyBoolean(),any());verify(provider,times(1)).editAnimation(any());
+        var source=org.mockito.ArgumentCaptor.forClass(byte[].class);
+        verify(codec).idleEdit(eq("south"),source.capture(),anyInt());
+        assertThat(ImageIO.read(new ByteArrayInputStream(source.getValue())).getWidth()).isEqualTo(288);
+        assertThat(jdbc.queryForObject("SELECT repair_count FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-south'",Integer.class,id)).isEqualTo(2);
+        assertThat(calls.get()).isEqualTo(4); // Original + regenerated + restored edit + raw edit.
+        var step=read(id).path("steps").get(1);
+        assertThat(step.at("/result/rawEdit/sha256").asText()).matches("[a-f0-9]{64}");
+        assertThat(step.at("/qualityReport/rawEditReview/passed").asBoolean()).isTrue();
+        review(id,false,"APPROVE",200);publicStatus(200);
+    }
+    @Test void failedRawIdleEditBlocksApprovalWithoutAnyThirdRepairOrHiddenFrame() throws Exception {
+        var calls=new java.util.concurrent.atomic.AtomicInteger();
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("north"))).thenAnswer(c->{
+            boolean ok=calls.incrementAndGet()==3;
+            return json.valueToTree(Map.of("passed",ok,"issues",ok?List.of():List.of("IDLE_MOTION")));
+        });
+        when(codec.idleEdit(anyString(),any(),anyInt())).thenReturn(json.valueToTree(Map.of("idleEdited",true)));
+        when(provider.editAnimation(any())).thenReturn(UUID.randomUUID());
+        UUID id=request();tick();tick();review(id,true,"APPROVE",200);finish(id);
+        assertThat(read(id).path("failureCode").asText()).isEqualTo("QUALITY_REPAIR_EXHAUSTED");
+        review(id,false,"APPROVE",409);publicStatus(404);
+        post(subject,path(id)+"/repair",Map.of("note","Recheck must preserve the exhausted budget and failed raw edit","expectedSeedHashes",read(id).at("/steps/0/result/hashes")),200);tick();
+        verify(provider,times(14)).submit(anyBoolean(),any());verify(provider,times(1)).editAnimation(any());
+        assertThat(jdbc.queryForObject("SELECT repair_count FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-north'",Integer.class,id)).isEqualTo(2);
+    }
+    @Test void existingIdleJobsKeepTheirPinnedRegenerationPolicyAfterDeployment() throws Exception {
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("south"))).thenReturn(json.valueToTree(Map.of("passed",false,"issues",List.of("IDLE_MOTION"))));
+        UUID id=request();jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=quality_policy-'idleRepair' WHERE id=?",id);
+        tick();tick();review(id,true,"APPROVE",200);finish(id);
+        verify(provider,times(15)).submit(anyBoolean(),any());verify(provider,never()).editAnimation(any());
+        assertThat(read(id).path("failureCode").asText()).isEqualTo("QUALITY_REPAIR_EXHAUSTED");
+        review(id,false,"APPROVE",409);
+    }
     UUID tailPlan() throws Exception {
         UUID id=request();
         jdbc.update("UPDATE shelter.asset_jobs SET action_plan=action_plan || '[\"TAIL_WAG\"]'::jsonb WHERE id=?",id);

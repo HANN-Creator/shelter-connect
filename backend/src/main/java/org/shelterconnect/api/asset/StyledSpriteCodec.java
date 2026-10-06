@@ -16,6 +16,7 @@ import tools.jackson.databind.json.JsonMapper;
 @Component
 public class StyledSpriteCodec {
     public static final String VERSION="cozy32-photo-style-v1";
+    public static final String IDLE_EDIT_VERSION="calm-idle-edit-v1";
     static final List<String> DIRECTIONS=List.of("south","north","west","east");
     static final List<String> ACTIONS=List.of("IDLE","WALK","RUN","SNIFF","TAIL_WAG","BACK_OFF","SIT","LIE_DOWN");
     private final JsonMapper json;
@@ -51,6 +52,11 @@ public class StyledSpriteCodec {
         if(!DIRECTIONS.contains(direction) || seed<0)throw AssetException.invalid();
         frames(sheet); // Bounded nine native frames; defective geometry is the edit input.
         return payload(Map.of("mode","tail-edit","direction",direction,"seed",seed),"sheet.png",sheet);
+    }
+    public JsonNode idleEdit(String direction,byte[] sheet,int seed) {
+        if(!DIRECTIONS.contains(direction) || seed<0)throw AssetException.invalid();
+        frames(sheet);
+        return payload(Map.of("mode","idle-edit","direction",direction,"seed",seed),"sheet.png",sheet);
     }
     private JsonNode payload(Object input,String imageName,byte[] image) {
         Path dir=null; Process process=null;

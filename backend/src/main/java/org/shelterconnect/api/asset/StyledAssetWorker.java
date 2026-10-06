@@ -52,14 +52,14 @@ public class StyledAssetWorker {
                         json.valueToTree(Map.of("contract",w.qualityPolicy().path("contract"),"attempt",w.repairCount(),
                             "rulesSha256",w.qualityPolicy().path("rulesSha256").asText(),
                             "issues",w.qualityReport()!=null && w.qualityReport().path("issues").isArray()?w.qualityReport().path("issues"):json.createArrayNode()));
-                JsonNode payload=tailEdit(w)?tailEditPayload(w):w.character()?codec.character(w.dogId(),w.traits(),storage.photo(w.dogId(),w.bucket(),w.key()),policy):
+                JsonNode payload=motionEdit(w)?motionEditPayload(w):w.character()?codec.character(w.dogId(),w.traits(),storage.photo(w.dogId(),w.bucket(),w.key()),policy):
                     codec.motion(w.traits(),w.action(),w.direction(),seed(w),policy);
                 {
-                    var selected=lessons.pin(w,(w.character() || tailEdit(w)?2000:1000)-payload.path("description").asText().length());
+                    var selected=lessons.pin(w,(w.character() || motionEdit(w)?2000:1000)-payload.path("description").asText().length());
                     if(!selected.isEmpty()) {
                         ((tools.jackson.databind.node.ObjectNode)policy).set("lessons",selected);
                         if(w.character())payload=codec.character(w.dogId(),w.traits(),storage.photo(w.dogId(),w.bucket(),w.key()),policy);
-                        else if(tailEdit(w)) {
+                        else if(motionEdit(w)) {
                             String suffix=" Lessons: "+String.join(" ",selected.valueStream().map(n->n.path("prevention").asText()).toList());
                             ((tools.jackson.databind.node.ObjectNode)payload).put("description",payload.path("description").asText()+suffix);
                         } else payload=codec.motion(w.traits(),w.action(),w.direction(),seed(w),policy);
@@ -67,7 +67,7 @@ public class StyledAssetWorker {
                 }
                 if(!store.reserve(w,payload))return;
                 submitted=true;
-                UUID id=tailEdit(w)?provider.editAnimation(payload):provider.submit(w.character(),payload);store.accepted(w,id);return;
+                UUID id=motionEdit(w)?provider.editAnimation(payload):provider.submit(w.character(),payload);store.accepted(w,id);return;
             }
             JsonNode result=w.providerResult();
             if(result==null) {
@@ -96,7 +96,7 @@ public class StyledAssetWorker {
             } else {
                 var frames=result.path("frames").valueStream().map(n->StyledPixelLabClient.decode(n.asText())).toList();
                 JsonNode rawEdit=null;
-                if(tailEdit(w)) {
+                if(motionEdit(w)) {
                     byte[] raw=StyledSpriteCodec.rawSheet(frames);String rawKey=w.prefix()+"raw-edits/"+w.label()+"-"+w.repairCount()+".png";
                     storage.put(rawKey,raw);rawEdit=json.valueToTree(Map.of("key",rawKey,"sha256",StyledSpriteCodec.sha(raw)));
                     frames=StyledSpriteCodec.restoreEditPalette(frames,seed(w));
@@ -197,11 +197,18 @@ public class StyledAssetWorker {
             && w.qualityPolicy().path("lowTailRepair").asText().equals("REGENERATE_THEN_EDIT_ONCE")
             && w.qualityPolicy().at("/contract/tailCarriage").asText().equals("LOW");
     }
-    private JsonNode tailEditPayload(StyledAssetStore.Work w) {
+    static boolean idleEdit(StyledAssetStore.Work w) {
+        return w.action().equals("IDLE") && w.repairCount()==2 && w.qualityPolicy()!=null
+            && StyledSpriteCodec.IDLE_EDIT_VERSION.equals(w.qualityPolicy().path("idleRepair").asText())
+            && w.qualityReport()!=null && w.qualityReport().path("issues").isArray()
+            && w.qualityReport().path("issues").valueStream().anyMatch(i->i.asText().equals("IDLE_MOTION"));
+    }
+    static boolean motionEdit(StyledAssetStore.Work w) {return tailEdit(w) || idleEdit(w);}
+    private JsonNode motionEditPayload(StyledAssetStore.Work w) {
         var previous=store.previousAttempt(w);byte[] sheet=storage.asset(previous.path("key").asText());
         if(!StyledSpriteCodec.sha(sheet).equals(previous.path("sha256").asText()))throw new AssetException(409,"STYLED_SHEET_CHANGED");
         int seed=(int)(((long)w.traits().path("seed").asInt()+7919L*w.repairCount())%2147483647);
-        return codec.tailEdit(w.direction(),sheet,seed);
+        return idleEdit(w)?codec.idleEdit(w.direction(),sheet,seed):codec.tailEdit(w.direction(),sheet,seed);
     }
     private byte[] seed(StyledAssetStore.Work w) {
         var base=store.seed(w);byte[] seed=storage.asset(base.path("keys").path(w.direction()).asText());
