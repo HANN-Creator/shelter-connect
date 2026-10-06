@@ -502,6 +502,80 @@ class StyledAssetPostgresTest {
         UUID id=tailPlan();tick();tick();review(id,true,"APPROVE",200);finish(id);verify(provider,never()).editAnimation(any());
         verify(provider,times(19)).submit(anyBoolean(),any());review(id,false,"APPROVE",409);
     }
+    @Test void seedLessonsWaitForHumanPositiveThenReachNextDogGenerationAndReview()throws Exception {
+        UUID first=seedLearningPair();UUID lesson=onlyLesson();
+        lessonWorker.tick();assertThat(lessonStatus(lesson)).isEqualTo("WAITING_EVIDENCE");verifyNoInteractions(lessonAgent);
+        review(first,true,"APPROVE",200);finish(first);
+        lessonWorker.tick();lessonWorker.tick();assertThat(lessonStatus(lesson)).isEqualTo("ACTIVE");
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=? AND action='BASE'",Integer.class,first)).isEqualTo(2);
+        nextLearningDog();UUID next=request();clearInvocations(provider,seedQuality);tick();tick();
+        var pinned=json.readTree(jdbc.queryForObject("SELECT learned_lessons::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='character'",String.class,next));
+        assertThat(pinned.size()).isEqualTo(1);assertThat(pinned.get(0).path("id").asText()).isEqualTo(lesson.toString());
+        var payload=org.mockito.ArgumentCaptor.forClass(JsonNode.class);verify(provider).submit(eq(true),payload.capture());
+        assertThat(payload.getValue().at("/quality/lessons")).isEqualTo(pinned);
+        verify(seedQuality).review(any(),anyList(),eq(pinned));
+        assertThat(read(next).at("/steps/0/qualityReport/learnedLessons")).isEqualTo(pinned);
+        assertThat(read(next).path("status").asText()).isEqualTo("SEED_REVIEW");
+        verify(provider,never()).submit(eq(false),any());
+        review(next,true,"APPROVE",200);finish(next);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_asset_steps WHERE job_id=? AND action<>'BASE' AND learned_lessons<>'[]'::jsonb",Integer.class,next)).isZero();
+    }
+    @Test void seedRuleRejectingApprovedGoodExampleNeverActivates()throws Exception {
+        UUID first=seedLearningPair();review(first,true,"APPROVE",200);finish(first);UUID lesson=onlyLesson();
+        when(lessonAgent.replaySeeds(any(),any(),anyList())).thenAnswer(c->seedReplayAnswer(c.getArgument(2),true));
+        lessonWorker.tick();lessonWorker.tick();assertThat(lessonStatus(lesson)).isEqualTo("REJECTED");
+    }
+    @Test void seedPhotoOrSeedChangesStopLearningBeforeModelUpload()throws Exception {
+        UUID first=seedLearningPair();review(first,true,"APPROVE",200);finish(first);UUID lesson=onlyLesson();
+        when(storage.photo(any(),anyString(),anyString())).thenReturn(new byte[]{1,2,3});
+        lessonWorker.tick();assertThat(lessonStatus(lesson)).isEqualTo("FAILED");verifyNoInteractions(lessonAgent);
+    }
+    @Test void revokedSeedPermissionPreventsLearning()throws Exception {
+        UUID first=seedLearningPair();review(first,true,"APPROVE",200);finish(first);UUID lesson=onlyLesson();
+        jdbc.update("UPDATE shelter.asset_source_permissions SET revoked_at=now() WHERE id=?",permission);
+        lessonWorker.tick();assertThat(lessonStatus(lesson)).isEqualTo("DISABLED");verifyNoInteractions(lessonAgent);
+    }
+    @Test void disabledSeedRuleCannotReachNextProviderRequest()throws Exception {
+        UUID first=seedLearningPair();review(first,true,"APPROVE",200);finish(first);UUID lesson=onlyLesson();
+        lessonWorker.tick();lessonWorker.tick();
+        nextLearningDog();UUID next=request();
+        when(codec.character(any(),any(),any(),any())).thenAnswer(c->{
+            var q=c.<JsonNode>getArgument(3);
+            if(!q.path("lessons").isEmpty())lessonStore.disable(opSubject,lesson,json.valueToTree(Map.of("note","Disable before any new seed submission")));
+            return json.valueToTree(Map.of("character",true,"quality",q));
+        });
+        clearInvocations(provider);tick();verifyNoInteractions(provider);
+        tick();var payload=org.mockito.ArgumentCaptor.forClass(JsonNode.class);verify(provider).submit(eq(true),payload.capture());
+        assertThat(payload.getValue().at("/quality/lessons").isMissingNode()).isTrue();
+    }
+    @Test void seedRecheckRecordsExampleOnceWithoutCreatingASeedPositiveApproval()throws Exception {
+        UUID id=request();tick();tick();var body=seedRecheckBody(id);
+        post(subject,path(id)+"/quality-recheck",body,200);tick();
+        post(subject,path(id)+"/quality-recheck",body,200);tick();
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=? AND action='BASE'",Integer.class,id)).isEqualTo(1);
+        assertThat(read(id).path("seedReview").isNull()).isTrue();
+        verify(provider,times(1)).submit(eq(true),any());
+    }
+    UUID seedLearningPair()throws Exception {
+        var changed=ImageIO.read(new ByteArrayInputStream(png));changed.setRGB(12,9,0xffcdbbab);
+        var out=new ByteArrayOutputStream();ImageIO.write(changed,"png",out);byte[] good=out.toByteArray();
+        var generations=new java.util.concurrent.atomic.AtomicInteger();var inspections=new java.util.concurrent.atomic.AtomicInteger();
+        when(provider.poll(any(),eq(true))).thenAnswer(c->{outsideTransaction();String b=Base64.getEncoder().encodeToString(generations.getAndIncrement()==0?png:good);
+            return json.valueToTree(Map.of("status","COMPLETED","directions",Map.of("south",b,"north",b,"west",b,"east",b)));});
+        when(seedQuality.review(any(),anyList())).thenAnswer(c->{outsideTransaction();return seedReport(c.getArgument(1),inspections.getAndIncrement()>0);});
+        when(seedQuality.review(any(),anyList(),any())).thenAnswer(c->{outsideTransaction();return seedReport(c.getArgument(1),true);});
+        when(lessonAgent.proposeSeeds(any(),any())).thenAnswer(c->{outsideTransaction();return json.valueToTree(Map.of(
+            "prevention","Separate filled pupils from adjacent fur with restrained local contrast.",
+            "criterion","A front or side pupil disappears into surrounding fur without a distinct filled shape."));});
+        when(lessonAgent.replaySeeds(any(),any(),anyList())).thenAnswer(c->{outsideTransaction();return seedReplayAnswer(c.getArgument(2),false);});
+        UUID id=request();for(int i=0;i<4;i++)tick();assertThat(read(id).path("status").asText()).isEqualTo("SEED_REVIEW");return id;
+    }
+    JsonNode seedReplayAnswer(List<StyledLessonAgent.Case> cases,boolean falsePositive) {
+        return json.valueToTree(Map.of("safeAndGeneral",true,"reason","Synthetic wiring check, not actual vision quality","cases",cases.stream().map(c->{
+            boolean bad=falsePositive || !c.report().path("passed").asBoolean();
+            return Map.of("key",c.key(),"violates",bad,"directions",bad?List.of("south","west","east"):List.of());}).toList()));
+    }
+
     @Test void automaticLessonsReplayFailuresAndPassesThenReachAnotherDogsFirstGeneration() throws Exception {
         UUID first=learningPair();UUID lesson=onlyLesson();
         assertThat(lessonStatus(lesson)).isEqualTo("WAITING_EVIDENCE");

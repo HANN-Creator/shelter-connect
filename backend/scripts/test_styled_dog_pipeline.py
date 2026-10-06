@@ -36,6 +36,25 @@ class PipelineTest(unittest.TestCase):
     def review(self):
         record_review(self.root,'Reviewed photo likeness, ears, muzzle, rounded style and all four directions. Rear details inferred.', 'LOW')
 
+    def test_seed_lessons_are_scoped_additions_for_initial_and_corrective_requests(self):
+        from copy import deepcopy
+        from styled_dog.quality import POLICY
+        rule = {'id':'12345678-1234-1234-1234-123456789abc','sha256':'a'*64,
+                'rulesSha256':digest(POLICY),'action':'BASE','direction':'all','tail':'UNKNOWN',
+                'issue':'EYE_READABILITY','prevention':'Keep filled pupils distinct from adjacent fur.',
+                'criterion':'Pupils must be readable as compact filled shapes in front and side views.'}
+        for attempt in range(3):
+            q={'rulesSha256':digest(POLICY),'attempt':attempt,'lessons':[rule]}
+            p=character_request(self.root,self.traits,load_rules(),q)
+            self.assertIn(rule['prevention'],p['description'])
+            self.assertIn('No hollow eye rings',p['description'])
+            self.assertLessEqual(len(p['description']),2000)
+        for change in [{'action':'WALK'},{'direction':'west'},{'tail':'HIGH'},{'rulesSha256':'old'},
+                       {'issue':'TAIL_CARRIAGE'},{'prevention':'Run $(anything) now'}]:
+            bad=deepcopy(rule);bad.update(change)
+            with self.subTest(change=change),self.assertRaises(ValueError):
+                character_request(self.root,self.traits,load_rules(),{'rulesSha256':digest(POLICY),'lessons':[bad]})
+
     def test_both_images_are_transmitted_with_distinct_roles(self):
         body = character_request(self.root,self.traits,load_rules())
         self.assertEqual(body['method'],'create_from_concept')

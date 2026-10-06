@@ -98,4 +98,25 @@ class StyledSeedQualityAgentTest {
             assertThat(p.path("seed").asInt()).isEqualTo(100+7919*attempt);
         }
     }
+    @Test void seedLessonsReachGenerationAndReviewWithoutOverridingHardChecks()throws Exception {
+        var lesson=json.readTree("{\"id\":\"12345678-1234-1234-1234-123456789abc\",\"sha256\":\""+"a".repeat(64)+"\",\"action\":\"BASE\",\"direction\":\"all\",\"tail\":\"UNKNOWN\",\"issue\":\"EYE_READABILITY\",\"prevention\":\"Keep compact filled pupils distinct from surrounding fur.\",\"criterion\":\"A front or side pupil disappears into surrounding fur.\"}");
+        ((tools.jackson.databind.node.ObjectNode)lesson).put("rulesSha256",StyledSpriteCodec.qualityRulesSha());
+        var lessons=json.createArrayNode().add(lesson);
+        when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(verdict("south","PASS","PASS"));
+        var clipped=new StyledQualityAgentTest().png(true);
+        var report=agent.review(seed(),Collections.nCopies(4,clipped),lessons);
+        assertThat(report.path("passed").asBoolean()).isFalse();assertThat(report.path("issues").toString()).contains("CANVAS_CLIPPING");
+        assertThat(report.path("learnedLessons")).isEqualTo(lessons);assertThat(report.path("photoSha256").asText()).isEqualTo(StyledSpriteCodec.sha(seed()));
+        var task=org.mockito.ArgumentCaptor.forClass(String.class);verify(client).structuredImage(anyString(),task.capture(),any(),anyMap());
+        assertThat(task.getValue()).contains(lesson.path("criterion").asText());
+        var traits=json.valueToTree(Map.of("seed",100,"sourcePhotoSha256",StyledSpriteCodec.sha(seed()),"faceBox",List.of(0,0,1,1),
+            "identityDescription","Photographed puppy","motionDescription","same puppy","rearDescription","same puppy rear","reviewNote","reviewed original photo and face crop"));
+        var codec=new StyledSpriteCodec(json,System.getenv().getOrDefault("ASSET_HARNESS_PYTHON","python3"));
+        var policy=json.valueToTree(Map.of("attempt",0,"rulesSha256",StyledSpriteCodec.qualityRulesSha(),"lessons",lessons));
+        var payload=codec.character(UUID.randomUUID(),traits,seed(),policy);
+        assertThat(payload.path("description").asText()).contains(lesson.path("prevention").asText(),"No hollow eye rings");
+        assertThat(payload.path("description").asText().length()).isLessThanOrEqualTo(2000);
+        ((tools.jackson.databind.node.ObjectNode)lesson).put("action","WALK");
+        assertThatThrownBy(()->agent.review(seed(),Collections.nCopies(4,seed()),lessons)).hasMessage("QUALITY_SEED_RESPONSE_INVALID");
+    }
 }

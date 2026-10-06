@@ -1,5 +1,5 @@
 {
-  "revision": "sprite-regressions-2026-10-06-v8",
+  "revision": "sprite-regressions-2026-10-06-v9",
   "frontalLowTail": {
     "upperBandPercent": 65,
     "seedTolerancePixels": 1,
@@ -151,6 +151,14 @@
       "check": "seed-response-interpretation",
       "fixture": "seed-eye-verdict-regressions.json",
       "expected": "Actual Luna response reports north readability NOT_VISIBLE and style PASS. Do not invent EYE_DIRECTION from rendering PASS; retain EYE_READABILITY failures in the visible views. Recheck stored images after a rule change without resetting repair counts or submitting another PixelLab request."
+    },
+    {
+      "id": "base-seeds-excluded-from-learning",
+      "action": "BASE",
+      "direction": "all",
+      "issue": "EYE_READABILITY",
+      "check": "seed-learning-integration",
+      "expected": "Record original four-view failures before repair. AI pass alone is not positive training evidence: require matching human seed approval. Blinded replay must retain known good seeds and reject bad seeds before a lesson reaches another dogs initial generation and seed review. Preserve source photo hashes, budgets, native pixels and motion lesson scopes."
     }
   ],
   "tailEdit": {
@@ -189,6 +197,16 @@
       "Do not demand photorealistic eyes, identical coat colors across dogs, or extra sparkle. Preserve the approved soft pixel-art style. Return UNCERTAIN when eye form cannot be confidently judged; uncertainty does not pass.",
       "Identity compares visible coat/markings, ears, muzzle and puppy/body proportions with the real photo. Do not infer temperament. The style reference supplies rendering only, never the dog identity.",
       "For north with no face or eyes, readability is NOT_VISIBLE. style may be NOT_VISIBLE or PASS for appropriate rendering; a style PASS alone is never evidence of visible eyes. North showing face or eyes must have readability FAIL. A style FAIL or UNCERTAIN still fails quality."
-    ]
+    ],
+    "learning": {
+      "scope": {
+        "action": "BASE",
+        "direction": "all",
+        "tail": "UNKNOWN"
+      },
+      "positiveEvidence": "AI-passing seeds plus a hash-bound human seed approval",
+      "validation": "Blinded positive/negative replay with original photo and all four seeds; a rule must preserve immutable gates",
+      "note": "v7 and v8 eye verdicts used different rules; same-condition nondeterminism has not been established."
+    }
   }
 }

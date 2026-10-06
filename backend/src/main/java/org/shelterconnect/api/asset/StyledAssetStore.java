@@ -142,8 +142,8 @@ public class StyledAssetStore {
         jdbc.sql("""
             UPDATE shelter.styled_asset_steps SET attempt_history=attempt_history || jsonb_build_array(jsonb_build_object(
               'qualityRecheck',true,'providerJobId',provider_job_id,'result',result,
-              'quality',quality_report,'repairCount',repair_count)),
-              quality_report=NULL,status='CHECKING'
+              'quality',quality_report,'repairCount',repair_count,'learnedLessons',learned_lessons)),
+              quality_report=NULL,learned_lessons='[]'::jsonb,status='CHECKING'
             WHERE job_id=:id AND ((:seedOnly AND action='BASE') OR (NOT :seedOnly AND (action<>'BASE' OR :recheckSeed)))
             """).param("id",id).param("seedOnly",seedOnly).param("recheckSeed",recheckSeed).update();
         jdbc.sql("""
