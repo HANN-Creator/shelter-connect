@@ -15,6 +15,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.shelterconnect.api.auth.*;
 import org.shelterconnect.api.web.ApiInputFilter;
+import tools.jackson.databind.json.JsonMapper;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -27,6 +28,9 @@ class ApiIngressHttpTest {
     @MockitoBean PhotoUploadStore uploads;
     @MockitoBean AssetStorage storage;
     @MockitoBean ShelterAccessService access;
+    @MockitoBean StyledAssetStore styled;
+    @MockitoBean StyledAssetProvider provider;
+    @Autowired JsonMapper json;
     private final HttpClient client=HttpClient.newHttpClient();
     private final UUID dog=UUID.randomUUID();
     @Test void realChunkedJsonCannotPassLimitAndUnauthorizedBodyDoesNotReachDatabase() throws Exception {
@@ -47,7 +51,7 @@ class ApiIngressHttpTest {
         }
         String part="--boundary\r\nContent-Disposition: form-data; name=\"x\"\r\n\r\na\r\n";
         var response=send(photoPath(),tokens.token(UUID.randomUUID()),"multipart/form-data; boundary=boundary",(part.repeat(5)+"--boundary--\r\n").getBytes(StandardCharsets.UTF_8),true);
-        assertThat(response.statusCode()).isIn(400,413);
+        assertThat(response.statusCode()).isEqualTo(413);
         verifyNoInteractions(accounts,storage,uploads,access);
     }
     @Test void ordinaryMultipartStillParsesAndUploadsANormalizedImage() throws Exception {
@@ -58,6 +62,45 @@ class ApiIngressHttpTest {
         var response=send(photoPath(),tokens.token(UUID.randomUUID()),"multipart/form-data; boundary=boundary",multipart(out.toByteArray(),"{}"),true);
         assertThat(response.statusCode()).isEqualTo(200);
         verify(storage).putPhoto(eq(dog),eq("test-key"),any());
+    }
+    @Test void fivePartSeedReferenceReachesControllerWithOriginalBytesForBothTransferModes() throws Exception {
+        var image=new BufferedImage(32,32,BufferedImage.TYPE_INT_ARGB);
+        for(int y=4;y<30;y++)for(int x=8;x<25;x++)image.setRGB(x,y,0xffa07845);
+        var out=new ByteArrayOutputStream();ImageIO.write(image,"png",out);byte[] png=out.toByteArray();
+        UUID photo=UUID.randomUUID(),job=UUID.randomUUID();String sha=StyledSpriteCodec.sha(png);
+        byte[] metadata=json.writeValueAsBytes(Map.of("photoId",photo,"sourcePhotoSha256",sha,
+            "expectedSeedHashes",Map.of("south",sha,"north",sha,"west",sha,"east",sha),
+            "assessment","POSITIVE","issues",List.of(),"note","Previously approved original native reference for ingress verification."));
+        when(styled.referencePhoto(any(),eq(dog),eq(photo))).thenReturn(new StyledAssetStore.ReferencePhoto("dog-photos","source.png"));
+        when(storage.photo(dog,"dog-photos","source.png")).thenReturn(png);
+        when(styled.referenceExisting(any(),eq(dog),eq(photo),anyString(),any())).thenReturn(Optional.empty());
+        when(styled.referenceInsert(any(),eq(dog),eq(photo),any(),anyString(),any(),any())).thenReturn(
+            new StyledAssetStore.Job(job,dog,"RUNNING",null,"test",List.of(),null,List.of("BASE"),json.createObjectNode(),json.createObjectNode().put("referenceOnly",true)));
+        byte[] body=seedMultipart(metadata,png,List.of("south","north","west","east"));
+        for(boolean chunked:new boolean[]{false,true}) {
+            var response=send(seedPath(),tokens.token(UUID.randomUUID()),"multipart/form-data; boundary=boundary",body,chunked);
+            assertThat(response.statusCode()).as(response.body()).isEqualTo(202);
+            assertThat(json.readTree(response.body()).at("/data/id").asText()).isEqualTo(job.toString());
+            assertThat(send(seedPath(),null,"multipart/form-data; boundary=boundary",body,chunked).statusCode()).isEqualTo(401);
+        }
+        verify(styled,times(2)).referenceInsert(any(),eq(dog),eq(photo),any(),anyString(),any(),any());
+        var stored=org.mockito.ArgumentCaptor.forClass(byte[].class);
+        verify(storage,times(8)).put(anyString(),stored.capture());
+        assertThat(stored.getAllValues()).allSatisfy(bytes->assertThat(bytes).isEqualTo(png));
+        verifyNoInteractions(provider,accounts,uploads);
+    }
+    @Test void seedReferenceRejectsExtraDuplicateUnknownAndOversizedPartsBeforeSideEffects() throws Exception {
+        for(boolean chunked:new boolean[]{false,true}) {
+            for(var names:List.of(List.of("south","north","west","east","extra"),List.of("south","north","west","west"),List.of("south","north","west","file"),List.of("south","north","west"))) {
+                var response=send(seedPath(),tokens.token(UUID.randomUUID()),"multipart/form-data; boundary=boundary",seedMultipart("{}".getBytes(StandardCharsets.UTF_8),new byte[1],names),chunked);
+                assertThat(response.statusCode()).isEqualTo(names.size()==5?413:400);
+            }
+            for(boolean largeMetadata:new boolean[]{false,true}) {
+                var body=seedMultipart(new byte[largeMetadata?ApiInputFilter.BODY_BYTES+1:2],new byte[largeMetadata?1:ApiInputFilter.BODY_BYTES+1],List.of("south","north","west","east"));
+                assertThat(send(seedPath(),tokens.token(UUID.randomUUID()),"multipart/form-data; boundary=boundary",body,chunked).statusCode()).isEqualTo(413);
+            }
+        }
+        verifyNoInteractions(styled,storage,provider,accounts,uploads,access);
     }
     @Test void refreshedTokensAndSpoofedIpHeadersCannotResetTheSameUsersQuota() throws Exception {
         UUID subject=UUID.randomUUID();
@@ -73,6 +116,17 @@ class ApiIngressHttpTest {
         assertThat(client.send(HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+"/actuator/health/liveness")).GET().build(),HttpResponse.BodyHandlers.ofString()).statusCode()).isEqualTo(200);
     }
     private String photoPath() { return "/v1/shelter-admin/dogs/"+dog+"/photos"; }
+    private String seedPath() { return "/v1/shelter-admin/dogs/"+dog+"/styled-seed-examples"; }
+    private byte[] seedMultipart(byte[] metadata,byte[] png,List<String> names) throws IOException {
+        var out=new ByteArrayOutputStream();
+        out.write("--boundary\r\nContent-Disposition: form-data; name=\"metadata\"\r\nContent-Type: application/json\r\n\r\n".getBytes(StandardCharsets.UTF_8));
+        out.write(metadata);out.write("\r\n".getBytes(StandardCharsets.UTF_8));
+        for(String name:names) {
+            out.write(("--boundary\r\nContent-Disposition: form-data; name=\""+name+"\"; filename=\""+name+".png\"\r\nContent-Type: image/png\r\n\r\n").getBytes(StandardCharsets.UTF_8));
+            out.write(png);out.write("\r\n".getBytes(StandardCharsets.UTF_8));
+        }
+        out.write("--boundary--\r\n".getBytes(StandardCharsets.UTF_8));return out.toByteArray();
+    }
     private HttpResponse<String> send(String path,String token,String type,byte[] bytes,boolean chunked) throws Exception {
         var publisher=chunked?HttpRequest.BodyPublishers.ofInputStream(()->new ByteArrayInputStream(bytes)):HttpRequest.BodyPublishers.ofByteArray(bytes);
         var builder=HttpRequest.newBuilder(URI.create("http://127.0.0.1:"+port+path)).header("Content-Type",type).POST(publisher);
