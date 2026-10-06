@@ -29,6 +29,21 @@ public class StyledAssetWorker {
                 store.contract(w,contract);store.defer(w,0);return;
             }
             if(w.status().equals("CHECKING")) {
+                if(w.character()) {
+                    var seeds=new ArrayList<byte[]>();
+                    for(String d:StyledSpriteCodec.DIRECTIONS) {
+                        String key=w.result().path("keys").path(d).asText();
+                        if(!key.startsWith(w.prefix()+"directions/"))throw new AssetException(409,"STYLED_SEED_CHANGED");
+                        byte[] image=storage.asset(key);
+                        if(!StyledSpriteCodec.sha(image).equals(w.result().path("hashes").path(d).asText()))
+                            throw new AssetException(409,"STYLED_SEED_CHANGED");
+                        StyledSpriteCodec.nativeFrame(image);seeds.add(image);
+                    }
+                    if(!store.startQuality(w))return;
+                    store.quality(w,seedQuality.review(storage.photo(w.dogId(),w.bucket(),w.key()),seeds));
+                    // An explicit rule recheck only judges stored bytes; it never buys a new character.
+                    store.success(w,w.result());return;
+                }
                 byte[] sheet=storage.asset(w.result().path("key").asText());
                 if(!StyledSpriteCodec.sha(sheet).equals(w.result().path("sha256").asText()))throw new AssetException(409,"STYLED_SHEET_CHANGED");
                 var frames=StyledSpriteCodec.frames(sheet);StyledSpriteCodec.sheet(frames,seed(w));

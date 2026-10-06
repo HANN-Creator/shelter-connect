@@ -57,6 +57,23 @@ class StyledSeedQualityAgentTest {
         when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(duplicate);
         assertThatThrownBy(()->agent.review(seed(),Collections.nCopies(4,seed()))).hasMessage("QUALITY_SEED_RESPONSE_INVALID");
     }
+    @Test void actualRearRenderingPassDoesNotInventVisibleEyes()throws Exception {
+        var fixture=json.readTree(Files.readAllBytes(Path.of("scripts/fixtures/seed-eye-verdict-regressions.json")));
+        when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(fixture.path("response"));
+        var report=agent.review(seed(),Collections.nCopies(4,seed()));
+        assertThat(report.path("issues").valueStream().map(JsonNode::asText)).containsExactly("EYE_READABILITY");
+        assertThat(report.path("passed").asBoolean()).isFalse();
+        // Synthetic all-visible-eyes-pass case checks interpretation, not actual image quality.
+        var passing=verdict("south","PASS","PASS");
+        ((tools.jackson.databind.node.ObjectNode)passing.path("views").get(1)).put("style","PASS");
+        when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(passing);
+        assertThat(agent.review(seed(),Collections.nCopies(4,seed())).path("passed").asBoolean()).isTrue();
+        for(String invalidStyle:List.of("FAIL","UNCERTAIN")) {
+            ((tools.jackson.databind.node.ObjectNode)passing.path("views").get(1)).put("style",invalidStyle);
+            assertThat(agent.review(seed(),Collections.nCopies(4,seed())).path("issues").valueStream().map(JsonNode::asText))
+                .containsExactly("EYE_STYLE");
+        }
+    }
     @Test void approvalIsBoundToAllFourBytesPolicyAndRules()throws Exception {
         var seeds=Collections.nCopies(4,seed());
         when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(verdict("south","PASS","PASS"));

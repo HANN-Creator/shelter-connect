@@ -1,5 +1,5 @@
 {
-  "revision": "sprite-regressions-2026-10-06-v7",
+  "revision": "sprite-regressions-2026-10-06-v8",
   "frontalLowTail": {
     "upperBandPercent": 65,
     "seedTolerancePixels": 1,
@@ -144,6 +144,13 @@
       "check": "vision-seed",
       "fixture": "seed-eye-regressions.json",
       "expected": "Block seed approval and all paid motion generation if any visible eye view fails or is uncertain. Recheck every regenerated seed independently; retain originals and receipts. The recorded examples are visual failures, not deterministic coordinate masks."
+    },
+    {
+      "id": "rear-no-eyes-rendering-pass-is-not-direction-drift",
+      "stage": "BASE",
+      "check": "seed-response-interpretation",
+      "fixture": "seed-eye-verdict-regressions.json",
+      "expected": "Actual Luna response reports north readability NOT_VISIBLE and style PASS. Do not invent EYE_DIRECTION from rendering PASS; retain EYE_READABILITY failures in the visible views. Recheck stored images after a rule change without resetting repair counts or submitting another PixelLab request."
     }
   ],
   "tailEdit": {
@@ -180,7 +187,8 @@
       "In south, both eyes must read separately from the surrounding coat and muzzle. In west/east the visible eye must read clearly. Compare eye placement, scale and rounded filled pupil treatment across views. North must show no eyes or face.",
       "Accept compact dark filled pupils and a restrained small catchlight. Reject hollow ring or socket eyes, large white eyeballs, angry slash-shaped eyes, misaligned pupils, or eyes that disappear into dark fur. A dark coat still needs readable local contrast without changing coat identity.",
       "Do not demand photorealistic eyes, identical coat colors across dogs, or extra sparkle. Preserve the approved soft pixel-art style. Return UNCERTAIN when eye form cannot be confidently judged; uncertainty does not pass.",
-      "Identity compares visible coat/markings, ears, muzzle and puppy/body proportions with the real photo. Do not infer temperament. The style reference supplies rendering only, never the dog identity."
+      "Identity compares visible coat/markings, ears, muzzle and puppy/body proportions with the real photo. Do not infer temperament. The style reference supplies rendering only, never the dog identity.",
+      "For north with no face or eyes, readability is NOT_VISIBLE. style may be NOT_VISIBLE or PASS for appropriate rendering; a style PASS alone is never evidence of visible eyes. North showing face or eyes must have readability FAIL. A style FAIL or UNCERTAIN still fails quality."
     ]
   }
 }

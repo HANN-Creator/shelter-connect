@@ -114,6 +114,46 @@ class StyledAssetPostgresTest {
         assertThat(read(id).path("status").asText()).isEqualTo("FAILED");
         verify(provider,times(1)).submit(eq(true),any());verify(provider,never()).submit(eq(false),any());
     }
+    Map<String,Object> seedRecheckBody(UUID id)throws Exception {
+        var body=new HashMap<String,Object>();body.put("note","Recheck the same stored four seeds after correcting the review rules");
+        body.put("expectedSeedHashes",read(id).at("/steps/0/result/hashes"));body.put("expectedRulesSha256","0".repeat(64));
+        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=jsonb_set(quality_policy,'{rulesSha256}',to_jsonb(CAST(? AS text))) WHERE id=?","0".repeat(64),id);
+        return body;
+    }
+    @Test void exhaustedSeedRecheckKeepsBytesBudgetAndRequiresFreshHumanApproval()throws Exception {
+        when(seedQuality.review(any(),anyList())).thenAnswer(c->seedReport(c.getArgument(1),false));
+        UUID id=request();for(int i=0;i<6;i++)tick();
+        var before=new HashMap<>(objects);var body=seedRecheckBody(id);
+        post(UUID.randomUUID(),path(id)+"/quality-recheck",body,403);
+        post(subject,path(id)+"/quality-recheck",body,200);post(subject,path(id)+"/quality-recheck",body,200);
+        when(seedQuality.review(any(),anyList())).thenAnswer(c->{outsideTransaction();return seedReport(c.getArgument(1),true);});
+        clearInvocations(provider);tick();
+        assertThat(read(id).path("status").asText()).isEqualTo("SEED_REVIEW");
+        assertThat(read(id).at("/steps/0/qualityReport/passed").asBoolean()).isTrue();
+        assertThat(read(id).at("/steps/0/repairCount").asInt()).isEqualTo(2);
+        assertThat(jdbc.queryForObject("SELECT attempt_history::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='character'",String.class,id)).contains("qualityRecheck","EYE_READABILITY");
+        assertThat(objects).containsExactlyInAnyOrderEntriesOf(before);verifyNoInteractions(provider);
+        post(subject,path(id)+"/quality-recheck",body,200);tick();verifyNoInteractions(provider);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.asset_submissions WHERE job_id=?",Integer.class,id)).isEqualTo(3);
+        review(id,true,"APPROVE",200);finish(id);verify(provider,times(12)).submit(eq(false),any());
+    }
+    @Test void failedSeedRecheckDoesNotSpendUnusedRepairBudget()throws Exception {
+        UUID id=request();tick();tick();var body=seedRecheckBody(id);
+        post(subject,path(id)+"/quality-recheck",body,200);
+        when(seedQuality.review(any(),anyList())).thenAnswer(c->seedReport(c.getArgument(1),false));
+        clearInvocations(provider);tick();tick();
+        assertThat(read(id).path("failureCode").asText()).isEqualTo("SEED_QUALITY_REVIEW_REQUIRED");
+        assertThat(read(id).at("/steps/0/repairCount").asInt()).isZero();
+        review(id,true,"APPROVE",409);verifyNoInteractions(provider);
+    }
+    @Test void seedRecheckRefusesChangedStoredBytesBeforeCallingVision()throws Exception {
+        UUID id=request();tick();tick();var body=seedRecheckBody(id);
+        post(subject,path(id)+"/quality-recheck",body,200);
+        objects.put(read(id).at("/steps/0/result/keys/south").asText(),new byte[]{1,2,3});
+        clearInvocations(seedQuality,provider);tick();
+        assertThat(read(id).path("failureCode").asText()).isEqualTo("STYLED_SEED_CHANGED");
+        verifyNoInteractions(seedQuality,provider);
+    }
     @AfterEach void cleanup() {
         var dogs=new ArrayList<>(extraDogs);dogs.add(dog);
         for(UUID target:dogs)cleanupDog(target);
@@ -406,7 +446,8 @@ class StyledAssetPostgresTest {
         post(subject,path(id)+"/quality-recheck",body,200);
         assertThat(jdbc.queryForObject("SELECT repair_count FROM shelter.styled_asset_steps WHERE job_id=? AND label='sit-north'",Integer.class,id)).isEqualTo(2);
         assertThat(jdbc.queryForObject("SELECT attempt_history::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='sit-north'",String.class,id)).contains("qualityRecheck","DIRECTION_DRIFT");
-        finish(id);verify(provider,times(15)).submit(anyBoolean(),any());
+        tick();assertThat(read(id).path("status").asText()).isEqualTo("SEED_REVIEW");
+        review(id,true,"APPROVE",200);finish(id);verify(provider,times(15)).submit(anyBoolean(),any());
         assertThat(read(id).path("failureCode").asText()).isEqualTo("QUALITY_REPAIR_EXHAUSTED");
         post(subject,path(id)+"/quality-recheck",body,200);tick();verify(provider,times(15)).submit(anyBoolean(),any());
         review(id,false,"APPROVE",409);

@@ -1,0 +1,37 @@
+{
+  "source": "Actual live Luna seed response, 2026-10-06; response interpretation fixture only, not a visual detector",
+  "response": {
+    "identity": "PASS",
+    "note": "All seeds use a generally appropriate soft pixel-art rendering style, but the front and side eye readability requirements are not met.",
+    "views": [
+      {
+        "note": "Front-facing eyes are not clearly separated from the dark facial coat; they read as indistinct dark slits rather than rounded filled pupils. The coat, markings, ears, muzzle, and puppy proportions otherwise resemble the photographed dog.",
+        "style": "PASS",
+        "direction": "south",
+        "readability": "FAIL"
+      },
+      {
+        "note": "Rear-facing view shows no face or eyes, as required. Dark coat and compact puppy proportions are consistent with the identity.",
+        "style": "PASS",
+        "direction": "north",
+        "readability": "NOT_VISIBLE"
+      },
+      {
+        "note": "The visible eye is too dark and indistinct against the surrounding fur to read clearly as a rounded filled pupil. Side profile, coat, markings, ears, muzzle, and proportions are broadly consistent with the photographed dog.",
+        "style": "PASS",
+        "direction": "west",
+        "readability": "FAIL"
+      },
+      {
+        "note": "The visible eye is not sufficiently separated from the dark head and does not read clearly as a rounded filled pupil. The side profile and puppy identity cues are otherwise broadly consistent.",
+        "style": "PASS",
+        "direction": "east",
+        "readability": "FAIL"
+      }
+    ]
+  },
+  "expectedIssues": [
+    "EYE_READABILITY"
+  ],
+  "inputSha256": "6fec39276709151d70d40797986fcb62840f2bc5e036a0498d8502398af2354c"
+}
