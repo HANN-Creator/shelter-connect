@@ -27,7 +27,7 @@ public class StyledAssetManifest {
         return result;
     }
     public Map<String,Object> preview(UUID subject,UUID dog,UUID id) {
-        var j=store.preview(subject,dog,id);var result=manifest(j,j.status().equals("SEED_REVIEW"));
+        var j=store.preview(subject,dog,id);var result=manifest(j,j.status().equals("SEED_REVIEW") || (j.qualityPolicy()!=null && j.qualityPolicy().path("referenceOnly").asBoolean()));
         if(!store.preview(subject,dog,id).status().equals(j.status()))throw new AssetException(409,"ASSET_CHANGED");return result;
     }
     private Map<String,Object> manifest(StyledAssetStore.Job job,boolean seedsOnly) {
@@ -43,6 +43,9 @@ public class StyledAssetManifest {
             "expiresAt",Instant.now().plusSeconds(60),"baseUrl",directions.get("south"),"sampling","nearest"));
         if(job.generationPlan()!=null)result.put("generationPlan",job.generationPlan());
         result.put("availableActions",job.availableActions());
+        if(job.qualityPolicy()!=null && job.qualityPolicy().path("referenceOnly").asBoolean()) {
+            result.put("referenceOnly",true);result.put("provider","Imported seed reference");
+        }
         if(job.qualityPolicy()!=null)result.put("quality",Map.of("policyVersion",job.qualityPolicy().path("version"),
             "passed",job.complete() && job.steps().stream().skip(1).allMatch(s->s.qualityReport()!=null && s.qualityReport().path("passed").asBoolean()),
             "repairCount",job.steps().stream().mapToInt(StyledAssetStore.Step::repairCount).sum()));

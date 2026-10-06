@@ -520,6 +520,87 @@ class StyledAssetPostgresTest {
         review(next,true,"APPROVE",200);finish(next);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_asset_steps WHERE job_id=? AND action<>'BASE' AND learned_lessons<>'[]'::jsonb",Integer.class,next)).isZero();
     }
+    Map<String,Object> referenceBody(byte[] frame,String assessment)throws Exception {
+        String hash=java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(frame));
+        String photoHash=java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(png));
+        return new HashMap<>(Map.of("photoId",photo,"sourcePhotoSha256",photoHash,"expectedSeedHashes",Map.of("south",hash,"north",hash,"west",hash,"east",hash),
+            "assessment",assessment,"issues",assessment.equals("NEGATIVE")?List.of("EYE_READABILITY"):List.of(),"note","Previously reviewed native reference; preserve source pixels and original AI judgment"));
+    }
+    JsonNode reference(UUID caller,byte[] frame,Object body,int expected)throws Exception {
+        var req=multipart("/v1/shelter-admin/dogs/"+dog+"/styled-seed-examples")
+            .file(new org.springframework.mock.web.MockMultipartFile("metadata","metadata.json","application/json",json.writeValueAsBytes(body)));
+        for(String d:List.of("south","north","west","east"))req.file(new org.springframework.mock.web.MockMultipartFile(d,d+".png","image/png",frame));
+        if(caller!=null)req.header("Authorization",bearer(caller));
+        return json.readTree(mvc.perform(req).andExpect(status().is(expected)).andReturn().getResponse().getContentAsString()).path("data");
+    }
+    @Test void importedReferencesKeepAiVerdictAndLearnHumanFailureOnlyAfterPositiveApproval()throws Exception {
+        var badBody=referenceBody(png,"NEGATIVE");UUID bad=UUID.fromString(reference(subject,png,badBody,202).path("id").asText());
+        assertThat(reference(subject,png,badBody,202).path("id").asText()).isEqualTo(bad.toString());
+        tick();assertThat(read(bad).at("/steps/0/qualityReport/passed").asBoolean()).isTrue();
+        var example=json.readTree(jdbc.queryForObject("SELECT report::text FROM shelter.styled_quality_examples WHERE job_id=?",String.class,bad));
+        assertThat(example.path("passed").asBoolean()).isFalse();assertThat(example.at("/aiAssessment/passed").asBoolean()).isTrue();
+        assertThat(example.path("assessmentSource").asText()).isEqualTo("HUMAN_NEGATIVE_FEEDBACK");review(bad,true,"APPROVE",409);
+        UUID lesson=onlyLesson();lessonWorker.tick();assertThat(lessonStatus(lesson)).isEqualTo("WAITING_EVIDENCE");
+        var changed=ImageIO.read(new ByteArrayInputStream(png));changed.setRGB(12,9,0xffcdbbab);
+        var bytes=new ByteArrayOutputStream();ImageIO.write(changed,"png",bytes);byte[] good=bytes.toByteArray();
+        UUID positive=UUID.fromString(reference(subject,good,referenceBody(good,"POSITIVE"),202).path("id").asText());tick();
+        lessonWorker.tick();verifyNoInteractions(lessonAgent);review(positive,true,"APPROVE",200);tick();
+        assertThat(read(positive).path("status").asText()).isEqualTo("SEED_REVIEW");assertThat(read(positive).path("steps")).hasSize(1);
+        assertThat(read(positive).path("actionPlan").valueStream().map(JsonNode::asText)).containsExactly("BASE");
+        review(positive,false,"APPROVE",409);publicStatus(404);verifyNoInteractions(provider);
+        assertThat(get(subject,path(positive)+"/preview",200).at("/data/referenceOnly").asBoolean()).isTrue();
+        assertThatThrownBy(()->jdbc.update("UPDATE shelter.asset_jobs SET status='APPROVED' WHERE id=?",positive)).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+        when(lessonAgent.proposeSeeds(any(),any())).thenReturn(json.valueToTree(Map.of("prevention","Keep filled pupils readable against dark fur.","criterion","Pupil clusters merge with adjacent fur.")));
+        when(lessonAgent.replaySeeds(any(),any(),anyList())).thenAnswer(c->seedReplayAnswer(c.getArgument(2),false));
+        lessonWorker.tick();lessonWorker.tick();assertThat(lessonStatus(lesson)).isEqualTo("ACTIVE");
+        nextLearningDog();when(seedQuality.review(any(),anyList(),any())).thenAnswer(c->seedReport(c.getArgument(1),true));
+        UUID generated=request();tick();tick();
+        assertThat(read(generated).at("/steps/0/qualityReport/learnedLessons/0/id").asText()).isEqualTo(lesson.toString());
+        verify(provider,times(1)).submit(eq(true),any());verify(provider,never()).submit(eq(false),any());
+    }
+    @Test void referenceUploadRejectsUnauthorizedChangedOrOversizedInputsBeforePersisting()throws Exception {
+        var body=referenceBody(png,"POSITIVE");reference(null,png,body,401);reference(UUID.randomUUID(),png,body,403);
+        body.put("sourcePhotoSha256","0".repeat(64));reference(subject,png,body,409);
+        body=referenceBody(png,"POSITIVE");body.put("expectedSeedHashes",Map.of("south","0".repeat(64)));reference(subject,png,body,409);
+        reference(subject,new byte[65537],referenceBody(png,"POSITIVE"),413);
+        reference(subject,new byte[]{1,2,3},referenceBody(png,"POSITIVE"),422);
+        verify(storage,never()).put(anyString(),any());verifyNoInteractions(provider,seedQuality);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.asset_jobs WHERE dog_id=?",Integer.class,dog)).isZero();
+    }
+    @Test void supposedPositiveRejectedByVisionIsNotNegativeLearningEvidenceOrRegenerated()throws Exception {
+        when(seedQuality.review(any(),anyList())).thenAnswer(c->seedReport(c.getArgument(1),false));
+        UUID id=UUID.fromString(reference(subject,png,referenceBody(png,"POSITIVE"),202).path("id").asText());tick();tick();
+        assertThat(read(id).path("failureCode").asText()).isEqualTo("SEED_QUALITY_REVIEW_REQUIRED");review(id,true,"APPROVE",409);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=?",Integer.class,id)).isZero();
+        verifyNoInteractions(provider);assertThat(read(id).at("/steps/0/repairCount").asInt()).isZero();
+    }
+    @Test void importedReferencesRejectConflictingAssessmentAndChangedPhotoBeforeVision()throws Exception {
+        UUID id=UUID.fromString(reference(subject,png,referenceBody(png,"POSITIVE"),202).path("id").asText());
+        reference(subject,png,referenceBody(png,"NEGATIVE"),409);
+        when(storage.photo(any(),anyString(),anyString())).thenReturn(new byte[]{9});tick();
+        assertThat(read(id).path("failureCode").asText()).isEqualTo("SOURCE_PHOTO_CHANGED");verifyNoInteractions(seedQuality,provider);
+    }
+    @Test void referencePermissionRevocationBeforeWorkerPreventsModelUpload()throws Exception {
+        UUID id=UUID.fromString(reference(subject,png,referenceBody(png,"POSITIVE"),202).path("id").asText());
+        jdbc.update("UPDATE shelter.asset_source_permissions SET revoked_at=now() WHERE id=?",permission);tick();
+        assertThat(read(id).path("status").asText()).isEqualTo("CANCELLED");verifyNoInteractions(seedQuality,provider);
+    }
+    @Test void concurrentReferenceImportsReuseOneJobAndOneVisionReview()throws Exception {
+        var body=referenceBody(png,"POSITIVE");
+        try(var pool=Executors.newFixedThreadPool(2)) {
+            var a=pool.submit(()->reference(subject,png,body,202).path("id").asText());
+            var b=pool.submit(()->reference(subject,png,body,202).path("id").asText());
+            assertThat(a.get(10,TimeUnit.SECONDS)).isEqualTo(b.get(10,TimeUnit.SECONDS));
+        }
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.asset_jobs WHERE dog_id=?",Integer.class,dog)).isEqualTo(1);
+        tick();tick();verify(seedQuality,times(1)).review(any(),anyList());verifyNoInteractions(provider);
+    }
+    @Test void failedReferenceStorageNeverEnqueuesPartialFrames()throws Exception {
+        doThrow(new RuntimeException("Simulated private storage failure")).when(storage).put(anyString(),any());
+        reference(subject,png,referenceBody(png,"POSITIVE"),500);tick();
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.asset_jobs WHERE dog_id=?",Integer.class,dog)).isZero();
+        verifyNoInteractions(seedQuality,provider);
+    }
     @Test void seedRuleRejectingApprovedGoodExampleNeverActivates()throws Exception {
         UUID first=seedLearningPair();review(first,true,"APPROVE",200);finish(first);UUID lesson=onlyLesson();
         when(lessonAgent.replaySeeds(any(),any(),anyList())).thenAnswer(c->seedReplayAnswer(c.getArgument(2),true));

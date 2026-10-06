@@ -39,7 +39,7 @@ class ApiDocumentationTest {
             for(String path:mapping.getPatternValues()) if(path.startsWith("/v1/"))
                 for(var method:mapping.getMethodsCondition().getMethods()) actual.add(method+" "+path);
         });
-        assertThat(documented).containsExactlyElementsOf(actual).hasSize(93);
+        assertThat(documented).containsExactlyElementsOf(actual).hasSize(94);
         assertThat(root.at("/servers/0/url").asText()).isEqualTo("/");
         assertThat(root.at("/components/securitySchemes/supabaseBearer/scheme").asText()).isEqualTo("bearer");
         assertThat(root.path("paths").path("/v1/dogs/{dogId}/assets").path("get").path("security").size()).isZero();
@@ -60,6 +60,7 @@ class ApiDocumentationTest {
         var upload=root.path("paths").path("/v1/shelter-admin/dogs/{dogId}/photos").path("post");
         assertThat(upload.at("/requestBody/content/multipart~1form-data/encoding/metadata/contentType").asText()).isEqualTo("application/json");
         assertThat(schemas.path("PhotoUploadInput").at("/properties/file/format").asText()).isEqualTo("binary");
+        assertThat(schemas.at("/StyledSeedExampleMetadata/required").toString()).contains("sourcePhotoSha256","expectedSeedHashes","assessment");
         var manifest=root.path("paths").path("/v1/dogs/{dogId}/assets").path("get");
         assertThat(manifest.at("/responses/200/content/application~1json/schema/$ref").asText()).endsWith("AssetManifestResponse");
         assertThat(schemas.path("AssetManifest").path("properties").has("animations")).isTrue();

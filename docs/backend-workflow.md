@@ -157,3 +157,5 @@ B-43: [스프라이트 자동 품질 검수·선택 보완](sprite-quality-repai
 - B-51A 실제 눈 검수 응답 해석·원본 재검수: [실제 실패와 수정 범위](seed-eye-quality.md#b-51a-실제-응답-해석과-기존-도트-재검수). 브랜치 `backend/b-51a-seed-eye-live-review`. 뒷모습의 정상 비노출 응답 오판을 고치고 기존 품질 재검수 API를 기준 도트까지 확장한다. 저장된 원본·보완 예산을 보존하며 PixelLab 재생성 없이 Luna로 재검수한다. DB 변경 없음. 노션 외부 기록은 앞선 승인 대기로 미동기화.
 
 - B-52 기본 도트 자동 학습 연결: [처리·검증 범위](seed-quality-learning.md). 브랜치 `backend/b-52-seed-quality-learning`. 완료 기준: BASE 사례 보존, 담당자 승인 정상 예시 기반 재검증, 검증된 문구의 다음 기본 도트 생성·검수 전달, 동작 학습 분리와 권한·해시·중단 경계 확인. DB V16. 노션 외부 기록은 앞선 승인 대기로 미동기화.
+
+- B-53 기본 도트 학습 자료 등록: [API·평가·검증 범위](seed-learning-references.md). 브랜치 `backend/b-53-seed-learning-references`. 사용자 요청 실제 학습 검증의 선행 작업: 기존 승인본·실패본 등록, AI 원판정과 인간 평가 분리, 승인 후 생성·공개 차단, 실제 Luna 학습 및 다음 생성 연결 확인. DB V17. 노션 외부 기록은 앞선 승인 대기로 미동기화.

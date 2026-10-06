@@ -13,7 +13,7 @@ import org.shelterconnect.api.auth.AccountAccessException;
 import org.shelterconnect.api.auth.SecurityErrors;
 import org.shelterconnect.api.web.ApiRequestFilter;
 
-@RestControllerAdvice(assignableTypes = {AssetController.class,StyledAssetController.class,StyledLessonController.class,PhotoUploadController.class})
+@RestControllerAdvice(assignableTypes = {AssetController.class,StyledAssetController.class,StyledLessonController.class,PhotoUploadController.class,StyledSeedExampleController.class})
 public class AssetErrorHandler {
 	private static final Logger log = LoggerFactory.getLogger(AssetErrorHandler.class);
 	@ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)

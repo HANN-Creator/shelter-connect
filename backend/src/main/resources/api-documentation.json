@@ -2588,6 +2588,120 @@
           }
         }
       }
+    },
+    "StyledSeedExampleMetadata": {
+      "type": "object",
+      "properties": {
+        "photoId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "sourcePhotoSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "expectedSeedHashes": {
+          "type": "object",
+          "properties": {
+            "south": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "north": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "west": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "east": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          },
+          "required": [
+            "south",
+            "north",
+            "west",
+            "east"
+          ],
+          "additionalProperties": false
+        },
+        "assessment": {
+          "type": "string",
+          "enum": [
+            "POSITIVE",
+            "NEGATIVE"
+          ]
+        },
+        "issues": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "EYE_READABILITY",
+              "EYE_STYLE",
+              "EYE_DIRECTION",
+              "SEED_IDENTITY",
+              "CANVAS_CLIPPING"
+            ]
+          },
+          "maxItems": 5,
+          "uniqueItems": true,
+          "description": "POSITIVE는 빈 배열, NEGATIVE는 하나 이상."
+        },
+        "note": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 1000
+        }
+      },
+      "required": [
+        "photoId",
+        "sourcePhotoSha256",
+        "expectedSeedHashes",
+        "assessment",
+        "issues",
+        "note"
+      ],
+      "additionalProperties": false
+    },
+    "StyledSeedExampleUpload": {
+      "type": "object",
+      "properties": {
+        "metadata": {
+          "$ref": "#/components/schemas/StyledSeedExampleMetadata"
+        },
+        "south": {
+          "type": "string",
+          "format": "binary",
+          "description": "원본 32×32 투명 PNG, 최대 65,536바이트. 픽셀 변환 없음."
+        },
+        "north": {
+          "type": "string",
+          "format": "binary",
+          "description": "원본 32×32 투명 PNG, 최대 65,536바이트. 픽셀 변환 없음."
+        },
+        "west": {
+          "type": "string",
+          "format": "binary",
+          "description": "원본 32×32 투명 PNG, 최대 65,536바이트. 픽셀 변환 없음."
+        },
+        "east": {
+          "type": "string",
+          "format": "binary",
+          "description": "원본 32×32 투명 PNG, 최대 65,536바이트. 픽셀 변환 없음."
+        }
+      },
+      "required": [
+        "metadata",
+        "south",
+        "north",
+        "west",
+        "east"
+      ],
+      "additionalProperties": false
     }
   },
   "operations": {
@@ -4287,6 +4401,28 @@
       "responseSchema": "StyledQualityLessonResponse",
       "request": {
         "schema": "StyledLessonDisable"
+      }
+    },
+    "POST /v1/shelter-admin/dogs/{dogId}/styled-seed-examples": {
+      "summary": "기본 도트 학습 자료 등록",
+      "tag": "32px 에셋",
+      "description": "소속 STAFF/MANAGER 전용. metadata는 application/json, south/north/west/east는 32×32 투명 PNG. 허가된 원본 사진과 4방향의 해시를 확인하고 Luna 검수만 실행한다. 같은 사진·도트·규칙 재전송은 기존 작업을 반환하며 평가 변경은 409. POSITIVE는 AI 통과 후 기존 seed-review 승인 필요. NEGATIVE는 사람의 결함 평가와 AI 원래 판정을 별도로 보존한다. 사람이 정상으로 판단했지만 AI가 실패한 자료는 학습에서 대기한다. referenceOnly=true 작업은 승인 후에도 SEED_REVIEW로 남고 PixelLab 생성·행동 생성·앱 공개가 불가능하다. 작업 조회와 미리보기는 기존 styled-assets 경로를 사용한다.",
+      "success": [
+        202
+      ],
+      "errors": [
+        400,
+        404,
+        409,
+        413,
+        422,
+        503
+      ],
+      "public": false,
+      "request": {
+        "schema": "StyledSeedExampleUpload",
+        "required": true,
+        "contentType": "multipart/form-data"
       }
     }
   }
