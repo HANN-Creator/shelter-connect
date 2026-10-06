@@ -22,7 +22,50 @@ def dog_frame():
     return frame
 
 
+def decode_recorded_alpha(rows):
+    frame=Image.new('RGBA',(32,32))
+    for y,row in enumerate(rows):
+        for x in range(32):
+            if int(row,16)&(1<<(31-x)):frame.putpixel((x,y),(70,70,70,255))
+    return frame
+
+
 class QualityRegressionTest(unittest.TestCase):
+    def test_live_edit_success_and_failures_replay_all_raw_and_restored_frames(self):
+        cases={}
+        for name in ('idle-motion-alpha.json','tail-repair-alpha.json','sit-tail-alpha.json'):
+            fixture=read(Path(__file__).parent/'fixtures'/name)['liveEditComparisons']
+            self.assertFalse(fixture['modelVisualRecheckPerformed'])
+            for case in fixture['clips']:
+                versions={}
+                for version,record in case['variants'].items():
+                    frames=[decode_recorded_alpha(rows) for rows in record['frames']]
+                    self.assertEqual(len(frames),9)
+                    before=[frame.tobytes() for frame in frames]
+                    audit=frame_audit(frames,frames[0],case['action'],case['direction'],'UNKNOWN')
+                    with self.subTest(clip=case['label'],version=version):
+                        self.assertEqual(audit['edgeFrames'],record['expectedEdgeFrames'])
+                        self.assertEqual(audit['idleMotionFrames'],record['expectedIdleMotionFrames'])
+                        self.assertEqual(audit['structuralPassed'],record['expectedStructuralPassed'])
+                        self.assertTrue(audit['visualReviewRequired'])
+                        self.assertEqual(before,[frame.tobytes() for frame in frames])
+                    versions[version]=(frames,audit)
+                self.assertEqual(versions['candidate'][0][0].tobytes(),versions['before'][0][0].tobytes())
+                cases[case['label']]=versions
+        # Actual successful idle edit provides a positive control, without pretending
+        # the alpha replay can judge eye expression, identity, or subtle tail carriage.
+        idle=cases['idle-south']
+        self.assertIn('IDLE_MOTION',idle['before'][1]['issues'])
+        for version in ('raw-edit','candidate'):
+            self.assertTrue(idle[version][1]['structuralPassed'])
+            self.assertEqual(idle_motion_frames(idle[version][0],idle['before'][0][0],'IDLE'),[])
+        # A provider-completed edit remains rejected, including the true final frame.
+        for version in ('raw-edit','candidate'):
+            self.assertEqual(cases['walk-west'][version][1]['edgeFrames'],[2,3,4,5,6,7,8])
+            self.assertEqual(cases['sit-west'][version][1]['edgeFrames'],[2,4,5,6])
+            for label in ('walk-west','sit-west'):
+                self.assertFalse(cases[label][version][1]['structuralPassed'])
+
     def test_scoped_learned_rules_extend_shared_payload_without_weakening_base_rules(self):
         from copy import deepcopy
         lesson={'id':'12345678-1234-1234-1234-123456789abc','sha256':'a'*64,
