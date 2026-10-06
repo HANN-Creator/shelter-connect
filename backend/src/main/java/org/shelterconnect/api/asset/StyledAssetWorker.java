@@ -116,6 +116,9 @@ public class StyledAssetWorker {
     }
     private void inspectSeeds(StyledAssetStore.Work w,List<byte[]> seeds,JsonNode metadata,boolean allowRepair) {
         byte[] photo=storage.photo(w.dogId(),w.bucket(),w.key());
+        if(w.qualityPolicy().path("referenceOnly").asBoolean()
+            && !StyledSpriteCodec.sha(photo).equals(w.qualityPolicy().at("/referenceInput/sourcePhotoSha256").asText()))
+            throw new AssetException(409,"SOURCE_PHOTO_CHANGED");
         var selected=lessons.pinned(w);String lessonSha=StyledSpriteCodec.sha(json.writeValueAsBytes(selected));
         var report=w.qualityReport();
         if(report==null || !StyledSeedQualityAgent.VERSION.equals(report.path("version").asText())
@@ -129,7 +132,20 @@ public class StyledAssetWorker {
             details.put("photoSha256",StyledSpriteCodec.sha(photo));details.put("lessonsSha256",lessonSha);details.set("learnedLessons",selected);
             report=details;store.quality(w,report);
         }
-        lessons.record(w,report,metadata,metadata);
+        var evidence=report;
+        if(w.qualityPolicy().path("referenceOnly").asBoolean()
+            && w.qualityPolicy().at("/referenceInput/assessment").asText().equals("NEGATIVE")) {
+            var corrected=(tools.jackson.databind.node.ObjectNode)report.deepCopy();
+            corrected.set("aiAssessment",report);corrected.put("passed",false);corrected.put("assessmentSource","HUMAN_NEGATIVE_FEEDBACK");
+            corrected.set("humanAssessment",w.qualityPolicy().path("referenceInput"));
+            var issues=new TreeSet<String>();report.path("issues").forEach(n->issues.add(n.asText()));
+            w.qualityPolicy().at("/referenceInput/issues").forEach(n->issues.add(n.asText()));
+            corrected.set("issues",json.valueToTree(issues));evidence=corrected;
+        }
+        // A supposed positive rejected by vision is unresolved, never repurposed as negative training evidence.
+        if(!(w.qualityPolicy().path("referenceOnly").asBoolean()
+            && w.qualityPolicy().at("/referenceInput/assessment").asText().equals("POSITIVE") && !report.path("passed").asBoolean()))
+            lessons.record(w,evidence,metadata,metadata);
         if(allowRepair && store.retryQuality(w,report,metadata))return;
         store.success(w,metadata);
     }

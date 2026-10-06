@@ -77,6 +77,35 @@ public class StyledAssetStore {
         jdbc.sql("INSERT INTO shelter.styled_asset_steps(job_id,ordinal,label,action,direction) VALUES (:id,:o,:l,:a,:d) ON CONFLICT DO NOTHING")
             .param("id",id).param("o",ordinal).param("l",label).param("a",action).param("d",direction,java.sql.Types.VARCHAR).update();
     }
+    public record ReferencePhoto(String bucket,String key) {}
+    @Transactional public ReferencePhoto referencePhoto(UUID subject,UUID dog,UUID photo) {
+        access.requireDogForWrite(subject,dog);properties.requireEnabled();legacy.validPhoto(photo,null,true);
+        return jdbc.sql("SELECT storage_bucket,storage_key FROM shelter.dog_photos WHERE id=:p AND dog_id=:d")
+            .param("p",photo).param("d",dog).query((r,n)->new ReferencePhoto(r.getString(1),r.getString(2))).optional().orElseThrow(StyledAssetStore::missing);
+    }
+    @Transactional public Optional<Job> referenceExisting(UUID subject,UUID dog,UUID photo,String selection,JsonNode body) {
+        referencePhoto(subject,dog,photo);
+        var existing=jdbc.sql("SELECT id FROM shelter.asset_jobs WHERE photo_id=:p AND pipeline_version=:v AND selection_key=:s")
+            .param("p",photo).param("v",StyledSpriteCodec.VERSION).param("s",selection).query(UUID.class).optional();
+        return existing.map(id->{var j=job(id);var input=j.qualityPolicy().path("referenceInput");
+            if(!input.path("assessment").equals(body.path("assessment")) || !input.path("issues").equals(body.path("issues")))throw new AssetException(409,"SEED_EXAMPLE_ASSESSMENT_CONFLICT");
+            return j;});
+    }
+    @Transactional public Job referenceInsert(UUID subject,UUID dog,UUID photo,UUID id,String selection,JsonNode body,JsonNode result) {
+        var actor=access.requireDogForWrite(subject,dog);referencePhoto(subject,dog,photo);
+        var policy=new HashMap<String,Object>(newSeedQualityPolicy());policy.put("referenceOnly",true);policy.put("referenceInput",body);
+        policy.put("referenceRecordedBy",actor.userId().toString());policy.put("referenceRecordedAt",Instant.now().toString());
+        var inserted=jdbc.sql("""
+            INSERT INTO shelter.asset_jobs(id,photo_id,dog_id,shelter_id,permission_id,pipeline_version,selection_key,action_plan,styled_input,quality_policy)
+            SELECT :id,p.id,p.dog_id,d.shelter_id,b.permission_id,:v,:s,'["BASE"]'::jsonb,'{}'::jsonb,CAST(:q AS jsonb)
+            FROM shelter.dog_photos p JOIN shelter.dogs d ON d.id=p.dog_id JOIN shelter.asset_photo_sources b ON b.photo_id=p.id WHERE p.id=:p
+            ON CONFLICT(photo_id,pipeline_version,selection_key) DO NOTHING RETURNING id
+            """).param("id",id).param("p",photo).param("v",StyledSpriteCodec.VERSION).param("s",selection).param("q",json.writeValueAsString(policy)).query(UUID.class).optional();
+        if(inserted.isEmpty())return referenceExisting(subject,dog,photo,selection,body).orElseThrow(StyledAssetStore::missing);
+        jdbc.sql("INSERT INTO shelter.styled_asset_steps(job_id,ordinal,label,action,status,result) VALUES(:id,0,'character','BASE','CHECKING',CAST(:r AS jsonb))")
+            .param("id",id).param("r",json.writeValueAsString(result)).update();
+        return job(id);
+    }
     @Transactional(readOnly=true) public Job read(UUID subject,UUID dog,UUID id) {
         access.requireDog(subject,dog);var job=job(id);if(!job.dogId().equals(dog))throw missing();return job;
     }
@@ -93,6 +122,9 @@ public class StyledAssetStore {
         String decision=AssetInput.text(body,"decision",16),note=AssetInput.text(body,"note",2000);
         if(!Set.of("APPROVE","REJECT").contains(decision) || note.length()<20)throw AssetException.invalid();
         lock(id);var j=job(id);if(!j.dogId().equals(dog))throw missing();legacy.valid(id,true);
+        boolean reference=j.qualityPolicy()!=null && j.qualityPolicy().path("referenceOnly").asBoolean();
+        if(reference && (!seed || (decision.equals("APPROVE") && !j.qualityPolicy().at("/referenceInput/assessment").asText().equals("POSITIVE"))))
+            throw new AssetException(409,"SEED_EXAMPLE_REVIEW_NOT_ALLOWED");
         if(!j.status().equals(seed?"SEED_REVIEW":"REVIEW"))throw new AssetException(409,"ASSET_NOT_READY");
         var base=j.steps().getFirst().result();
         if(base==null || !base.path("hashes").equals(body.path("expectedSeedHashes")))throw new AssetException(409,"SEED_REVIEW_STALE");
@@ -100,8 +132,8 @@ public class StyledAssetStore {
         if(!seed && !j.complete()) throw new AssetException(409,"ASSET_NOT_READY");
         if(!seed && decision.equals("APPROVE") && !qualityPassed(j))throw new AssetException(409,"QUALITY_REVIEW_REQUIRED");
         if(seed && decision.equals("APPROVE")) {
-            jdbc.sql("UPDATE shelter.asset_jobs SET seed_review=CAST(:r AS jsonb),status='QUEUED',next_run_at=now() WHERE id=:id")
-                .param("r",json.writeValueAsString(Map.of("hashes",base.path("hashes"),"reviewedBy",actor.userId(),"note",note,"reviewedAt",Instant.now())))
+            jdbc.sql("UPDATE shelter.asset_jobs SET seed_review=CAST(:r AS jsonb),status=:status,next_run_at=now() WHERE id=:id")
+                .param("status",reference?"SEED_REVIEW":"QUEUED").param("r",json.writeValueAsString(Map.of("hashes",base.path("hashes"),"reviewedBy",actor.userId(),"note",note,"reviewedAt",Instant.now())))
                 .param("id",id).update();
         } else jdbc.sql("UPDATE shelter.asset_jobs SET status=:s,reviewed_by=:u,reviewed_at=now() WHERE id=:id")
             .param("s",decision.equals("APPROVE")?"APPROVED":"REJECTED").param("u",actor.userId()).param("id",id).update();
@@ -223,6 +255,7 @@ public class StyledAssetStore {
     @Transactional public boolean authorized(Work w) { return owned(w) && validOrCancel(w.id()); }
     @Transactional public boolean reserve(Work w,JsonNode payload) {
         if(!authorized(w))return false;
+        if(w.qualityPolicy()!=null && w.qualityPolicy().path("referenceOnly").asBoolean())throw new AssetException(409,"SEED_EXAMPLE_GENERATION_FORBIDDEN");
         // A rollback stops the next submission even if it races with payload construction.
         int disabled=jdbc.sql("""
             SELECT count(*) FROM shelter.styled_asset_steps s, jsonb_array_elements(s.learned_lessons) item
@@ -284,6 +317,7 @@ public class StyledAssetStore {
     }
     @Transactional public boolean retryQuality(Work w,JsonNode report,JsonNode result) {
         if(!authorized(w))return true;
+        if(w.qualityPolicy()!=null && w.qualityPolicy().path("referenceOnly").asBoolean())return false;
         if(report.path("passed").asBoolean() || w.repairCount()>=2)return false;
         // The provider finished definitively. Archive the receipt and image before buying a corrective attempt.
         jdbc.sql("""
