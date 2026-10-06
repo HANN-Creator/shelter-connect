@@ -67,7 +67,7 @@ public class StyledAssetStore {
             ON CONFLICT(photo_id,pipeline_version,selection_key) DO UPDATE SET photo_id=EXCLUDED.photo_id RETURNING id
             """).param("p",photo).param("v",StyledSpriteCodec.VERSION).param("s",selection).param("plan",json.writeValueAsString(plan))
             .param("input",json.writeValueAsString(traits)).param("revision",selected.revision(),java.sql.Types.INTEGER)
-            .param("behavior",json.writeValueAsString(selected.generationPlan())).param("quality",json.writeValueAsString(qualityPolicy())).query(UUID.class).single();
+            .param("behavior",json.writeValueAsString(selected.generationPlan())).param("quality",json.writeValueAsString(newSeedQualityPolicy())).query(UUID.class).single();
         insert(id,0,"character","BASE",null);int ordinal=1;
         for(String action:selected.generationPlan().selectedActions()) for(String direction:StyledSpriteCodec.DIRECTIONS)
             insert(id,ordinal++,action.toLowerCase(Locale.ROOT)+"-"+direction,action,direction);
@@ -96,6 +96,7 @@ public class StyledAssetStore {
         if(!j.status().equals(seed?"SEED_REVIEW":"REVIEW"))throw new AssetException(409,"ASSET_NOT_READY");
         var base=j.steps().getFirst().result();
         if(base==null || !base.path("hashes").equals(body.path("expectedSeedHashes")))throw new AssetException(409,"SEED_REVIEW_STALE");
+        if(decision.equals("APPROVE") && !seedQualityPassed(j))throw new AssetException(409,"SEED_QUALITY_REVIEW_REQUIRED");
         if(!seed && !j.complete()) throw new AssetException(409,"ASSET_NOT_READY");
         if(!seed && decision.equals("APPROVE") && !qualityPassed(j))throw new AssetException(409,"QUALITY_REVIEW_REQUIRED");
         if(seed && decision.equals("APPROVE")) {
@@ -153,7 +154,11 @@ public class StyledAssetStore {
     private Map<String,Object> qualityPolicy(){return Map.of("version",StyledQualityAgent.VERSION,"maxRepairsPerClip",2,
         "rulesRevision",StyledSpriteCodec.qualityRules(json).path("revision").asText(),"rulesSha256",StyledSpriteCodec.qualityRulesSha(),
         "lowTailRepair", "REGENERATE_THEN_EDIT_ONCE");}
-    private boolean qualityPassed(Job j) {return j.qualityPolicy()==null || j.steps().stream().skip(1).allMatch(s->s.qualityReport()!=null && s.qualityReport().path("passed").asBoolean());}
+    private Map<String,Object> newSeedQualityPolicy(){var p=new HashMap<String,Object>(qualityPolicy());p.put("seedQualityVersion",StyledSeedQualityAgent.VERSION);return p;}
+    private boolean seedQualityPassed(Job j) {
+        var step=j.steps().getFirst();return StyledSeedQualityAgent.passed(step.qualityReport(),step.result()==null?json.createObjectNode():step.result().path("hashes"),j.qualityPolicy());
+    }
+    private boolean qualityPassed(Job j) {return seedQualityPassed(j) && (j.qualityPolicy()==null || j.steps().stream().skip(1).allMatch(s->s.qualityReport()!=null && s.qualityReport().path("passed").asBoolean()));}
     @Transactional public Job recover(UUID subject,UUID id,JsonNode body) {
         operator(subject);properties.requireEnabled();lock(id);legacy.valid(id,true);var j=job(id);
         AssetInput.fields(body,"providerJobId");
@@ -204,6 +209,7 @@ public class StyledAssetStore {
         if(w.get().status().equals("SUBMITTING")) { fail(w.get(),true,"SUBMISSION_INTERRUPTED");return null; }
         if(!w.get().character()) {
             var j=job(id.get());
+            if(!seedQualityPassed(j)) {status(id.get(),"SEED_REVIEW","SEED_QUALITY_REVIEW_REQUIRED");return null;}
             if(j.seedReview()==null || !j.seedReview().path("hashes").equals(j.steps().getFirst().result().path("hashes"))) {
                 status(id.get(),"SEED_REVIEW","SEED_REVIEW_REQUIRED");return null;
             }
@@ -289,7 +295,7 @@ public class StyledAssetStore {
         if(!authorized(w))return;
         jdbc.sql("UPDATE shelter.styled_asset_steps SET result=CAST(:r AS jsonb),provider_result=NULL,status='SUCCEEDED' WHERE job_id=:id AND label=:l AND status IN ('PERSISTING','CHECKING')")
             .param("r",json.writeValueAsString(result)).param("id",w.id()).param("l",w.label()).update();
-        if(w.character())status(w.id(),"SEED_REVIEW",null);
+        if(w.character())status(w.id(),"SEED_REVIEW",seedQualityPassed(job(w.id()))?null:"SEED_QUALITY_REVIEW_REQUIRED");
         else if(job(w.id()).complete())status(w.id(),"REVIEW",qualityPassed(job(w.id()))?null:"QUALITY_REPAIR_EXHAUSTED");
         else defer(w,0);
     }

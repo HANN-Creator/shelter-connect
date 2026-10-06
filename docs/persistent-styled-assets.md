@@ -18,7 +18,7 @@
 0. 특징이 있으면 Luna 행동 초안을 생성하고 확인한다. [B-42 선택 흐름](trait-selected-sprites.md)을 따른다. 미확인/특징 없음은 기본3개다.
 1. `POST /v1/shelter-admin/dogs/{dogId}/styled-assets` → 202, 작업 ID.
 2. `GET /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}`로 상태 조회.
-3. `SEED_REVIEW`에서 `GET .../{jobId}/preview`로 앞·뒤·좌·우 기준 이미지 확인.
+3. 새 작업은 기준 도트의 [눈 표현 검사와 최대2회 보완](seed-eye-quality.md)을 먼저 수행한다. `steps[0].qualityReport`가 불합격이면 기준 승인과 행동 생성이 차단된다. `SEED_REVIEW`에서 `GET .../{jobId}/preview`로 앞·뒤·좌·우 기준 이미지 확인.
 4. `POST .../{jobId}/seed-review`에 `decision`, 20자 이상 `note`, 미리보기의 `expectedSeedHashes` 4개를 전달. 승인해야 actionPlan에 있는 행동 × 4방향 생성이 시작된다.
 5. 새 작업은 각 시트 저장 후 Luna·픽셀 검사와 최대2회 자동 보완을 수행한다. 모두 처리되면 `REVIEW`. 실패 잔존 시 최종 승인은 차단된다. [자동 검수·보완](sprite-quality-repair.md) 참조. 동일 preview 경로에서 4방향·선택 행동을 검토한다.
 6. `POST .../{jobId}/review`에 같은 형식으로 최종 승인. 사진 허가·강아지·보호소 공개 조건도 만족해야 공개 조회가 가능하다.

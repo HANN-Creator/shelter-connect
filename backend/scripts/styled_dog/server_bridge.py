@@ -2,7 +2,7 @@
 import sys
 from pathlib import Path
 from .client import read, write, image_argument
-from .pipeline import prepare, load_rules, motion_payload
+from .pipeline import prepare, load_rules, motion_payload, character_request
 
 
 def main():
@@ -14,7 +14,8 @@ def main():
         traits.update(animalId=request['dogId'], sourcePhoto='photo-1.png', photoReviewed=True)
         write(root / 'source.json', {'desertionNo': request['dogId']})
         write(root / 'traits.json', traits)
-        payload = prepare(root, root / 'traits.json')
+        prepare(root, root / 'traits.json')
+        payload = character_request(root, traits, load_rules(), request.get('quality'))
     elif request['mode'] == 'motion':
         payload = motion_payload(request['traits'], load_rules(), request['action'],
                                  request['direction'], image_argument(root / 'seed.png'), request.get('quality'))

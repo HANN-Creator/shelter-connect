@@ -151,3 +151,5 @@ B-43: [스프라이트 자동 품질 검수·선택 보완](sprite-quality-repai
 - B-50 자동 품질 규칙 학습: [처리·API·검증 경계](automatic-quality-lessons.md). 브랜치 `backend/b-50-automatic-quality-lessons`. 실패/정상 사례 저장, Luna 후보 제안·정답을 숨긴 재검증, 범위별 다음 생성 적용, 운영자 중단과 이력. DB V15. 실제 이미지 외부 검증 및 노션 쓰기의 승인 상태는 각각 별도로 기록한다.
 
 - B-50A 실제 Luna 학습 검증: [실행 결과와 범위](automatic-quality-lessons.md#2026-10-06-실제-luna-검증). 브랜치 `backend/b-50a-live-lesson-verification`. 승인된 기존 도트의 실제 모델 제안·재검증·로컬 DB 활성화·다음 요청 반영을 확인한다. 방향별 테스트 첫 프레임 연결을 고치고 회귀 검사한다. API·DB·운영 코드 변경 없음. 노션 외부 기록은 별도 승인 대기.
+
+- B-51 기준 도트 눈 표현 검사: [생성·검수·검증 경계](seed-eye-quality.md). 브랜치 `backend/b-51-seed-eye-quality`. 새 도트의 눈 가독성·그림체를 행동 생성 전에 검사하고 제한된 기준 도트 보완과 승인 차단을 적용한다. API 요청·DB 변경 없음. 노션 외부 기록은 앞선 승인 대기로 미동기화.
