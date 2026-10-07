@@ -1,5 +1,5 @@
 {
-  "revision": "sprite-regressions-2026-10-07-v10",
+  "revision": "sprite-regressions-2026-10-07-v11",
   "pixelEvidence": {
     "version": "native-frame-delta-v1",
     "subtleRgbChannelDelta": 24
@@ -53,6 +53,15 @@
     "EYES: compare open-eye frames with the approved seed: keep pupil shape, position and local contrast. A brief natural blink is allowed. Eyes that stay erased, become hollow rings, or merge into fur in open-eye frames are IDENTITY_DRIFT. North has no face; do not invent eyes."
   ],
   "regressions": [
+    {
+      "id": "live-idle-review-still-confuses-shading-after-pixel-evidence",
+      "action": "IDLE",
+      "direction": "all",
+      "issue": "IDLE_MOTION",
+      "check": "paired-direction-review",
+      "fixture": "idle-review-recheck.json",
+      "expected": "Preserve the actual v10 failures and immutable source images. Show only the matching approved direction and all nine exact frames adjacent to repeated frame 0; every pair uses identical 4x scale and the full canvas including frame 8. Pixel measurements do not force a pass and false subtleShadingOnly does not imply a defect. Live v11 model accuracy remains unverified until deployment."
+    },
     {
       "id": "idle-shading-mistaken-for-large-pose-change",
       "action": "IDLE",
@@ -222,5 +231,11 @@
       "validation": "Blinded positive/negative replay with original photo and all four seeds; a rule must preserve immutable gates",
       "note": "v7 and v8 eye verdicts used different rules; same-condition nondeterminism has not been established."
     }
+  },
+  "reviewPresentation": {
+    "version": "matched-direction-frame-pairs-v1",
+    "scale": 4,
+    "reference": "approved-matching-direction-and-repeated-frame-zero",
+    "instruction": "A paired review shows only the matching-direction approved seed and nine FRAME 0/current-frame pairs. Each left image repeats frame 0; only the labeled right images form the animation. All images have uniform 4x nearest-neighbor scaling: one native pixel equals four displayed pixels. A false subtleShadingOnly value is NOT a defect verdict; a brief blink can create a high RGB difference without a large pose change. Report concrete visible motion beyond the allowed one native pixel, not merely the presence of changed colors or the displacement between grid cells. Continue checking identity, eyes, direction, action, and actual tail motion independently."
   }
 }

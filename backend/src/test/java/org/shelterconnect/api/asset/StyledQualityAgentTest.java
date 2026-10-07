@@ -28,6 +28,7 @@ class StyledQualityAgentTest {
             var report=agent.review(json.readTree("{\"tailCarriage\":\"UNKNOWN\"}"),Collections.nCopies(4,frames.getFirst()),frames,"IDLE","north");
             assertThat(report.path("pixelEvidence")).isEqualTo(record.path("pixelEvidence"));
             assertThat(report.path("pixelEvidence").path("subtleShadingOnly").asBoolean()).isTrue();
+            assertThat(report.path("reviewLayout").asText()).isEqualTo("matched-direction-frame-pairs-v1");
             assertThat(report.path("passed").asBoolean()).isFalse();
             assertThat(report.path("issues").toString()).contains("IDENTITY_DRIFT");
             assertThat(frames.stream().map(StyledSpriteCodec::sha).toList()).isEqualTo(hashes);
@@ -35,7 +36,7 @@ class StyledQualityAgentTest {
         var tasks=ArgumentCaptor.forClass(String.class);var instructions=ArgumentCaptor.forClass(String.class);
         verify(client,times(2)).structuredImage(instructions.capture(),tasks.capture(),any(),anyMap());
         assertThat(tasks.getAllValues()).allSatisfy(t->assertThat(t).contains("\"alphaStable\":true","\"alphaChangedFromFrame0\":[0,0,0,0,0,0,0,0,0]","NOT animation frames"));
-        assertThat(instructions.getAllValues()).allSatisfy(t->assertThat(t).contains("do NOT prove identity","Never suppress clipping"));
+        assertThat(instructions.getAllValues()).allSatisfy(t->assertThat(t).contains("do NOT prove identity","Never suppress clipping","false subtleShadingOnly value is NOT a defect verdict"));
     }
     @Test void highContrastDetailsAndSameBoundsAlphaChangesAreNotSubtleShading()throws Exception {
         var image=new BufferedImage(32,32,BufferedImage.TYPE_INT_ARGB);
@@ -184,10 +185,40 @@ class StyledQualityAgentTest {
             var instruction=ArgumentCaptor.forClass(String.class);var board=ArgumentCaptor.forClass(byte[].class);
             verify(client).structuredImage(instruction.capture(),anyString(),board.capture(),anyMap());
             for(var line:rules.path("reviewInstructions"))assertThat(instruction.getValue()).contains(line.asText());
-            // FRAME 8 occupies the final row/right column at 4x, not a substituted FRAME 7.
-            assertThat(ImageIO.read(new ByteArrayInputStream(board.getValue())).getRGB(446+16*4,472+20*4)).isEqualTo(0xff12ab56);
+            // FRAME 8 is the right member of the final pair, not a repeated reference/frame 7.
+            assertThat(ImageIO.read(new ByteArrayInputStream(board.getValue())).getRGB(736+16*4,528+20*4)).isEqualTo(0xff12ab56);
         }
         assertThat(cases).isEqualTo(2);
+    }
+    @Test void pairedReviewShowsOnlyMatchingDirectionAndAllNineUnmodifiedFrames()throws Exception {
+        var seeds=new ArrayList<byte[]>();var frames=new ArrayList<byte[]>();
+        for(int i=0;i<13;i++) {
+            var im=new BufferedImage(32,32,BufferedImage.TYPE_INT_ARGB);
+            im.setRGB(0,0,0xff120000+i);im.setRGB(31,31,0xff340000+i);
+            im.setRGB(15,15,0xff560000+i);
+            var bytes=new ByteArrayOutputStream();ImageIO.write(im,"png",bytes);
+            (i<4?seeds:frames).add(bytes.toByteArray());
+        }
+        var sourceHashes=frames.stream().map(StyledSpriteCodec::sha).toList();
+        var directions=List.of("south","north","west","east");
+        for(int direction=0;direction<4;direction++) {
+            var board=ImageIO.read(new ByteArrayInputStream(StyledQualityAgent.pairedBoard(seeds,frames,directions.get(direction))));
+            assertThat(board.getWidth()).isEqualTo(896);assertThat(board.getHeight()).isEqualTo(704);
+            assertThat(board.getRGB(16,32)).isEqualTo(0xff120000+direction);
+            assertThat(board.getRGB(16+127,32+127)).isEqualTo(0xff340000+direction);
+            for(int f=0;f<9;f++) {
+                int x=16+(f%3)*288,y=192+(f/3)*168;
+                var reference=StyledSpriteCodec.nativeFrame(frames.getFirst());var current=StyledSpriteCodec.nativeFrame(frames.get(f));
+                for(int py=0;py<32;py++)for(int px=0;px<32;px++)for(int sy=0;sy<4;sy++)for(int sx=0;sx<4;sx++) {
+                    int expected=reference.getRGB(px,py);if((expected>>>24)==0)expected=0xffebede1;
+                    assertThat(board.getRGB(x+px*4+sx,y+py*4+sy)).isEqualTo(expected);
+                    expected=current.getRGB(px,py);if((expected>>>24)==0)expected=0xffebede1;
+                    assertThat(board.getRGB(x+144+px*4+sx,y+py*4+sy)).isEqualTo(expected);
+                }
+            }
+        }
+        assertThat(frames.stream().map(StyledSpriteCodec::sha).toList()).isEqualTo(sourceHashes);
+        assertThatThrownBy(()->StyledQualityAgent.pairedBoard(seeds,frames,"unknown")).hasMessage("QUALITY_RESPONSE_INVALID");
     }
     @Test void realCodecUsesFindingSpecificRepairAndRejectsUnknownCodes()throws Exception{
         var codec=new StyledSpriteCodec(json,System.getenv().getOrDefault("ASSET_HARNESS_PYTHON","python3"));
