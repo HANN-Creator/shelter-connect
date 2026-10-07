@@ -12,14 +12,17 @@ public class StyledAssetWorker {
     private final StyledSpriteCodec codec;private final AssetProperties properties;private final JsonMapper json;private final StyledQualityAgent quality;
     private final StyledLessonStore lessons;
     private final StyledSeedQualityAgent seedQuality;
-    public StyledAssetWorker(StyledAssetStore store,StyledAssetProvider provider,AssetStorage storage,StyledSpriteCodec codec,AssetProperties properties,JsonMapper json,StyledQualityAgent quality,StyledLessonStore lessons,StyledSeedQualityAgent seedQuality) {
-        this.store=store;this.provider=provider;this.storage=storage;this.codec=codec;this.properties=properties;this.json=json;this.quality=quality;this.lessons=lessons;this.seedQuality=seedQuality;
+    private final StyledLearningRecoveryStore recovery;
+    public StyledAssetWorker(StyledAssetStore store,StyledAssetProvider provider,AssetStorage storage,StyledSpriteCodec codec,AssetProperties properties,JsonMapper json,StyledQualityAgent quality,StyledLessonStore lessons,StyledSeedQualityAgent seedQuality,StyledLearningRecoveryStore recovery) {
+        this.store=store;this.provider=provider;this.storage=storage;this.codec=codec;this.properties=properties;this.json=json;this.quality=quality;this.lessons=lessons;this.seedQuality=seedQuality;this.recovery=recovery;
     }
     public void tick() {
         if(!properties.enabled)return;
         var w=store.claim();if(w==null)return;boolean submitted=false;
         try {
             if(!store.authorized(w))return;
+            boolean learnedEdit=!store.learningRecovery(w).isEmpty();
+            boolean edit=motionEdit(w) || learnedEdit;
             if(w.qualityPolicy()!=null && w.qualityPolicy().has("rulesSha256")
                 && !StyledSpriteCodec.qualityRulesSha().equals(w.qualityPolicy().path("rulesSha256").asText()))
                 throw new AssetException(409,"QUALITY_RULES_CHANGED");
@@ -48,7 +51,7 @@ public class StyledAssetWorker {
                 inspect(w,frames,w.result());return;
             }
             if(w.status().equals("PENDING")) {
-                if(mirrorRepair(w)) {
+                if(!learnedEdit && mirrorRepair(w)) {
                     var plan=continuation(w);var source=store.mirrorSource(w);var base=store.seed(w);
                     if(!base.path("hashes").equals(w.qualityPolicy().at("/repairContinuation/seedHashes")))throw new AssetException(409,"STYLED_SEED_CHANGED");
                     byte[] sheet=storage.asset(source.path("key").asText());
@@ -67,14 +70,14 @@ public class StyledAssetWorker {
                         json.valueToTree(Map.of("contract",w.qualityPolicy().path("contract"),"attempt",w.repairCount(),
                             "rulesSha256",w.qualityPolicy().path("rulesSha256").asText(),
                             "issues",w.qualityReport()!=null && w.qualityReport().path("issues").isArray()?w.qualityReport().path("issues"):json.createArrayNode()));
-                JsonNode payload=motionEdit(w)?motionEditPayload(w):w.character()?codec.character(w.dogId(),w.traits(),storage.photo(w.dogId(),w.bucket(),w.key()),policy):
+                JsonNode payload=learnedEdit?codec.seedIdle(w.direction(),seed(w),(int)(((long)w.traits().path("seed").asInt()+7919L*w.repairCount())%2147483647)):motionEdit(w)?motionEditPayload(w):w.character()?codec.character(w.dogId(),w.traits(),storage.photo(w.dogId(),w.bucket(),w.key()),policy):
                     codec.motion(w.traits(),w.action(),w.direction(),seed(w),policy);
                 {
-                    var selected=lessons.pin(w,(w.character() || motionEdit(w)?2000:1000)-payload.path("description").asText().length());
+                    var selected=lessons.pin(w,(w.character() || edit?2000:1000)-payload.path("description").asText().length());
                     if(!selected.isEmpty()) {
                         ((tools.jackson.databind.node.ObjectNode)policy).set("lessons",selected);
                         if(w.character())payload=codec.character(w.dogId(),w.traits(),storage.photo(w.dogId(),w.bucket(),w.key()),policy);
-                        else if(motionEdit(w)) {
+                        else if(edit) {
                             String suffix=" Lessons: "+String.join(" ",selected.valueStream().map(n->n.path("prevention").asText()).toList());
                             ((tools.jackson.databind.node.ObjectNode)payload).put("description",payload.path("description").asText()+suffix);
                         } else payload=codec.motion(w.traits(),w.action(),w.direction(),seed(w),policy);
@@ -82,7 +85,7 @@ public class StyledAssetWorker {
                 }
                 if(!store.reserve(w,payload))return;
                 submitted=true;
-                UUID id=motionEdit(w)?provider.editAnimation(payload):provider.submit(w.character(),payload);store.accepted(w,id);return;
+                UUID id=edit?provider.editAnimation(payload):provider.submit(w.character(),payload);store.accepted(w,id);return;
             }
             JsonNode result=w.providerResult();
             if(result==null) {
@@ -111,7 +114,7 @@ public class StyledAssetWorker {
             } else {
                 var frames=result.path("frames").valueStream().map(n->StyledPixelLabClient.decode(n.asText())).toList();
                 JsonNode rawEdit=null;
-                if(motionEdit(w) || mirrorRepair(w)) {
+                if(edit || mirrorRepair(w)) {
                     byte[] raw=StyledSpriteCodec.rawSheet(frames);String rawKey=w.prefix()+"raw-edits/"+w.label()+"-"+w.repairCount()+".png";
                     storage.put(rawKey,raw);rawEdit=json.valueToTree(Map.of("key",rawKey,"sha256",StyledSpriteCodec.sha(raw)));
                     frames=StyledSpriteCodec.restoreEditPalette(frames,seed(w));
@@ -195,18 +198,30 @@ public class StyledAssetWorker {
                 var rawReview=selected.isEmpty()?quality.review(w.qualityPolicy().path("contract"),seeds,rawFrames,w.action(),w.direction()):
                     quality.review(w.qualityPolicy().path("contract"),seeds,rawFrames,w.action(),w.direction(),selected);
                 var issues=new TreeSet<String>();review.path("issues").forEach(n->issues.add(n.asText()));rawReview.path("issues").forEach(n->issues.add(n.asText()));
+                var restored=review.deepCopy();
                 var combined=(tools.jackson.databind.node.ObjectNode)review;
+                combined.set("restoredReview",restored);
                 combined.set("issues",json.valueToTree(issues));combined.put("passed",review.path("passed").asBoolean() && rawReview.path("passed").asBoolean());
                 combined.set("rawEditReview",rawReview);combined.put("rawEditSha256",source.path("sha256").asText());
             }
             var details=(tools.jackson.databind.node.ObjectNode)review;details.put("inputSha256",sha);details.put("lessonsSha256",lessonSha);details.set("learnedLessons",selected);
             report=review;store.quality(w,report);
         }
-        // A failed raw edit must teach from that raw image, never a clean restored image with the wrong label.
-        if(metadata.has("rawEdit") && !report.path("rawEditReview").path("passed").asBoolean())
-            lessons.record(w,report.path("rawEditReview"),metadata.path("rawEdit"),store.seed(w));
-        else lessons.record(w,report,metadata,store.seed(w));
-        if(!store.retryQuality(w,report,metadata))store.success(w,metadata);
+        // Each report labels only its own exact bytes. The combined gate still requires BOTH to pass.
+        var seeds=store.seed(w);
+        if(metadata.has("rawEdit") && metadata.at("/rawEdit/sha256").asText().equals(sha)
+            && report.path("rawEditReview").path("passed").asBoolean()!=report.path("restoredReview").path("passed").asBoolean()) {
+            // Identical bytes with contradictory model labels cannot become a positive/negative pair.
+            lessons.record(w,report,metadata,seeds);
+        } else if(metadata.has("rawEdit")) {
+            lessons.record(w,report.path("rawEditReview"),metadata.path("rawEdit"),seeds);
+            if(report.has("restoredReview"))lessons.record(w,report.path("restoredReview"),metadata,seeds);
+            else if(report.path("rawEditReview").path("passed").asBoolean())lessons.record(w,report,metadata,seeds);
+        } else lessons.record(w,report,metadata,seeds);
+        if(!store.retryQuality(w,report,metadata)) {
+            recovery.observe(w,report,metadata,seeds);
+            store.success(w,metadata);
+        }
     }
     static boolean tailEdit(StyledAssetStore.Work w) {
         return w.action().equals("TAIL_WAG") && w.repairCount()==2 && w.qualityPolicy()!=null

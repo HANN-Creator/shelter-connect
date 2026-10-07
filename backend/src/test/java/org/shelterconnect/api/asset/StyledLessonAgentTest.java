@@ -30,6 +30,17 @@ class StyledLessonAgentTest {
         assertThat(instructions.getValue()).contains("untrusted data","ALL nine frames","Never weaken");
         assertThat(task.getValue()).contains("immutableRules","CASE_0","CASE_1").doesNotContain("SECRET_BAD_LABEL","SECRET_GOOD_LABEL","\"passed\"");
     }
+    @Test void idleLearningUsesMatchedDirectionPairsAndScopesAdditiveRules()throws Exception {
+        when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(verdict());
+        var scope=json.readTree("{\"action\":\"IDLE\",\"direction\":\"south\",\"tail\":\"UNKNOWN\",\"issue\":\"IDENTITY_DRIFT\",\"sourceExampleId\":\"PRIVATE_SOURCE_ID\"}");
+        agent.replay(scope,candidate(),cases());
+        var instructions=ArgumentCaptor.forClass(String.class);var task=ArgumentCaptor.forClass(String.class);var image=ArgumentCaptor.forClass(byte[].class);
+        verify(client).structuredImage(instructions.capture(),task.capture(),image.capture(),anyMap());
+        assertThat(instructions.getValue()).contains("need NOT restate unrelated checks","same-direction","subtle breathing or blinking","does not contradict ANY immutable rule");
+        assertThat(task.getValue()).contains("pixelEvidence","alphaStable").doesNotContain("PRIVATE_SOURCE_ID","SECRET_BAD_LABEL","SECRET_GOOD_LABEL","passed");
+        var board=javax.imageio.ImageIO.read(new java.io.ByteArrayInputStream(image.getValue()));
+        assertThat(board.getWidth()).isEqualTo(896);assertThat(board.getHeight()).isEqualTo(1456);
+    }
     @Test void unknownMissingDuplicateOrInconsistentVerdictsFailClosed()throws Exception {
         for(String mutation:List.of("unknown","duplicate","missing","frame","inconsistent")) {
             var v=verdict().deepCopy();var entries=(tools.jackson.databind.node.ArrayNode)v.path("cases");

@@ -135,9 +135,12 @@ public class StyledLessonStore {
         var selected=json.createArrayNode();if(!ownedAsset(w) || w.qualityPolicy()==null)return selected;assets.valid(w.id(),true);
         var ids=jdbc.sql("""
             SELECT id FROM shelter.styled_quality_lessons WHERE status='ACTIVE' AND action=:a AND direction=:d AND tail=:t AND rules_sha256=:r
+              AND (NOT EXISTS(SELECT 1 FROM shelter.styled_learning_recoveries x WHERE x.job_id=:job AND x.label=:label AND x.state='QUEUED')
+                OR EXISTS(SELECT 1 FROM shelter.styled_learning_recoveries x,jsonb_array_elements(x.required_lessons) wanted
+                  WHERE x.job_id=:job AND x.label=:label AND x.state='QUEUED' AND wanted->>'id'=styled_quality_lessons.id::text AND wanted->>'sha256'=candidate_sha256))
             ORDER BY updated_at DESC,id LIMIT 20
             """).param("a",w.action()).param("d",direction(w)).param("t",tail(w))
-            .param("r",StyledSpriteCodec.qualityRulesSha()).query(UUID.class).list();
+            .param("r",StyledSpriteCodec.qualityRulesSha()).param("job",w.id()).param("label",w.label()).query(UUID.class).list();
         var issues=new HashSet<String>();
         for(UUID id:ids) {
             var row=lesson(id);String issue=row.path("issue").asText();if(issues.contains(issue))continue;

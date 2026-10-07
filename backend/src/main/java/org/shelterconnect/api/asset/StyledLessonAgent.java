@@ -14,7 +14,7 @@ import tools.jackson.databind.json.JsonMapper;
 /** Propose text-only lessons; a separate blinded replay must pass before use. */
 @Component
 public class StyledLessonAgent {
-    public static final String VERSION="sprite-lessons-v1";
+    public static final String VERSION="sprite-lessons-v2";
     public static final Set<String> ISSUES=Set.of("CANVAS_CLIPPING","DIRECTION_DRIFT","TAIL_CARRIAGE","IDENTITY_DRIFT","ACTION_MISSING","DISCONTINUITY","DETACHED_PIXELS","IDLE_MOTION");
     public static final Set<String> SEED_ISSUES=Set.of("EYE_READABILITY","EYE_STYLE","EYE_DIRECTION","SEED_IDENTITY","CANVAS_CLIPPING");
     private static final String SEED_BOUNDARY="""
@@ -92,10 +92,11 @@ public class StyledLessonAgent {
         var schema=StyledQualityAgent.object(Map.of(
             "prevention",Map.of("type","string","minLength",15,"maxLength",120),
             "criterion",Map.of("type","string","minLength",20,"maxLength",240)));
-        var result=client.structuredImage(BOUNDARY+" Derive ONE concise, reusable lesson from the failed motion. Use English words and simple punctuation only; spell out numbers. Respect both character limits.",
-            "Scope and recorded findings (data): "+json.writeValueAsString(Map.of("scope",scope,"report",failed.report()))+
-            ". Top row shows approved SOUTH/NORTH/WEST/EAST; below are frames 0–8. Do not restate dog-specific traits.",
-            StyledQualityAgent.board(failed.seeds(),failed.frames()),schema);
+        var result=client.structuredImage(BOUNDARY+" Derive ONE concise, reusable lesson for ONLY the scoped issue. Each field must be one complete sentence. "+
+            "Aim for sixty to one hundred ASCII characters for prevention and under two hundred for criterion. "+
+            "Use English words and simple punctuation only; spell out numbers. Do not start a second sentence or leave a truncated word.",
+            "Scope and recorded findings (data): "+json.writeValueAsString(Map.of("scope",motionScope(scope),"report",failed.report()))+
+            ". "+layout(scope)+" Do not restate dog-specific traits.",motionBoard(scope,failed),schema);
         validateText(result);return result;
     }
     public JsonNode replay(JsonNode scope,JsonNode candidate,List<Case> cases) {
@@ -106,10 +107,13 @@ public class StyledLessonAgent {
             "reason",Map.of("type","string","maxLength",300),
             "cases",Map.of("type","array","minItems",cases.size(),"maxItems",cases.size(),"items",verdict)));
         var result=client.structuredImage(BOUNDARY+" Independently assess the candidate, not its author's confidence. "+
-            "safeAndGeneral is true only for an additive, anatomical, reusable rule consistent with ALL immutable rules. "+
-            "Classify each case against the candidate's visual criterion. Do not infer expected labels. Inspect ALL nine frames.",
-            json.writeValueAsString(Map.of("scope",scope,"candidate",candidate,"immutableRules",StyledSpriteCodec.qualityRules(json),
-                "caseKeys",cases.stream().map(Case::key).toList())),board(cases),schema);
+            "safeAndGeneral is true for an additive, reusable visual rule about the scoped issue that does not contradict ANY immutable rule. "+
+            "The candidate supplements existing checks; it need NOT restate unrelated checks or the entire rulebook. Appearance consistency is a valid visual rule. "+
+            "Classify each case only against the candidate criterion. Do not infer expected labels. Inspect ALL nine frames. "+
+            "For IDLE, unchanged frames and subtle breathing or blinking may be valid; pixel changes alone do not prove a defect. "+layout(scope),
+            json.writeValueAsString(Map.of("scope",motionScope(scope),"candidate",candidate,"immutableRules",StyledSpriteCodec.qualityRules(json),
+                "caseKeys",cases.stream().map(Case::key).toList(),"pixelEvidence",cases.stream().map(c->Map.of("key",c.key(),
+                    "measurements",StyledQualityAgent.pixelEvidence(c.frames(),StyledSpriteCodec.qualityRules(json),json))).toList())),motionCasesBoard(scope,cases),schema);
         if(!result.path("safeAndGeneral").isBoolean() || !result.path("reason").isString() || result.path("reason").asText().length()>300
             || !result.path("cases").isArray() || result.path("cases").size()!=cases.size())throw invalid();
         var remaining=new HashSet<>(cases.stream().map(Case::key).toList());
@@ -119,6 +123,29 @@ public class StyledLessonAgent {
             if(v.path("violates").asBoolean()==v.path("frames").isEmpty())throw invalid();
         }
         return result;
+    }
+    private JsonNode motionScope(JsonNode scope) {
+        if(!ISSUES.contains(scope.path("issue").asText()) || !StyledSpriteCodec.DIRECTIONS.contains(scope.path("direction").asText())
+            || !StyledQualityAgent.TAILS.contains(scope.path("tail").asText()) || !StyledSpriteCodec.rules(json).path("actions").has(scope.path("action").asText()))throw invalid();
+        return json.valueToTree(Map.of("action",scope.path("action").asText(),"direction",scope.path("direction").asText(),"tail",scope.path("tail").asText(),"issue",scope.path("issue").asText()));
+    }
+    private static String layout(JsonNode scope) {
+        return scope.path("action").asText().equals("IDLE")?
+            "Each case shows the approved same-direction seed and nine pairs: repeated FRAME ZERO on the left, actual FRAME ZERO through EIGHT on the right. References are not extra motion frames.":
+            "Each case has approved SOUTH/NORTH/WEST/EAST on top and actual frames ZERO through EIGHT below in time order.";
+    }
+    private static byte[] motionBoard(JsonNode scope,Case c) {
+        return scope.path("action").asText().equals("IDLE")?StyledQualityAgent.pairedBoard(c.seeds(),c.frames(),scope.path("direction").asText()):StyledQualityAgent.board(c.seeds(),c.frames());
+    }
+    private static byte[] motionCasesBoard(JsonNode scope,List<Case> cases) {
+        if(!scope.path("action").asText().equals("IDLE"))return board(cases);
+        if(cases.size()<2 || cases.size()>4)throw invalid();
+        var image=new BufferedImage(896,728*cases.size(),BufferedImage.TYPE_INT_RGB);var g=image.createGraphics();
+        try {
+            g.setColor(Color.WHITE);g.fillRect(0,0,image.getWidth(),image.getHeight());g.setColor(Color.BLACK);
+            for(int i=0;i<cases.size();i++){g.drawString(cases.get(i).key(),12,i*728+18);g.drawImage(ImageIO.read(new ByteArrayInputStream(motionBoard(scope,cases.get(i)))),0,i*728+24,null);}
+            var out=new ByteArrayOutputStream();ImageIO.write(image,"png",out);return out.toByteArray();
+        }catch(IOException e){throw invalid();}finally{g.dispose();}
     }
     public static void validateText(JsonNode rule) {
         if(!rule.isObject() || rule.size()!=2 || !rule.path("prevention").isString() || !rule.path("criterion").isString())throw invalid();

@@ -8,8 +8,8 @@ import tools.jackson.databind.JsonNode;
 
 @RestController @RequestMapping("/v1")
 public class StyledAssetController {
-    private final StyledAssetStore store;private final StyledAssetManifest manifests;
-    public StyledAssetController(StyledAssetStore store,StyledAssetManifest manifests) { this.store=store;this.manifests=manifests; }
+    private final StyledAssetStore store;private final StyledAssetManifest manifests;private final StyledLearningRecoveryStore learning;
+    public StyledAssetController(StyledAssetStore store,StyledAssetManifest manifests,StyledLearningRecoveryStore learning) { this.store=store;this.manifests=manifests;this.learning=learning; }
     @PostMapping("/shelter-admin/dogs/{dogId}/styled-assets") @ResponseStatus(org.springframework.http.HttpStatus.ACCEPTED)
     public Item<StyledAssetStore.Job> request(@AuthenticationPrincipal Jwt jwt,@PathVariable String dogId,@RequestBody JsonNode body) { return new Item<>(store.request(subject(jwt),AssetInput.id(dogId),body)); }
     @GetMapping("/shelter-admin/dogs/{dogId}/styled-assets/{jobId}")
@@ -28,5 +28,9 @@ public class StyledAssetController {
     public Item<StyledAssetStore.Job> qualityRecheck(@AuthenticationPrincipal Jwt jwt,@PathVariable String dogId,@PathVariable String jobId,@RequestBody JsonNode body) {return new Item<>(store.recheck(subject(jwt),AssetInput.id(dogId),AssetInput.id(jobId),body));}
     @PostMapping("/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/repair-continuation")
     public Item<StyledAssetStore.Job> continueRepair(@AuthenticationPrincipal Jwt jwt,@PathVariable String dogId,@PathVariable String jobId,@RequestBody JsonNode body) {return new Item<>(store.continueRepair(subject(jwt),AssetInput.id(dogId),AssetInput.id(jobId),body));}
+    @PostMapping("/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/learning-repair")
+    public Item<StyledAssetStore.Job> learningRepair(@AuthenticationPrincipal Jwt jwt,@PathVariable String dogId,@PathVariable String jobId,@RequestBody JsonNode body) {
+        return new Item<>(learning.arm(subject(jwt),AssetInput.id(dogId),AssetInput.id(jobId),body));
+    }
     private UUID subject(Jwt jwt) { return UUID.fromString(jwt.getSubject()); }
 }

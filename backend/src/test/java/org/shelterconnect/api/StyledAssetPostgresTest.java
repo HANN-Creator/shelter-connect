@@ -31,6 +31,7 @@ class StyledAssetPostgresTest {
     @Autowired JdbcTemplate jdbc;@Autowired MockMvc mvc;@Autowired JsonMapper json;@Autowired JwtTestSupport tokens;
     @Autowired StyledAssetWorker worker;@Autowired StyledAssetStore store;
     @Autowired StyledLessonWorker lessonWorker;@Autowired StyledLessonStore lessonStore;
+    @Autowired StyledLearningRecoveryWorker recoveryWorker;
     @MockitoBean StyledLessonAgent lessonAgent;
     @MockitoBean StyledAssetProvider provider;@MockitoBean AssetStorage storage;
     @MockitoBean StyledSpriteCodec codec;@MockitoBean BehaviorSuggestionProvider suggestions;
@@ -560,6 +561,7 @@ class StyledAssetPostgresTest {
         assertThat(step.at("/qualityReport/rawEditReview/passed").asBoolean()).isFalse();
         assertThat(step.path("repairCount").asInt()).isEqualTo(2);
         review(id,false,"APPROVE",409);publicStatus(404);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=? AND label='sit-west' AND passed",Integer.class,id)).isZero();
         post(subject,path(id)+"/repair",Map.of("note","Do not reset the margin repair budget after the raw edit failed","expectedSeedHashes",read(id).at("/steps/0/result/hashes")),200);tick();
         verify(provider,times(14)).submit(anyBoolean(),any());verify(provider,times(1)).editAnimation(any());
     }
@@ -686,7 +688,7 @@ class StyledAssetPostgresTest {
         assertThat(history.get(history.size()-1).path("repairCount").asInt()).isEqualTo(3);
         post(subject,path(id)+"/repair-continuation",original,200);post(subject,path(id)+"/repair-continuation",next,200);
         post(subject,path(id)+"/repair-continuation",continuationBody(id,"idle-west"),409);tick();verify(provider,times(1)).editAnimation(any());
-        assertThatThrownBy(()->jdbc.update("UPDATE shelter.styled_asset_steps SET repair_count=5 WHERE job_id=? AND label='idle-west'",id)).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+        assertThatThrownBy(()->jdbc.update("UPDATE shelter.styled_asset_steps SET repair_count=6 WHERE job_id=? AND label='idle-west'",id)).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
         assertThatThrownBy(()->jdbc.update("UPDATE shelter.styled_asset_steps SET repair_count=4 WHERE job_id=? AND label='walk-west'",id)).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
     }
     @Test void legacyFallbackRejectsOtherDefectsPriorSeedRepairAndUnspentNormalBudget() throws Exception {
@@ -1023,6 +1025,216 @@ class StyledAssetPostgresTest {
         report.set("nextGenerationSnapshot",pinned);report.put("nextPayloadVerified",true);
         java.nio.file.Files.writeString(destination,json.writerWithDefaultPrettyPrinter().writeValueAsString(report));
     }
+    String currentRules(){try{return java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("asset-styles/cozy32-v1/quality-rules.json"))));}catch(Exception e){throw new AssertionError(e);}}
+    JsonNode recoveryVerdict(boolean passed) {
+        return json.valueToTree(Map.of("passed",passed,"issues",passed?List.of():List.of("IDENTITY_DRIFT"),
+            "rulesSha256",currentRules(),"note","Known fixture verdict; not a live quality approval"));
+    }
+    UUID learningRecoveryJob(boolean automatic) throws Exception {
+        // Three approved colors keep raw and restored fixture pixels meaningful.
+        var seed=ImageIO.read(new ByteArrayInputStream(png));seed.setRGB(10,10,0xffeeddcc);seed.setRGB(11,10,0xff222222);
+        var bytes=new ByteArrayOutputStream();ImageIO.write(seed,"png",bytes);png=bytes.toByteArray();
+        var changed=ImageIO.read(new ByteArrayInputStream(png));changed.setRGB(13,15,0xffeeddcc);
+        bytes=new ByteArrayOutputStream();ImageIO.write(changed,"png",bytes);byte[] bad=bytes.toByteArray();
+        when(provider.poll(any(),eq(false))).thenAnswer(c->{
+            var frames=new ArrayList<String>();frames.add(Base64.getEncoder().encodeToString(png));
+            for(int i=1;i<9;i++)frames.add(Base64.getEncoder().encodeToString(bad));
+            return json.valueToTree(Map.of("status","COMPLETED","frames",frames));
+        });
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("south"))).thenAnswer(c->{
+            outsideTransaction();var frames=c.<List<byte[]>>getArgument(2);
+            return recoveryVerdict(frames.stream().allMatch(f->Arrays.equals(f,frames.getFirst())));
+        });
+        when(codec.seedIdle(anyString(),any(),anyInt())).thenAnswer(c->{outsideTransaction();return json.valueToTree(Map.of("description","Keep the approved dog calm and stationary."));});
+        when(provider.editAnimation(any())).thenAnswer(c->{outsideTransaction();return UUID.randomUUID();});
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("south"),any())).thenAnswer(c->{outsideTransaction();return recoveryVerdict(true);});
+        when(lessonAgent.propose(any(),any())).thenReturn(json.valueToTree(Map.of("prevention","Keep the approved chest markings unchanged throughout every frame.","criterion","The approved chest markings change color between idle frames.")));
+        when(lessonAgent.replay(any(),any(),anyList())).thenAnswer(c->replayAnswer(c.getArgument(2),false));
+        UUID id=request();if(!automatic)jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=quality_policy-'learningRecovery' WHERE id=?",id);
+        tick();tick();review(id,true,"APPROVE",200);finish(id);
+        assertThat(read(id).path("failureCode").asText()).isEqualTo("QUALITY_REPAIR_EXHAUSTED");return id;
+    }
+    void recoveryTick(){jdbc.update("UPDATE shelter.styled_learning_recoveries SET next_run_at=now() WHERE job_id IN (SELECT id FROM shelter.asset_jobs WHERE dog_id=?)",dog);recoveryWorker.tick();}
+    JsonNode recoveryState(UUID id)throws Exception {return step(id,"idle-south").path("learningRecovery");}
+    Map<String,Object> learningRequest(UUID id)throws Exception {
+        return Map.of("requestId",UUID.randomUUID(),"note","Enable one learned repair with exact stored hashes and preserve all existing attempts",
+            "expectedSeedHashes",read(id).at("/steps/0/result/hashes"),"expectedSheetHashes",Map.of("idle-south",step(id,"idle-south").at("/result/sha256").asText()));
+    }
+    @Test void recoveryBuildsCheckedReferenceLearnsAndAutomaticallyAppliesOneNewRule()throws Exception {
+        UUID id=learningRecoveryJob(true);var original=step(id,"idle-south").path("result").deepCopy();
+        assertThat(recoveryState(id).path("state").asText()).isEqualTo("WAITING_EVIDENCE");
+        clearInvocations(provider);recoveryTick();
+        assertThat(recoveryState(id).path("state").asText()).isEqualTo("WAITING_RULE");
+        assertThat(recoveryState(id).at("/referenceReport/evidenceKind").asText()).isEqualTo("APPROVED_IDLE_REFERENCE");
+        assertThat(step(id,"idle-south").path("result")).isEqualTo(original);verifyNoInteractions(provider);
+        lessonWorker.tick();lessonWorker.tick();assertThat(lessonStatus(onlyLesson())).isEqualTo("ACTIVE");
+        recoveryTick();assertThat(recoveryState(id).path("state").asText()).isEqualTo("QUEUED");
+        tick();tick();finish(id);
+        var calls=org.mockito.ArgumentCaptor.forClass(JsonNode.class);verify(provider,times(1)).editAnimation(calls.capture());
+        assertThat(calls.getValue().path("description").asText()).contains("Keep the approved chest markings unchanged");
+        assertThat(recoveryState(id).path("state").asText()).isEqualTo("COMPLETED");
+        assertThat(step(id,"idle-south").path("repairCount").asInt()).isEqualTo(3);
+        assertThat(step(id,"idle-south").at("/qualityReport/learnedLessons/0/id").asText()).isEqualTo(onlyLesson().toString());
+        for(int i=0;i<3;i++)recoveryTick();verify(provider,times(1)).editAnimation(any());
+        assertThat(jdbc.queryForObject("SELECT attempt_history::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-south'",String.class,id)).contains(original.path("sha256").asText(),"learningRecovery");
+    }
+    @Test void rejectedReferenceNeverBecomesPositiveOrBuysAnExtraAttempt()throws Exception {
+        UUID id=learningRecoveryJob(true);when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("south"))).thenReturn(recoveryVerdict(false));
+        clearInvocations(provider,quality);recoveryTick();recoveryTick();
+        assertThat(recoveryState(id).path("state").asText()).isEqualTo("NEEDS_REVIEW");
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=? AND passed AND action='IDLE' AND direction='south'",Integer.class,id)).isZero();
+        verify(quality,times(1)).review(any(),anyList(),anyList(),eq("IDLE"),eq("south"));verifyNoInteractions(provider);
+    }
+    @Test void failedRuleReplayKeepsRecoveryWaitingWithoutProviderCalls()throws Exception {
+        UUID id=learningRecoveryJob(true);recoveryTick();when(lessonAgent.replay(any(),any(),anyList())).thenAnswer(c->replayAnswer(c.getArgument(2),true));
+        lessonWorker.tick();lessonWorker.tick();assertThat(lessonStatus(onlyLesson())).isEqualTo("REJECTED");
+        clearInvocations(provider);recoveryTick();assertThat(recoveryState(id).path("state").asText()).isEqualTo("WAITING_RULE");verifyNoInteractions(provider);
+    }
+    @Test void lostOrUnappliedLearnedRuleCannotBuyAnUninformedRepair()throws Exception {
+        UUID id=learningRecoveryJob(true);recoveryTick();lessonWorker.tick();lessonWorker.tick();recoveryTick();
+        lessonStore.disable(opSubject,onlyLesson(),json.valueToTree(Map.of("note","Disable the rule before paid submission")));
+        clearInvocations(provider);tick();
+        assertThat(read(id).path("failureCode").asText()).isEqualTo("LEARNED_RULE_NOT_APPLIED");
+        assertThat(recoveryState(id).path("state").asText()).isEqualTo("FAILED");verifyNoInteractions(provider);
+    }
+    @Test void failedLearnedRepairPreservesLimitAndNeverLoops()throws Exception {
+        UUID id=learningRecoveryJob(true);recoveryTick();lessonWorker.tick();lessonWorker.tick();recoveryTick();
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("south"),any())).thenReturn(recoveryVerdict(false));
+        clearInvocations(provider);tick();tick();finish(id);recoveryTick();
+        assertThat(recoveryState(id).path("state").asText()).isEqualTo("EXHAUSTED");
+        assertThat(read(id).path("failureCode").asText()).isEqualTo("QUALITY_REPAIR_EXHAUSTED");
+        verify(provider,times(1)).editAnimation(any());review(id,false,"APPROVE",409);
+    }
+    @Test void learnedAttemptStorageFailureCanResumeWithoutBuyingAnotherImage()throws Exception {
+        UUID id=learningRecoveryJob(true);recoveryTick();lessonWorker.tick();lessonWorker.tick();recoveryTick();
+        var failed=new java.util.concurrent.atomic.AtomicBoolean();
+        doAnswer(c->{if(c.<String>getArgument(0).contains("raw-edits/idle-south-3") && !failed.getAndSet(true))throw new RuntimeException("Disposable storage failure");objects.put(c.getArgument(0),c.getArgument(1));return null;}).when(storage).put(anyString(),any());
+        clearInvocations(provider);tick();tick();assertThat(read(id).path("status").asText()).isEqualTo("FAILED");
+        post(opSubject,"/v1/operations/styled-asset-jobs/"+id+"/recover",Map.of(),200);
+        assertThat(recoveryState(id).path("state").asText()).isEqualTo("QUEUED");
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("south"),any())).thenReturn(recoveryVerdict(true));
+        finish(id);assertThat(recoveryState(id).path("state").asText()).isEqualTo("COMPLETED");verify(provider,times(1)).editAnimation(any());
+    }
+    @Test void failedLearnedProviderJobCannotBeRecoveredIntoAnotherPaidSubmission()throws Exception {
+        UUID id=learningRecoveryJob(true);recoveryTick();lessonWorker.tick();lessonWorker.tick();recoveryTick();
+        when(provider.poll(any(),eq(false))).thenReturn(json.valueToTree(Map.of("status","FAILED")));
+        clearInvocations(provider);tick();tick();
+        post(opSubject,"/v1/operations/styled-asset-jobs/"+id+"/recover",Map.of(),409);
+        tick();verify(provider,times(1)).editAnimation(any());
+    }
+    @Test void existingPacksRequireExplicitConsentAndReplayCannotResetLearning()throws Exception {
+        UUID id=learningRecoveryJob(false);assertThat(recoveryState(id).isNull()).isTrue();
+        clearInvocations(provider);recoveryTick();verifyNoInteractions(provider);var request=learningRequest(id);
+        post(null,path(id)+"/learning-repair",request,401);post(UUID.randomUUID(),path(id)+"/learning-repair",request,403);
+        post(subject,path(id)+"/learning-repair",request,200);post(subject,path(id)+"/learning-repair",request,200);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_learning_recoveries WHERE job_id=?",Integer.class,id)).isEqualTo(1);
+        var changed=new HashMap<>(request);changed.put("note","A different meaning with a reused request id must not be accepted");
+        post(subject,path(id)+"/learning-repair",changed,409);
+        post(subject,path(id)+"/learning-repair",learningRequest(id),409);
+        assertThat(step(id,"idle-south").path("repairCount").asInt()).isEqualTo(2);verifyNoInteractions(provider);
+    }
+    @Test void sourceRevocationStopsRecoveryBeforeAnyUpload()throws Exception {
+        UUID id=learningRecoveryJob(true);jdbc.update("UPDATE shelter.asset_source_permissions SET revoked_at=now() WHERE id=?",permission);
+        clearInvocations(storage,quality,provider);recoveryTick();
+        assertThat(recoveryState(id).path("state").asText()).isEqualTo("DISABLED");verifyNoInteractions(storage,quality,provider);
+    }
+    @Test void interruptedReferenceReviewDoesNotRepeatTheModelCall()throws Exception {
+        UUID id=learningRecoveryJob(true);jdbc.update("UPDATE shelter.styled_learning_recoveries SET state='CHECKING_REFERENCE',lease_until=now()-interval '1 minute' WHERE job_id=?",id);
+        clearInvocations(storage,quality,provider);recoveryTick();assertThat(recoveryState(id).path("state").asText()).isEqualTo("FAILED");verifyNoInteractions(storage,quality,provider);
+    }
+    @Test void rawPositiveIsKeptWhenTheRestoredImageFails()throws Exception {
+        var changed=ImageIO.read(new ByteArrayInputStream(png));changed.setRGB(12,12,0xff00ff00);
+        var out=new ByteArrayOutputStream();ImageIO.write(changed,"png",out);byte[] raw=out.toByteArray();
+        var edited=new java.util.concurrent.atomic.AtomicBoolean();
+        when(provider.poll(any(),eq(false))).thenAnswer(c->json.valueToTree(Map.of("status","COMPLETED","frames",
+            java.util.stream.IntStream.range(0,9).mapToObj(i->Base64.getEncoder().encodeToString(i==0 || !edited.get()?png:raw)).toList())));
+        var count=new java.util.concurrent.atomic.AtomicInteger();
+        when(quality.review(any(),anyList(),anyList(),eq("SIT"),eq("west"))).thenAnswer(c->{boolean passed=count.incrementAndGet()>1 && ImageIO.read(new ByteArrayInputStream(c.<List<byte[]>>getArgument(2).get(1))).getRGB(12,12)==0xff00ff00;
+            return json.valueToTree(Map.of("passed",passed,"issues",passed?List.of():List.of("CANVAS_CLIPPING"),"rulesSha256",currentRules()));});
+        when(codec.marginEdit(anyString(),anyString(),any(),anyInt())).thenReturn(json.valueToTree(Map.of("description","repair whole strip")));
+        when(provider.editAnimation(any())).thenAnswer(c->{edited.set(true);return UUID.randomUUID();});
+        UUID id=request();tick();tick();review(id,true,"APPROVE",200);finish(id);var step=step(id,"sit-west");
+        assertThat(step.at("/qualityReport/rawEditReview/passed").asBoolean()).isTrue();
+        assertThat(step.at("/qualityReport/restoredReview/passed").asBoolean()).isFalse();
+        assertThat(step.at("/qualityReport/passed").asBoolean()).isFalse();
+        assertThat(step.at("/result/rawEdit/sha256")).isNotEqualTo(step.at("/result/sha256"));
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=? AND label='sit-west' AND passed AND input_sha256=?",Integer.class,id,step.at("/result/rawEdit/sha256").asText())).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=? AND label='sit-west' AND NOT passed AND input_sha256=?",Integer.class,id,step.at("/result/sha256").asText())).isEqualTo(1);
+        review(id,false,"APPROVE",409);
+    }
+    @Test void changedSeedQualityOrRulesPreventAnyLearningUpload()throws Exception {
+        UUID id=learningRecoveryJob(true);
+        jdbc.update("UPDATE shelter.styled_asset_steps SET quality_report=jsonb_set(quality_report,'{passed}','false') WHERE job_id=? AND label='character'",id);
+        clearInvocations(storage,quality,provider);recoveryTick();
+        assertThat(recoveryState(id).path("reason").asText()).isEqualTo("SEED_QUALITY_REVIEW_REQUIRED");verifyNoInteractions(storage,quality,provider);
+    }
+    @Test void changedRulesMakeRecoveryStaleBeforeAnyLearningUpload()throws Exception {
+        UUID id=learningRecoveryJob(true);jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=jsonb_set(quality_policy,'{rulesSha256}',to_jsonb(CAST(? AS text))) WHERE id=?","0".repeat(64),id);
+        clearInvocations(storage,quality,provider);recoveryTick();assertThat(recoveryState(id).path("state").asText()).isEqualTo("STALE");verifyNoInteractions(storage,quality,provider);
+    }
+    @Test void concurrentRecoveryTicksReviewTheReferenceOnlyOnce()throws Exception {
+        UUID id=learningRecoveryJob(true);clearInvocations(quality,provider);var pool=Executors.newFixedThreadPool(2);
+        try{var a=pool.submit(()->recoveryWorker.tick());var b=pool.submit(()->recoveryWorker.tick());a.get();b.get();}finally{pool.shutdownNow();}
+        assertThat(recoveryState(id).path("state").asText()).isEqualTo("WAITING_RULE");
+        verify(quality,times(1)).review(any(),anyList(),anyList(),eq("IDLE"),eq("south"));verifyNoInteractions(provider);
+    }
+    @Test @org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable(named="RUN_LEARNING_RECOVERY_LIVE",matches="true")
+    void liveLunaRecoversB60EvidenceAndPinsAValidatedRule()throws Exception {
+        // Recorded authorized B-60 pixels and verdicts; all persistence and provider submissions remain local/mocked.
+        var fixtures=java.nio.file.Path.of(System.getenv("LEARNING_RECOVERY_FIXTURES"));
+        var saved=json.readTree(java.nio.file.Files.readString(fixtures.resolve("job.json")));
+        UUID id=learningRecoveryJob(false);
+        jdbc.update("DELETE FROM shelter.styled_quality_lessons WHERE source_job_id=?",id);
+        jdbc.update("DELETE FROM shelter.styled_quality_examples WHERE job_id=?",id);
+        var base=json.createObjectNode();var keys=json.createObjectNode();var hashes=json.createObjectNode();
+        String prefix=dog+"/"+id+"/native-32/";
+        for(String d:List.of("south","north","west","east")) {
+            byte[] data=java.nio.file.Files.readAllBytes(fixtures.resolve("directions/"+d+".png"));String key=prefix+"directions/"+d+".png";
+            objects.put(key,data);keys.put(d,key);hashes.put(d,hex(data));
+            assertThat(hashes.path(d)).isEqualTo(saved.at("/steps/0/result/hashes/"+d));
+        }
+        base.set("keys",keys);base.set("hashes",hashes);
+        var policy=saved.path("qualityPolicy").deepCopy();
+        jdbc.update("UPDATE shelter.styled_asset_steps SET result=?::jsonb,quality_report=NULL WHERE job_id=? AND label='character'",base.toString(),id);
+        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=?::jsonb,seed_review=jsonb_build_object('hashes',?::jsonb) WHERE id=?",policy.toString(),hashes.toString(),id);
+        var old=saved.path("steps").valueStream().filter(n->n.path("label").asText().equals("idle-south")).findFirst().orElseThrow();
+        var result=(tools.jackson.databind.node.ObjectNode)old.path("result").deepCopy();
+        for(String source:List.of("sheets","raw-edits")) {
+            byte[] data=java.nio.file.Files.readAllBytes(fixtures.resolve(source+"/idle-south.png"));String key=prefix+source+"/idle-south.png";objects.put(key,data);
+            var target=source.equals("sheets")?result:(tools.jackson.databind.node.ObjectNode)result.path("rawEdit");
+            assertThat(hex(data)).isEqualTo(target.path("sha256").asText());target.put("key",key);
+        }
+        var verdict=old.path("qualityReport");
+        jdbc.update("UPDATE shelter.styled_asset_steps SET result=?::jsonb,quality_report=?::jsonb,repair_count=?,learned_lessons='[]' WHERE job_id=? AND label='idle-south'",result.toString(),verdict.toString(),old.path("repairCount").asInt(),id);
+        UUID example=UUID.randomUUID();
+        jdbc.update("INSERT INTO shelter.styled_quality_examples(id,job_id,label,action,direction,tail,rules_sha256,input_sha256,result,seeds,report,passed) VALUES (?,?,'idle-south','IDLE','south','UNKNOWN',?,?,?::jsonb,?::jsonb,?::jsonb,false)",example,id,currentRules(),result.path("sha256").asText(),result.toString(),base.toString(),verdict.toString());
+        for(var issue:verdict.path("issues"))jdbc.update("INSERT INTO shelter.styled_quality_lessons(source_example_id,source_job_id,source_label,action,direction,tail,issue,rules_sha256) VALUES (?,?,'idle-south','IDLE','south','UNKNOWN',?,?)",example,id,issue.asText(),currentRules());
+        post(subject,path(id)+"/learning-repair",learningRequest(id),200);
+        var props=new org.shelterconnect.api.chat.AiProperties(true,System.getenv("OPENAI_API_KEY"),System.getenv("OPENAI_MODEL"),60);
+        var client=new org.shelterconnect.api.chat.OpenAiResponsesClient(props,json);
+        var realQuality=new StyledQualityAgent(client,props,json);var realLesson=new StyledLessonAgent(client,json);
+        doAnswer(c->realQuality.review(c.getArgument(0),c.getArgument(1),c.getArgument(2),c.getArgument(3),c.getArgument(4))).when(quality).review(any(),anyList(),anyList(),eq("IDLE"),eq("south"));
+        doAnswer(c->realLesson.propose(c.getArgument(0),c.getArgument(1))).when(lessonAgent).propose(any(),any());
+        doAnswer(c->realLesson.replay(c.getArgument(0),c.getArgument(1),c.getArgument(2))).when(lessonAgent).replay(any(),any(),anyList());
+        clearInvocations(provider);recoveryTick();
+        for(int i=0;i<4;i++)lessonWorker.tick();
+        var report=json.createObjectNode();report.put("scope","Recorded B-60 images, real Luna calls, disposable local DB, mocked PixelLab only");
+        report.put("rulesSha256",currentRules());report.set("recovery",recoveryState(id));
+        report.set("lessons",json.valueToTree(jdbc.queryForList("SELECT status,issue,candidate::text,validation::text FROM shelter.styled_quality_lessons WHERE source_job_id=? ORDER BY issue",id)));
+        report.set("events",json.valueToTree(jdbc.queryForList("SELECT e.event,e.detail::text FROM shelter.styled_quality_lesson_events e JOIN shelter.styled_quality_lessons l ON l.id=e.lesson_id WHERE l.source_job_id=? ORDER BY e.created_at,e.id",id)));
+        var destination=java.nio.file.Path.of(System.getenv("LEARNING_RECOVERY_REPORT"));java.nio.file.Files.createDirectories(destination.getParent());
+        java.nio.file.Files.writeString(destination,json.writerWithDefaultPrettyPrinter().writeValueAsString(report));
+        verifyNoInteractions(provider);assertThat(recoveryState(id).at("/referenceReport/passed").asBoolean()).isTrue();
+        recoveryTick();assertThat(recoveryState(id).path("state").asText()).isEqualTo("QUEUED");
+        var realCodec=new StyledSpriteCodec(json,System.getenv().getOrDefault("ASSET_HARNESS_PYTHON","python3"));
+        doAnswer(c->realCodec.seedIdle(c.getArgument(0),c.getArgument(1),c.getArgument(2))).when(codec).seedIdle(anyString(),any(),anyInt());
+        tick();var calls=org.mockito.ArgumentCaptor.forClass(JsonNode.class);verify(provider,times(1)).editAnimation(calls.capture());
+        var pinned=json.readTree(jdbc.queryForObject("SELECT learned_lessons::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-south'",String.class,id));
+        assertThat(pinned.isEmpty()).isFalse();for(var rule:pinned)assertThat(calls.getValue().path("description").asText()).contains(rule.path("prevention").asText());
+        report.set("pinnedRules",pinned);report.put("providerMock",true);report.put("outboundPayloadIncludesRules",true);
+        java.nio.file.Files.writeString(destination,json.writerWithDefaultPrettyPrinter().writeValueAsString(report));
+    }
+    String hex(byte[] bytes)throws Exception{return java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(bytes));}
     String learnedPrevention(){return "Keep the entire seated tail tip tucked beside the hind paw, away from the canvas edge.";}
     JsonNode replayAnswer(List<StyledLessonAgent.Case> cases,boolean falsePositive) {
         return json.valueToTree(Map.of("safeAndGeneral",true,"reason","Offline wiring replay, not live model accuracy", "cases",cases.stream().map(c->{
@@ -1089,7 +1301,7 @@ class StyledAssetPostgresTest {
     void tick() {jdbc.update("UPDATE shelter.asset_jobs SET next_run_at=now() WHERE dog_id=?",dog);worker.tick();}
     void publicStatus(int status) throws Exception {get(null,"/v1/dogs/"+dog+"/assets",status);}
     String bearer(UUID subject) {return "Bearer "+tokens.token(subject);}
-    JsonNode post(UUID subject,String path,Object body,int status) throws Exception {var result=mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(path).header("Authorization",bearer(subject)).contentType("application/json").content(json.writeValueAsBytes(body))).andExpect(status().is(status)).andReturn();return json.readTree(result.getResponse().getContentAsString());}
+    JsonNode post(UUID subject,String path,Object body,int status) throws Exception {var req=org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(path).contentType("application/json").content(json.writeValueAsBytes(body));if(subject!=null)req.header("Authorization",bearer(subject));var result=mvc.perform(req).andExpect(status().is(status)).andReturn();return json.readTree(result.getResponse().getContentAsString());}
     JsonNode get(UUID subject,String path,int status) throws Exception {var req=org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(path);if(subject!=null)req.header("Authorization",bearer(subject));var result=mvc.perform(req).andExpect(status().is(status)).andReturn();return json.readTree(result.getResponse().getContentAsString());}
     void outsideTransaction() {assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isFalse();}
 }
