@@ -1,0 +1,3616 @@
+{
+  "source": "Actual B-59 deployed stored-image recheck of private development dog 442418202600971",
+  "rulesRevision": "sprite-regressions-2026-10-07-v11",
+  "rulesSha256": "b33d5a540b1d5adbec62438e29fea781fb13bd0b0c525b043ae476dc6068da8b",
+  "result": "REVIEW / QUALITY_REPAIR_EXHAUSTED",
+  "passedClips": 7,
+  "totalClips": 12,
+  "sourcePixelsChanged": false,
+  "newPixelLabRequests": 0,
+  "followUpModelReviewPerformed": false,
+  "note": "These are real failures, not ground-truth false positives. Offline replay preserves exact native frames and verdicts; action-specific presentation and own-seed idle fallback require new live verification.",
+  "cases": [
+    {
+      "label": "idle-south",
+      "action": "IDLE",
+      "direction": "south",
+      "repairCount": 2,
+      "derivation": null,
+      "variants": {
+        "restored": {
+          "file": "paired-review-live/idle-south-restored.png",
+          "sha256": "8088c25509f07ef51cc60c268dd78e913b8c45b0cf7ff94ee067ed0b08ef8329",
+          "actualReport": {
+            "note": "No clear visible defects. The dog maintains the approved south-facing identity and a quiet idle pose across frames 0–8.",
+            "model": "gpt-5.6-luna",
+            "frames": [],
+            "issues": [],
+            "passed": true,
+            "version": "sprite-quality-v1",
+            "edgeFrames": [],
+            "reviewedAt": "2026-10-07T03:56:02.831820457Z",
+            "inputSha256": "8088c25509f07ef51cc60c268dd78e913b8c45b0cf7ff94ee067ed0b08ef8329",
+            "rulesSha256": "b33d5a540b1d5adbec62438e29fea781fb13bd0b0c525b043ae476dc6068da8b",
+            "reviewLayout": "matched-direction-frame-pairs-v1",
+            "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "pixelEvidence": {
+              "version": "native-frame-delta-v1",
+              "reference": "frame0",
+              "frameCount": 9,
+              "alphaStable": true,
+              "boundsExclusive": [
+                [
+                  5,
+                  5,
+                  28,
+                  30
+                ],
+                [
+                  5,
+                  5,
+                  28,
+                  30
+                ],
+                [
+                  5,
+                  5,
+                  28,
+                  30
+                ],
+                [
+                  5,
+                  5,
+                  28,
+                  30
+                ],
+                [
+                  5,
+                  5,
+                  28,
+                  30
+                ],
+                [
+                  5,
+                  5,
+                  28,
+                  30
+                ],
+                [
+                  5,
+                  5,
+                  28,
+                  30
+                ],
+                [
+                  5,
+                  5,
+                  28,
+                  30
+                ],
+                [
+                  5,
+                  5,
+                  28,
+                  30
+                ]
+              ],
+              "subtleShadingOnly": false,
+              "maxVisibleRgbDelta": 55,
+              "maxRgbDeltaFromFrame0": [
+                0,
+                55,
+                55,
+                17,
+                15,
+                17,
+                15,
+                15,
+                17
+              ],
+              "alphaChangedFromFrame0": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "maxRgbDeltaFromPrevious": [
+                0,
+                55,
+                15,
+                55,
+                17,
+                17,
+                17,
+                15,
+                17
+              ],
+              "alphaChangedFromPrevious": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "rgbChangedPixelsFromFrame0": [
+                0,
+                92,
+                98,
+                89,
+                88,
+                94,
+                92,
+                91,
+                87
+              ]
+            },
+            "rawEditReview": {
+              "note": "No clear visible defects detected across frames 0–8.",
+              "model": "gpt-5.6-luna",
+              "frames": [],
+              "issues": [],
+              "passed": true,
+              "version": "sprite-quality-v1",
+              "edgeFrames": [],
+              "reviewedAt": "2026-10-07T03:56:11.428088537Z",
+              "rulesSha256": "b33d5a540b1d5adbec62438e29fea781fb13bd0b0c525b043ae476dc6068da8b",
+              "reviewLayout": "matched-direction-frame-pairs-v1",
+              "pixelEvidence": {
+                "version": "native-frame-delta-v1",
+                "reference": "frame0",
+                "frameCount": 9,
+                "alphaStable": true,
+                "boundsExclusive": [
+                  [
+                    5,
+                    5,
+                    28,
+                    30
+                  ],
+                  [
+                    5,
+                    5,
+                    28,
+                    30
+                  ],
+                  [
+                    5,
+                    5,
+                    28,
+                    30
+                  ],
+                  [
+                    5,
+                    5,
+                    28,
+                    30
+                  ],
+                  [
+                    5,
+                    5,
+                    28,
+                    30
+                  ],
+                  [
+                    5,
+                    5,
+                    28,
+                    30
+                  ],
+                  [
+                    5,
+                    5,
+                    28,
+                    30
+                  ],
+                  [
+                    5,
+                    5,
+                    28,
+                    30
+                  ],
+                  [
+                    5,
+                    5,
+                    28,
+                    30
+                  ]
+                ],
+                "subtleShadingOnly": false,
+                "maxVisibleRgbDelta": 49,
+                "maxRgbDeltaFromFrame0": [
+                  0,
+                  49,
+                  48,
+                  16,
+                  15,
+                  15,
+                  16,
+                  16,
+                  16
+                ],
+                "alphaChangedFromFrame0": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "maxRgbDeltaFromPrevious": [
+                  0,
+                  49,
+                  6,
+                  48,
+                  15,
+                  15,
+                  15,
+                  6,
+                  15
+                ],
+                "alphaChangedFromPrevious": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "rgbChangedPixelsFromFrame0": [
+                  0,
+                  101,
+                  87,
+                  88,
+                  104,
+                  114,
+                  115,
+                  101,
+                  93
+                ]
+              },
+              "rulesRevision": "sprite-regressions-2026-10-07-v11",
+              "detachedFrames": [],
+              "idleMotionFrames": [],
+              "silhouetteFrames": []
+            },
+            "rawEditSha256": "d791be3041698747a9aff23ff47411c33479f17b6aa734ee90bc289ba4b88695",
+            "rulesRevision": "sprite-regressions-2026-10-07-v11",
+            "detachedFrames": [],
+            "learnedLessons": [],
+            "idleMotionFrames": [],
+            "silhouetteFrames": []
+          }
+        },
+        "raw": {
+          "file": "paired-review-live/idle-south-raw.png",
+          "sha256": "d791be3041698747a9aff23ff47411c33479f17b6aa734ee90bc289ba4b88695",
+          "actualReport": {
+            "note": "No clear visible defects detected across frames 0–8.",
+            "model": "gpt-5.6-luna",
+            "frames": [],
+            "issues": [],
+            "passed": true,
+            "version": "sprite-quality-v1",
+            "edgeFrames": [],
+            "reviewedAt": "2026-10-07T03:56:11.428088537Z",
+            "rulesSha256": "b33d5a540b1d5adbec62438e29fea781fb13bd0b0c525b043ae476dc6068da8b",
+            "reviewLayout": "matched-direction-frame-pairs-v1",
+            "pixelEvidence": {
+              "version": "native-frame-delta-v1",
+              "reference": "frame0",
+              "frameCount": 9,
+              "alphaStable": true,
+              "boundsExclusive": [
+                [
+                  5,
+                  5,
+                  28,
+                  30
+                ],
+                [
+                  5,
+                  5,
+                  28,
+                  30
+                ],
+                [
+                  5,
+                  5,
+                  28,
+                  30
+                ],
+                [
+                  5,
+                  5,
+                  28,
+                  30
+                ],
+                [
+                  5,
+                  5,
+                  28,
+                  30
+                ],
+                [
+                  5,
+                  5,
+                  28,
+                  30
+                ],
+                [
+                  5,
+                  5,
+                  28,
+                  30
+                ],
+                [
+                  5,
+                  5,
+                  28,
+                  30
+                ],
+                [
+                  5,
+                  5,
+                  28,
+                  30
+                ]
+              ],
+              "subtleShadingOnly": false,
+              "maxVisibleRgbDelta": 49,
+              "maxRgbDeltaFromFrame0": [
+                0,
+                49,
+                48,
+                16,
+                15,
+                15,
+                16,
+                16,
+                16
+              ],
+              "alphaChangedFromFrame0": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "maxRgbDeltaFromPrevious": [
+                0,
+                49,
+                6,
+                48,
+                15,
+                15,
+                15,
+                6,
+                15
+              ],
+              "alphaChangedFromPrevious": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "rgbChangedPixelsFromFrame0": [
+                0,
+                101,
+                87,
+                88,
+                104,
+                114,
+                115,
+                101,
+                93
+              ]
+            },
+            "rulesRevision": "sprite-regressions-2026-10-07-v11",
+            "detachedFrames": [],
+            "idleMotionFrames": [],
+            "silhouetteFrames": []
+          }
+        }
+      }
+    },
+    {
+      "label": "idle-north",
+      "action": "IDLE",
+      "direction": "north",
+      "repairCount": 3,
+      "derivation": null,
+      "variants": {
+        "restored": {
+          "file": "paired-review-live/idle-north-restored.png",
+          "sha256": "eb06d108be1b4a2a6e337e6a823d176876731efed22bee1c5b451e3227dafd79",
+          "actualReport": {
+            "note": "No clear visible defects; the north-facing dog remains consistent and the animation shows only acceptable subtle shading.",
+            "model": "gpt-5.6-luna",
+            "frames": [],
+            "issues": [],
+            "passed": true,
+            "version": "sprite-quality-v1",
+            "edgeFrames": [],
+            "reviewedAt": "2026-10-07T03:56:37.221758142Z",
+            "inputSha256": "eb06d108be1b4a2a6e337e6a823d176876731efed22bee1c5b451e3227dafd79",
+            "rulesSha256": "b33d5a540b1d5adbec62438e29fea781fb13bd0b0c525b043ae476dc6068da8b",
+            "reviewLayout": "matched-direction-frame-pairs-v1",
+            "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "pixelEvidence": {
+              "version": "native-frame-delta-v1",
+              "reference": "frame0",
+              "frameCount": 9,
+              "alphaStable": true,
+              "boundsExclusive": [
+                [
+                  5,
+                  3,
+                  27,
+                  31
+                ],
+                [
+                  5,
+                  3,
+                  27,
+                  31
+                ],
+                [
+                  5,
+                  3,
+                  27,
+                  31
+                ],
+                [
+                  5,
+                  3,
+                  27,
+                  31
+                ],
+                [
+                  5,
+                  3,
+                  27,
+                  31
+                ],
+                [
+                  5,
+                  3,
+                  27,
+                  31
+                ],
+                [
+                  5,
+                  3,
+                  27,
+                  31
+                ],
+                [
+                  5,
+                  3,
+                  27,
+                  31
+                ],
+                [
+                  5,
+                  3,
+                  27,
+                  31
+                ]
+              ],
+              "subtleShadingOnly": true,
+              "maxVisibleRgbDelta": 15,
+              "maxRgbDeltaFromFrame0": [
+                0,
+                15,
+                15,
+                15,
+                15,
+                15,
+                15,
+                15,
+                15
+              ],
+              "alphaChangedFromFrame0": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "maxRgbDeltaFromPrevious": [
+                0,
+                15,
+                15,
+                15,
+                3,
+                15,
+                15,
+                15,
+                15
+              ],
+              "alphaChangedFromPrevious": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "rgbChangedPixelsFromFrame0": [
+                0,
+                78,
+                72,
+                70,
+                74,
+                84,
+                118,
+                77,
+                70
+              ]
+            },
+            "rawEditReview": {
+              "note": "No clear visible defects; the north-facing dog remains stationary with only subtle shading variation consistent with IDLE.",
+              "model": "gpt-5.6-luna",
+              "frames": [],
+              "issues": [],
+              "passed": true,
+              "version": "sprite-quality-v1",
+              "edgeFrames": [],
+              "reviewedAt": "2026-10-07T03:56:41.130410818Z",
+              "rulesSha256": "b33d5a540b1d5adbec62438e29fea781fb13bd0b0c525b043ae476dc6068da8b",
+              "reviewLayout": "matched-direction-frame-pairs-v1",
+              "pixelEvidence": {
+                "version": "native-frame-delta-v1",
+                "reference": "frame0",
+                "frameCount": 9,
+                "alphaStable": true,
+                "boundsExclusive": [
+                  [
+                    5,
+                    3,
+                    27,
+                    31
+                  ],
+                  [
+                    5,
+                    3,
+                    27,
+                    31
+                  ],
+                  [
+                    5,
+                    3,
+                    27,
+                    31
+                  ],
+                  [
+                    5,
+                    3,
+                    27,
+                    31
+                  ],
+                  [
+                    5,
+                    3,
+                    27,
+                    31
+                  ],
+                  [
+                    5,
+                    3,
+                    27,
+                    31
+                  ],
+                  [
+                    5,
+                    3,
+                    27,
+                    31
+                  ],
+                  [
+                    5,
+                    3,
+                    27,
+                    31
+                  ],
+                  [
+                    5,
+                    3,
+                    27,
+                    31
+                  ]
+                ],
+                "subtleShadingOnly": true,
+                "maxVisibleRgbDelta": 17,
+                "maxRgbDeltaFromFrame0": [
+                  0,
+                  12,
+                  12,
+                  12,
+                  12,
+                  13,
+                  17,
+                  12,
+                  12
+                ],
+                "alphaChangedFromFrame0": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "maxRgbDeltaFromPrevious": [
+                  0,
+                  12,
+                  10,
+                  7,
+                  7,
+                  14,
+                  17,
+                  16,
+                  13
+                ],
+                "alphaChangedFromPrevious": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "rgbChangedPixelsFromFrame0": [
+                  0,
+                  103,
+                  93,
+                  111,
+                  117,
+                  153,
+                  211,
+                  123,
+                  120
+                ]
+              },
+              "rulesRevision": "sprite-regressions-2026-10-07-v11",
+              "detachedFrames": [],
+              "idleMotionFrames": [],
+              "silhouetteFrames": []
+            },
+            "rawEditSha256": "ca14206a9c0328b6eded606467bc9c87597ec46f25a7f277b56651014a4aca49",
+            "rulesRevision": "sprite-regressions-2026-10-07-v11",
+            "detachedFrames": [],
+            "learnedLessons": [],
+            "idleMotionFrames": [],
+            "silhouetteFrames": []
+          }
+        },
+        "raw": {
+          "file": "paired-review-live/idle-north-raw.png",
+          "sha256": "ca14206a9c0328b6eded606467bc9c87597ec46f25a7f277b56651014a4aca49",
+          "actualReport": {
+            "note": "No clear visible defects; the north-facing dog remains stationary with only subtle shading variation consistent with IDLE.",
+            "model": "gpt-5.6-luna",
+            "frames": [],
+            "issues": [],
+            "passed": true,
+            "version": "sprite-quality-v1",
+            "edgeFrames": [],
+            "reviewedAt": "2026-10-07T03:56:41.130410818Z",
+            "rulesSha256": "b33d5a540b1d5adbec62438e29fea781fb13bd0b0c525b043ae476dc6068da8b",
+            "reviewLayout": "matched-direction-frame-pairs-v1",
+            "pixelEvidence": {
+              "version": "native-frame-delta-v1",
+              "reference": "frame0",
+              "frameCount": 9,
+              "alphaStable": true,
+              "boundsExclusive": [
+                [
+                  5,
+                  3,
+                  27,
+                  31
+                ],
+                [
+                  5,
+                  3,
+                  27,
+                  31
+                ],
+                [
+                  5,
+                  3,
+                  27,
+                  31
+                ],
+                [
+                  5,
+                  3,
+                  27,
+                  31
+                ],
+                [
+                  5,
+                  3,
+                  27,
+                  31
+                ],
+                [
+                  5,
+                  3,
+                  27,
+                  31
+                ],
+                [
+                  5,
+                  3,
+                  27,
+                  31
+                ],
+                [
+                  5,
+                  3,
+                  27,
+                  31
+                ],
+                [
+                  5,
+                  3,
+                  27,
+                  31
+                ]
+              ],
+              "subtleShadingOnly": true,
+              "maxVisibleRgbDelta": 17,
+              "maxRgbDeltaFromFrame0": [
+                0,
+                12,
+                12,
+                12,
+                12,
+                13,
+                17,
+                12,
+                12
+              ],
+              "alphaChangedFromFrame0": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "maxRgbDeltaFromPrevious": [
+                0,
+                12,
+                10,
+                7,
+                7,
+                14,
+                17,
+                16,
+                13
+              ],
+              "alphaChangedFromPrevious": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "rgbChangedPixelsFromFrame0": [
+                0,
+                103,
+                93,
+                111,
+                117,
+                153,
+                211,
+                123,
+                120
+              ]
+            },
+            "rulesRevision": "sprite-regressions-2026-10-07-v11",
+            "detachedFrames": [],
+            "idleMotionFrames": [],
+            "silhouetteFrames": []
+          }
+        }
+      }
+    },
+    {
+      "label": "idle-west",
+      "action": "IDLE",
+      "direction": "west",
+      "repairCount": 3,
+      "derivation": {
+        "source": {
+          "key": "7bcd0a3a-c05e-41a3-b26e-72aaa085d231/9b512fb8-0f67-441e-9c31-0b9c74512153/native-32/sheets/repair-2/idle-east.png",
+          "loop": true,
+          "sha256": "a4e5873cbf30bd5f4750b66f872fab57be07d94d3035c7535ef0a64c136e60c0",
+          "rawEdit": {
+            "key": "7bcd0a3a-c05e-41a3-b26e-72aaa085d231/9b512fb8-0f67-441e-9c31-0b9c74512153/native-32/raw-edits/idle-east-2.png",
+            "sha256": "2e0e18fe7f2d83cfd9d91006cf897aed90663ccb7845a1097b9b1d8f25779140"
+          },
+          "durationMs": 140,
+          "frameCount": 9,
+          "providerUsage": {
+            "type": "generations",
+            "generations": 20.0
+          }
+        },
+        "strategy": "symmetric-approved-motion-v1",
+        "seedHashes": {
+          "east": "d8023778640c83ec4aeb1f54a9bfbd2fe81f4f665a45d13d513e9937dcd64b12",
+          "west": "d083ea1de9ca34afe1696a51db3d38d5ccc74467aa81159f932662f2769fe492",
+          "north": "575bf09fcfe085dba3c709484135010ffb409940e62d18873466e2b8ad2be333",
+          "south": "d88af1d768c31af17bf3699b8986daeb6a43e06c433f429f3b3439756fac00fb"
+        }
+      },
+      "variants": {
+        "restored": {
+          "file": "paired-review-live/idle-west-restored.png",
+          "sha256": "0a56537e22b6ba882b57fefd4503e0a1906bcb64a28507f418277ae141fc6009",
+          "actualReport": {
+            "note": "The idle clip shows broad, repeated coat/leg shading changes across many pixels rather than only a subtle one-pixel breathing or blink variation; the dog otherwise retains its west-facing silhouette and tail carriage.",
+            "model": "gpt-5.6-luna",
+            "frames": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            "issues": [
+              "IDLE_MOTION"
+            ],
+            "passed": false,
+            "version": "sprite-quality-v1",
+            "edgeFrames": [],
+            "reviewedAt": "2026-10-07T03:57:13.522415322Z",
+            "inputSha256": "0a56537e22b6ba882b57fefd4503e0a1906bcb64a28507f418277ae141fc6009",
+            "rulesSha256": "b33d5a540b1d5adbec62438e29fea781fb13bd0b0c525b043ae476dc6068da8b",
+            "reviewLayout": "matched-direction-frame-pairs-v1",
+            "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "pixelEvidence": {
+              "version": "native-frame-delta-v1",
+              "reference": "frame0",
+              "frameCount": 9,
+              "alphaStable": true,
+              "boundsExclusive": [
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ]
+              ],
+              "subtleShadingOnly": false,
+              "maxVisibleRgbDelta": 55,
+              "maxRgbDeltaFromFrame0": [
+                0,
+                55,
+                55,
+                55,
+                55,
+                48,
+                48,
+                48,
+                48
+              ],
+              "alphaChangedFromFrame0": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "maxRgbDeltaFromPrevious": [
+                0,
+                55,
+                41,
+                55,
+                23,
+                68,
+                29,
+                29,
+                29
+              ],
+              "alphaChangedFromPrevious": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "rgbChangedPixelsFromFrame0": [
+                0,
+                105,
+                108,
+                113,
+                115,
+                108,
+                111,
+                107,
+                107
+              ]
+            },
+            "rawEditReview": {
+              "note": "The idle clip shows repeated tail movement and changing leg/paw shading beyond quiet breathing/blinking, indicating non-idle motion.",
+              "model": "gpt-5.6-luna",
+              "frames": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8
+              ],
+              "issues": [
+                "IDLE_MOTION"
+              ],
+              "passed": false,
+              "version": "sprite-quality-v1",
+              "edgeFrames": [],
+              "reviewedAt": "2026-10-07T03:57:23.736477488Z",
+              "rulesSha256": "b33d5a540b1d5adbec62438e29fea781fb13bd0b0c525b043ae476dc6068da8b",
+              "reviewLayout": "matched-direction-frame-pairs-v1",
+              "pixelEvidence": {
+                "version": "native-frame-delta-v1",
+                "reference": "frame0",
+                "frameCount": 9,
+                "alphaStable": true,
+                "boundsExclusive": [
+                  [
+                    3,
+                    4,
+                    29,
+                    31
+                  ],
+                  [
+                    3,
+                    4,
+                    29,
+                    31
+                  ],
+                  [
+                    3,
+                    4,
+                    29,
+                    31
+                  ],
+                  [
+                    3,
+                    4,
+                    29,
+                    31
+                  ],
+                  [
+                    3,
+                    4,
+                    29,
+                    31
+                  ],
+                  [
+                    3,
+                    4,
+                    29,
+                    31
+                  ],
+                  [
+                    3,
+                    4,
+                    29,
+                    31
+                  ],
+                  [
+                    3,
+                    4,
+                    29,
+                    31
+                  ],
+                  [
+                    3,
+                    4,
+                    29,
+                    31
+                  ]
+                ],
+                "subtleShadingOnly": false,
+                "maxVisibleRgbDelta": 55,
+                "maxRgbDeltaFromFrame0": [
+                  0,
+                  34,
+                  41,
+                  55,
+                  55,
+                  29,
+                  29,
+                  29,
+                  22
+                ],
+                "alphaChangedFromFrame0": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "maxRgbDeltaFromPrevious": [
+                  0,
+                  34,
+                  41,
+                  55,
+                  23,
+                  68,
+                  29,
+                  29,
+                  29
+                ],
+                "alphaChangedFromPrevious": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "rgbChangedPixelsFromFrame0": [
+                  0,
+                  89,
+                  92,
+                  97,
+                  99,
+                  92,
+                  95,
+                  91,
+                  91
+                ]
+              },
+              "rulesRevision": "sprite-regressions-2026-10-07-v11",
+              "detachedFrames": [],
+              "idleMotionFrames": [],
+              "silhouetteFrames": []
+            },
+            "rawEditSha256": "90a25bce1c78bb72f33a0e3c69b8aa20c51cca6568ae73308eb1bc768d04d000",
+            "rulesRevision": "sprite-regressions-2026-10-07-v11",
+            "detachedFrames": [],
+            "learnedLessons": [],
+            "idleMotionFrames": [],
+            "silhouetteFrames": []
+          }
+        },
+        "raw": {
+          "file": "paired-review-live/idle-west-raw.png",
+          "sha256": "90a25bce1c78bb72f33a0e3c69b8aa20c51cca6568ae73308eb1bc768d04d000",
+          "actualReport": {
+            "note": "The idle clip shows repeated tail movement and changing leg/paw shading beyond quiet breathing/blinking, indicating non-idle motion.",
+            "model": "gpt-5.6-luna",
+            "frames": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            "issues": [
+              "IDLE_MOTION"
+            ],
+            "passed": false,
+            "version": "sprite-quality-v1",
+            "edgeFrames": [],
+            "reviewedAt": "2026-10-07T03:57:23.736477488Z",
+            "rulesSha256": "b33d5a540b1d5adbec62438e29fea781fb13bd0b0c525b043ae476dc6068da8b",
+            "reviewLayout": "matched-direction-frame-pairs-v1",
+            "pixelEvidence": {
+              "version": "native-frame-delta-v1",
+              "reference": "frame0",
+              "frameCount": 9,
+              "alphaStable": true,
+              "boundsExclusive": [
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ]
+              ],
+              "subtleShadingOnly": false,
+              "maxVisibleRgbDelta": 55,
+              "maxRgbDeltaFromFrame0": [
+                0,
+                34,
+                41,
+                55,
+                55,
+                29,
+                29,
+                29,
+                22
+              ],
+              "alphaChangedFromFrame0": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "maxRgbDeltaFromPrevious": [
+                0,
+                34,
+                41,
+                55,
+                23,
+                68,
+                29,
+                29,
+                29
+              ],
+              "alphaChangedFromPrevious": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "rgbChangedPixelsFromFrame0": [
+                0,
+                89,
+                92,
+                97,
+                99,
+                92,
+                95,
+                91,
+                91
+              ]
+            },
+            "rulesRevision": "sprite-regressions-2026-10-07-v11",
+            "detachedFrames": [],
+            "idleMotionFrames": [],
+            "silhouetteFrames": []
+          }
+        }
+      }
+    },
+    {
+      "label": "idle-east",
+      "action": "IDLE",
+      "direction": "east",
+      "repairCount": 2,
+      "derivation": null,
+      "variants": {
+        "restored": {
+          "file": "paired-review-live/idle-east-restored.png",
+          "sha256": "a4e5873cbf30bd5f4750b66f872fab57be07d94d3035c7535ef0a64c136e60c0",
+          "actualReport": {
+            "note": "The lower legs and paws visibly change across these frames, creating a stepping or leg-motion cycle instead of quiet idle breathing with planted paws. The tail remains consistently carried and the dog’s identity and east-facing direction are preserved.",
+            "model": "gpt-5.6-luna",
+            "frames": [
+              6,
+              7,
+              8
+            ],
+            "issues": [
+              "IDLE_MOTION"
+            ],
+            "passed": false,
+            "version": "sprite-quality-v1",
+            "edgeFrames": [],
+            "reviewedAt": "2026-10-07T03:57:56.230512019Z",
+            "inputSha256": "a4e5873cbf30bd5f4750b66f872fab57be07d94d3035c7535ef0a64c136e60c0",
+            "rulesSha256": "b33d5a540b1d5adbec62438e29fea781fb13bd0b0c525b043ae476dc6068da8b",
+            "reviewLayout": "matched-direction-frame-pairs-v1",
+            "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "pixelEvidence": {
+              "version": "native-frame-delta-v1",
+              "reference": "frame0",
+              "frameCount": 9,
+              "alphaStable": true,
+              "boundsExclusive": [
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ]
+              ],
+              "subtleShadingOnly": false,
+              "maxVisibleRgbDelta": 55,
+              "maxRgbDeltaFromFrame0": [
+                0,
+                34,
+                41,
+                55,
+                55,
+                29,
+                29,
+                29,
+                22
+              ],
+              "alphaChangedFromFrame0": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "maxRgbDeltaFromPrevious": [
+                0,
+                34,
+                41,
+                55,
+                23,
+                68,
+                29,
+                29,
+                29
+              ],
+              "alphaChangedFromPrevious": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "rgbChangedPixelsFromFrame0": [
+                0,
+                89,
+                92,
+                97,
+                99,
+                92,
+                95,
+                91,
+                91
+              ]
+            },
+            "rawEditReview": {
+              "note": "No clear visible defects. The east-facing dog remains consistent across the idle sequence, with no evident silhouette, direction, tail-carriage, or continuity problems.",
+              "model": "gpt-5.6-luna",
+              "frames": [],
+              "issues": [],
+              "passed": true,
+              "version": "sprite-quality-v1",
+              "edgeFrames": [],
+              "reviewedAt": "2026-10-07T03:58:05.723121034Z",
+              "rulesSha256": "b33d5a540b1d5adbec62438e29fea781fb13bd0b0c525b043ae476dc6068da8b",
+              "reviewLayout": "matched-direction-frame-pairs-v1",
+              "pixelEvidence": {
+                "version": "native-frame-delta-v1",
+                "reference": "frame0",
+                "frameCount": 9,
+                "alphaStable": true,
+                "boundsExclusive": [
+                  [
+                    3,
+                    4,
+                    29,
+                    31
+                  ],
+                  [
+                    3,
+                    4,
+                    29,
+                    31
+                  ],
+                  [
+                    3,
+                    4,
+                    29,
+                    31
+                  ],
+                  [
+                    3,
+                    4,
+                    29,
+                    31
+                  ],
+                  [
+                    3,
+                    4,
+                    29,
+                    31
+                  ],
+                  [
+                    3,
+                    4,
+                    29,
+                    31
+                  ],
+                  [
+                    3,
+                    4,
+                    29,
+                    31
+                  ],
+                  [
+                    3,
+                    4,
+                    29,
+                    31
+                  ],
+                  [
+                    3,
+                    4,
+                    29,
+                    31
+                  ]
+                ],
+                "subtleShadingOnly": false,
+                "maxVisibleRgbDelta": 66,
+                "maxRgbDeltaFromFrame0": [
+                  0,
+                  20,
+                  29,
+                  64,
+                  66,
+                  24,
+                  24,
+                  24,
+                  24
+                ],
+                "alphaChangedFromFrame0": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "maxRgbDeltaFromPrevious": [
+                  0,
+                  20,
+                  29,
+                  46,
+                  20,
+                  66,
+                  24,
+                  24,
+                  24
+                ],
+                "alphaChangedFromPrevious": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "rgbChangedPixelsFromFrame0": [
+                  0,
+                  39,
+                  49,
+                  72,
+                  64,
+                  57,
+                  60,
+                  66,
+                  62
+                ]
+              },
+              "rulesRevision": "sprite-regressions-2026-10-07-v11",
+              "detachedFrames": [],
+              "idleMotionFrames": [],
+              "silhouetteFrames": []
+            },
+            "rawEditSha256": "2e0e18fe7f2d83cfd9d91006cf897aed90663ccb7845a1097b9b1d8f25779140",
+            "rulesRevision": "sprite-regressions-2026-10-07-v11",
+            "detachedFrames": [],
+            "learnedLessons": [],
+            "idleMotionFrames": [],
+            "silhouetteFrames": []
+          }
+        },
+        "raw": {
+          "file": "paired-review-live/idle-east-raw.png",
+          "sha256": "2e0e18fe7f2d83cfd9d91006cf897aed90663ccb7845a1097b9b1d8f25779140",
+          "actualReport": {
+            "note": "No clear visible defects. The east-facing dog remains consistent across the idle sequence, with no evident silhouette, direction, tail-carriage, or continuity problems.",
+            "model": "gpt-5.6-luna",
+            "frames": [],
+            "issues": [],
+            "passed": true,
+            "version": "sprite-quality-v1",
+            "edgeFrames": [],
+            "reviewedAt": "2026-10-07T03:58:05.723121034Z",
+            "rulesSha256": "b33d5a540b1d5adbec62438e29fea781fb13bd0b0c525b043ae476dc6068da8b",
+            "reviewLayout": "matched-direction-frame-pairs-v1",
+            "pixelEvidence": {
+              "version": "native-frame-delta-v1",
+              "reference": "frame0",
+              "frameCount": 9,
+              "alphaStable": true,
+              "boundsExclusive": [
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ]
+              ],
+              "subtleShadingOnly": false,
+              "maxVisibleRgbDelta": 66,
+              "maxRgbDeltaFromFrame0": [
+                0,
+                20,
+                29,
+                64,
+                66,
+                24,
+                24,
+                24,
+                24
+              ],
+              "alphaChangedFromFrame0": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "maxRgbDeltaFromPrevious": [
+                0,
+                20,
+                29,
+                46,
+                20,
+                66,
+                24,
+                24,
+                24
+              ],
+              "alphaChangedFromPrevious": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "rgbChangedPixelsFromFrame0": [
+                0,
+                39,
+                49,
+                72,
+                64,
+                57,
+                60,
+                66,
+                62
+              ]
+            },
+            "rulesRevision": "sprite-regressions-2026-10-07-v11",
+            "detachedFrames": [],
+            "idleMotionFrames": [],
+            "silhouetteFrames": []
+          }
+        }
+      }
+    },
+    {
+      "label": "walk-south",
+      "action": "WALK",
+      "direction": "south",
+      "repairCount": 0,
+      "derivation": null,
+      "variants": {
+        "restored": {
+          "file": "paired-review-live/walk-south-restored.png",
+          "sha256": "c877cb4ef36fbb92f581a286ef48e51231d42a30afcf0b6f33c349f7685259fe",
+          "actualReport": {
+            "note": "No clear visible defects; the south-facing dog maintains identity and direction, and the WALK leg motion is present and continuous.",
+            "model": "gpt-5.6-luna",
+            "frames": [],
+            "issues": [],
+            "passed": true,
+            "version": "sprite-quality-v1",
+            "edgeFrames": [],
+            "reviewedAt": "2026-10-07T03:58:35.798495275Z",
+            "inputSha256": "c877cb4ef36fbb92f581a286ef48e51231d42a30afcf0b6f33c349f7685259fe",
+            "rulesSha256": "b33d5a540b1d5adbec62438e29fea781fb13bd0b0c525b043ae476dc6068da8b",
+            "reviewLayout": "matched-direction-frame-pairs-v1",
+            "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "pixelEvidence": {
+              "version": "native-frame-delta-v1",
+              "reference": "frame0",
+              "frameCount": 9,
+              "alphaStable": false,
+              "boundsExclusive": [
+                [
+                  5,
+                  5,
+                  28,
+                  30
+                ],
+                [
+                  5,
+                  3,
+                  28,
+                  30
+                ],
+                [
+                  5,
+                  2,
+                  28,
+                  30
+                ],
+                [
+                  6,
+                  1,
+                  27,
+                  30
+                ],
+                [
+                  5,
+                  4,
+                  28,
+                  29
+                ],
+                [
+                  5,
+                  3,
+                  28,
+                  30
+                ],
+                [
+                  5,
+                  2,
+                  28,
+                  30
+                ],
+                [
+                  6,
+                  1,
+                  27,
+                  30
+                ],
+                [
+                  5,
+                  5,
+                  28,
+                  30
+                ]
+              ],
+              "subtleShadingOnly": false,
+              "maxVisibleRgbDelta": 254,
+              "maxRgbDeltaFromFrame0": [
+                0,
+                243,
+                243,
+                254,
+                243,
+                243,
+                243,
+                243,
+                22
+              ],
+              "alphaChangedFromFrame0": [
+                0,
+                50,
+                76,
+                41,
+                21,
+                54,
+                87,
+                60,
+                0
+              ],
+              "maxRgbDeltaFromPrevious": [
+                0,
+                243,
+                243,
+                254,
+                243,
+                254,
+                243,
+                254,
+                243
+              ],
+              "alphaChangedFromPrevious": [
+                0,
+                50,
+                46,
+                81,
+                40,
+                45,
+                55,
+                79,
+                60
+              ],
+              "rgbChangedPixelsFromFrame0": [
+                0,
+                209,
+                213,
+                128,
+                109,
+                213,
+                228,
+                142,
+                69
+              ]
+            },
+            "rulesRevision": "sprite-regressions-2026-10-07-v11",
+            "detachedFrames": [],
+            "learnedLessons": [],
+            "idleMotionFrames": [],
+            "silhouetteFrames": []
+          }
+        }
+      }
+    },
+    {
+      "label": "walk-north",
+      "action": "WALK",
+      "direction": "north",
+      "repairCount": 0,
+      "derivation": null,
+      "variants": {
+        "restored": {
+          "file": "paired-review-live/walk-north-restored.png",
+          "sha256": "23017afcb9dc8fd86d2977b049e215c6c254f03540f100bd6da9decdb5874470",
+          "actualReport": {
+            "note": "The north-facing dog maintains its identity and direction, with a continuous in-place walking gait across frames 0–8. No clear defects are visible.",
+            "model": "gpt-5.6-luna",
+            "frames": [],
+            "issues": [],
+            "passed": true,
+            "version": "sprite-quality-v1",
+            "edgeFrames": [],
+            "reviewedAt": "2026-10-07T03:59:01.912838984Z",
+            "inputSha256": "23017afcb9dc8fd86d2977b049e215c6c254f03540f100bd6da9decdb5874470",
+            "rulesSha256": "b33d5a540b1d5adbec62438e29fea781fb13bd0b0c525b043ae476dc6068da8b",
+            "reviewLayout": "matched-direction-frame-pairs-v1",
+            "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "pixelEvidence": {
+              "version": "native-frame-delta-v1",
+              "reference": "frame0",
+              "frameCount": 9,
+              "alphaStable": false,
+              "boundsExclusive": [
+                [
+                  5,
+                  3,
+                  27,
+                  31
+                ],
+                [
+                  5,
+                  3,
+                  27,
+                  31
+                ],
+                [
+                  6,
+                  3,
+                  26,
+                  31
+                ],
+                [
+                  5,
+                  2,
+                  27,
+                  31
+                ],
+                [
+                  6,
+                  1,
+                  27,
+                  31
+                ],
+                [
+                  5,
+                  1,
+                  27,
+                  30
+                ],
+                [
+                  5,
+                  2,
+                  27,
+                  31
+                ],
+                [
+                  5,
+                  3,
+                  27,
+                  31
+                ],
+                [
+                  5,
+                  3,
+                  27,
+                  31
+                ]
+              ],
+              "subtleShadingOnly": false,
+              "maxVisibleRgbDelta": 243,
+              "maxRgbDeltaFromFrame0": [
+                0,
+                212,
+                243,
+                243,
+                243,
+                243,
+                243,
+                243,
+                46
+              ],
+              "alphaChangedFromFrame0": [
+                0,
+                6,
+                36,
+                66,
+                102,
+                92,
+                68,
+                37,
+                0
+              ],
+              "maxRgbDeltaFromPrevious": [
+                0,
+                212,
+                243,
+                243,
+                243,
+                243,
+                243,
+                195,
+                243
+              ],
+              "alphaChangedFromPrevious": [
+                0,
+                6,
+                36,
+                54,
+                48,
+                42,
+                38,
+                47,
+                37
+              ],
+              "rgbChangedPixelsFromFrame0": [
+                0,
+                87,
+                151,
+                189,
+                259,
+                222,
+                181,
+                140,
+                77
+              ]
+            },
+            "rulesRevision": "sprite-regressions-2026-10-07-v11",
+            "detachedFrames": [],
+            "learnedLessons": [],
+            "idleMotionFrames": [],
+            "silhouetteFrames": []
+          }
+        }
+      }
+    },
+    {
+      "label": "walk-west",
+      "action": "WALK",
+      "direction": "west",
+      "repairCount": 3,
+      "derivation": {
+        "source": {
+          "key": "7bcd0a3a-c05e-41a3-b26e-72aaa085d231/9b512fb8-0f67-441e-9c31-0b9c74512153/native-32/sheets/walk-east.png",
+          "loop": true,
+          "sha256": "ba7adcd2edcb065b0d0132891fd813ffc0538c1823b0672237656556002724d1",
+          "durationMs": 120,
+          "frameCount": 9,
+          "providerUsage": {
+            "type": "generations",
+            "generations": 1.0
+          }
+        },
+        "strategy": "symmetric-approved-motion-v1",
+        "seedHashes": {
+          "east": "d8023778640c83ec4aeb1f54a9bfbd2fe81f4f665a45d13d513e9937dcd64b12",
+          "west": "d083ea1de9ca34afe1696a51db3d38d5ccc74467aa81159f932662f2769fe492",
+          "north": "575bf09fcfe085dba3c709484135010ffb409940e62d18873466e2b8ad2be333",
+          "south": "d88af1d768c31af17bf3699b8986daeb6a43e06c433f429f3b3439756fac00fb"
+        }
+      },
+      "variants": {
+        "restored": {
+          "file": "paired-review-live/walk-west-restored.png",
+          "sha256": "6020963d2c8b15d9f2a824306522a581d7af3e1bcdbe478da133699844a9d391",
+          "actualReport": {
+            "note": "No clear visible defects. The dog maintains west-facing identity and shows a continuous in-place walking gait across frames 0–8.",
+            "model": "gpt-5.6-luna",
+            "frames": [],
+            "issues": [],
+            "passed": true,
+            "version": "sprite-quality-v1",
+            "edgeFrames": [],
+            "reviewedAt": "2026-10-07T03:59:30.438589297Z",
+            "inputSha256": "6020963d2c8b15d9f2a824306522a581d7af3e1bcdbe478da133699844a9d391",
+            "rulesSha256": "b33d5a540b1d5adbec62438e29fea781fb13bd0b0c525b043ae476dc6068da8b",
+            "reviewLayout": "matched-direction-frame-pairs-v1",
+            "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "pixelEvidence": {
+              "version": "native-frame-delta-v1",
+              "reference": "frame0",
+              "frameCount": 9,
+              "alphaStable": false,
+              "boundsExclusive": [
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  30,
+                  31
+                ],
+                [
+                  4,
+                  4,
+                  31,
+                  31
+                ],
+                [
+                  4,
+                  4,
+                  31,
+                  30
+                ],
+                [
+                  4,
+                  5,
+                  29,
+                  30
+                ],
+                [
+                  4,
+                  5,
+                  26,
+                  30
+                ],
+                [
+                  4,
+                  4,
+                  27,
+                  30
+                ],
+                [
+                  3,
+                  4,
+                  28,
+                  30
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ]
+              ],
+              "subtleShadingOnly": false,
+              "maxVisibleRgbDelta": 243,
+              "maxRgbDeltaFromFrame0": [
+                0,
+                243,
+                243,
+                243,
+                243,
+                243,
+                243,
+                243,
+                48
+              ],
+              "alphaChangedFromFrame0": [
+                0,
+                73,
+                97,
+                127,
+                154,
+                154,
+                107,
+                58,
+                1
+              ],
+              "maxRgbDeltaFromPrevious": [
+                0,
+                243,
+                243,
+                243,
+                243,
+                243,
+                243,
+                243,
+                243
+              ],
+              "alphaChangedFromPrevious": [
+                0,
+                73,
+                58,
+                100,
+                49,
+                60,
+                69,
+                73,
+                59
+              ],
+              "rgbChangedPixelsFromFrame0": [
+                0,
+                180,
+                203,
+                288,
+                305,
+                307,
+                215,
+                167,
+                113
+              ]
+            },
+            "rawEditReview": {
+              "note": "No clear visible defects; the west-facing dog maintains identity and direction, and the WALK cycle is present and continuous.",
+              "model": "gpt-5.6-luna",
+              "frames": [],
+              "issues": [],
+              "passed": true,
+              "version": "sprite-quality-v1",
+              "edgeFrames": [],
+              "reviewedAt": "2026-10-07T03:59:34.590825205Z",
+              "rulesSha256": "b33d5a540b1d5adbec62438e29fea781fb13bd0b0c525b043ae476dc6068da8b",
+              "reviewLayout": "matched-direction-frame-pairs-v1",
+              "pixelEvidence": {
+                "version": "native-frame-delta-v1",
+                "reference": "frame0",
+                "frameCount": 9,
+                "alphaStable": false,
+                "boundsExclusive": [
+                  [
+                    3,
+                    4,
+                    29,
+                    31
+                  ],
+                  [
+                    3,
+                    4,
+                    30,
+                    31
+                  ],
+                  [
+                    4,
+                    4,
+                    31,
+                    31
+                  ],
+                  [
+                    4,
+                    4,
+                    31,
+                    30
+                  ],
+                  [
+                    4,
+                    5,
+                    29,
+                    30
+                  ],
+                  [
+                    4,
+                    5,
+                    26,
+                    30
+                  ],
+                  [
+                    4,
+                    4,
+                    27,
+                    30
+                  ],
+                  [
+                    3,
+                    4,
+                    28,
+                    30
+                  ],
+                  [
+                    3,
+                    4,
+                    29,
+                    31
+                  ]
+                ],
+                "subtleShadingOnly": false,
+                "maxVisibleRgbDelta": 243,
+                "maxRgbDeltaFromFrame0": [
+                  0,
+                  243,
+                  243,
+                  243,
+                  243,
+                  243,
+                  243,
+                  243,
+                  46
+                ],
+                "alphaChangedFromFrame0": [
+                  0,
+                  73,
+                  97,
+                  127,
+                  154,
+                  154,
+                  107,
+                  58,
+                  1
+                ],
+                "maxRgbDeltaFromPrevious": [
+                  0,
+                  243,
+                  243,
+                  243,
+                  243,
+                  243,
+                  243,
+                  243,
+                  243
+                ],
+                "alphaChangedFromPrevious": [
+                  0,
+                  73,
+                  58,
+                  100,
+                  49,
+                  60,
+                  69,
+                  73,
+                  59
+                ],
+                "rgbChangedPixelsFromFrame0": [
+                  0,
+                  165,
+                  190,
+                  283,
+                  301,
+                  300,
+                  203,
+                  156,
+                  92
+                ]
+              },
+              "rulesRevision": "sprite-regressions-2026-10-07-v11",
+              "detachedFrames": [],
+              "idleMotionFrames": [],
+              "silhouetteFrames": []
+            },
+            "rawEditSha256": "8db1e7bc5e5ad0494c1b4c0c12d0d08d0a26e317e887a84322426546c6e6b4c4",
+            "rulesRevision": "sprite-regressions-2026-10-07-v11",
+            "detachedFrames": [],
+            "learnedLessons": [],
+            "idleMotionFrames": [],
+            "silhouetteFrames": []
+          }
+        },
+        "raw": {
+          "file": "paired-review-live/walk-west-raw.png",
+          "sha256": "8db1e7bc5e5ad0494c1b4c0c12d0d08d0a26e317e887a84322426546c6e6b4c4",
+          "actualReport": {
+            "note": "No clear visible defects; the west-facing dog maintains identity and direction, and the WALK cycle is present and continuous.",
+            "model": "gpt-5.6-luna",
+            "frames": [],
+            "issues": [],
+            "passed": true,
+            "version": "sprite-quality-v1",
+            "edgeFrames": [],
+            "reviewedAt": "2026-10-07T03:59:34.590825205Z",
+            "rulesSha256": "b33d5a540b1d5adbec62438e29fea781fb13bd0b0c525b043ae476dc6068da8b",
+            "reviewLayout": "matched-direction-frame-pairs-v1",
+            "pixelEvidence": {
+              "version": "native-frame-delta-v1",
+              "reference": "frame0",
+              "frameCount": 9,
+              "alphaStable": false,
+              "boundsExclusive": [
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  30,
+                  31
+                ],
+                [
+                  4,
+                  4,
+                  31,
+                  31
+                ],
+                [
+                  4,
+                  4,
+                  31,
+                  30
+                ],
+                [
+                  4,
+                  5,
+                  29,
+                  30
+                ],
+                [
+                  4,
+                  5,
+                  26,
+                  30
+                ],
+                [
+                  4,
+                  4,
+                  27,
+                  30
+                ],
+                [
+                  3,
+                  4,
+                  28,
+                  30
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ]
+              ],
+              "subtleShadingOnly": false,
+              "maxVisibleRgbDelta": 243,
+              "maxRgbDeltaFromFrame0": [
+                0,
+                243,
+                243,
+                243,
+                243,
+                243,
+                243,
+                243,
+                46
+              ],
+              "alphaChangedFromFrame0": [
+                0,
+                73,
+                97,
+                127,
+                154,
+                154,
+                107,
+                58,
+                1
+              ],
+              "maxRgbDeltaFromPrevious": [
+                0,
+                243,
+                243,
+                243,
+                243,
+                243,
+                243,
+                243,
+                243
+              ],
+              "alphaChangedFromPrevious": [
+                0,
+                73,
+                58,
+                100,
+                49,
+                60,
+                69,
+                73,
+                59
+              ],
+              "rgbChangedPixelsFromFrame0": [
+                0,
+                165,
+                190,
+                283,
+                301,
+                300,
+                203,
+                156,
+                92
+              ]
+            },
+            "rulesRevision": "sprite-regressions-2026-10-07-v11",
+            "detachedFrames": [],
+            "idleMotionFrames": [],
+            "silhouetteFrames": []
+          }
+        }
+      }
+    },
+    {
+      "label": "walk-east",
+      "action": "WALK",
+      "direction": "east",
+      "repairCount": 0,
+      "derivation": null,
+      "variants": {
+        "restored": {
+          "file": "paired-review-live/walk-east-restored.png",
+          "sha256": "ba7adcd2edcb065b0d0132891fd813ffc0538c1823b0672237656556002724d1",
+          "actualReport": {
+            "note": "No clear visible defects detected; the east-facing dog maintains identity and performs a continuous in-place walk.",
+            "model": "gpt-5.6-luna",
+            "frames": [],
+            "issues": [],
+            "passed": true,
+            "version": "sprite-quality-v1",
+            "edgeFrames": [],
+            "reviewedAt": "2026-10-07T04:00:03.453446831Z",
+            "inputSha256": "ba7adcd2edcb065b0d0132891fd813ffc0538c1823b0672237656556002724d1",
+            "rulesSha256": "b33d5a540b1d5adbec62438e29fea781fb13bd0b0c525b043ae476dc6068da8b",
+            "reviewLayout": "matched-direction-frame-pairs-v1",
+            "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "pixelEvidence": {
+              "version": "native-frame-delta-v1",
+              "reference": "frame0",
+              "frameCount": 9,
+              "alphaStable": false,
+              "boundsExclusive": [
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  2,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  1,
+                  4,
+                  28,
+                  31
+                ],
+                [
+                  1,
+                  4,
+                  28,
+                  30
+                ],
+                [
+                  3,
+                  5,
+                  28,
+                  30
+                ],
+                [
+                  6,
+                  5,
+                  28,
+                  30
+                ],
+                [
+                  5,
+                  4,
+                  28,
+                  30
+                ],
+                [
+                  4,
+                  4,
+                  29,
+                  30
+                ],
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ]
+              ],
+              "subtleShadingOnly": false,
+              "maxVisibleRgbDelta": 243,
+              "maxRgbDeltaFromFrame0": [
+                0,
+                243,
+                243,
+                243,
+                243,
+                243,
+                243,
+                243,
+                46
+              ],
+              "alphaChangedFromFrame0": [
+                0,
+                73,
+                97,
+                127,
+                154,
+                154,
+                107,
+                58,
+                1
+              ],
+              "maxRgbDeltaFromPrevious": [
+                0,
+                243,
+                243,
+                243,
+                243,
+                243,
+                243,
+                243,
+                243
+              ],
+              "alphaChangedFromPrevious": [
+                0,
+                73,
+                58,
+                100,
+                49,
+                60,
+                69,
+                73,
+                59
+              ],
+              "rgbChangedPixelsFromFrame0": [
+                0,
+                165,
+                190,
+                283,
+                301,
+                300,
+                203,
+                156,
+                92
+              ]
+            },
+            "rulesRevision": "sprite-regressions-2026-10-07-v11",
+            "detachedFrames": [],
+            "learnedLessons": [],
+            "idleMotionFrames": [],
+            "silhouetteFrames": []
+          }
+        }
+      }
+    },
+    {
+      "label": "sit-south",
+      "action": "SIT",
+      "direction": "south",
+      "repairCount": 0,
+      "derivation": null,
+      "variants": {
+        "restored": {
+          "file": "paired-review-live/sit-south-restored.png",
+          "sha256": "b9ccabf4ea36202fd8a6e793beb0302986f675a3be7e5ca1f99e5d7bf949ed69",
+          "actualReport": {
+            "note": "The tail becomes a prominent external appendage during the sit and remains protruding beside the right side instead of staying tucked beside the haunch as in the approved anatomy.",
+            "model": "gpt-5.6-luna",
+            "frames": [
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            "issues": [
+              "IDENTITY_DRIFT"
+            ],
+            "passed": false,
+            "version": "sprite-quality-v1",
+            "edgeFrames": [],
+            "reviewedAt": "2026-10-07T04:00:42.526430953Z",
+            "inputSha256": "b9ccabf4ea36202fd8a6e793beb0302986f675a3be7e5ca1f99e5d7bf949ed69",
+            "rulesSha256": "b33d5a540b1d5adbec62438e29fea781fb13bd0b0c525b043ae476dc6068da8b",
+            "reviewLayout": "matched-direction-frame-pairs-v1",
+            "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "pixelEvidence": {
+              "version": "native-frame-delta-v1",
+              "reference": "frame0",
+              "frameCount": 9,
+              "alphaStable": false,
+              "boundsExclusive": [
+                [
+                  5,
+                  5,
+                  28,
+                  30
+                ],
+                [
+                  5,
+                  5,
+                  28,
+                  30
+                ],
+                [
+                  5,
+                  4,
+                  28,
+                  30
+                ],
+                [
+                  5,
+                  4,
+                  28,
+                  30
+                ],
+                [
+                  5,
+                  3,
+                  28,
+                  30
+                ],
+                [
+                  5,
+                  3,
+                  28,
+                  30
+                ],
+                [
+                  5,
+                  3,
+                  28,
+                  30
+                ],
+                [
+                  5,
+                  3,
+                  28,
+                  30
+                ],
+                [
+                  5,
+                  3,
+                  28,
+                  30
+                ]
+              ],
+              "subtleShadingOnly": false,
+              "maxVisibleRgbDelta": 254,
+              "maxRgbDeltaFromFrame0": [
+                0,
+                22,
+                243,
+                243,
+                254,
+                254,
+                254,
+                254,
+                254
+              ],
+              "alphaChangedFromFrame0": [
+                0,
+                4,
+                69,
+                68,
+                116,
+                105,
+                103,
+                113,
+                110
+              ],
+              "maxRgbDeltaFromPrevious": [
+                0,
+                22,
+                243,
+                243,
+                243,
+                59,
+                0,
+                59,
+                59
+              ],
+              "alphaChangedFromPrevious": [
+                0,
+                4,
+                73,
+                25,
+                62,
+                13,
+                2,
+                10,
+                3
+              ],
+              "rgbChangedPixelsFromFrame0": [
+                0,
+                66,
+                205,
+                212,
+                254,
+                249,
+                249,
+                253,
+                251
+              ]
+            },
+            "rulesRevision": "sprite-regressions-2026-10-07-v11",
+            "detachedFrames": [],
+            "learnedLessons": [],
+            "idleMotionFrames": [],
+            "silhouetteFrames": []
+          }
+        }
+      }
+    },
+    {
+      "label": "sit-north",
+      "action": "SIT",
+      "direction": "north",
+      "repairCount": 1,
+      "derivation": null,
+      "variants": {
+        "restored": {
+          "file": "paired-review-live/sit-north-restored.png",
+          "sha256": "c7f481c31f53dd6b0e917e1f125c141524615e8f1eca7083bfcdb1c5516b3d28",
+          "actualReport": {
+            "note": "The sit motion is present, but the descent is not fully continuous: frames 2–3 visibly shift between different leg/body configurations, and frames 6–8 show the tail protruding laterally from the seated haunch instead of remaining tucked beside it. The north-facing direction is maintained and the final frames are seated.",
+            "model": "gpt-5.6-luna",
+            "frames": [
+              2,
+              3,
+              6,
+              7,
+              8
+            ],
+            "issues": [
+              "DISCONTINUITY",
+              "TAIL_CARRIAGE"
+            ],
+            "passed": false,
+            "version": "sprite-quality-v1",
+            "edgeFrames": [],
+            "reviewedAt": "2026-10-07T04:01:14.038653638Z",
+            "inputSha256": "c7f481c31f53dd6b0e917e1f125c141524615e8f1eca7083bfcdb1c5516b3d28",
+            "rulesSha256": "b33d5a540b1d5adbec62438e29fea781fb13bd0b0c525b043ae476dc6068da8b",
+            "reviewLayout": "matched-direction-frame-pairs-v1",
+            "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "pixelEvidence": {
+              "version": "native-frame-delta-v1",
+              "reference": "frame0",
+              "frameCount": 9,
+              "alphaStable": false,
+              "boundsExclusive": [
+                [
+                  5,
+                  3,
+                  27,
+                  31
+                ],
+                [
+                  6,
+                  3,
+                  26,
+                  30
+                ],
+                [
+                  6,
+                  2,
+                  26,
+                  29
+                ],
+                [
+                  5,
+                  2,
+                  27,
+                  29
+                ],
+                [
+                  5,
+                  3,
+                  27,
+                  30
+                ],
+                [
+                  6,
+                  3,
+                  26,
+                  30
+                ],
+                [
+                  6,
+                  3,
+                  25,
+                  30
+                ],
+                [
+                  7,
+                  3,
+                  25,
+                  31
+                ],
+                [
+                  7,
+                  3,
+                  25,
+                  31
+                ]
+              ],
+              "subtleShadingOnly": false,
+              "maxVisibleRgbDelta": 243,
+              "maxRgbDeltaFromFrame0": [
+                0,
+                243,
+                243,
+                243,
+                243,
+                243,
+                243,
+                243,
+                243
+              ],
+              "alphaChangedFromFrame0": [
+                0,
+                28,
+                63,
+                74,
+                49,
+                61,
+                76,
+                87,
+                85
+              ],
+              "maxRgbDeltaFromPrevious": [
+                0,
+                243,
+                243,
+                243,
+                243,
+                59,
+                195,
+                243,
+                59
+              ],
+              "alphaChangedFromPrevious": [
+                0,
+                28,
+                51,
+                33,
+                49,
+                14,
+                19,
+                17,
+                12
+              ],
+              "rgbChangedPixelsFromFrame0": [
+                0,
+                127,
+                196,
+                219,
+                177,
+                187,
+                220,
+                231,
+                227
+              ]
+            },
+            "rulesRevision": "sprite-regressions-2026-10-07-v11",
+            "detachedFrames": [],
+            "learnedLessons": [],
+            "idleMotionFrames": [],
+            "silhouetteFrames": []
+          }
+        }
+      }
+    },
+    {
+      "label": "sit-west",
+      "action": "SIT",
+      "direction": "west",
+      "repairCount": 3,
+      "derivation": {
+        "source": {
+          "key": "7bcd0a3a-c05e-41a3-b26e-72aaa085d231/9b512fb8-0f67-441e-9c31-0b9c74512153/native-32/sheets/sit-east.png",
+          "loop": false,
+          "sha256": "ca3755cb00ea68b2fec308bb80da8e33454cc5801fea4166d009d793d3ef7de8",
+          "durationMs": 130,
+          "frameCount": 9,
+          "providerUsage": {
+            "type": "generations",
+            "generations": 1.0
+          }
+        },
+        "strategy": "symmetric-approved-motion-v1",
+        "seedHashes": {
+          "east": "d8023778640c83ec4aeb1f54a9bfbd2fe81f4f665a45d13d513e9937dcd64b12",
+          "west": "d083ea1de9ca34afe1696a51db3d38d5ccc74467aa81159f932662f2769fe492",
+          "north": "575bf09fcfe085dba3c709484135010ffb409940e62d18873466e2b8ad2be333",
+          "south": "d88af1d768c31af17bf3699b8986daeb6a43e06c433f429f3b3439756fac00fb"
+        }
+      },
+      "variants": {
+        "restored": {
+          "file": "paired-review-live/sit-west-restored.png",
+          "sha256": "54fbb83146255c97af2db473dde2eef6d4bb0576f0b838fe60593903e52da17b",
+          "actualReport": {
+            "note": "The dog consistently faces west, transitions smoothly into a seated pose, and holds the seated posture through frames 5–8. No clear identity, eye, direction, tail-carriage, action, or continuity defects are visible.",
+            "model": "gpt-5.6-luna",
+            "frames": [],
+            "issues": [
+              "TAIL_CARRIAGE"
+            ],
+            "passed": false,
+            "version": "sprite-quality-v1",
+            "edgeFrames": [],
+            "reviewedAt": "2026-10-07T04:01:47.156353917Z",
+            "inputSha256": "54fbb83146255c97af2db473dde2eef6d4bb0576f0b838fe60593903e52da17b",
+            "rulesSha256": "b33d5a540b1d5adbec62438e29fea781fb13bd0b0c525b043ae476dc6068da8b",
+            "reviewLayout": "matched-direction-frame-pairs-v1",
+            "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "pixelEvidence": {
+              "version": "native-frame-delta-v1",
+              "reference": "frame0",
+              "frameCount": 9,
+              "alphaStable": false,
+              "boundsExclusive": [
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  2,
+                  5,
+                  29,
+                  31
+                ],
+                [
+                  4,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  5,
+                  3,
+                  30,
+                  31
+                ],
+                [
+                  5,
+                  3,
+                  31,
+                  31
+                ],
+                [
+                  6,
+                  3,
+                  31,
+                  31
+                ],
+                [
+                  6,
+                  3,
+                  29,
+                  31
+                ],
+                [
+                  6,
+                  3,
+                  29,
+                  31
+                ],
+                [
+                  6,
+                  3,
+                  29,
+                  31
+                ]
+              ],
+              "subtleShadingOnly": false,
+              "maxVisibleRgbDelta": 254,
+              "maxRgbDeltaFromFrame0": [
+                0,
+                243,
+                243,
+                254,
+                254,
+                254,
+                254,
+                254,
+                254
+              ],
+              "alphaChangedFromFrame0": [
+                0,
+                82,
+                54,
+                126,
+                157,
+                162,
+                156,
+                155,
+                155
+              ],
+              "maxRgbDeltaFromPrevious": [
+                0,
+                243,
+                254,
+                243,
+                243,
+                59,
+                59,
+                59,
+                0
+              ],
+              "alphaChangedFromPrevious": [
+                0,
+                82,
+                82,
+                100,
+                83,
+                31,
+                14,
+                5,
+                0
+              ],
+              "rgbChangedPixelsFromFrame0": [
+                0,
+                232,
+                175,
+                277,
+                314,
+                315,
+                311,
+                312,
+                312
+              ]
+            },
+            "rawEditReview": {
+              "note": "The dog reaches a seated pose, but the tail extends prominently away from the haunch in frames 3–5 and remains raised and curled above the rump during the final seated hold, rather than staying tucked beside the haunch.",
+              "model": "gpt-5.6-luna",
+              "frames": [
+                3,
+                4,
+                5,
+                6,
+                7,
+                8
+              ],
+              "issues": [
+                "TAIL_CARRIAGE"
+              ],
+              "passed": false,
+              "version": "sprite-quality-v1",
+              "edgeFrames": [],
+              "reviewedAt": "2026-10-07T04:01:55.481970784Z",
+              "rulesSha256": "b33d5a540b1d5adbec62438e29fea781fb13bd0b0c525b043ae476dc6068da8b",
+              "reviewLayout": "matched-direction-frame-pairs-v1",
+              "pixelEvidence": {
+                "version": "native-frame-delta-v1",
+                "reference": "frame0",
+                "frameCount": 9,
+                "alphaStable": false,
+                "boundsExclusive": [
+                  [
+                    3,
+                    4,
+                    29,
+                    31
+                  ],
+                  [
+                    2,
+                    5,
+                    29,
+                    31
+                  ],
+                  [
+                    4,
+                    4,
+                    29,
+                    31
+                  ],
+                  [
+                    5,
+                    3,
+                    30,
+                    31
+                  ],
+                  [
+                    5,
+                    3,
+                    31,
+                    31
+                  ],
+                  [
+                    6,
+                    3,
+                    31,
+                    31
+                  ],
+                  [
+                    6,
+                    3,
+                    29,
+                    31
+                  ],
+                  [
+                    6,
+                    3,
+                    29,
+                    31
+                  ],
+                  [
+                    6,
+                    3,
+                    29,
+                    31
+                  ]
+                ],
+                "subtleShadingOnly": false,
+                "maxVisibleRgbDelta": 254,
+                "maxRgbDeltaFromFrame0": [
+                  0,
+                  243,
+                  243,
+                  254,
+                  254,
+                  254,
+                  254,
+                  254,
+                  254
+                ],
+                "alphaChangedFromFrame0": [
+                  0,
+                  82,
+                  54,
+                  126,
+                  157,
+                  162,
+                  156,
+                  155,
+                  155
+                ],
+                "maxRgbDeltaFromPrevious": [
+                  0,
+                  243,
+                  254,
+                  243,
+                  243,
+                  59,
+                  59,
+                  59,
+                  0
+                ],
+                "alphaChangedFromPrevious": [
+                  0,
+                  82,
+                  82,
+                  100,
+                  83,
+                  31,
+                  14,
+                  5,
+                  0
+                ],
+                "rgbChangedPixelsFromFrame0": [
+                  0,
+                  221,
+                  158,
+                  262,
+                  298,
+                  299,
+                  294,
+                  295,
+                  295
+                ]
+              },
+              "rulesRevision": "sprite-regressions-2026-10-07-v11",
+              "detachedFrames": [],
+              "idleMotionFrames": [],
+              "silhouetteFrames": []
+            },
+            "rawEditSha256": "113fc43ae2302e4b9b8388dea4addc6bb309310ec06cf558ab356fb65f0f8892",
+            "rulesRevision": "sprite-regressions-2026-10-07-v11",
+            "detachedFrames": [],
+            "learnedLessons": [],
+            "idleMotionFrames": [],
+            "silhouetteFrames": []
+          }
+        },
+        "raw": {
+          "file": "paired-review-live/sit-west-raw.png",
+          "sha256": "113fc43ae2302e4b9b8388dea4addc6bb309310ec06cf558ab356fb65f0f8892",
+          "actualReport": {
+            "note": "The dog reaches a seated pose, but the tail extends prominently away from the haunch in frames 3–5 and remains raised and curled above the rump during the final seated hold, rather than staying tucked beside the haunch.",
+            "model": "gpt-5.6-luna",
+            "frames": [
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            "issues": [
+              "TAIL_CARRIAGE"
+            ],
+            "passed": false,
+            "version": "sprite-quality-v1",
+            "edgeFrames": [],
+            "reviewedAt": "2026-10-07T04:01:55.481970784Z",
+            "rulesSha256": "b33d5a540b1d5adbec62438e29fea781fb13bd0b0c525b043ae476dc6068da8b",
+            "reviewLayout": "matched-direction-frame-pairs-v1",
+            "pixelEvidence": {
+              "version": "native-frame-delta-v1",
+              "reference": "frame0",
+              "frameCount": 9,
+              "alphaStable": false,
+              "boundsExclusive": [
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  2,
+                  5,
+                  29,
+                  31
+                ],
+                [
+                  4,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  5,
+                  3,
+                  30,
+                  31
+                ],
+                [
+                  5,
+                  3,
+                  31,
+                  31
+                ],
+                [
+                  6,
+                  3,
+                  31,
+                  31
+                ],
+                [
+                  6,
+                  3,
+                  29,
+                  31
+                ],
+                [
+                  6,
+                  3,
+                  29,
+                  31
+                ],
+                [
+                  6,
+                  3,
+                  29,
+                  31
+                ]
+              ],
+              "subtleShadingOnly": false,
+              "maxVisibleRgbDelta": 254,
+              "maxRgbDeltaFromFrame0": [
+                0,
+                243,
+                243,
+                254,
+                254,
+                254,
+                254,
+                254,
+                254
+              ],
+              "alphaChangedFromFrame0": [
+                0,
+                82,
+                54,
+                126,
+                157,
+                162,
+                156,
+                155,
+                155
+              ],
+              "maxRgbDeltaFromPrevious": [
+                0,
+                243,
+                254,
+                243,
+                243,
+                59,
+                59,
+                59,
+                0
+              ],
+              "alphaChangedFromPrevious": [
+                0,
+                82,
+                82,
+                100,
+                83,
+                31,
+                14,
+                5,
+                0
+              ],
+              "rgbChangedPixelsFromFrame0": [
+                0,
+                221,
+                158,
+                262,
+                298,
+                299,
+                294,
+                295,
+                295
+              ]
+            },
+            "rulesRevision": "sprite-regressions-2026-10-07-v11",
+            "detachedFrames": [],
+            "idleMotionFrames": [],
+            "silhouetteFrames": []
+          }
+        }
+      }
+    },
+    {
+      "label": "sit-east",
+      "action": "SIT",
+      "direction": "east",
+      "repairCount": 0,
+      "derivation": null,
+      "variants": {
+        "restored": {
+          "file": "paired-review-live/sit-east-restored.png",
+          "sha256": "ca3755cb00ea68b2fec308bb80da8e33454cc5801fea4166d009d793d3ef7de8",
+          "actualReport": {
+            "note": "No clear visible defects detected across frames 0–8.",
+            "model": "gpt-5.6-luna",
+            "frames": [],
+            "issues": [],
+            "passed": true,
+            "version": "sprite-quality-v1",
+            "edgeFrames": [],
+            "reviewedAt": "2026-10-07T04:02:25.061696262Z",
+            "inputSha256": "ca3755cb00ea68b2fec308bb80da8e33454cc5801fea4166d009d793d3ef7de8",
+            "rulesSha256": "b33d5a540b1d5adbec62438e29fea781fb13bd0b0c525b043ae476dc6068da8b",
+            "reviewLayout": "matched-direction-frame-pairs-v1",
+            "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "pixelEvidence": {
+              "version": "native-frame-delta-v1",
+              "reference": "frame0",
+              "frameCount": 9,
+              "alphaStable": false,
+              "boundsExclusive": [
+                [
+                  3,
+                  4,
+                  29,
+                  31
+                ],
+                [
+                  3,
+                  5,
+                  30,
+                  31
+                ],
+                [
+                  3,
+                  4,
+                  28,
+                  31
+                ],
+                [
+                  2,
+                  3,
+                  27,
+                  31
+                ],
+                [
+                  1,
+                  3,
+                  27,
+                  31
+                ],
+                [
+                  1,
+                  3,
+                  26,
+                  31
+                ],
+                [
+                  3,
+                  3,
+                  26,
+                  31
+                ],
+                [
+                  3,
+                  3,
+                  26,
+                  31
+                ],
+                [
+                  3,
+                  3,
+                  26,
+                  31
+                ]
+              ],
+              "subtleShadingOnly": false,
+              "maxVisibleRgbDelta": 254,
+              "maxRgbDeltaFromFrame0": [
+                0,
+                243,
+                243,
+                254,
+                254,
+                254,
+                254,
+                254,
+                254
+              ],
+              "alphaChangedFromFrame0": [
+                0,
+                82,
+                54,
+                126,
+                157,
+                162,
+                156,
+                155,
+                155
+              ],
+              "maxRgbDeltaFromPrevious": [
+                0,
+                243,
+                254,
+                243,
+                243,
+                59,
+                59,
+                59,
+                0
+              ],
+              "alphaChangedFromPrevious": [
+                0,
+                82,
+                82,
+                100,
+                83,
+                31,
+                14,
+                5,
+                0
+              ],
+              "rgbChangedPixelsFromFrame0": [
+                0,
+                221,
+                158,
+                262,
+                298,
+                299,
+                294,
+                295,
+                295
+              ]
+            },
+            "rulesRevision": "sprite-regressions-2026-10-07-v11",
+            "detachedFrames": [],
+            "learnedLessons": [],
+            "idleMotionFrames": [],
+            "silhouetteFrames": []
+          }
+        }
+      }
+    }
+  ]
+}

@@ -185,8 +185,9 @@ class StyledQualityAgentTest {
             var instruction=ArgumentCaptor.forClass(String.class);var board=ArgumentCaptor.forClass(byte[].class);
             verify(client).structuredImage(instruction.capture(),anyString(),board.capture(),anyMap());
             for(var line:rules.path("reviewInstructions"))assertThat(instruction.getValue()).contains(line.asText());
-            // FRAME 8 is the right member of the final pair, not a repeated reference/frame 7.
-            assertThat(ImageIO.read(new ByteArrayInputStream(board.getValue())).getRGB(736+16*4,528+20*4)).isEqualTo(0xff12ab56);
+            // Moving actions keep all direction references and the original nine-frame temporal grid.
+            assertThat(report.path("reviewLayout").asText()).isEqualTo("four-direction-temporal-grid-v1");
+            assertThat(ImageIO.read(new ByteArrayInputStream(board.getValue())).getRGB(446+16*4,472+20*4)).isEqualTo(0xff12ab56);
         }
         assertThat(cases).isEqualTo(2);
     }
@@ -219,6 +220,27 @@ class StyledQualityAgentTest {
         }
         assertThat(frames.stream().map(StyledSpriteCodec::sha).toList()).isEqualTo(sourceHashes);
         assertThatThrownBy(()->StyledQualityAgent.pairedBoard(seeds,frames,"unknown")).hasMessage("QUALITY_RESPONSE_INVALID");
+    }
+    @Test void onlyIdleUsesFirstFramePairsWhileMovingActionsRetainAllDirectionReferences()throws Exception {
+        when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(json.readTree("{\"issues\":[],\"frames\":[],\"note\":\"Mock response for layout routing only\"}"));
+        var seed=png(false);var frames=Collections.nCopies(9,seed);
+        for(String action:List.of("IDLE","WALK","RUN","SNIFF","TAIL_WAG","BACK_OFF","SIT","LIE_DOWN")) {
+            clearInvocations(client);
+            var report=agent.review(json.readTree("{\"tailCarriage\":\"UNKNOWN\"}"),Collections.nCopies(4,seed),frames,action,"west");
+            var image=ArgumentCaptor.forClass(byte[].class);var task=ArgumentCaptor.forClass(String.class);var instruction=ArgumentCaptor.forClass(String.class);
+            verify(client).structuredImage(instruction.capture(),task.capture(),image.capture(),anyMap());
+            var board=ImageIO.read(new ByteArrayInputStream(image.getValue()));
+            if(action.equals("IDLE")) {
+                assertThat(report.path("reviewLayout").asText()).isEqualTo("matched-direction-frame-pairs-v1");
+                assertThat(board.getWidth()).isEqualTo(896);assertThat(task.getValue()).contains("nine labeled pairs");
+                assertThat(instruction.getValue()).contains("false subtleShadingOnly value is NOT a defect verdict");
+            } else {
+                assertThat(report.path("reviewLayout").asText()).isEqualTo("four-direction-temporal-grid-v1");
+                assertThat(board.getWidth()).isEqualTo(640);assertThat(board.getHeight()).isEqualTo(608);
+                assertThat(task.getValue()).contains("SOUTH, NORTH, WEST, EAST","neighboring frames").doesNotContain("nine labeled pairs");
+                assertThat(instruction.getValue()).doesNotContain("false subtleShadingOnly value is NOT a defect verdict");
+            }
+        }
     }
     @Test void realCodecUsesFindingSpecificRepairAndRejectsUnknownCodes()throws Exception{
         var codec=new StyledSpriteCodec(json,System.getenv().getOrDefault("ASSET_HARNESS_PYTHON","python3"));

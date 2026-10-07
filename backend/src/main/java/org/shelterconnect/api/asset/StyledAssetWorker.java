@@ -230,7 +230,9 @@ public class StyledAssetWorker {
     private static JsonNode continuation(StyledAssetStore.Work w) {
         if(w.qualityPolicy()==null)return tools.jackson.databind.node.MissingNode.getInstance();
         var plan=w.qualityPolicy().at("/repairContinuation/plans/"+w.label());
-        return w.repairCount()==3 && plan.path("attempt").asInt()==3?plan:tools.jackson.databind.node.MissingNode.getInstance();
+        boolean valid=w.repairCount()==plan.path("attempt").asInt() && (w.repairCount()==3
+            || w.repairCount()==4 && w.action().equals("IDLE") && StyledSpriteCodec.SEED_IDLE_VERSION.equals(plan.path("strategy").asText()));
+        return valid?plan:tools.jackson.databind.node.MissingNode.getInstance();
     }
     static boolean mirrorRepair(StyledAssetStore.Work w) {
         return Set.of("IDLE","WALK","SIT").contains(w.action()) && Set.of("west","east").contains(w.direction())
