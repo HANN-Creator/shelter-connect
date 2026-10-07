@@ -130,37 +130,41 @@ public class StyledLessonStore {
         event(w.id(),pass?"ACTIVATED":"REJECTED",Map.of("passed",pass));
     }
     @Transactional public void failed(Work w,String code) {if(owned(w))terminal(w.id(),"FAILED",code);}
-    /** Choose lessons afresh only before submission. A paid/in-flight attempt keeps its receipt. */
-    @Transactional public JsonNode pin(StyledAssetStore.Work w,int promptBudget) {
+    /** Pin every applicable active rule; the composer, not selection, handles the provider text budget. */
+    @Transactional public JsonNode pin(StyledAssetStore.Work w) {
         var selected=json.createArrayNode();if(!ownedAsset(w) || w.qualityPolicy()==null)return selected;assets.valid(w.id(),true);
         var ids=jdbc.sql("""
             SELECT id FROM shelter.styled_quality_lessons WHERE status='ACTIVE' AND action=:a AND direction=:d AND tail=:t AND rules_sha256=:r
-              AND (NOT EXISTS(SELECT 1 FROM shelter.styled_learning_recoveries x WHERE x.job_id=:job AND x.label=:label AND x.state='QUEUED')
-                OR EXISTS(SELECT 1 FROM shelter.styled_learning_recoveries x,jsonb_array_elements(x.required_lessons) wanted
-                  WHERE x.job_id=:job AND x.label=:label AND x.state='QUEUED' AND wanted->>'id'=styled_quality_lessons.id::text AND wanted->>'sha256'=candidate_sha256))
-            ORDER BY updated_at DESC,id LIMIT 20
-            """).param("a",w.action()).param("d",direction(w)).param("t",tail(w))
-            .param("r",StyledSpriteCodec.qualityRulesSha()).param("job",w.id()).param("label",w.label()).query(UUID.class).list();
-        var issues=new HashSet<String>();
+            ORDER BY id
+            """).param("a",w.action()).param("d",direction(w)).param("t",tail(w)).param("r",StyledSpriteCodec.qualityRulesSha()).query(UUID.class).list();
         for(UUID id:ids) {
-            var row=lesson(id);String issue=row.path("issue").asText();if(issues.contains(issue))continue;
-            boolean permitted=true;
-            for(var e:row.path("validationExamples")) {
-                try {if(!valid(example(UUID.fromString(e.path("id").asText()))))permitted=false;}
-                catch(org.springframework.dao.EmptyResultDataAccessException removed){permitted=false;}
-            }
-            if(!permitted){terminal(id,"DISABLED","Evidence permission withdrawn");continue;}
+            var row=lesson(id);
+            if(!evidencePermitted(row)){terminal(id,"DISABLED","Evidence permission withdrawn");continue;}
             var c=row.path("candidate");StyledLessonAgent.validateText(c);
-            int length=c.path("prevention").asText().length()+1+(selected.isEmpty()?9:0);
-            if(length>promptBudget)continue;promptBudget-=length;
-            selected.add(json.valueToTree(Map.of("id",id.toString(),"sha256",row.path("candidateSha256").asText(),"issue",issue,
+            selected.add(json.valueToTree(Map.of("id",id.toString(),"sha256",row.path("candidateSha256").asText(),"issue",row.path("issue").asText(),
                 "prevention",c.path("prevention").asText(),"criterion",c.path("criterion").asText(),"action",w.action(),"direction",direction(w),
                 "tail",tail(w),"rulesSha256",StyledSpriteCodec.qualityRulesSha())));
-            issues.add(issue);if(selected.size()==2)break;
         }
         jdbc.sql("UPDATE shelter.styled_asset_steps SET learned_lessons=CAST(:l AS jsonb) WHERE job_id=:j AND label=:label AND status='PENDING'")
             .param("l",json.writeValueAsString(selected)).param("j",w.id()).param("label",w.label()).update();
-        return selected;
+        return pinned(w); // Use the durable JSON representation for all hashes and the next quality review.
+    }
+    @Transactional public boolean authorized(StyledAssetStore.Work w,JsonNode selected) {
+        if(!ownedAsset(w) || !selected.equals(pinned(w)))return false;assets.valid(w.id(),true);
+        for(var expected:selected) {
+            var row=lesson(UUID.fromString(expected.path("id").asText()));
+            if(!row.path("status").asText().equals("ACTIVE") || !row.path("candidateSha256").equals(expected.path("sha256"))
+                || !row.path("rulesSha256").asText().equals(StyledSpriteCodec.qualityRulesSha()) || !evidencePermitted(row))return false;
+        }
+        return true;
+    }
+    private boolean evidencePermitted(JsonNode row) {
+        if(!row.path("validationExamples").isArray() || row.path("validationExamples").isEmpty())return false;
+        for(var e:row.path("validationExamples")) {
+            try {if(!valid(example(UUID.fromString(e.path("id").asText()))))return false;}
+            catch(org.springframework.dao.EmptyResultDataAccessException removed){return false;}
+        }
+        return true;
     }
     @Transactional(readOnly=true) public JsonNode pinned(StyledAssetStore.Work w) {
         return json.readTree(jdbc.sql("SELECT learned_lessons::text FROM shelter.styled_asset_steps WHERE job_id=:j AND label=:l")

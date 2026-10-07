@@ -36,9 +36,9 @@ public class StyledAssetStore {
         String prefix() { return dogId+"/"+id+"/native-32/"; }
     }
     private final JdbcClient jdbc;private final JsonMapper json;private final ShelterAccessService access;
-    private final AccountService accounts;private final AssetProperties properties;private final AssetStore legacy;private final BehaviorService behaviors;
-    public StyledAssetStore(JdbcClient jdbc,JsonMapper json,ShelterAccessService access,AccountService accounts,AssetProperties properties,AssetStore legacy,BehaviorService behaviors) {
-        this.jdbc=jdbc;this.json=json;this.access=access;this.accounts=accounts;this.properties=properties;this.legacy=legacy;this.behaviors=behaviors;
+    private final AccountService accounts;private final AssetProperties properties;private final AssetStore legacy;private final BehaviorService behaviors;private final StyledLessonStore lessons;
+    public StyledAssetStore(JdbcClient jdbc,JsonMapper json,ShelterAccessService access,AccountService accounts,AssetProperties properties,AssetStore legacy,BehaviorService behaviors,StyledLessonStore lessons) {
+        this.jdbc=jdbc;this.json=json;this.access=access;this.accounts=accounts;this.properties=properties;this.legacy=legacy;this.behaviors=behaviors;this.lessons=lessons;
     }
     @Transactional public Job request(UUID subject,UUID dog,JsonNode body) {
         access.requireDogForWrite(subject,dog);properties.requireEnabled();AssetInput.fields(body,"photoId","traits");
@@ -349,14 +349,19 @@ public class StyledAssetStore {
             WHERE s.job_id=:j AND s.label=:l AND NOT EXISTS(SELECT 1 FROM shelter.styled_quality_lessons q
               WHERE q.id::text=item->>'id' AND q.status='ACTIVE' AND q.candidate_sha256=item->>'sha256')
             """).param("j",w.id()).param("l",w.label()).query(Integer.class).single();
+        var pinned=lessons.pinned(w);
+        if(!pinned.isEmpty()) {
+            if(!lessons.authorized(w,pinned))throw new AssetException(409,"LESSON_SOURCE_CHANGED");
+            String sha=StyledSpriteCodec.sha(payload.path("description").asText().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            int ready=jdbc.sql("SELECT count(*) FROM shelter.styled_lesson_prompts WHERE job_id=:j AND label=:l AND state='READY' AND lessons_sha256=:lessons AND description_sha256=:description")
+                .param("j",w.id()).param("l",w.label()).param("lessons",StyledSpriteCodec.sha(json.writeValueAsBytes(pinned))).param("description",sha).query(Integer.class).single();
+            if(ready==0)throw new AssetException(409,"LEARNED_RULE_NOT_APPLIED");
+        }
         var recovery=learningRecovery(w);
         if(!recovery.isEmpty()) {
-            var pinned=json.readTree(jdbc.sql("SELECT learned_lessons::text FROM shelter.styled_asset_steps WHERE job_id=:j AND label=:l")
-                .param("j",w.id()).param("l",w.label()).query(String.class).single());
             var required=recovery.path("requiredLessons");
             boolean applied=disabled==0 && !required.isEmpty() && required.valueStream().allMatch(r->pinned.valueStream().anyMatch(p->
-                p.path("id").equals(r.path("id")) && p.path("sha256").equals(r.path("sha256"))
-                && payload.path("description").asText().contains(p.path("prevention").asText())));
+                p.path("id").equals(r.path("id")) && p.path("sha256").equals(r.path("sha256"))));
             if(!applied)throw new AssetException(409,"LEARNED_RULE_NOT_APPLIED");
         }
         if(disabled>0){defer(w,0);return false;}

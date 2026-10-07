@@ -101,7 +101,7 @@ class StyledSeedQualityAgentTest {
     @Test void seedLessonsReachGenerationAndReviewWithoutOverridingHardChecks()throws Exception {
         var lesson=json.readTree("{\"id\":\"12345678-1234-1234-1234-123456789abc\",\"sha256\":\""+"a".repeat(64)+"\",\"action\":\"BASE\",\"direction\":\"all\",\"tail\":\"UNKNOWN\",\"issue\":\"EYE_READABILITY\",\"prevention\":\"Keep compact filled pupils distinct from surrounding fur.\",\"criterion\":\"A front or side pupil disappears into surrounding fur.\"}");
         ((tools.jackson.databind.node.ObjectNode)lesson).put("rulesSha256",StyledSpriteCodec.qualityRulesSha());
-        var lessons=json.createArrayNode().add(lesson);
+        var lessons=json.createArrayNode();for(int i=0;i<5;i++)lessons.add(lesson);
         when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(verdict("south","PASS","PASS"));
         var clipped=new StyledQualityAgentTest().png(true);
         var report=agent.review(seed(),Collections.nCopies(4,clipped),lessons);

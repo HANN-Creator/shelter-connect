@@ -12,9 +12,9 @@ public class StyledAssetWorker {
     private final StyledSpriteCodec codec;private final AssetProperties properties;private final JsonMapper json;private final StyledQualityAgent quality;
     private final StyledLessonStore lessons;
     private final StyledSeedQualityAgent seedQuality;
-    private final StyledLearningRecoveryStore recovery;
-    public StyledAssetWorker(StyledAssetStore store,StyledAssetProvider provider,AssetStorage storage,StyledSpriteCodec codec,AssetProperties properties,JsonMapper json,StyledQualityAgent quality,StyledLessonStore lessons,StyledSeedQualityAgent seedQuality,StyledLearningRecoveryStore recovery) {
-        this.store=store;this.provider=provider;this.storage=storage;this.codec=codec;this.properties=properties;this.json=json;this.quality=quality;this.lessons=lessons;this.seedQuality=seedQuality;this.recovery=recovery;
+    private final StyledLearningRecoveryStore recovery;private final StyledLessonPromptComposer prompts;
+    public StyledAssetWorker(StyledAssetStore store,StyledAssetProvider provider,AssetStorage storage,StyledSpriteCodec codec,AssetProperties properties,JsonMapper json,StyledQualityAgent quality,StyledLessonStore lessons,StyledSeedQualityAgent seedQuality,StyledLearningRecoveryStore recovery,StyledLessonPromptComposer prompts) {
+        this.store=store;this.provider=provider;this.storage=storage;this.codec=codec;this.properties=properties;this.json=json;this.quality=quality;this.lessons=lessons;this.seedQuality=seedQuality;this.recovery=recovery;this.prompts=prompts;
     }
     public void tick() {
         if(!properties.enabled)return;
@@ -60,7 +60,7 @@ public class StyledAssetWorker {
                     byte[] origin=storage.asset(base.path("keys").path(direction).asText());
                     if(!StyledSpriteCodec.sha(origin).equals(base.path("hashes").path(direction).asText()))throw new AssetException(409,"STYLED_SEED_CHANGED");
                     var frames=StyledSpriteCodec.mirroredMotion(sheet,origin,seed(w));
-                    lessons.pin(w,1000);
+                    lessons.pin(w);
                     store.derivedCheckpoint(w,json.valueToTree(Map.of("status","COMPLETED",
                         "frames",frames.stream().map(b->Base64.getEncoder().encodeToString(b)).toList(),
                         "derivation",Map.of("strategy",StyledSpriteCodec.MIRROR_VERSION,"source",source,"seedHashes",base.path("hashes")))));
@@ -72,16 +72,10 @@ public class StyledAssetWorker {
                             "issues",w.qualityReport()!=null && w.qualityReport().path("issues").isArray()?w.qualityReport().path("issues"):json.createArrayNode()));
                 JsonNode payload=learnedEdit?codec.seedIdle(w.direction(),seed(w),(int)(((long)w.traits().path("seed").asInt()+7919L*w.repairCount())%2147483647)):motionEdit(w)?motionEditPayload(w):w.character()?codec.character(w.dogId(),w.traits(),storage.photo(w.dogId(),w.bucket(),w.key()),policy):
                     codec.motion(w.traits(),w.action(),w.direction(),seed(w),policy);
-                {
-                    var selected=lessons.pin(w,(w.character() || edit?2000:1000)-payload.path("description").asText().length());
-                    if(!selected.isEmpty()) {
-                        ((tools.jackson.databind.node.ObjectNode)policy).set("lessons",selected);
-                        if(w.character())payload=codec.character(w.dogId(),w.traits(),storage.photo(w.dogId(),w.bucket(),w.key()),policy);
-                        else if(edit) {
-                            String suffix=" Lessons: "+String.join(" ",selected.valueStream().map(n->n.path("prevention").asText()).toList());
-                            ((tools.jackson.databind.node.ObjectNode)payload).put("description",payload.path("description").asText()+suffix);
-                        } else payload=codec.motion(w.traits(),w.action(),w.direction(),seed(w),policy);
-                    }
+                var selected=lessons.pin(w);
+                if(!selected.isEmpty()) {
+                    String description=prompts.describe(w,selected,payload.path("description").asText(),w.character() || edit?2000:1000);
+                    ((tools.jackson.databind.node.ObjectNode)payload).put("description",description);
                 }
                 if(!store.reserve(w,payload))return;
                 submitted=true;

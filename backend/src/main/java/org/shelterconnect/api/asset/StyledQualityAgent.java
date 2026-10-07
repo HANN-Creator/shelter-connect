@@ -37,7 +37,7 @@ public class StyledQualityAgent {
     }
     public JsonNode review(JsonNode contract,List<byte[]> seeds,List<byte[]> frames,String action,String direction,JsonNode lessons) {
         var allowedIssues=new TreeSet<>(ISSUES);if(!action.equals("IDLE"))allowedIssues.remove("IDLE_MOTION");
-        if(!lessons.isArray() || lessons.size()>2)throw invalid();
+        if(!lessons.isArray())throw invalid();
         for(var lesson:lessons) {
             if(!lesson.path("action").asText().equals(action) || !lesson.path("direction").asText().equals(direction)
                 || !lesson.path("tail").asText().equals(contract.path("tailCarriage").asText())

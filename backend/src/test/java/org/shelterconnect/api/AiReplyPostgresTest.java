@@ -39,6 +39,7 @@ class AiReplyPostgresTest {
 	@MockitoBean org.shelterconnect.api.asset.StyledQualityAgent spriteQuality;
     @MockitoBean org.shelterconnect.api.asset.StyledSeedQualityAgent seedQuality;
     @MockitoBean org.shelterconnect.api.asset.StyledLessonAgent spriteLessons;
+    @MockitoBean org.shelterconnect.api.asset.StyledLessonPromptAgent spritePrompt;
     @MockitoBean AiProvider provider; @MockitoSpyBean AiProperties properties;
 	@MockitoSpyBean AiBudgetProperties budgetProperties;
 	private UUID user,other,subject,otherSubject,shelter,dog,otherDog,session,message,observation;

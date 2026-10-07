@@ -164,7 +164,7 @@ class QualityRegressionTest(unittest.TestCase):
                 'rulesSha256':quality_binding()['sha256'],'action':'SIT','direction':'west','tail':'UNKNOWN',
                 'issue':'CANVAS_CLIPPING','prevention':'Keep the whole seated tail beside the hind paw throughout the descent.',
                 'criterion':'The tail tip touches the canvas boundary while sitting or holding the pose.'}
-        q={'contract':{'tailCarriage':'UNKNOWN'},'lessons':[lesson]}
+        q={'contract':{'tailCarriage':'UNKNOWN'},'lessons':[deepcopy(lesson) for _ in range(5)]}
         traits={'seed':0,'motionDescription':'dog','rearDescription':'rear'}
         p=motion_payload(traits,load_rules(),'SIT','west',{},q)
         self.assertIn(lesson['prevention'],p['description'])

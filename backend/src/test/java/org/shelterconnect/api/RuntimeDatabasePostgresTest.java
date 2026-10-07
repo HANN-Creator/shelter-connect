@@ -30,6 +30,7 @@ class RuntimeDatabasePostgresTest {
     @MockitoBean org.shelterconnect.api.asset.StyledQualityAgent spriteQuality;
     @MockitoBean org.shelterconnect.api.asset.StyledSeedQualityAgent seedQuality;
     @MockitoBean org.shelterconnect.api.asset.StyledLessonAgent spriteLessons;
+    @MockitoBean org.shelterconnect.api.asset.StyledLessonPromptAgent spritePrompt;
     @MockitoBean AiProvider provider;
     @MockitoBean org.shelterconnect.api.asset.PhotoAppearanceProvider appearance;
     @MockitoBean org.shelterconnect.api.behavior.BehaviorSuggestionProvider suggestions;

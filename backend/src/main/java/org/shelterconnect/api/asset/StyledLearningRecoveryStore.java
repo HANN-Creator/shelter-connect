@@ -125,12 +125,12 @@ public class StyledLearningRecoveryStore {
     @Transactional public JsonNode newLessons(Work w) {
         if(!authorized(w))return json.createArrayNode();
         return json.valueToTree(jdbc.sql("""
-            SELECT DISTINCT ON (l.issue) l.id,l.candidate_sha256,l.issue FROM shelter.styled_quality_lessons l
+            SELECT l.id,l.candidate_sha256,l.issue FROM shelter.styled_quality_lessons l
             JOIN shelter.styled_asset_steps s ON s.job_id=:j AND s.label=:label
             WHERE l.status='ACTIVE' AND l.action='IDLE' AND l.direction=:d AND l.tail=:t AND l.rules_sha256=:r
               AND s.quality_report->'issues' @> jsonb_build_array(l.issue)
               AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements(s.learned_lessons) old WHERE old->>'sha256'=l.candidate_sha256)
-            ORDER BY l.issue,l.updated_at DESC,l.id LIMIT 2
+            ORDER BY l.id
             """).param("j",w.job()).param("label",w.label()).param("d",w.direction()).param("t",w.policy().at("/contract/tailCarriage").asText())
             .param("r",StyledSpriteCodec.qualityRulesSha()).query((r,n)->Map.of("id",r.getObject(1,UUID.class).toString(),"sha256",r.getString(2),"issue",r.getString(3))).list());
     }
