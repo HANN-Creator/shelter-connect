@@ -179,3 +179,5 @@ B-43: [스프라이트 자동 품질 검수·선택 보완](sprite-quality-repai
 - B-61 실패 학습의 정상 사례 확보와 규칙 적용 보완 재개: [노션](https://app.notion.com/p/3f25b2d1a55f80b3a5d0f5809a190509), [처리·API·검증 경계](learning-recovery.md). 브랜치 `backend/b-61-learning-recovery`. 원본/복원본 학습 분리, 승인 도트의 검수된 학습 전용 참조, 검증된 새 규칙이 있을 때만 IDLE 1회 추가 보완, 요청 내 규칙 반영 강제·이력·권한·동시성 검사. DB V20, 품질 기준 v12 유지. B-61 노션 쓰기는 정상이며 앞선 미동기화 기록은 당시 상태다. 기존 팩 최종 품질·배포 검증은 B-60에서 이어간다.
 
 - B-62 생성·검수 학습 규칙 고정 2개 제한 제거: [노션](https://app.notion.com/p/3f25b2d1a55f80979009e4daad46c40d), [전체 규칙 간결화](all-lesson-compaction.md). 브랜치 `backend/b-62-remove-lesson-cap`. 적용 범위의 모든 활성 규칙을 Luna로 간결화하고 별도 의미 보존 검증, 원본 전체의 후속 검수·필수 규칙 연결, 영구 기록·동일 입력 결과 재사용·실패 차단. DB V21, 공통 품질 기준 v12 및 이미지 보완 예산 유지.
+
+- B-63 기본 도트·최종 팩 품질 통과 자동 승인: [노션](https://app.notion.com/p/3f25b2d1a55f801b83efdf64490d1b83), [동작·검증 경계](automatic-quality-approval.md). 브랜치 `backend/b-63-automatic-quality-approval`. 새 일반 작업의 수동 승인 두 단계 제거, 이미지·검수·전체 행동·권한 일치 시 SYSTEM 승인 근거 저장, 실패 예외 보존. DB V22. 기존 작업 일괄 전환·학습 전용 공개·전체 동물 자동 수집은 제외한다.

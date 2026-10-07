@@ -1,6 +1,6 @@
 # 32px 4방향 에셋 영구 저장·조회 (B-40)
 
-강아지에 사용할 에셋을 담당자가 한 번 생성하고 검토하면, 방문자는 저장된 에셋을 재사용한다. 기존 Spring 서버의 작업 큐에 승인된 사진+스타일 파이프라인을 연결한다. FastAPI 서버를 별도로 운영할 필요는 없다.
+강아지에 사용할 에셋을 한 번 생성하고 품질 검수를 통과하면, 방문자는 저장된 에셋을 재사용한다. B-63부터 새 32px 일반 작업의 기본 도트와 최종 팩은 [품질 통과 자동 승인](automatic-quality-approval.md)을 사용한다. 기존 Spring 서버의 작업 큐에 허가된 사진+스타일 파이프라인을 연결한다. FastAPI 서버를 별도로 운영할 필요는 없다.
 
 ## 저장과 생성 범위
 
@@ -18,10 +18,9 @@
 0. 특징이 있으면 Luna 행동 초안을 생성하고 확인한다. [B-42 선택 흐름](trait-selected-sprites.md)을 따른다. 미확인/특징 없음은 기본3개다.
 1. `POST /v1/shelter-admin/dogs/{dogId}/styled-assets` → 202, 작업 ID.
 2. `GET /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}`로 상태 조회.
-3. 새 작업은 기준 도트의 [눈 표현 검사와 최대2회 보완](seed-eye-quality.md)을 먼저 수행한다. `steps[0].qualityReport`가 불합격이면 기준 승인과 행동 생성이 차단된다. `SEED_REVIEW`에서 `GET .../{jobId}/preview`로 앞·뒤·좌·우 기준 이미지 확인.
-4. `POST .../{jobId}/seed-review`에 `decision`, 20자 이상 `note`, 미리보기의 `expectedSeedHashes` 4개를 전달. 승인해야 actionPlan에 있는 행동 × 4방향 생성이 시작된다.
-5. 새 작업은 각 시트 저장 후 Luna·픽셀 검사와 최대2회 자동 보완을 수행한다. 모두 처리되면 `REVIEW`. 실패 잔존 시 최종 승인은 차단된다. [자동 검수·보완](sprite-quality-repair.md) 참조. 동일 preview 경로에서 4방향·선택 행동을 검토한다.
-6. `POST .../{jobId}/review`에 같은 형식으로 최종 승인. 사진 허가·강아지·보호소 공개 조건도 만족해야 공개 조회가 가능하다.
+3. 새 작업은 기준 도트의 [눈 표현 검사와 최대2회 보완](seed-eye-quality.md)을 먼저 수행한다. 해시와 모든 검수 근거가 통과하면 `seedReview.actor=SYSTEM`으로 자동 승인하고 행동 생성을 시작한다. 불합격·불확실은 `SEED_REVIEW`에 남으며 `GET .../{jobId}/preview`로 확인한다.
+4. 각 행동·방향 시트는 Luna·픽셀 검사와 최대2회 자동 보완을 수행한다. 모든 선택 시트가 통과하면 `qualityApproval.actor=SYSTEM`으로 `APPROVED`. 실패가 남으면 `REVIEW`이며 공개되지 않는다. [자동 검수·보완](sprite-quality-repair.md) 참조.
+5. `seed-review`와 `review`의 `decision`, 20자 이상 `note`, `expectedSeedHashes` 요청은 과거 수동 작업과 예외 처리용으로 유지한다. 정상 새 작업에서는 두 승인 요청이 필요 없다. 사진 허가·강아지·보호소 공개 조건도 만족해야 공개 조회가 가능하다.
 
 요청 예시 (실제 사진 해시와 설명으로 교체):
 
@@ -65,7 +64,7 @@
 - 접수된 작업 ID가 있으면 재시작 후 조회만 재개한다. Storage 장애는 DB에 임시 보관한 완료 응답부터 저장을 재개한다.
 - 요청 직후 연결이 끊겨 접수 여부가 불명확하면 `OUTCOME_UNKNOWN`으로 정지한다. 자동 재결제하지 않는다.
 - 운영자만 `POST /v1/operations/styled-asset-jobs/{jobId}/recover`를 사용한다. 결과 불명 시 PixelLab 대시보드에서 확인한 `providerJobId`가 필수다. 공급자가 실패를 확정한 작업만 명시적으로 새 요청을 허용하고 이전 ID·요청 해시를 이력에 남긴다. 일반 저장 실패는 `{}`로 기존 결과부터 재개한다.
-- 현재 회복 API에 넣는 공급자 ID의 개체 일치는 운영자가 확인해야 한다. 기준 프레임 및 최종 검토 없이 공개되지 않는다.
+- 현재 회복 API에 넣는 공급자 ID의 개체 일치는 운영자가 확인해야 한다. 기준 프레임 및 최종 품질 검수 통과 없이 자동 공개되지 않는다.
 
 ## 적용과 확인
 
