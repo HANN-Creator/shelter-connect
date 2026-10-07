@@ -64,7 +64,7 @@ class StyledLessonAgentTest {
         var helper=new StyledQualityAgentTest();var lesson=(tools.jackson.databind.node.ObjectNode)candidate();
         lesson.put("action","SIT");lesson.put("direction","west");lesson.put("tail","UNKNOWN");
         lesson.put("rulesSha256",StyledSpriteCodec.qualityRulesSha());lesson.put("issue","CANVAS_CLIPPING");
-        var lessons=json.createArrayNode().add(lesson);
+        var lessons=json.createArrayNode();for(int i=0;i<5;i++)lessons.add(lesson);
         when(helper.client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(json.readTree("{\"issues\":[],\"frames\":[],\"note\":\"Mock pass\"}"));
         var contract=json.readTree("{\"tailCarriage\":\"UNKNOWN\"}");
         var seeds=Collections.nCopies(4,helper.png(false));var frames=Collections.nCopies(9,helper.png(true));

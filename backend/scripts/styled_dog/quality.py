@@ -16,7 +16,7 @@ DIRECTIONS = ('south', 'north', 'west', 'east')
 def learned_guidance(action, direction, quality):
     """Validated runtime lessons are additive prompt data, never Python or shell code."""
     lessons = quality.get('lessons', [])
-    if not isinstance(lessons, list) or len(lessons) > 2:
+    if not isinstance(lessons, list):
         raise ValueError('Invalid learned lessons')
     text=[]
     for lesson in lessons:
@@ -31,13 +31,14 @@ def learned_guidance(action, direction, quality):
             value=lesson.get(field)
             if not isinstance(value,str) or not minimum <= len(value) <= maximum or not re.fullmatch(r"[A-Za-z ,.;:'()!?-]+", value):
                 raise ValueError('Invalid learned lesson text')
-        text.append(lesson['prevention'])
+        if lesson['prevention'] not in text:
+            text.append(lesson['prevention'])
     return ' Lessons: '+' '.join(text) if text else ''
 
 
 def learned_seed_guidance(quality):
     lessons = quality.get('lessons', [])
-    if not isinstance(lessons, list) or len(lessons) > 2:
+    if not isinstance(lessons, list):
         raise ValueError('Invalid seed lessons')
     text = []
     for lesson in lessons:
@@ -51,7 +52,8 @@ def learned_seed_guidance(quality):
             value = lesson.get(field)
             if not isinstance(value,str) or not low <= len(value) <= high or not re.fullmatch(r"[A-Za-z ,.;:'()!?-]+", value):
                 raise ValueError('Invalid seed lesson text')
-        text.append(lesson['prevention'])
+        if lesson['prevention'] not in text:
+            text.append(lesson['prevention'])
     return ' Lessons: ' + ' '.join(text) if text else ''
 
 

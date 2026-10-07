@@ -27,7 +27,7 @@ public class StyledSeedQualityAgent {
     }
     public JsonNode review(byte[] photo,List<byte[]> seeds,JsonNode lessons) {
         if(seeds.size()!=4)throw invalid();
-        if(!lessons.isArray() || lessons.size()>2)throw invalid();
+        if(!lessons.isArray())throw invalid();
         var criteria=new ArrayList<String>();
         for(var lesson:lessons) {
             if(!lesson.path("action").asText().equals("BASE") || !lesson.path("direction").asText().equals("all")

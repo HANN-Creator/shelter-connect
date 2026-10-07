@@ -32,7 +32,9 @@ class StyledAssetPostgresTest {
     @Autowired StyledAssetWorker worker;@Autowired StyledAssetStore store;
     @Autowired StyledLessonWorker lessonWorker;@Autowired StyledLessonStore lessonStore;
     @Autowired StyledLearningRecoveryWorker recoveryWorker;
+    @Autowired StyledLessonPromptComposer promptComposer;
     @MockitoBean StyledLessonAgent lessonAgent;
+    @MockitoBean StyledLessonPromptAgent promptAgent;
     @MockitoBean StyledAssetProvider provider;@MockitoBean AssetStorage storage;
     @MockitoBean StyledSpriteCodec codec;@MockitoBean BehaviorSuggestionProvider suggestions;
     @MockitoBean StyledQualityAgent quality;
@@ -63,6 +65,12 @@ class StyledAssetPostgresTest {
         when(provider.submit(anyBoolean(),any())).thenAnswer(c->{outsideTransaction();return UUID.randomUUID();});
         when(provider.poll(any(),eq(true))).thenAnswer(c->{outsideTransaction();String b=Base64.getEncoder().encodeToString(png);return json.valueToTree(Map.of("status","COMPLETED","directions",Map.of("south",b,"north",b,"west",b,"east",b)));});
         when(provider.poll(any(),eq(false))).thenAnswer(c->{outsideTransaction();return json.valueToTree(Map.of("status","COMPLETED","frames",Collections.nCopies(9,Base64.getEncoder().encodeToString(png))));});
+        when(promptAgent.compose(any(),anyString(),anyInt())).thenAnswer(c->{outsideTransaction();
+            return json.valueToTree(Map.of("prompt",String.join(" ",c.<JsonNode>getArgument(0).valueStream().map(n->n.path("prevention").asText()).distinct().toList())));});
+        when(promptAgent.rewrite(any(),anyString(),anyInt(),any(),any())).thenAnswer(c->{outsideTransaction();
+            return json.valueToTree(Map.of("prompt",String.join(" ",c.<JsonNode>getArgument(0).valueStream().map(n->n.path("prevention").asText()).distinct().toList())));});
+        when(promptAgent.verify(any(),anyString(),any(),anyInt())).thenAnswer(c->{outsideTransaction();
+            return json.valueToTree(Map.of("preserved",Collections.nCopies(c.<JsonNode>getArgument(0).size(),true),"compatibleWithBase",true,"noNewRequirements",true));});
         permission=UUID.fromString(post(opSubject,"/v1/operations/asset-permissions",Map.of("shelterId",shelter,"sourceKey","test-"+dog,"sourceKind","SHELTER","permissionNote","disposable fixture","crawlAllowed",false,"derivativesAllowed",true,"pixellabAllowed",true,"autoGenerate",false),201).at("/data/id").asText());
         post(opSubject,"/v1/operations/asset-imports",Map.of("photoId",photo,"permissionId",permission),200);
     }
@@ -760,6 +768,85 @@ class StyledAssetPostgresTest {
         verify(provider,times(18)).submit(anyBoolean(),any());verify(provider,times(1)).editAnimation(any());
         review(id,false,"APPROVE",200);
     }
+    @Test void everyRuleBeyondOldCandidateLimitAndSameIssueReachesFirstMotionAndReview()throws Exception {
+        learningPair();lessonWorker.tick();lessonWorker.tick();cloneActiveRules(onlyLesson(),24);
+        nextLearningDog();UUID next=request();tick();tick();review(next,true,"APPROVE",200);finish(next);
+        var pinned=json.readTree(jdbc.queryForObject("SELECT learned_lessons::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='sit-west'",String.class,next));
+        assertThat(pinned.size()).isEqualTo(25);
+        var inputs=org.mockito.ArgumentCaptor.forClass(JsonNode.class);verify(promptAgent).compose(inputs.capture(),anyString(),anyInt());
+        assertThat(inputs.getValue()).isEqualTo(pinned);
+        assertThat(step(next,"sit-west").at("/qualityReport/learnedLessons")).isEqualTo(pinned);
+        var record=json.readTree(jdbc.queryForObject("SELECT input::text FROM shelter.styled_lesson_prompts WHERE job_id=? AND state='READY'",String.class,next));
+        assertThat(record.path("lessons")).isEqualTo(pinned);
+        assertThat(jdbc.queryForObject("SELECT jsonb_array_length(validation->'preserved') FROM shelter.styled_lesson_prompts WHERE job_id=?",Integer.class,next)).isEqualTo(25);
+    }
+    @Test void allSeedRulesReachFirstGenerationAndQualityReview()throws Exception {
+        UUID source=seedLearningPair();review(source,true,"APPROVE",200);finish(source);lessonWorker.tick();lessonWorker.tick();cloneActiveRules(onlyLesson(),4);
+        nextLearningDog();UUID next=request();tick();tick();
+        var pinned=json.readTree(jdbc.queryForObject("SELECT learned_lessons::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='character'",String.class,next));
+        assertThat(pinned.size()).isEqualTo(5);verify(seedQuality).review(any(),anyList(),eq(pinned));
+        var input=org.mockito.ArgumentCaptor.forClass(JsonNode.class);verify(promptAgent).compose(input.capture(),anyString(),anyInt());
+        assertThat(input.getValue()).isEqualTo(pinned);assertThat(read(next).path("status").asText()).isEqualTo("SEED_REVIEW");
+    }
+    @Test void meaningLossIsAutomaticallyRewrittenWithEveryRuleBeforeImagePurchase()throws Exception {
+        UUID source=seedLearningPair();review(source,true,"APPROVE",200);finish(source);lessonWorker.tick();lessonWorker.tick();cloneActiveRules(onlyLesson(),3);
+        var rejected=json.valueToTree(Map.of("preserved",List.of(true,true,false,true),"compatibleWithBase",true,"noNewRequirements",true));
+        var accepted=json.valueToTree(Map.of("preserved",Collections.nCopies(4,true),"compatibleWithBase",true,"noNewRequirements",true));
+        doReturn(rejected,accepted).when(promptAgent).verify(any(),anyString(),any(),anyInt());
+        nextLearningDog();UUID next=request();clearInvocations(provider);tick();
+        var pinned=json.readTree(jdbc.queryForObject("SELECT learned_lessons::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='character'",String.class,next));
+        verify(promptAgent).rewrite(eq(pinned),anyString(),anyInt(),any(),eq(rejected));
+        verify(provider).submit(eq(true),any());
+        assertThat(jdbc.queryForObject("SELECT state FROM shelter.styled_lesson_prompts WHERE job_id=?",String.class,next)).isEqualTo("READY");
+        assertThat(jdbc.queryForObject("SELECT jsonb_array_length(history) FROM shelter.styled_lesson_prompts WHERE job_id=?",Integer.class,next)).isEqualTo(4);
+    }
+    @Test void failedMeaningVerificationPreservesAllRulesAndStopsBeforeImagePurchase()throws Exception {
+        UUID source=seedLearningPair();review(source,true,"APPROVE",200);finish(source);lessonWorker.tick();lessonWorker.tick();cloneActiveRules(onlyLesson(),3);
+        doReturn(json.valueToTree(Map.of("preserved",List.of(true,true,false,true),"compatibleWithBase",true,"noNewRequirements",true))).when(promptAgent).verify(any(),anyString(),any(),anyInt());
+        nextLearningDog();UUID next=request();clearInvocations(provider);tick();
+        assertThat(read(next).path("failureCode").asText()).isEqualTo("LESSON_PROMPT_MEANING_LOST");verifyNoInteractions(provider);
+        assertThat(jdbc.queryForObject("SELECT state FROM shelter.styled_lesson_prompts WHERE job_id=?",String.class,next)).isEqualTo("FAILED");
+        assertThat(jdbc.queryForObject("SELECT validation->'preserved'->>2 FROM shelter.styled_lesson_prompts WHERE job_id=?",String.class,next)).isEqualTo("false");
+        verify(promptAgent,times(2)).rewrite(any(),anyString(),anyInt(),any(),any());
+        assertThat(jdbc.queryForObject("SELECT jsonb_array_length(history) FROM shelter.styled_lesson_prompts WHERE job_id=?",Integer.class,next)).isEqualTo(6);
+        post(opSubject,"/v1/operations/styled-asset-jobs/"+next+"/recover",Map.of(),200);tick();
+        verify(promptAgent,times(1)).compose(any(),anyString(),anyInt());verifyNoInteractions(provider);
+    }
+    @Test void overlongCompactionCannotDropRulesToPurchaseAnImage()throws Exception {
+        UUID source=seedLearningPair();review(source,true,"APPROVE",200);finish(source);lessonWorker.tick();lessonWorker.tick();cloneActiveRules(onlyLesson(),3);
+        doAnswer(c->json.valueToTree(Map.of("prompt","x".repeat(c.<Integer>getArgument(2)+1)))).when(promptAgent).compose(any(),anyString(),anyInt());
+        nextLearningDog();UUID next=request();clearInvocations(provider);tick();
+        assertThat(read(next).path("failureCode").asText()).isEqualTo("LESSON_PROMPT_INVALID");verifyNoInteractions(provider);
+        verify(promptAgent,never()).verify(any(),anyString(),any(),anyInt());
+        assertThat(jdbc.queryForObject("SELECT jsonb_array_length(learned_lessons) FROM shelter.styled_asset_steps WHERE job_id=? AND label='character'",Integer.class,next)).isEqualTo(4);
+    }
+    @Test void learningRecoveryIncludesAllRequiredRulesBeyondTwo()throws Exception {
+        UUID id=learningRecoveryJob(true);recoveryTick();lessonWorker.tick();lessonWorker.tick();cloneActiveRules(onlyLesson(),3);
+        recoveryTick();assertThat(recoveryState(id).path("requiredLessons").size()).isEqualTo(4);
+        clearInvocations(provider);tick();tick();finish(id);
+        verify(provider,times(1)).editAnimation(any());assertThat(step(id,"idle-south").at("/qualityReport/learnedLessons").size()).isEqualTo(4);
+        assertThat(recoveryState(id).path("state").asText()).isEqualTo("COMPLETED");
+    }
+    @Test void cachedPromptIsReusedAndChangedPayloadOrRevokedRuleCannotBeSubmitted()throws Exception {
+        UUID source=seedLearningPair();review(source,true,"APPROVE",200);finish(source);lessonWorker.tick();lessonWorker.tick();cloneActiveRules(onlyLesson(),3);
+        nextLearningDog();UUID next=request();var work=store.claim();var rules=lessonStore.pin(work);
+        String description=promptComposer.describe(work,rules,"Keep native pixel art.",2000);
+        assertThat(promptComposer.describe(work,rules,"Keep native pixel art.",2000)).isEqualTo(description);
+        verify(promptAgent,times(1)).compose(any(),anyString(),anyInt());verify(promptAgent,times(1)).verify(any(),anyString(),any(),anyInt());
+        try {store.reserve(work,json.valueToTree(Map.of("description","Different prompt missing the rules.")));fail("An unverified payload must be blocked");}
+        catch(RuntimeException error){assertThat(error).hasMessage("LEARNED_RULE_NOT_APPLIED");}
+        lessonStore.disable(opSubject,UUID.fromString(rules.get(0).path("id").asText()),json.valueToTree(Map.of("note","Disable after verification, before provider purchase")));
+        try {store.reserve(work,json.valueToTree(Map.of("description",description)));fail("Revoked rules must be blocked");}
+        catch(RuntimeException error){assertThat(error).hasMessage("LESSON_SOURCE_CHANGED");}
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.asset_submissions WHERE job_id=?",Integer.class,next)).isZero();
+    }
+    void cloneActiveRules(UUID original,int count) {
+        for(int i=0;i<count;i++)jdbc.update("""
+            INSERT INTO shelter.styled_quality_lessons(source_example_id,source_job_id,source_label,action,direction,tail,issue,rules_sha256,status,candidate,candidate_sha256,validation_examples,validation)
+            SELECT source_example_id,source_job_id,?,action,direction,tail,issue,rules_sha256,status,candidate,candidate_sha256,validation_examples,validation
+            FROM shelter.styled_quality_lessons WHERE id=?
+            ""","fixture-copy-"+i,original);
+    }
     @Test void seedLessonsWaitForHumanPositiveThenReachNextDogGenerationAndReview()throws Exception {
         UUID first=seedLearningPair();UUID lesson=onlyLesson();
         lessonWorker.tick();assertThat(lessonStatus(lesson)).isEqualTo("WAITING_EVIDENCE");verifyNoInteractions(lessonAgent);
@@ -770,7 +857,7 @@ class StyledAssetPostgresTest {
         var pinned=json.readTree(jdbc.queryForObject("SELECT learned_lessons::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='character'",String.class,next));
         assertThat(pinned.size()).isEqualTo(1);assertThat(pinned.get(0).path("id").asText()).isEqualTo(lesson.toString());
         var payload=org.mockito.ArgumentCaptor.forClass(JsonNode.class);verify(provider).submit(eq(true),payload.capture());
-        assertThat(payload.getValue().at("/quality/lessons")).isEqualTo(pinned);
+        assertThat(payload.getValue().path("description").asText()).contains(pinned.get(0).path("prevention").asText());
         verify(seedQuality).review(any(),anyList(),eq(pinned));
         assertThat(read(next).at("/steps/0/qualityReport/learnedLessons")).isEqualTo(pinned);
         assertThat(read(next).path("status").asText()).isEqualTo("SEED_REVIEW");
@@ -882,15 +969,15 @@ class StyledAssetPostgresTest {
         UUID first=seedLearningPair();review(first,true,"APPROVE",200);finish(first);UUID lesson=onlyLesson();
         lessonWorker.tick();lessonWorker.tick();
         nextLearningDog();UUID next=request();
-        when(codec.character(any(),any(),any(),any())).thenAnswer(c->{
-            var q=c.<JsonNode>getArgument(3);
-            if(!q.path("lessons").isEmpty())lessonStore.disable(opSubject,lesson,json.valueToTree(Map.of("note","Disable before any new seed submission")));
-            return json.valueToTree(Map.of("character",true,"quality",q));
-        });
+        doAnswer(c->{
+            lessonStore.disable(opSubject,lesson,json.valueToTree(Map.of("note","Disable before any new seed submission")));
+            return json.valueToTree(Map.of("prompt","Preserve all filled pupils and the original dog."));
+        }).when(promptAgent).compose(any(),anyString(),anyInt());
         clearInvocations(provider);tick();verifyNoInteractions(provider);
-        tick();var payload=org.mockito.ArgumentCaptor.forClass(JsonNode.class);verify(provider).submit(eq(true),payload.capture());
-        assertThat(payload.getValue().at("/quality/lessons").isMissingNode()).isTrue();
+        assertThat(read(next).path("failureCode").asText()).isEqualTo("LESSON_SOURCE_CHANGED");
+        verify(promptAgent,never()).verify(any(),anyString(),any(),anyInt());
     }
+
     @Test void seedRecheckRecordsExampleOnceWithoutCreatingASeedPositiveApproval()throws Exception {
         UUID id=request();tick();tick();var body=seedRecheckBody(id);
         post(subject,path(id)+"/quality-recheck",body,200);tick();
@@ -974,15 +1061,15 @@ class StyledAssetPostgresTest {
     @Test void disabledDuringPayloadConstructionNeverReachesProvider() throws Exception {
         learningPair();UUID lesson=onlyLesson();lessonWorker.tick();lessonWorker.tick();
         nextLearningDog();UUID next=request();tick();tick();review(next,true,"APPROVE",200);
-        var realCodec=new StyledSpriteCodec(json,System.getenv().getOrDefault("ASSET_HARNESS_PYTHON","python3"));
-        doAnswer(c->{var payload=realCodec.motion(c.getArgument(0),c.getArgument(1),c.getArgument(2),c.getArgument(3),c.getArgument(4));
-            if(!c.<JsonNode>getArgument(4).path("lessons").isEmpty())lessonStore.disable(opSubject,lesson,json.valueToTree(Map.of("note","Disabled during pending request construction")));
-            return payload;}).when(codec).motion(any(),anyString(),anyString(),any(),any());
+        doAnswer(c->{lessonStore.disable(opSubject,lesson,json.valueToTree(Map.of("note","Disabled during pending prompt verification")));
+            return json.valueToTree(Map.of("preserved",List.of(true),"compatibleWithBase",true,"noNewRequirements",true));
+        }).when(promptAgent).verify(any(),anyString(),any(),anyInt());
         clearInvocations(provider);finish(next);
         var calls=org.mockito.ArgumentCaptor.forClass(JsonNode.class);verify(provider,atLeastOnce()).submit(eq(false),calls.capture());
         assertThat(calls.getAllValues().stream().anyMatch(n->n.path("description").asText().contains(learnedPrevention()))).isFalse();
-        assertThat(lessonStatus(lesson)).isEqualTo("DISABLED");assertThat(read(next).path("status").asText()).isEqualTo("REVIEW");
+        assertThat(lessonStatus(lesson)).isEqualTo("DISABLED");assertThat(read(next).path("failureCode").asText()).isEqualTo("LESSON_SOURCE_CHANGED");
     }
+
     @Test void revokedEvidencePreventsLearningWithoutAnyModelUpload() throws Exception {
         learningPair();UUID lesson=onlyLesson();
         jdbc.update("UPDATE shelter.asset_source_permissions SET revoked_at=now() WHERE id=?",permission);

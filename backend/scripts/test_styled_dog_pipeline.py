@@ -44,7 +44,7 @@ class PipelineTest(unittest.TestCase):
                 'issue':'EYE_READABILITY','prevention':'Keep filled pupils distinct from adjacent fur.',
                 'criterion':'Pupils must be readable as compact filled shapes in front and side views.'}
         for attempt in range(3):
-            q={'rulesSha256':digest(POLICY),'attempt':attempt,'lessons':[rule]}
+            q={'rulesSha256':digest(POLICY),'attempt':attempt,'lessons':[deepcopy(rule) for _ in range(5)]}
             p=character_request(self.root,self.traits,load_rules(),q)
             self.assertIn(rule['prevention'],p['description'])
             self.assertIn('No hollow eye rings',p['description'])
