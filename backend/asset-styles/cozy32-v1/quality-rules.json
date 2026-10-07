@@ -1,5 +1,5 @@
 {
-  "revision": "sprite-regressions-2026-10-07-v11",
+  "revision": "sprite-regressions-2026-10-07-v12",
   "pixelEvidence": {
     "version": "native-frame-delta-v1",
     "subtleRgbChannelDelta": 24
@@ -53,6 +53,15 @@
     "EYES: compare open-eye frames with the approved seed: keep pupil shape, position and local contrast. A brief natural blink is allowed. Eyes that stay erased, become hollow rings, or merge into fur in open-eye frames are IDENTITY_DRIFT. North has no face; do not invent eyes."
   ],
   "regressions": [
+    {
+      "id": "paired-review-must-not-remove-moving-pose-context",
+      "action": "SIT",
+      "direction": "all",
+      "issue": "IDENTITY_DRIFT",
+      "check": "action-specific-review-and-bounded-idle-fallback",
+      "fixture": "paired-review-live.json",
+      "expected": "Preserve the v11 real 7/12 result, including three new SIT failures and both side IDLE failures. IDLE uses exact frame-zero pairs. Other actions use all four approved direction references and all nine sequential frames, preserving expected sitting/lying transitions and hidden anatomy context. Do not force a pass or remove raw-edit verdicts. Legacy mirrored IDLE may receive one explicit own-seed fallback with its recorded count increasing from 3 to 4; retain every prior grant/hash and replay old requests without spending again. No automatic extra repair budget."
+    },
     {
       "id": "live-idle-review-still-confuses-shading-after-pixel-evidence",
       "action": "IDLE",
@@ -236,6 +245,10 @@
     "version": "matched-direction-frame-pairs-v1",
     "scale": 4,
     "reference": "approved-matching-direction-and-repeated-frame-zero",
-    "instruction": "A paired review shows only the matching-direction approved seed and nine FRAME 0/current-frame pairs. Each left image repeats frame 0; only the labeled right images form the animation. All images have uniform 4x nearest-neighbor scaling: one native pixel equals four displayed pixels. A false subtleShadingOnly value is NOT a defect verdict; a brief blink can create a high RGB difference without a large pose change. Report concrete visible motion beyond the allowed one native pixel, not merely the presence of changed colors or the displacement between grid cells. Continue checking identity, eyes, direction, action, and actual tail motion independently."
+    "instruction": "A paired review shows only the matching-direction approved seed and nine FRAME 0/current-frame pairs. Each left image repeats frame 0; only the labeled right images form the animation. All images have uniform 4x nearest-neighbor scaling: one native pixel equals four displayed pixels. A false subtleShadingOnly value is NOT a defect verdict; a brief blink can create a high RGB difference without a large pose change. Report concrete visible motion beyond the allowed one native pixel, not merely the presence of changed colors or the displacement between grid cells. Continue checking identity, eyes, direction, action, and actual tail motion independently.",
+    "actions": [
+      "IDLE"
+    ],
+    "otherActions": "four-direction-temporal-grid-v1"
   }
 }

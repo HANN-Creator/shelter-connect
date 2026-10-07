@@ -31,6 +31,31 @@ def decode_recorded_alpha(rows):
 
 
 class QualityRegressionTest(unittest.TestCase):
+    def test_live_paired_review_keeps_idle_and_sit_failures_without_overriding_vision(self):
+        from styled_dog.tail_repair import read_sheet
+        root=Path(__file__).parent/'fixtures'
+        fixture=read(root/'paired-review-live.json')
+        self.assertFalse(fixture['sourcePixelsChanged'])
+        self.assertFalse(fixture['followUpModelReviewPerformed'])
+        self.assertEqual(fixture['newPixelLabRequests'],0)
+        self.assertEqual(len(fixture['cases']),12)
+        failed=[]
+        for case in fixture['cases']:
+            if not case['variants']['restored']['actualReport']['passed']:failed.append(case['label'])
+            for record in case['variants'].values():
+                path=root/record['file'];frames=read_sheet(path);report=record['actualReport']
+                self.assertEqual(digest(path),record['sha256'])
+                self.assertEqual(len(frames),9)
+                self.assertEqual(pixel_evidence(frames),report['pixelEvidence'])
+                self.assertEqual(report['rulesSha256'],fixture['rulesSha256'])
+                self.assertEqual(report['reviewLayout'],'matched-direction-frame-pairs-v1')
+                self.assertTrue(frame_audit(frames,frames[0],case['action'],case['direction'],'UNKNOWN')['structuralPassed'])
+        self.assertEqual(set(failed),{'idle-west','idle-east','sit-south','sit-north','sit-west'})
+        self.assertEqual(fixture['passedClips'],12-len(failed))
+        presentation=load_quality()['reviewPresentation']
+        self.assertEqual(presentation['actions'],['IDLE'])
+        self.assertEqual(presentation['otherActions'],'four-direction-temporal-grid-v1')
+
     def test_live_recheck_preserves_failed_verdicts_and_all_original_pixels(self):
         from styled_dog.tail_repair import read_sheet
         root=Path(__file__).parent/'fixtures'

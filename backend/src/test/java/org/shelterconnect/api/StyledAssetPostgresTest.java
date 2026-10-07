@@ -631,6 +631,76 @@ class StyledAssetPostgresTest {
         objects.put(source.at("/result/key").asText(),new byte[]{1});clearInvocations(provider,quality);tick();
         assertThat(read(id).path("failureCode").asText()).isEqualTo("STYLED_SHEET_CHANGED");verifyNoInteractions(provider,quality);
     }
+    JsonNode step(UUID id,String label) throws Exception {
+        return read(id).path("steps").valueStream().filter(n->n.path("label").asText().equals(label)).findFirst().orElseThrow();
+    }
+    Map<String,Object> legacyMirroredIdle(UUID id) throws Exception {
+        var before=step(id,"idle-west");var original=continuationBody(id,"idle-west");
+        post(subject,path(id)+"/repair-continuation",original,200);
+        // Reconstruct the pre-B60 persisted mirror grant, without paying for a fixture image.
+        jdbc.update("UPDATE shelter.asset_jobs SET status='REVIEW',quality_policy=jsonb_set(quality_policy,'{repairContinuation,plans,idle-west,strategy}',to_jsonb(CAST(? AS text))) WHERE id=?",StyledSpriteCodec.MIRROR_VERSION,id);
+        jdbc.update("UPDATE shelter.styled_asset_steps SET status='SUCCEEDED',result=CAST(? AS jsonb) || jsonb_build_object('derivation',jsonb_build_object('strategy',CAST(? AS text))),quality_report=CAST(? AS jsonb) || '{\"passed\":false,\"issues\":[\"IDLE_MOTION\"]}'::jsonb WHERE job_id=? AND label='idle-west'",
+            json.writeValueAsString(before.path("result")),StyledSpriteCodec.MIRROR_VERSION,json.writeValueAsString(before.path("qualityReport")),id);
+        return original;
+    }
+    @Test void idleUsesOwnSeedEvenWithPassingOppositeAndSeparateClipsRetainOldIdempotency() throws Exception {
+        UUID id=continuationFixture("idle-west");var original=continuationBody(id,"idle-west");
+        when(codec.seedIdle(anyString(),any(),anyInt())).thenReturn(json.valueToTree(Map.of("seedIdle",true)));
+        when(provider.editAnimation(any())).thenReturn(UUID.randomUUID());clearInvocations(provider);
+        post(subject,path(id)+"/repair-continuation",original,200);finish(id);
+        verify(codec).seedIdle(eq("west"),eq(png),anyInt());verify(provider,times(1)).editAnimation(any());
+        assertThat(read(id).at("/qualityPolicy/repairContinuation/plans/idle-west/strategy").asText()).isEqualTo(StyledSpriteCodec.SEED_IDLE_VERSION);
+        var kept=step(id,"idle-west");var seeds=read(id).path("seedReview");
+        jdbc.update("UPDATE shelter.styled_asset_steps SET repair_count=2,quality_report=quality_report || '{\"passed\":false,\"issues\":[\"IDLE_MOTION\"]}'::jsonb WHERE job_id=? AND label='idle-east'",id);
+        var next=continuationBody(id,"idle-east");post(subject,path(id)+"/repair-continuation",next,200);
+        post(subject,path(id)+"/repair-continuation",original,200);post(subject,path(id)+"/repair-continuation",next,200);
+        var changed=new HashMap<>(original);changed.put("note","Changed body must not reuse an archived idempotency identifier");
+        post(subject,path(id)+"/repair-continuation",changed,409);finish(id);tick();
+        verify(provider,times(2)).editAnimation(any());verify(provider,never()).submit(anyBoolean(),any());
+        assertThat(step(id,"idle-west")).isEqualTo(kept);assertThat(read(id).path("seedReview")).isEqualTo(seeds);
+        assertThat(read(id).at("/qualityPolicy/repairContinuationHistory/0/requestId").asText()).isEqualTo(original.get("requestId").toString());
+        assertThat(read(id).at("/qualityPolicy/repairContinuationHistory")).hasSize(1);
+        post(subject,path(id)+"/repair-continuation",original,200);tick();verify(provider,times(2)).editAnimation(any());
+    }
+    @Test void legacyMirroredIdleGetsOnlyOneSeedFallbackAndRawFailureStillBlocksApproval() throws Exception {
+        UUID id=continuationFixture("idle-west");var original=legacyMirroredIdle(id);var before=read(id);
+        var beforeHistory=json.readTree(jdbc.queryForObject("SELECT attempt_history::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-west'",String.class,id));
+        when(codec.seedIdle(anyString(),any(),anyInt())).thenReturn(json.valueToTree(Map.of("seedIdle",true)));
+        when(provider.editAnimation(any())).thenReturn(UUID.randomUUID());
+        var calls=new java.util.concurrent.atomic.AtomicInteger();
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("west"))).thenAnswer(c->{boolean ok=calls.incrementAndGet()==1;
+            return json.valueToTree(Map.of("passed",ok,"issues",ok?List.of():List.of("IDLE_MOTION")));});
+        var next=continuationBody(id,"idle-west");clearInvocations(provider);
+        post(subject,path(id)+"/repair-continuation",next,200);post(subject,path(id)+"/repair-continuation",next,200);
+        post(subject,path(id)+"/repair-continuation",original,200);finish(id);
+        verify(provider,times(1)).editAnimation(any());verify(provider,never()).submit(anyBoolean(),any());
+        verify(codec).seedIdle(eq("west"),eq(png),anyInt());
+        assertThat(step(id,"idle-west").path("repairCount").asInt()).isEqualTo(4);
+        assertThat(step(id,"idle-west").at("/qualityReport/rawEditReview/passed").asBoolean()).isFalse();
+        assertThat(read(id).path("failureCode").asText()).isEqualTo("QUALITY_REPAIR_EXHAUSTED");review(id,false,"APPROVE",409);
+        for(var old:before.path("steps"))if(!old.path("label").asText().equals("idle-west"))assertThat(step(id,old.path("label").asText())).isEqualTo(old);
+        assertThat(read(id).path("seedReview")).isEqualTo(before.path("seedReview"));
+        var history=json.readTree(jdbc.queryForObject("SELECT attempt_history::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-west'",String.class,id));
+        assertThat(history.size()).isEqualTo(beforeHistory.size()+1);
+        for(int i=0;i<beforeHistory.size();i++)assertThat(history.get(i)).isEqualTo(beforeHistory.get(i));
+        assertThat(history.get(history.size()-1).path("repairCount").asInt()).isEqualTo(3);
+        post(subject,path(id)+"/repair-continuation",original,200);post(subject,path(id)+"/repair-continuation",next,200);
+        post(subject,path(id)+"/repair-continuation",continuationBody(id,"idle-west"),409);tick();verify(provider,times(1)).editAnimation(any());
+        assertThatThrownBy(()->jdbc.update("UPDATE shelter.styled_asset_steps SET repair_count=5 WHERE job_id=? AND label='idle-west'",id)).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+        assertThatThrownBy(()->jdbc.update("UPDATE shelter.styled_asset_steps SET repair_count=4 WHERE job_id=? AND label='walk-west'",id)).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+    }
+    @Test void legacyFallbackRejectsOtherDefectsPriorSeedRepairAndUnspentNormalBudget() throws Exception {
+        UUID id=continuationFixture("idle-west");legacyMirroredIdle(id);var body=continuationBody(id,"idle-west");
+        jdbc.update("UPDATE shelter.styled_asset_steps SET quality_report=quality_report || '{\"issues\":[\"CANVAS_CLIPPING\"]}'::jsonb WHERE job_id=? AND label='idle-west'",id);
+        post(subject,path(id)+"/repair-continuation",body,409);
+        jdbc.update("UPDATE shelter.styled_asset_steps SET quality_report=quality_report || '{\"issues\":[\"IDLE_MOTION\"]}'::jsonb WHERE job_id=? AND label='idle-west'",id);
+        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=jsonb_set(quality_policy,'{repairContinuation,plans,idle-west,strategy}',to_jsonb(CAST(? AS text))) WHERE id=?",StyledSpriteCodec.SEED_IDLE_VERSION,id);
+        post(subject,path(id)+"/repair-continuation",body,409);
+        jdbc.update("UPDATE shelter.styled_asset_steps SET quality_report=quality_report || '{\"passed\":false,\"issues\":[\"IDENTITY_DRIFT\"]}'::jsonb WHERE job_id=? AND label='sit-south'",id);
+        post(subject,path(id)+"/repair-continuation",continuationBody(id,"sit-south"),409);
+        assertThat(step(id,"idle-west").path("repairCount").asInt()).isEqualTo(3);
+        assertThat(step(id,"sit-south").path("repairCount").asInt()).isZero();
+    }
     UUID tailPlan() throws Exception {
         UUID id=request();
         jdbc.update("UPDATE shelter.asset_jobs SET action_plan=action_plan || '[\"TAIL_WAG\"]'::jsonb WHERE id=?",id);

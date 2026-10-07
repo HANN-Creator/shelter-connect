@@ -173,3 +173,5 @@ B-43: [스프라이트 자동 품질 검수·선택 보완](sprite-quality-repai
 - B-58 쉬기 검수의 실제 픽셀 근거: [명암 변화 오판·검증 경계](idle-review-evidence.md). 브랜치 `backend/b-58-idle-review-evidence`. 실제 B-57 원본/복원본의 고정 알파·작은 RGB 변화와 Luna 오판을 보존하고 서버/CLI의 정확한 측정값을 검수 입력에 연결한다. v10, API·DB·보완 예산 변경 없음. 기존 이미지 실제 재검수와 프론트 승인 교체는 배포 후 진행하며 노션은 미동기화.
 
 - B-59 동일 방향 프레임 비교 검수: [실제 v10 재검수·입력 개선·검증 경계](direction-paired-review.md). 브랜치 `backend/b-59-direction-paired-review`. v10 실서버의 쉬기 4개 실패와 원본을 보존하고, 해당 방향 기준 도트 및 첫 프레임/각 프레임 쌍을 같은 배율로 전달한다. v11, 저장 이미지·API 요청·DB·보완 예산 변경 없음. 실제 v11 재검수와 승인 여부는 배포 후 확인하며 노션은 미동기화.
+
+- B-60 동작별 검수와 기존 쉬기 보완: [실제 v11 결과·보완 조건·검증 경계](idle-continuation-fallback.md). 브랜치 `backend/b-60-idle-continuation-fallback`. 실제 7/12 판정 보존, IDLE/다른 행동의 비교 입력 분리, 과거 반대편 복원 IDLE만 승인 도트 편집 1회 연결, 과거 요청 중복 방지·이력 유지. v12, DB V19. 실제 재검수·선택 보완·프론트 승인 연결까지가 완료 기준이며 노션은 미동기화.
