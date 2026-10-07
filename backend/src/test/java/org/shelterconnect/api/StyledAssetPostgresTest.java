@@ -1122,6 +1122,11 @@ class StyledAssetPostgresTest {
         post(opSubject,"/v1/operations/styled-asset-jobs/"+id+"/recover",Map.of(),409);
         tick();verify(provider,times(1)).editAnimation(any());
     }
+    @Test void existingPackRuleRecheckDoesNotOptIntoAutomaticLearning()throws Exception {
+        UUID id=learningRecoveryJob(false);var request=seedRecheckBody(id);
+        post(subject,path(id)+"/quality-recheck",request,200);
+        assertThat(read(id).path("qualityPolicy").has("learningRecovery")).isFalse();
+    }
     @Test void existingPacksRequireExplicitConsentAndReplayCannotResetLearning()throws Exception {
         UUID id=learningRecoveryJob(false);assertThat(recoveryState(id).isNull()).isTrue();
         clearInvocations(provider);recoveryTick();verifyNoInteractions(provider);var request=learningRequest(id);
