@@ -80,4 +80,29 @@ class StyledSpriteCodecTest {
         }
         assertThatThrownBy(()->codec.marginEdit("BASE","north",sheet,147)).isInstanceOf(AssetException.class);
     }
+    @Test void seedIdleStartsFromNineApprovedPosesNotTheDefectiveAnimation() throws Exception {
+        var codec=new StyledSpriteCodec(json,System.getenv().getOrDefault("ASSET_HARNESS_PYTHON","python3"));
+        byte[] seed=image(32);var payload=codec.seedIdle("north",seed,147);
+        assertThat(payload.path("description").asText()).contains("identical approved", "silhouette pixel", "north facing", "No visible eyes");
+        assertThat(payload.path("frames").size()).isEqualTo(9);
+        for(var frame:payload.path("frames"))assertThat(StyledSpriteCodec.nativeFrame(StyledPixelLabClient.decode(frame.at("/image/base64").asText())).getRGB(8,5)).isEqualTo(0xff123456);
+    }
+    @Test void mirroredMotionPreservesAllPixelsAndRefusesAsymmetricCoatsOrShapes() throws Exception {
+        var root=java.nio.file.Path.of("scripts/fixtures/motion-continuation");
+        byte[] east=java.nio.file.Files.readAllBytes(root.resolve("east.png")),west=java.nio.file.Files.readAllBytes(root.resolve("west.png"));
+        for(String action:List.of("idle","walk","sit")) {
+            byte[] sheet=java.nio.file.Files.readAllBytes(root.resolve(action+"-east.png"));
+            var source=StyledSpriteCodec.frames(sheet);var mirrored=StyledSpriteCodec.mirroredMotion(sheet,east,west);
+            assertThat(mirrored).hasSize(9);
+            for(int i=0;i<9;i++) {
+                var a=StyledSpriteCodec.nativeFrame(mirrored.get(i));var b=StyledSpriteCodec.nativeFrame(source.get(i));
+                for(int y=0;y<32;y++)for(int x=0;x<32;x++)assertThat(a.getRGB(x,y)).isEqualTo(b.getRGB(31-x,y));
+            }
+            var changed=StyledSpriteCodec.nativeFrame(west);changed.setRGB(12,10,0xffffffff);
+            var out=new ByteArrayOutputStream();ImageIO.write(changed,"png",out);
+            assertThatThrownBy(()->StyledSpriteCodec.mirroredMotion(sheet,east,out.toByteArray())).hasMessage("MOTION_SEEDS_NOT_SYMMETRIC");
+            changed.setRGB(0,0,0xff123456);out.reset();ImageIO.write(changed,"png",out);
+            assertThatThrownBy(()->StyledSpriteCodec.mirroredMotion(sheet,east,out.toByteArray())).hasMessage("MOTION_SEEDS_NOT_SYMMETRIC");
+        }
+    }
 }

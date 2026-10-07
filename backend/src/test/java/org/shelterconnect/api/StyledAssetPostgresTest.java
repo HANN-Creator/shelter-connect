@@ -467,14 +467,14 @@ class StyledAssetPostgresTest {
             boolean ok=calls.incrementAndGet()>2;
             return json.valueToTree(Map.of("passed",ok,"issues",ok?List.of():List.of("IDLE_MOTION")));
         });
-        when(codec.idleEdit(anyString(),any(),anyInt())).thenAnswer(c->{outsideTransaction();return json.valueToTree(Map.of("idleEdited",true));});
+        when(codec.seedIdle(anyString(),any(),anyInt())).thenAnswer(c->{outsideTransaction();return json.valueToTree(Map.of("idleEdited",true));});
         when(provider.editAnimation(any())).thenAnswer(c->{outsideTransaction();return UUID.randomUUID();});
         UUID id=request();tick();tick();review(id,true,"APPROVE",200);finish(id);
         assertThat(read(id).path("failureCode").isNull()).isTrue();
         verify(provider,times(14)).submit(anyBoolean(),any());verify(provider,times(1)).editAnimation(any());
         var source=org.mockito.ArgumentCaptor.forClass(byte[].class);
-        verify(codec).idleEdit(eq("south"),source.capture(),anyInt());
-        assertThat(ImageIO.read(new ByteArrayInputStream(source.getValue())).getWidth()).isEqualTo(288);
+        verify(codec).seedIdle(eq("south"),source.capture(),anyInt());
+        assertThat(ImageIO.read(new ByteArrayInputStream(source.getValue())).getWidth()).isEqualTo(32);
         assertThat(jdbc.queryForObject("SELECT repair_count FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-south'",Integer.class,id)).isEqualTo(2);
         assertThat(calls.get()).isEqualTo(4); // Original + regenerated + restored edit + raw edit.
         var step=read(id).path("steps").get(1);
@@ -488,7 +488,7 @@ class StyledAssetPostgresTest {
             boolean ok=calls.incrementAndGet()==3;
             return json.valueToTree(Map.of("passed",ok,"issues",ok?List.of():List.of("IDLE_MOTION")));
         });
-        when(codec.idleEdit(anyString(),any(),anyInt())).thenReturn(json.valueToTree(Map.of("idleEdited",true)));
+        when(codec.seedIdle(anyString(),any(),anyInt())).thenReturn(json.valueToTree(Map.of("idleEdited",true)));
         when(provider.editAnimation(any())).thenReturn(UUID.randomUUID());
         UUID id=request();tick();tick();review(id,true,"APPROVE",200);finish(id);
         assertThat(read(id).path("failureCode").asText()).isEqualTo("QUALITY_REPAIR_EXHAUSTED");
@@ -550,6 +550,66 @@ class StyledAssetPostgresTest {
         verify(provider,times(15)).submit(anyBoolean(),any());verify(provider,never()).editAnimation(any());
         assertThat(read(id).path("failureCode").asText()).isEqualTo("QUALITY_REPAIR_EXHAUSTED");
         review(id,false,"APPROVE",409);
+    }
+    UUID continuationFixture(String label) throws Exception {
+        // Symmetric coat/shape fixture; the ordinary failure remains archived.
+        var image=new BufferedImage(32,32,BufferedImage.TYPE_INT_ARGB);
+        for(int y=4;y<30;y++)for(int x=8;x<24;x++)image.setRGB(x,y,0xffa07845);
+        var out=new ByteArrayOutputStream();ImageIO.write(image,"png",out);png=out.toByteArray();
+        UUID id=request();tick();tick();review(id,true,"APPROVE",200);finish(id);
+        jdbc.update("UPDATE shelter.styled_asset_steps SET repair_count=2,quality_report=quality_report || '{\"passed\":false,\"issues\":[\"IDLE_MOTION\",\"CANVAS_CLIPPING\"]}'::jsonb WHERE job_id=? AND label=?",id,label);
+        jdbc.update("UPDATE shelter.styled_asset_steps s SET quality_report=quality_report || jsonb_build_object('rulesSha256',j.quality_policy->>'rulesSha256') FROM shelter.asset_jobs j WHERE s.job_id=j.id AND j.id=?",id);
+        return id;
+    }
+    Map<String,Object> continuationBody(UUID id,String label) throws Exception {
+        var j=read(id);var step=j.path("steps").valueStream().filter(n->n.path("label").asText().equals(label)).findFirst().orElseThrow();
+        return new HashMap<>(Map.of("requestId",UUID.randomUUID(),"note","Explicitly continue one failed motion while retaining every prior attempt",
+            "expectedSeedHashes",j.at("/steps/0/result/hashes"),"expectedSheetHashes",Map.of(label,step.at("/result/sha256").asText())));
+    }
+    @Test void explicitContinuationMirrorsOnlyBoundPassingSourceAndReplaysWithoutBuying() throws Exception {
+        UUID id=continuationFixture("walk-west");var before=read(id);var body=continuationBody(id,"walk-west");
+        post(UUID.randomUUID(),path(id)+"/repair-continuation",body,403);
+        post(subject,path(id)+"/repair-continuation",body,200);post(subject,path(id)+"/repair-continuation",body,200);
+        clearInvocations(provider);finish(id);
+        assertThat(read(id).path("failureCode").isNull()).isTrue();verifyNoInteractions(provider);
+        var step=read(id).path("steps").valueStream().filter(n->n.path("label").asText().equals("walk-west")).findFirst().orElseThrow();
+        assertThat(step.path("repairCount").asInt()).isEqualTo(3);
+        assertThat(step.at("/result/derivation/strategy").asText()).isEqualTo(StyledSpriteCodec.MIRROR_VERSION);
+        assertThat(step.at("/qualityReport/rawEditReview/passed").asBoolean()).isTrue();
+        assertThat(read(id).path("seedReview")).isEqualTo(before.path("seedReview"));
+        assertThat(jdbc.queryForObject("SELECT attempt_history::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='walk-west'",String.class,id)).contains("continuationRequestId","CANVAS_CLIPPING","repairCount");
+        post(subject,path(id)+"/repair-continuation",body,200);tick();verifyNoInteractions(provider);
+        body.put("requestId",UUID.randomUUID());post(subject,path(id)+"/repair-continuation",body,409);
+        review(id,false,"APPROVE",200);
+    }
+    @Test void continuationRefusesStaleSourcePassingTargetOrUnapprovedSeed() throws Exception {
+        UUID id=continuationFixture("walk-west");var body=continuationBody(id,"walk-west");var original=body.get("expectedSheetHashes");
+        body.put("expectedSheetHashes",Map.of("walk-west","0".repeat(64)));post(subject,path(id)+"/repair-continuation",body,409);body.put("expectedSheetHashes",original);
+        jdbc.update("UPDATE shelter.styled_asset_steps SET quality_report=quality_report || '{\"inputSha256\":\"stale\"}'::jsonb WHERE job_id=? AND label='walk-east'",id);
+        post(subject,path(id)+"/repair-continuation",body,409);
+        post(subject,path(id)+"/repair-continuation",continuationBody(id,"sit-east"),409);
+        jdbc.update("UPDATE shelter.asset_jobs SET seed_review=NULL WHERE id=?",id);
+        post(subject,path(id)+"/repair-continuation",body,409);
+        assertThat(jdbc.queryForObject("SELECT repair_count FROM shelter.styled_asset_steps WHERE job_id=? AND label='walk-west'",Integer.class,id)).isEqualTo(2);
+    }
+    @Test void seedIdleContinuationIsOneNewPaidEditAndFailedRawCannotPublish() throws Exception {
+        UUID id=continuationFixture("idle-north");var body=continuationBody(id,"idle-north");
+        when(codec.seedIdle(anyString(),any(),anyInt())).thenReturn(json.valueToTree(Map.of("seedIdle",true)));
+        when(provider.editAnimation(any())).thenReturn(UUID.randomUUID());
+        var calls=new java.util.concurrent.atomic.AtomicInteger();
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("north"))).thenAnswer(c->json.valueToTree(Map.of("passed",calls.incrementAndGet()==1,"issues",List.of("IDLE_MOTION"))));
+        clearInvocations(provider);post(subject,path(id)+"/repair-continuation",body,200);finish(id);
+        verify(provider,times(1)).editAnimation(any());verify(provider,never()).submit(anyBoolean(),any());
+        assertThat(read(id).path("failureCode").asText()).isEqualTo("QUALITY_REPAIR_EXHAUSTED");review(id,false,"APPROVE",409);
+        post(subject,path(id)+"/repair-continuation",body,200);tick();verify(provider,times(1)).editAnimation(any());
+        assertThat(jdbc.queryForObject("SELECT repair_count FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-north'",Integer.class,id)).isEqualTo(3);
+    }
+    @Test void continuationStopsBeforeQualityIfThePassingSourceBytesChange() throws Exception {
+        UUID id=continuationFixture("sit-west");var body=continuationBody(id,"sit-west");
+        post(subject,path(id)+"/repair-continuation",body,200);
+        var source=read(id).path("steps").valueStream().filter(n->n.path("label").asText().equals("sit-east")).findFirst().orElseThrow();
+        objects.put(source.at("/result/key").asText(),new byte[]{1});clearInvocations(provider,quality);tick();
+        assertThat(read(id).path("failureCode").asText()).isEqualTo("STYLED_SHEET_CHANGED");verifyNoInteractions(provider,quality);
     }
     UUID tailPlan() throws Exception {
         UUID id=request();

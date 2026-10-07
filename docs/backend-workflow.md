@@ -167,3 +167,5 @@ B-43: [스프라이트 자동 품질 검수·선택 보완](sprite-quality-repai
 - B-55 반복된 동작 잘림의 마지막 편집 보완: [처리와 검증 경계](motion-margin-edit.md). 브랜치 `backend/b-55-motion-margin-edit`. B-54 이후 실제 WALK 세 시트 실패를 기존 잘림 회귀 자료에 추가하고 일반 동작의 CANVAS_CLIPPING에 전체 프레임 편집을 연결한다. 행동·방향, 원본/복원본 검사, 기존 작업 정책과 보완 예산을 보존한다. DB 변경 없음. 실제 편집 품질은 배포 후 검증하며 노션 쓰기는 앞선 별도 승인 대기로 미동기화.
 
 - B-56 실제 편집 결과의 회귀 보존: [성공·실패와 검증 범위](live-motion-edit-verification.md). 브랜치 `backend/b-56-live-edit-regressions`. 실제 정면 IDLE 개선과 왼쪽 WALK/SIT 편집 실패의 원본·편집·복원 81프레임을 기존 하네스에 추가한다. 런타임·API·DB·품질 규칙 변경 없음. 서버 배포·Luna 재검수는 남아 있으며 노션 쓰기는 앞선 별도 승인 대기로 미동기화.
+
+- B-57 실패 동작 전체 보완: [추가 보완·원본 보존·검증 경계](complete-motion-repair.md). 브랜치 `backend/b-57-complete-motion-repair`. 승인 도트 기반 IDLE, 대칭 검증을 거친 좌우 동작 복원, 실패 동작만 명시적 1회 추가 보완과 이력·중복·검수 경계. V18. 실제 서버 검수·프론트 연결까지 완료 기준으로 삼으며 노션 쓰기는 미동기화.

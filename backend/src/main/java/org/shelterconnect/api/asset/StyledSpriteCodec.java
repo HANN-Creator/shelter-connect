@@ -18,6 +18,8 @@ public class StyledSpriteCodec {
     public static final String VERSION="cozy32-photo-style-v1";
     public static final String IDLE_EDIT_VERSION="calm-idle-edit-v1";
     public static final String MARGIN_EDIT_VERSION="frame-margin-edit-v1";
+    public static final String SEED_IDLE_VERSION="approved-seed-idle-v1";
+    public static final String MIRROR_VERSION="symmetric-approved-motion-v1";
     static final List<String> DIRECTIONS=List.of("south","north","west","east");
     static final List<String> ACTIONS=List.of("IDLE","WALK","RUN","SNIFF","TAIL_WAG","BACK_OFF","SIT","LIE_DOWN");
     private final JsonMapper json;
@@ -63,6 +65,33 @@ public class StyledSpriteCodec {
         if(!ACTIONS.contains(action) || !DIRECTIONS.contains(direction) || seed<0)throw AssetException.invalid();
         frames(sheet);
         return payload(Map.of("mode","margin-edit","action",action,"direction",direction,"seed",seed),"sheet.png",sheet);
+    }
+    public JsonNode seedIdle(String direction,byte[] approvedSeed,int seed) {
+        if(!DIRECTIONS.contains(direction) || seed<0)throw AssetException.invalid();
+        nativeFrame(approvedSeed);
+        return payload(Map.of("mode","seed-idle","direction",direction,"seed",seed),"seed.png",approvedSeed);
+    }
+    /** Strict seed symmetry gate; a one-sided marking or different silhouette must not be copied. */
+    static List<byte[]> mirroredMotion(byte[] sheet,byte[] sourceSeed,byte[] targetSeed) {
+        var source=nativeFrame(sourceSeed);var target=nativeFrame(targetSeed);int visible=0,close=0;
+        for(int y=0;y<32;y++)for(int x=0;x<32;x++) {
+            int a=source.getRGB(31-x,y),b=target.getRGB(x,y);
+            if((a>>>24)!=(b>>>24))throw new AssetException(409,"MOTION_SEEDS_NOT_SYMMETRIC");
+            if((a>>>24)==0)continue;
+            visible++;int delta=0;
+            for(int shift:List.of(0,8,16))delta=Math.max(delta,Math.abs(((a>>shift)&255)-((b>>shift)&255)));
+            if(delta>64)throw new AssetException(409,"MOTION_SEEDS_NOT_SYMMETRIC");
+            if(delta<=3)close++;
+        }
+        if(close*100<visible*95)throw new AssetException(409,"MOTION_SEEDS_NOT_SYMMETRIC");
+        var frames=frames(sheet);sheet(frames,sourceSeed);var result=new ArrayList<byte[]>();
+        for(byte[] bytes:frames) {
+            var frame=nativeFrame(bytes);var mirror=new BufferedImage(32,32,BufferedImage.TYPE_INT_ARGB);
+            for(int y=0;y<32;y++)for(int x=0;x<32;x++)mirror.setRGB(x,y,frame.getRGB(31-x,y));
+            try {var out=new ByteArrayOutputStream();ImageIO.write(mirror,"png",out);result.add(out.toByteArray());}
+            catch(IOException e){throw AssetException.unavailable();}
+        }
+        return result; // Raw evidence; never replace frame zero before the raw review.
     }
     private JsonNode payload(Object input,String imageName,byte[] image) {
         Path dir=null; Process process=null;

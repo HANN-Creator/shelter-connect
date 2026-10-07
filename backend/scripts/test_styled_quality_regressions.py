@@ -31,6 +31,25 @@ def decode_recorded_alpha(rows):
 
 
 class QualityRegressionTest(unittest.TestCase):
+    def test_continuation_replays_actual_failures_and_all_nine_candidate_frames(self):
+        from styled_dog.tail_repair import read_sheet, seed_idle_payload
+        root=Path(__file__).parent/'fixtures'
+        fixture=read(root/'idle-motion-alpha.json')['boundedContinuation']
+        self.assertFalse(fixture['modelVisualRecheckPerformed'])
+        for case in fixture['clips']:
+            action,direction=case['label'].split('-')
+            before=read_sheet(root/case['before']);candidate=read_sheet(root/case['candidate'])
+            self.assertEqual(digest(root/case['before']),case['sourceSha256'])
+            self.assertFalse(frame_audit(before,before[0],action.upper(),direction,'UNKNOWN')['structuralPassed'])
+            self.assertTrue(frame_audit(candidate,before[0],action.upper(),direction,'UNKNOWN')['structuralPassed'])
+            self.assertEqual(len(candidate),9)
+            self.assertEqual(candidate[0].tobytes(),before[0].tobytes())
+        seed=Image.open(root/'motion-continuation/north.png').convert('RGBA')
+        payload=seed_idle_payload(seed,'north')
+        self.assertEqual(len(payload['frames']),9)
+        self.assertTrue(all(frame==payload['frames'][0] for frame in payload['frames']))
+        self.assertLessEqual(len(payload['description']),2000)
+
     def test_live_edit_success_and_failures_replay_all_raw_and_restored_frames(self):
         cases={}
         for name in ('idle-motion-alpha.json','tail-repair-alpha.json','sit-tail-alpha.json'):

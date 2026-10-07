@@ -3187,5 +3187,36 @@
         }
       }
     ]
+  },
+  "boundedContinuation": {
+    "sourceJobId": "9b512fb8-0f67-441e-9c31-0b9c74512153",
+    "modelVisualRecheckPerformed": false,
+    "framesPerClip": 9,
+    "clips": [
+      {
+        "label": "idle-north",
+        "before": "motion-continuation/before-idle-north.png",
+        "candidate": "motion-continuation/idle-north-candidate.png",
+        "sourceSha256": "99903c13259fa2e7f5f4ec8c5725d92bff7c0c09f09dd653890fb63cd829c805"
+      },
+      {
+        "label": "idle-west",
+        "before": "motion-continuation/before-idle-west.png",
+        "candidate": "motion-continuation/idle-west-candidate.png",
+        "sourceSha256": "05f902c83feb948b4935e079e923f08f2a7a0d54f15ddfcff82ce913a20d2ff2"
+      },
+      {
+        "label": "walk-west",
+        "before": "motion-continuation/before-walk-west.png",
+        "candidate": "motion-continuation/walk-west-candidate.png",
+        "sourceSha256": "bb86cefeab592339f074d4b5aa7839237915dde6cc4372b97aedbf58dc615bcc"
+      },
+      {
+        "label": "sit-west",
+        "before": "motion-continuation/before-sit-west.png",
+        "candidate": "motion-continuation/sit-west-candidate.png",
+        "sourceSha256": "54a25a537716d73e01f7b5a69a8eefe347e2ff971954c3b53df6a6b678d56852"
+      }
+    ]
   }
 }

@@ -31,6 +31,11 @@ def main():
         from .tail_repair import read_sheet, margin_edit_payload
         payload = margin_edit_payload(read_sheet(root / 'sheet.png'), request['action'], request['direction'])
         payload['seed'] = request['seed']
+    elif request['mode'] == 'seed-idle':
+        from PIL import Image
+        from .tail_repair import seed_idle_payload
+        payload = seed_idle_payload(Image.open(root / 'seed.png').convert('RGBA'), request['direction'])
+        payload['seed'] = request['seed']
     else:
         raise ValueError('Unknown mode')
     write(root / 'payload.json', payload)
