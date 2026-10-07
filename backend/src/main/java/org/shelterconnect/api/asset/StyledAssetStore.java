@@ -397,6 +397,8 @@ public class StyledAssetStore {
     }
     @Transactional public boolean retryQuality(Work w,JsonNode report,JsonNode result) {
         if(!authorized(w))return true;
+        // Explicit rechecks judge the stored bytes, even if a new rule finds a defect with budget left.
+        if(w.status().equals("CHECKING"))return false;
         if(w.qualityPolicy()!=null && w.qualityPolicy().path("referenceOnly").asBoolean())return false;
         if(report.path("passed").asBoolean() || w.repairCount()>=2)return false;
         // The provider finished definitively. Archive the receipt and image before buying a corrective attempt.
