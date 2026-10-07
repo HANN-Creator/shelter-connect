@@ -452,6 +452,26 @@ class StyledAssetPostgresTest {
         post(subject,path(id)+"/quality-recheck",body,200);tick();verify(provider,times(15)).submit(anyBoolean(),any());
         review(id,false,"APPROVE",409);
     }
+    @Test void explicitRecheckNeverRegeneratesANewlyFailedClipWithUnusedRepairBudget()throws Exception {
+        UUID id=request();tick();tick();review(id,true,"APPROVE",200);finish(id);
+        var before=read(id).path("steps");var originalObjects=new HashMap<>(objects);
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("north")))
+            .thenReturn(json.valueToTree(Map.of("passed",false,"issues",List.of("IDLE_MOTION"))));
+        String old="0".repeat(64);
+        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=jsonb_set(quality_policy,'{rulesSha256}',to_jsonb(CAST(? AS text))) WHERE id=?",old,id);
+        var body=Map.of("note","Inspect exact stored bytes after new evidence rules without regeneration",
+            "expectedSeedHashes",read(id).at("/steps/0/result/hashes"),"expectedRulesSha256",old);
+        post(subject,path(id)+"/quality-recheck",body,200);tick();review(id,true,"APPROVE",200);finish(id);
+        var after=read(id);assertThat(after.path("failureCode").asText()).isEqualTo("QUALITY_REPAIR_EXHAUSTED");
+        for(int i=0;i<before.size();i++) {
+            assertThat(after.path("steps").get(i).path("result")).isEqualTo(before.get(i).path("result"));
+            assertThat(after.path("steps").get(i).path("repairCount")).isEqualTo(before.get(i).path("repairCount"));
+        }
+        for(var e:originalObjects.entrySet())assertThat(objects.get(e.getKey())).isEqualTo(e.getValue());
+        verify(provider,times(13)).submit(anyBoolean(),any());
+        post(subject,path(id)+"/quality-recheck",body,200);tick();verify(provider,times(13)).submit(anyBoolean(),any());
+        review(id,false,"APPROVE",409);
+    }
     @Test void approvedPackCannotBeRecheckedWithChangedRules() throws Exception {
         UUID id=request();tick();tick();review(id,true,"APPROVE",200);finish(id);review(id,false,"APPROVE",200);
         String old="0".repeat(64);

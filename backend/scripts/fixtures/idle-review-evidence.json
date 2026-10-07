@@ -1,0 +1,312 @@
+{
+  "sourceJobId": "9b512fb8-0f67-441e-9c31-0b9c74512153",
+  "action": "IDLE",
+  "direction": "north",
+  "framesPerClip": 9,
+  "clips": {
+    "raw": {
+      "file": "idle-review/raw.png",
+      "sha256": "ca14206a9c0328b6eded606467bc9c87597ec46f25a7f277b56651014a4aca49",
+      "pixelEvidence": {
+        "version": "native-frame-delta-v1",
+        "reference": "frame0",
+        "frameCount": 9,
+        "alphaStable": true,
+        "maxVisibleRgbDelta": 17,
+        "subtleShadingOnly": true,
+        "alphaChangedFromFrame0": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "alphaChangedFromPrevious": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "maxRgbDeltaFromFrame0": [
+          0,
+          12,
+          12,
+          12,
+          12,
+          13,
+          17,
+          12,
+          12
+        ],
+        "maxRgbDeltaFromPrevious": [
+          0,
+          12,
+          10,
+          7,
+          7,
+          14,
+          17,
+          16,
+          13
+        ],
+        "rgbChangedPixelsFromFrame0": [
+          0,
+          103,
+          93,
+          111,
+          117,
+          153,
+          211,
+          123,
+          120
+        ],
+        "boundsExclusive": [
+          [
+            5,
+            3,
+            27,
+            31
+          ],
+          [
+            5,
+            3,
+            27,
+            31
+          ],
+          [
+            5,
+            3,
+            27,
+            31
+          ],
+          [
+            5,
+            3,
+            27,
+            31
+          ],
+          [
+            5,
+            3,
+            27,
+            31
+          ],
+          [
+            5,
+            3,
+            27,
+            31
+          ],
+          [
+            5,
+            3,
+            27,
+            31
+          ],
+          [
+            5,
+            3,
+            27,
+            31
+          ],
+          [
+            5,
+            3,
+            27,
+            31
+          ]
+        ]
+      }
+    },
+    "candidate": {
+      "file": "idle-review/candidate.png",
+      "sha256": "eb06d108be1b4a2a6e337e6a823d176876731efed22bee1c5b451e3227dafd79",
+      "pixelEvidence": {
+        "version": "native-frame-delta-v1",
+        "reference": "frame0",
+        "frameCount": 9,
+        "alphaStable": true,
+        "maxVisibleRgbDelta": 15,
+        "subtleShadingOnly": true,
+        "alphaChangedFromFrame0": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "alphaChangedFromPrevious": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "maxRgbDeltaFromFrame0": [
+          0,
+          15,
+          15,
+          15,
+          15,
+          15,
+          15,
+          15,
+          15
+        ],
+        "maxRgbDeltaFromPrevious": [
+          0,
+          15,
+          15,
+          15,
+          3,
+          15,
+          15,
+          15,
+          15
+        ],
+        "rgbChangedPixelsFromFrame0": [
+          0,
+          78,
+          72,
+          70,
+          74,
+          84,
+          118,
+          77,
+          70
+        ],
+        "boundsExclusive": [
+          [
+            5,
+            3,
+            27,
+            31
+          ],
+          [
+            5,
+            3,
+            27,
+            31
+          ],
+          [
+            5,
+            3,
+            27,
+            31
+          ],
+          [
+            5,
+            3,
+            27,
+            31
+          ],
+          [
+            5,
+            3,
+            27,
+            31
+          ],
+          [
+            5,
+            3,
+            27,
+            31
+          ],
+          [
+            5,
+            3,
+            27,
+            31
+          ],
+          [
+            5,
+            3,
+            27,
+            31
+          ],
+          [
+            5,
+            3,
+            27,
+            31
+          ]
+        ]
+      }
+    }
+  },
+  "originalQualityReport": {
+    "note": "The clip has large standing/crouched posture changes instead of quiet idle breathing; transitions into and out of the crouched pose are abrupt.",
+    "model": "gpt-5.6-luna",
+    "frames": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "issues": [
+      "DISCONTINUITY",
+      "IDLE_MOTION"
+    ],
+    "passed": false,
+    "version": "sprite-quality-v1",
+    "edgeFrames": [],
+    "reviewedAt": "2026-10-07T02:24:59.061670947Z",
+    "inputSha256": "eb06d108be1b4a2a6e337e6a823d176876731efed22bee1c5b451e3227dafd79",
+    "rulesSha256": "6fae1b5ad7b062411172441cc8ac9eb6ec11c6cef905f6c1a0dd4c35014100ec",
+    "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "rawEditReview": {
+      "note": "Frames 6–8 show a clear scale/pose expansion compared with frames 0–5, inconsistent with quiet north-facing IDLE motion; the change begins between frames 5 and 6.",
+      "model": "gpt-5.6-luna",
+      "frames": [
+        5,
+        6,
+        7,
+        8
+      ],
+      "issues": [
+        "DISCONTINUITY",
+        "IDLE_MOTION"
+      ],
+      "passed": false,
+      "version": "sprite-quality-v1",
+      "edgeFrames": [],
+      "reviewedAt": "2026-10-07T02:25:13.356840445Z",
+      "rulesSha256": "6fae1b5ad7b062411172441cc8ac9eb6ec11c6cef905f6c1a0dd4c35014100ec",
+      "rulesRevision": "sprite-regressions-2026-10-06-v9",
+      "detachedFrames": [],
+      "idleMotionFrames": [],
+      "silhouetteFrames": []
+    },
+    "rawEditSha256": "ca14206a9c0328b6eded606467bc9c87597ec46f25a7f277b56651014a4aca49",
+    "rulesRevision": "sprite-regressions-2026-10-06-v9",
+    "detachedFrames": [],
+    "learnedLessons": [],
+    "idleMotionFrames": [],
+    "silhouetteFrames": []
+  },
+  "humanAssessment": "All 9 frames retain the identical silhouette and small RGB-only shading changes. The reported large crouching/scale jumps are not supported by the pixels or manual frame inspection.",
+  "newModelReviewPerformed": false,
+  "approval": "Original failed verdict retained. This fixture is not a server approval."
+}
