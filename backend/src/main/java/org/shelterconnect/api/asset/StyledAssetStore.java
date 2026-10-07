@@ -18,7 +18,7 @@ public class StyledAssetStore {
     public record Step(String label,String action,String direction,String status,JsonNode result,JsonNode qualityReport,int repairCount,JsonNode learningRecovery) {}
     @io.swagger.v3.oas.annotations.media.Schema(name="StyledAssetJob")
     public record Job(UUID id,UUID dogId,String status,String failureCode,String pipelineVersion,List<Step> steps,JsonNode seedReview,
-                      List<String> actionPlan,JsonNode generationPlan,JsonNode qualityPolicy) {
+                      List<String> actionPlan,JsonNode generationPlan,JsonNode qualityPolicy,JsonNode qualityApproval) {
         public List<String> availableActions() { return actionPlan.stream().filter(a->!a.equals("BASE")).toList(); }
         public boolean complete() {
             if(actionPlan.size()<4 || !actionPlan.getFirst().equals("BASE") || new HashSet<>(actionPlan).size()!=actionPlan.size()
@@ -93,7 +93,7 @@ public class StyledAssetStore {
     }
     @Transactional public Job referenceInsert(UUID subject,UUID dog,UUID photo,UUID id,String selection,JsonNode body,JsonNode result) {
         var actor=access.requireDogForWrite(subject,dog);referencePhoto(subject,dog,photo);
-        var policy=new HashMap<String,Object>(newSeedQualityPolicy());policy.put("referenceOnly",true);policy.put("referenceInput",body);
+        var policy=new HashMap<String,Object>(newSeedQualityPolicy());policy.remove("automaticApproval");policy.put("referenceOnly",true);policy.put("referenceInput",body);
         policy.put("referenceRecordedBy",actor.userId().toString());policy.put("referenceRecordedAt",Instant.now().toString());
         var inserted=jdbc.sql("""
             INSERT INTO shelter.asset_jobs(id,photo_id,dog_id,shelter_id,permission_id,pipeline_version,selection_key,action_plan,styled_input,quality_policy)
@@ -272,11 +272,39 @@ public class StyledAssetStore {
         "lowTailRepair", "REGENERATE_THEN_EDIT_ONCE", "idleRepair",StyledSpriteCodec.IDLE_EDIT_VERSION,
         "marginRepair",StyledSpriteCodec.MARGIN_EDIT_VERSION,"seedIdleRepair",StyledSpriteCodec.SEED_IDLE_VERSION);}
     private Map<String,Object> seedQualityPolicy(){var p=new HashMap<String,Object>(qualityPolicy());p.put("seedQualityVersion",StyledSeedQualityAgent.VERSION);return p;}
-    private Map<String,Object> newSeedQualityPolicy(){var p=seedQualityPolicy();p.put("learningRecovery",StyledLearningRecoveryStore.VERSION);return p;}
+    private Map<String,Object> newSeedQualityPolicy(){var p=seedQualityPolicy();p.put("learningRecovery",StyledLearningRecoveryStore.VERSION);p.put("automaticApproval",StyledAutoApproval.VERSION);return p;}
     private boolean seedQualityPassed(Job j) {
         var step=j.steps().getFirst();return StyledSeedQualityAgent.passed(step.qualityReport(),step.result()==null?json.createObjectNode():step.result().path("hashes"),j.qualityPolicy());
     }
     private boolean qualityPassed(Job j) {return seedQualityPassed(j) && (j.qualityPolicy()==null || j.steps().stream().skip(1).allMatch(s->s.qualityReport()!=null && s.qualityReport().path("passed").asBoolean()));}
+    private boolean automaticSeedPassed(Job j) {
+        if(!StyledAutoApproval.seed(j,json) || !lessonsBound(j.id(),true))return false;
+        String expected=jdbc.sql("SELECT styled_input->>'sourcePhotoSha256' FROM shelter.asset_jobs WHERE id=:id")
+            .param("id",j.id()).query(String.class).single();
+        return j.steps().getFirst().qualityReport().path("photoSha256").asText().equals(expected);
+    }
+    private boolean lessonsBound(UUID id,boolean seedOnly) {
+        return jdbc.sql("""
+            SELECT count(*) FROM shelter.styled_asset_steps s WHERE s.job_id=:id AND (:seedOnly=false OR s.action='BASE')
+              AND (s.quality_report->'learnedLessons' IS DISTINCT FROM s.learned_lessons
+                OR EXISTS(SELECT 1 FROM jsonb_array_elements(s.learned_lessons) item
+                  WHERE NOT EXISTS(SELECT 1 FROM shelter.styled_quality_lessons l WHERE l.id::text=item->>'id'
+                    AND l.status='ACTIVE' AND l.candidate_sha256=item->>'sha256')))
+            """).param("id",id).param("seedOnly",seedOnly).query(Integer.class).single()==0;
+    }
+    private void approveSeeds(Job j) {
+        jdbc.sql("UPDATE shelter.asset_jobs SET seed_review=CAST(:r AS jsonb) WHERE id=:id")
+            .param("r",json.writeValueAsString(StyledAutoApproval.seedEvidence(j,json))).param("id",j.id()).update();
+    }
+    private void finishPack(Job j) {
+        if(automaticSeedPassed(j) && StyledAutoApproval.pack(j,json) && lessonsBound(j.id(),false)) {
+            jdbc.sql("""
+                UPDATE shelter.asset_jobs SET status='APPROVED',quality_approval=CAST(:a AS jsonb),
+                  reviewed_by=NULL,reviewed_at=now(),failure_code=NULL,lease_token=NULL,lease_until=NULL WHERE id=:id
+                """).param("a",json.writeValueAsString(StyledAutoApproval.packEvidence(j,json))).param("id",j.id()).update();
+        } else status(j.id(),"REVIEW",qualityPassed(j)?
+            (StyledAutoApproval.enabled(j.qualityPolicy())?"AUTO_APPROVAL_EVIDENCE_REQUIRED":null):"QUALITY_REPAIR_EXHAUSTED");
+    }
     @Transactional public Job recover(UUID subject,UUID id,JsonNode body) {
         operator(subject);properties.requireEnabled();lock(id);legacy.valid(id,true);var j=job(id);
         AssetInput.fields(body,"providerJobId");
@@ -327,12 +355,18 @@ public class StyledAssetStore {
             """).param("id",id.get()).query((r,n)->new Work(id.get(),r.getObject("dog_id",UUID.class),token,r.getString("label"),r.getString("action"),r.getString("direction"),r.getString("status"),r.getObject("provider_job_id",UUID.class),
                 r.getTimestamp("submitted_at")==null?null:r.getTimestamp("submitted_at").toInstant(),r.getString("storage_bucket"),r.getString("storage_key"),json.readTree(r.getString("styled_input")),node(r.getString("provider_result")),node(r.getString("result")),node(r.getString("quality_report")),r.getInt("repair_count"),node(r.getString("quality_policy")))).optional();
         if(w.isEmpty()) {
-            var j=job(id.get());boolean complete=j.complete();status(id.get(),complete?"REVIEW":"FAILED",complete?(qualityPassed(j)?null:"QUALITY_REPAIR_EXHAUSTED"):"ACTION_PLAN_INCOMPLETE");return null;
+            var j=job(id.get());if(j.complete())finishPack(j);else status(id.get(),"FAILED","ACTION_PLAN_INCOMPLETE");return null;
         }
         if(w.get().status().equals("SUBMITTING")) { fail(w.get(),true,"SUBMISSION_INTERRUPTED");return null; }
         if(!w.get().character()) {
             var j=job(id.get());
             if(!seedQualityPassed(j)) {status(id.get(),"SEED_REVIEW","SEED_QUALITY_REVIEW_REQUIRED");return null;}
+            if(StyledAutoApproval.enabled(j.qualityPolicy())) {
+                if(!automaticSeedPassed(j)) {status(id.get(),"SEED_REVIEW","AUTO_APPROVAL_EVIDENCE_REQUIRED");return null;}
+                if(j.seedReview()==null || !j.seedReview().path("hashes").equals(j.steps().getFirst().result().path("hashes"))) {
+                    approveSeeds(j);j=job(id.get());
+                }
+            }
             if(j.seedReview()==null || !j.seedReview().path("hashes").equals(j.steps().getFirst().result().path("hashes"))) {
                 status(id.get(),"SEED_REVIEW","SEED_REVIEW_REQUIRED");return null;
             }
@@ -455,8 +489,15 @@ public class StyledAssetStore {
             .param("r",json.writeValueAsString(result)).param("id",w.id()).param("l",w.label()).update();
         jdbc.sql("UPDATE shelter.styled_learning_recoveries SET state=CASE WHEN (SELECT quality_report->>'passed' FROM shelter.styled_asset_steps WHERE job_id=:id AND label=:l)='true' THEN 'COMPLETED' ELSE 'EXHAUSTED' END,reason='LEARNED_ATTEMPT_REVIEWED',updated_at=now() WHERE job_id=:id AND label=:l AND state='QUEUED'")
             .param("id",w.id()).param("l",w.label()).update();
-        if(w.character())status(w.id(),"SEED_REVIEW",seedQualityPassed(job(w.id()))?null:"SEED_QUALITY_REVIEW_REQUIRED");
-        else if(job(w.id()).complete())status(w.id(),"REVIEW",qualityPassed(job(w.id()))?null:"QUALITY_REPAIR_EXHAUSTED");
+        var j=job(w.id());
+        if(w.character()) {
+            if(automaticSeedPassed(j)) {
+                approveSeeds(j);status(w.id(),"QUEUED",null);
+                jdbc.sql("UPDATE shelter.asset_jobs SET next_run_at=now() WHERE id=:id").param("id",w.id()).update();
+            } else status(w.id(),"SEED_REVIEW",seedQualityPassed(j)?
+                (StyledAutoApproval.enabled(j.qualityPolicy())?"AUTO_APPROVAL_EVIDENCE_REQUIRED":null):"SEED_QUALITY_REVIEW_REQUIRED");
+        }
+        else if(j.complete())finishPack(j);
         else defer(w,0);
     }
     @Transactional public void defer(Work w,int seconds) {
@@ -491,9 +532,9 @@ public class StyledAssetStore {
     private Job job(UUID id) {
         var steps=jdbc.sql("SELECT s.label,s.action,s.direction,s.status,s.result::text,s.quality_report::text,s.repair_count,(SELECT jsonb_build_object('state',r.state,'reason',r.reason,'requiredLessons',r.required_lessons,'referenceReport',r.reference_report)::text FROM shelter.styled_learning_recoveries r WHERE r.job_id=s.job_id AND r.label=s.label) FROM shelter.styled_asset_steps s WHERE s.job_id=:id ORDER BY s.ordinal").param("id",id)
             .query((r,n)->new Step(r.getString(1),r.getString(2),r.getString(3),r.getString(4),node(r.getString(5)),node(r.getString(6)),r.getInt(7),node(r.getString(8)))).list();
-        return jdbc.sql("SELECT dog_id,status,failure_code,seed_review::text,action_plan::text,behavior_plan::text,quality_policy::text FROM shelter.asset_jobs WHERE id=:id AND pipeline_version=:v")
+        return jdbc.sql("SELECT dog_id,status,failure_code,seed_review::text,action_plan::text,behavior_plan::text,quality_policy::text,quality_approval::text FROM shelter.asset_jobs WHERE id=:id AND pipeline_version=:v")
             .param("id",id).param("v",StyledSpriteCodec.VERSION).query((r,n)->new Job(id,r.getObject(1,UUID.class),r.getString(2),r.getString(3),StyledSpriteCodec.VERSION,steps,r.getString(4)==null?null:json.readTree(r.getString(4)),
-                json.readTree(r.getString(5)).valueStream().map(JsonNode::asText).toList(),node(r.getString(6)),node(r.getString(7)))).optional().orElseThrow(StyledAssetStore::missing);
+                json.readTree(r.getString(5)).valueStream().map(JsonNode::asText).toList(),node(r.getString(6)),node(r.getString(7)),node(r.getString(8)))).optional().orElseThrow(StyledAssetStore::missing);
     }
     private JsonNode node(String value){return value==null?null:json.readTree(value);}
     private static AssetException missing() { return new AssetException(404,"ASSET_NOT_FOUND"); }

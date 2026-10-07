@@ -164,7 +164,7 @@ public class StyledAssetWorker {
     }
     private void inspect(StyledAssetStore.Work w,List<byte[]> frames,JsonNode metadata) {
         if(w.qualityPolicy()==null){store.success(w,metadata);return;}
-        var report=w.qualityReport();String sha=metadata.path("sha256").asText();
+        var report=w.qualityReport();String sha=metadata.path("sha256").asText();var base=store.seed(w);
         var selected=lessons.pinned(w);String lessonSha=StyledSpriteCodec.sha(json.writeValueAsBytes(selected));
         List<byte[]> rawFrames=null;
         if(metadata.has("rawEdit")) {
@@ -177,8 +177,10 @@ public class StyledAssetWorker {
         if(report==null || !sha.equals(report.path("inputSha256").asText())
             || !StyledSpriteCodec.qualityRulesSha().equals(report.path("rulesSha256").asText())
             || (!selected.isEmpty() && !lessonSha.equals(report.path("lessonsSha256").asText()))
+            || (StyledAutoApproval.enabled(w.qualityPolicy()) && (!base.path("hashes").equals(report.path("seedHashes"))
+                || !w.action().equals(report.path("action").asText()) || !w.direction().equals(report.path("direction").asText())))
             || (metadata.has("rawEdit") && !metadata.at("/rawEdit/sha256").asText().equals(report.path("rawEditSha256").asText()))) {
-            var base=store.seed(w);var seeds=new ArrayList<byte[]>();
+            var seeds=new ArrayList<byte[]>();
             for(String d:StyledSpriteCodec.DIRECTIONS) {
                 var seed=storage.asset(base.path("keys").path(d).asText());
                 if(!StyledSpriteCodec.sha(seed).equals(base.path("hashes").path(d).asText()))throw new AssetException(409,"STYLED_SEED_CHANGED");
@@ -199,6 +201,7 @@ public class StyledAssetWorker {
                 combined.set("rawEditReview",rawReview);combined.put("rawEditSha256",source.path("sha256").asText());
             }
             var details=(tools.jackson.databind.node.ObjectNode)review;details.put("inputSha256",sha);details.put("lessonsSha256",lessonSha);details.set("learnedLessons",selected);
+            details.set("seedHashes",base.path("hashes"));details.put("action",w.action());details.put("direction",w.direction());
             report=review;store.quality(w,report);
         }
         // Each report labels only its own exact bytes. The combined gate still requires BOTH to pass.

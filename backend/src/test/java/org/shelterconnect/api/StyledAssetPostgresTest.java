@@ -1026,6 +1026,7 @@ class StyledAssetPostgresTest {
         post(opSubject,"/v1/operations/styled-quality-lessons/"+lesson+"/disable",Map.of("note","Stop this lesson for later generations"),200);
         clearInvocations(provider);var request=json.valueToTree(input());((tools.jackson.databind.node.ObjectNode)request.path("traits")).put("seed",43);
         UUID after=UUID.fromString(post(subject,"/v1/shelter-admin/dogs/"+dog+"/styled-assets",request,202).at("/data/id").asText());
+        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=quality_policy-'automaticApproval' WHERE id=?",after);
         tick();tick();review(after,true,"APPROVE",200);finish(after);
         var afterPayloads=org.mockito.ArgumentCaptor.forClass(JsonNode.class);verify(provider,atLeastOnce()).submit(eq(false),afterPayloads.capture());
         assertThat(afterPayloads.getAllValues().stream().anyMatch(n->n.path("description").asText().contains(learnedPrevention()))).isFalse();
@@ -1384,12 +1385,135 @@ class StyledAssetPostgresTest {
         jdbc.update("INSERT INTO shelter.dog_photos(id,dog_id,storage_bucket,storage_key,sort_order,rights_status,rights_note,rights_confirmed_by,rights_confirmed_at) VALUES (?,?,'dog-photos',?,0,'GRANTED','local test only',?,now())",photo,dog,dog+"/source.png",op);
         post(opSubject,"/v1/operations/asset-imports",Map.of("photoId",photo,"permissionId",permission),200);
     }
+    String sha(byte[] data) {try{return java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(data));}catch(Exception e){throw new AssertionError(e);}}
+    JsonNode automaticSeedReport(List<byte[]> images,boolean passed) {
+        var r=(tools.jackson.databind.node.ObjectNode)seedReport(images,passed);
+        r.put("identity",passed?"PASS":"UNCERTAIN");r.put("model","fixture-vision");r.put("reviewedAt",java.time.Instant.now().toString());
+        r.putArray("edgeDirections");var views=r.putArray("views");
+        for(String d:List.of("south","north","west","east"))views.add(json.valueToTree(Map.of("direction",d,"readability",d.equals("north")?"NOT_VISIBLE":"PASS","style","PASS")));
+        return r;
+    }
+    JsonNode automaticMotionReport(boolean passed) {
+        var r=json.createObjectNode().put("version",StyledQualityAgent.VERSION).put("passed",passed)
+            .put("rulesSha256",currentRules()).put("model","fixture-vision").put("reviewedAt",java.time.Instant.now().toString());
+        r.set("issues",json.valueToTree(passed?List.of():List.of("ACTION_MISSING")));
+        for(String f:List.of("edgeFrames","silhouetteFrames","detachedFrames","idleMotionFrames"))r.putArray(f);
+        return r;
+    }
+    Map<String,Object> automaticInput() {
+        var traits=new HashMap<>((Map<String,Object>)input().get("traits"));traits.put("sourcePhotoSha256",sha(png));
+        return Map.of("photoId",photo,"traits",traits);
+    }
+    UUID automaticRequest()throws Exception {
+        when(seedQuality.review(any(),anyList())).thenAnswer(c->{outsideTransaction();return automaticSeedReport(c.getArgument(1),true);});
+        when(quality.review(any(),anyList(),anyList(),anyString(),anyString())).thenAnswer(c->{outsideTransaction();return automaticMotionReport(true);});
+        return UUID.fromString(post(subject,"/v1/shelter-admin/dogs/"+dog+"/styled-assets",automaticInput(),202).at("/data/id").asText());
+    }
+    @Test void newJobsApproveSeedsAndCompletePackWithoutEitherHumanReviewCall()throws Exception {
+        UUID id=automaticRequest();tick();tick();
+        assertThat(read(id).path("status").asText()).isEqualTo("QUEUED");
+        assertThat(read(id).at("/seedReview/actor").asText()).isEqualTo("SYSTEM");
+        assertThat(read(id).at("/seedReview/hashes")).isEqualTo(read(id).at("/steps/0/result/hashes"));
+        publicStatus(404);finish(id);
+        var j=read(id);assertThat(j.path("status").asText()).isEqualTo("APPROVED");
+        assertThat(j.at("/qualityApproval/actor").asText()).isEqualTo("SYSTEM");
+        assertThat(j.at("/qualityApproval/steps").size()).isEqualTo(13);
+        assertThat(j.at("/qualityApproval/actionPlan")).isEqualTo(j.path("actionPlan"));
+        assertThat(jdbc.queryForObject("SELECT reviewed_by FROM shelter.asset_jobs WHERE id=?",UUID.class,id)).isNull();
+        assertThat(jdbc.queryForObject("SELECT reviewed_at IS NOT NULL FROM shelter.asset_jobs WHERE id=?",Boolean.class,id)).isTrue();
+        var manifest=get(null,"/v1/dogs/"+dog+"/assets",200).path("data");
+        assertThat(manifest.at("/mapDirections/LEFT/WALK/frames").size()).isEqualTo(9);
+        clearInvocations(provider);for(int i=0;i<3;i++)tick();publicStatus(200);
+        var replay=post(subject,"/v1/shelter-admin/dogs/"+dog+"/styled-assets",automaticInput(),202).path("data");
+        assertThat(replay.path("id").asText()).isEqualTo(id.toString());assertThat(replay.path("qualityApproval")).isEqualTo(j.path("qualityApproval"));
+        verifyNoInteractions(provider);
+    }
+    @Test void automaticApprovalPreservesDogShelterAndSourceAccessBoundaries()throws Exception {
+        UUID id=automaticRequest();jdbc.update("UPDATE shelter.dogs SET is_public=false WHERE id=?",dog);finish(id);
+        assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");publicStatus(404);
+        jdbc.update("UPDATE shelter.dogs SET is_public=true WHERE id=?",dog);jdbc.update("UPDATE shelter.shelters SET is_public=false WHERE id=?",shelter);publicStatus(404);
+        jdbc.update("UPDATE shelter.shelters SET is_public=true WHERE id=?",shelter);publicStatus(200);
+        jdbc.update("UPDATE shelter.asset_source_permissions SET revoked_at=now() WHERE id=?",permission);publicStatus(409);
+    }
+    @Test void uncertainSeedRemainsAnExceptionWithoutGeneratingAnyMotion()throws Exception {
+        UUID id=automaticRequest();when(seedQuality.review(any(),anyList())).thenAnswer(c->automaticSeedReport(c.getArgument(1),false));finish(id);
+        assertThat(read(id).path("status").asText()).isEqualTo("SEED_REVIEW");
+        assertThat(read(id).path("seedReview").isNull()).isTrue();assertThat(read(id).path("qualityApproval").isNull()).isTrue();
+        verify(provider,times(3)).submit(eq(true),any());verify(provider,never()).submit(eq(false),any());
+        review(id,true,"APPROVE",409);review(id,true,"REJECT",200);tick();assertThat(read(id).path("status").asText()).isEqualTo("REJECTED");
+    }
+    @Test void failedMotionIsNotAutomaticallyPublishedAndKeepsBoundedRepairHistory()throws Exception {
+        UUID id=automaticRequest();when(quality.review(any(),anyList(),anyList(),eq("WALK"),eq("west"))).thenAnswer(c->automaticMotionReport(false));finish(id);
+        assertThat(read(id).path("status").asText()).isEqualTo("REVIEW");assertThat(read(id).path("failureCode").asText()).isEqualTo("QUALITY_REPAIR_EXHAUSTED");
+        assertThat(step(id,"walk-west").path("repairCount").asInt()).isEqualTo(2);
+        assertThat(read(id).path("qualityApproval").isNull()).isTrue();publicStatus(404);
+        assertThat(jdbc.queryForObject("SELECT jsonb_array_length(attempt_history) FROM shelter.styled_asset_steps WHERE job_id=? AND label='walk-west'",Integer.class,id)).isEqualTo(2);
+        // A later successful, byte-preserving recheck completes without another human approval.
+        post(subject,path(id)+"/quality-recheck",seedRecheckBody(id),200);
+        when(quality.review(any(),anyList(),anyList(),eq("WALK"),eq("west"))).thenAnswer(c->automaticMotionReport(true));
+        clearInvocations(provider);finish(id);assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");verifyNoInteractions(provider);
+    }
+    @Test void sourceRevocationDuringLastReviewCancelsInsteadOfApproving()throws Exception {
+        UUID id=automaticRequest();when(quality.review(any(),anyList(),anyList(),eq("SIT"),eq("east"))).thenAnswer(c->{
+            jdbc.update("UPDATE shelter.asset_source_permissions SET revoked_at=now() WHERE id=?",permission);return automaticMotionReport(true);});
+        finish(id);assertThat(read(id).path("status").asText()).isEqualTo("CANCELLED");assertThat(read(id).path("qualityApproval").isNull()).isTrue();
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"missing-report","stale-rules","changed-image","wrong-direction","changed-seed","missing-lessons","uncertain-identity","raw-edit-unreviewed","changed-pinned-lessons","incomplete-plan"})
+    void automaticApprovalRejectsIncompleteOrStaleEvidence(String defect)throws Exception {
+        UUID id=automaticRequest();finish(id);assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
+        jdbc.update("UPDATE shelter.asset_jobs SET status='QUEUED',quality_approval=NULL,reviewed_at=NULL WHERE id=?",id);
+        String label=defect.equals("uncertain-identity")?"character":"walk-west";
+        var result=(tools.jackson.databind.node.ObjectNode)step(id,label).path("result").deepCopy();
+        var report=(tools.jackson.databind.node.ObjectNode)step(id,label).path("qualityReport").deepCopy();
+        switch(defect) {
+            case "missing-report" -> report.removeAll();
+            case "stale-rules" -> report.put("rulesSha256","0".repeat(64));
+            case "changed-image" -> result.put("sha256","0".repeat(64));
+            case "wrong-direction" -> report.put("direction","east");
+            case "changed-seed" -> report.putObject("seedHashes").put("west","0".repeat(64));
+            case "missing-lessons" -> report.remove("learnedLessons");
+            case "uncertain-identity" -> report.put("identity","UNCERTAIN");
+            case "raw-edit-unreviewed" -> result.putObject("rawEdit").put("sha256","0".repeat(64));
+            case "changed-pinned-lessons" -> jdbc.update("UPDATE shelter.styled_asset_steps SET learned_lessons='[{\"id\":\"unknown\",\"sha256\":\"unknown\"}]'::jsonb WHERE job_id=? AND label=?",id,label);
+            case "incomplete-plan" -> jdbc.update("UPDATE shelter.asset_jobs SET action_plan=action_plan || '[\"RUN\"]'::jsonb WHERE id=?",id);
+        }
+        jdbc.update("UPDATE shelter.styled_asset_steps SET result=?::jsonb,quality_report=?::jsonb WHERE job_id=? AND label=?",result.toString(),report.toString(),id,label);
+        clearInvocations(provider);tick();assertThat(read(id).path("status").asText()).isEqualTo(defect.equals("incomplete-plan")?"FAILED":"REVIEW");
+        assertThat(read(id).path("qualityApproval").isNull()).isTrue();publicStatus(404);verifyNoInteractions(provider);
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"model","reviewedAt","views","identity","edgeDirections","source-photo"})
+    void baseApprovalRequiresCompleteReviewEvidence(String missing)throws Exception {
+        UUID id=automaticRequest();
+        when(seedQuality.review(any(),anyList())).thenAnswer(c->{
+            var r=(tools.jackson.databind.node.ObjectNode)automaticSeedReport(c.getArgument(1),true);r.remove(missing);return r;});
+        if(missing.equals("source-photo"))jdbc.update("UPDATE shelter.asset_jobs SET styled_input=jsonb_set(styled_input,'{sourcePhotoSha256}',to_jsonb(CAST(? AS text))) WHERE id=?","0".repeat(64),id);
+        finish(id);assertThat(read(id).path("status").asText()).isEqualTo("SEED_REVIEW");
+        assertThat(read(id).path("failureCode").asText()).isEqualTo("AUTO_APPROVAL_EVIDENCE_REQUIRED");
+        assertThat(read(id).path("seedReview").isNull()).isTrue();verify(provider,never()).submit(eq(false),any());
+    }
+    @Test void recoveryOfCompletedWorkIsIdempotentAndDatabaseRequiresMachineEvidence()throws Exception {
+        UUID id=automaticRequest();
+        assertThatThrownBy(()->jdbc.update("UPDATE shelter.asset_jobs SET status='APPROVED',reviewed_at=now() WHERE id=?",id)).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+        assertThatThrownBy(()->jdbc.update("UPDATE shelter.asset_jobs SET status='APPROVED',reviewed_at=now(),quality_approval='{}'::jsonb WHERE id=?",id)).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+        finish(id);var evidence=read(id).path("qualityApproval");
+        jdbc.update("UPDATE shelter.asset_jobs SET status='RUNNING',quality_approval=NULL,reviewed_at=NULL,lease_token=NULL,lease_until=NULL WHERE id=?",id);
+        clearInvocations(provider);tick();assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");verifyNoInteractions(provider);
+        assertThat(read(id).at("/qualityApproval/steps")).isEqualTo(evidence.path("steps"));
+        assertThatThrownBy(()->jdbc.update("UPDATE shelter.asset_jobs SET quality_approval='{}'::jsonb WHERE id=?",id)).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+        assertThatThrownBy(()->jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=quality_policy-'automaticApproval' WHERE id=?",id)).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+    }
     Map<String,Object> input() {return Map.of("photoId",photo,"traits",Map.of("sourcePhotoSha256","a".repeat(64),"faceBox",List.of(.1,.1,.8,.8),"identityDescription","brown dog","motionDescription","brown dog","rearDescription","unknown markings","seed",42,"reviewNote","Reviewed full body photo and face crop for this dog"));}
-    UUID request() throws Exception {return UUID.fromString(post(subject,"/v1/shelter-admin/dogs/"+dog+"/styled-assets",input(),202).at("/data/id").asText());}
+    // Existing cases exercise persisted pre-B63 jobs and their explicit manual review contract.
+    UUID request() throws Exception {
+        UUID id=UUID.fromString(post(subject,"/v1/shelter-admin/dogs/"+dog+"/styled-assets",input(),202).at("/data/id").asText());
+        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=quality_policy-'automaticApproval' WHERE id=?",id);return id;
+    }
     String path(UUID id) {return "/v1/shelter-admin/dogs/"+dog+"/styled-assets/"+id;}
     JsonNode read(UUID id) throws Exception {return get(subject,path(id),200).path("data");}
     void review(UUID id,boolean seed,String decision,int expected) throws Exception {post(subject,path(id)+(seed?"/seed-review":"/review"),Map.of("decision",decision,"note","Reviewed all directions, identity and motion quality","expectedSeedHashes",read(id).at("/steps/0/result/hashes")),expected);}
-    void finish(UUID id) throws Exception {for(int i=0;i<220 && !Set.of("REVIEW","FAILED","OUTCOME_UNKNOWN").contains(read(id).path("status").asText());i++)tick();}
+    void finish(UUID id) throws Exception {for(int i=0;i<220 && !Set.of("REVIEW","FAILED","OUTCOME_UNKNOWN","APPROVED","SEED_REVIEW","REJECTED","CANCELLED").contains(read(id).path("status").asText());i++)tick();}
     void tick() {jdbc.update("UPDATE shelter.asset_jobs SET next_run_at=now() WHERE dog_id=?",dog);worker.tick();}
     void publicStatus(int status) throws Exception {get(null,"/v1/dogs/"+dog+"/assets",status);}
     String bearer(UUID subject) {return "Bearer "+tokens.token(subject);}

@@ -75,7 +75,7 @@ class ApiIngressHttpTest {
         when(storage.photo(dog,"dog-photos","source.png")).thenReturn(png);
         when(styled.referenceExisting(any(),eq(dog),eq(photo),anyString(),any())).thenReturn(Optional.empty());
         when(styled.referenceInsert(any(),eq(dog),eq(photo),any(),anyString(),any(),any())).thenReturn(
-            new StyledAssetStore.Job(job,dog,"RUNNING",null,"test",List.of(),null,List.of("BASE"),json.createObjectNode(),json.createObjectNode().put("referenceOnly",true)));
+            new StyledAssetStore.Job(job,dog,"RUNNING",null,"test",List.of(),null,List.of("BASE"),json.createObjectNode(),json.createObjectNode().put("referenceOnly",true),null));
         byte[] body=seedMultipart(metadata,png,List.of("south","north","west","east"));
         for(boolean chunked:new boolean[]{false,true}) {
             var response=send(seedPath(),tokens.token(UUID.randomUUID()),"multipart/form-data; boundary=boundary",body,chunked);
