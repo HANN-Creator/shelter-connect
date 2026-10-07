@@ -1,0 +1,2318 @@
+{
+  "sourceJobId": "9b512fb8-0f67-441e-9c31-0b9c74512153",
+  "rulesSha256": "7596b2ccbe0383f08190d6623683599fbdec6d279911568d979dc2248f14fc79",
+  "rulesRevision": "sprite-regressions-2026-10-07-v10",
+  "sourcePixelsChanged": false,
+  "newPixelLabRequests": 0,
+  "actualModel": "gpt-5.6-luna",
+  "newPresentationLiveVerified": false,
+  "cases": [
+    {
+      "label": "idle-south",
+      "direction": "south",
+      "previousQualityReport": {
+        "note": "",
+        "model": "gpt-5.6-luna",
+        "frames": [],
+        "issues": [],
+        "passed": true,
+        "version": "sprite-quality-v1",
+        "edgeFrames": [],
+        "reviewedAt": "2026-10-07T00:34:26.014693760Z",
+        "inputSha256": "8088c25509f07ef51cc60c268dd78e913b8c45b0cf7ff94ee067ed0b08ef8329",
+        "rulesSha256": "6fae1b5ad7b062411172441cc8ac9eb6ec11c6cef905f6c1a0dd4c35014100ec",
+        "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "rawEditReview": {
+          "note": "",
+          "model": "gpt-5.6-luna",
+          "frames": [],
+          "issues": [],
+          "passed": true,
+          "version": "sprite-quality-v1",
+          "edgeFrames": [],
+          "reviewedAt": "2026-10-07T00:34:33.515047326Z",
+          "rulesSha256": "6fae1b5ad7b062411172441cc8ac9eb6ec11c6cef905f6c1a0dd4c35014100ec",
+          "rulesRevision": "sprite-regressions-2026-10-06-v9",
+          "detachedFrames": [],
+          "idleMotionFrames": [],
+          "silhouetteFrames": []
+        },
+        "rawEditSha256": "d791be3041698747a9aff23ff47411c33479f17b6aa734ee90bc289ba4b88695",
+        "rulesRevision": "sprite-regressions-2026-10-06-v9",
+        "detachedFrames": [],
+        "learnedLessons": [],
+        "idleMotionFrames": [],
+        "silhouetteFrames": []
+      },
+      "actualRecheckReport": {
+        "note": "Frames 3–5 show a sustained, non-subtle head/ear or facial pose change rather than quiet idle breathing/blinking. The dog returns to the earlier appearance in frames 6–8.",
+        "model": "gpt-5.6-luna",
+        "frames": [
+          3,
+          4,
+          5
+        ],
+        "issues": [
+          "IDLE_MOTION"
+        ],
+        "passed": false,
+        "version": "sprite-quality-v1",
+        "edgeFrames": [],
+        "reviewedAt": "2026-10-07T03:04:29.257033989Z",
+        "inputSha256": "8088c25509f07ef51cc60c268dd78e913b8c45b0cf7ff94ee067ed0b08ef8329",
+        "rulesSha256": "7596b2ccbe0383f08190d6623683599fbdec6d279911568d979dc2248f14fc79",
+        "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "pixelEvidence": {
+          "version": "native-frame-delta-v1",
+          "reference": "frame0",
+          "frameCount": 9,
+          "alphaStable": true,
+          "boundsExclusive": [
+            [
+              5,
+              5,
+              28,
+              30
+            ],
+            [
+              5,
+              5,
+              28,
+              30
+            ],
+            [
+              5,
+              5,
+              28,
+              30
+            ],
+            [
+              5,
+              5,
+              28,
+              30
+            ],
+            [
+              5,
+              5,
+              28,
+              30
+            ],
+            [
+              5,
+              5,
+              28,
+              30
+            ],
+            [
+              5,
+              5,
+              28,
+              30
+            ],
+            [
+              5,
+              5,
+              28,
+              30
+            ],
+            [
+              5,
+              5,
+              28,
+              30
+            ]
+          ],
+          "subtleShadingOnly": false,
+          "maxVisibleRgbDelta": 55,
+          "maxRgbDeltaFromFrame0": [
+            0,
+            55,
+            55,
+            17,
+            15,
+            17,
+            15,
+            15,
+            17
+          ],
+          "alphaChangedFromFrame0": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "maxRgbDeltaFromPrevious": [
+            0,
+            55,
+            15,
+            55,
+            17,
+            17,
+            17,
+            15,
+            17
+          ],
+          "alphaChangedFromPrevious": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "rgbChangedPixelsFromFrame0": [
+            0,
+            92,
+            98,
+            89,
+            88,
+            94,
+            92,
+            91,
+            87
+          ]
+        },
+        "rawEditReview": {
+          "note": "The idle clip contains repeated, pronounced internal pose/color changes rather than only quiet breathing or a brief blink. Frames 1 and 3–5 visibly depart from the approved standing idle appearance; the silhouette remains stable.",
+          "model": "gpt-5.6-luna",
+          "frames": [
+            1,
+            3,
+            4,
+            5
+          ],
+          "issues": [
+            "IDLE_MOTION"
+          ],
+          "passed": false,
+          "version": "sprite-quality-v1",
+          "edgeFrames": [],
+          "reviewedAt": "2026-10-07T03:04:37.162292721Z",
+          "rulesSha256": "7596b2ccbe0383f08190d6623683599fbdec6d279911568d979dc2248f14fc79",
+          "pixelEvidence": {
+            "version": "native-frame-delta-v1",
+            "reference": "frame0",
+            "frameCount": 9,
+            "alphaStable": true,
+            "boundsExclusive": [
+              [
+                5,
+                5,
+                28,
+                30
+              ],
+              [
+                5,
+                5,
+                28,
+                30
+              ],
+              [
+                5,
+                5,
+                28,
+                30
+              ],
+              [
+                5,
+                5,
+                28,
+                30
+              ],
+              [
+                5,
+                5,
+                28,
+                30
+              ],
+              [
+                5,
+                5,
+                28,
+                30
+              ],
+              [
+                5,
+                5,
+                28,
+                30
+              ],
+              [
+                5,
+                5,
+                28,
+                30
+              ],
+              [
+                5,
+                5,
+                28,
+                30
+              ]
+            ],
+            "subtleShadingOnly": false,
+            "maxVisibleRgbDelta": 49,
+            "maxRgbDeltaFromFrame0": [
+              0,
+              49,
+              48,
+              16,
+              15,
+              15,
+              16,
+              16,
+              16
+            ],
+            "alphaChangedFromFrame0": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxRgbDeltaFromPrevious": [
+              0,
+              49,
+              6,
+              48,
+              15,
+              15,
+              15,
+              6,
+              15
+            ],
+            "alphaChangedFromPrevious": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "rgbChangedPixelsFromFrame0": [
+              0,
+              101,
+              87,
+              88,
+              104,
+              114,
+              115,
+              101,
+              93
+            ]
+          },
+          "rulesRevision": "sprite-regressions-2026-10-07-v10",
+          "detachedFrames": [],
+          "idleMotionFrames": [],
+          "silhouetteFrames": []
+        },
+        "rawEditSha256": "d791be3041698747a9aff23ff47411c33479f17b6aa734ee90bc289ba4b88695",
+        "rulesRevision": "sprite-regressions-2026-10-07-v10",
+        "detachedFrames": [],
+        "learnedLessons": [],
+        "idleMotionFrames": [],
+        "silhouetteFrames": []
+      },
+      "variants": {
+        "raw": {
+          "file": "idle-review-recheck/idle-south-raw.png",
+          "sha256": "d791be3041698747a9aff23ff47411c33479f17b6aa734ee90bc289ba4b88695",
+          "pixelEvidence": {
+            "version": "native-frame-delta-v1",
+            "reference": "frame0",
+            "frameCount": 9,
+            "alphaStable": true,
+            "boundsExclusive": [
+              [
+                5,
+                5,
+                28,
+                30
+              ],
+              [
+                5,
+                5,
+                28,
+                30
+              ],
+              [
+                5,
+                5,
+                28,
+                30
+              ],
+              [
+                5,
+                5,
+                28,
+                30
+              ],
+              [
+                5,
+                5,
+                28,
+                30
+              ],
+              [
+                5,
+                5,
+                28,
+                30
+              ],
+              [
+                5,
+                5,
+                28,
+                30
+              ],
+              [
+                5,
+                5,
+                28,
+                30
+              ],
+              [
+                5,
+                5,
+                28,
+                30
+              ]
+            ],
+            "subtleShadingOnly": false,
+            "maxVisibleRgbDelta": 49,
+            "maxRgbDeltaFromFrame0": [
+              0,
+              49,
+              48,
+              16,
+              15,
+              15,
+              16,
+              16,
+              16
+            ],
+            "alphaChangedFromFrame0": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxRgbDeltaFromPrevious": [
+              0,
+              49,
+              6,
+              48,
+              15,
+              15,
+              15,
+              6,
+              15
+            ],
+            "alphaChangedFromPrevious": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "rgbChangedPixelsFromFrame0": [
+              0,
+              101,
+              87,
+              88,
+              104,
+              114,
+              115,
+              101,
+              93
+            ]
+          }
+        },
+        "candidate": {
+          "file": "idle-review-recheck/idle-south-candidate.png",
+          "sha256": "8088c25509f07ef51cc60c268dd78e913b8c45b0cf7ff94ee067ed0b08ef8329",
+          "pixelEvidence": {
+            "version": "native-frame-delta-v1",
+            "reference": "frame0",
+            "frameCount": 9,
+            "alphaStable": true,
+            "boundsExclusive": [
+              [
+                5,
+                5,
+                28,
+                30
+              ],
+              [
+                5,
+                5,
+                28,
+                30
+              ],
+              [
+                5,
+                5,
+                28,
+                30
+              ],
+              [
+                5,
+                5,
+                28,
+                30
+              ],
+              [
+                5,
+                5,
+                28,
+                30
+              ],
+              [
+                5,
+                5,
+                28,
+                30
+              ],
+              [
+                5,
+                5,
+                28,
+                30
+              ],
+              [
+                5,
+                5,
+                28,
+                30
+              ],
+              [
+                5,
+                5,
+                28,
+                30
+              ]
+            ],
+            "subtleShadingOnly": false,
+            "maxVisibleRgbDelta": 55,
+            "maxRgbDeltaFromFrame0": [
+              0,
+              55,
+              55,
+              17,
+              15,
+              17,
+              15,
+              15,
+              17
+            ],
+            "alphaChangedFromFrame0": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxRgbDeltaFromPrevious": [
+              0,
+              55,
+              15,
+              55,
+              17,
+              17,
+              17,
+              15,
+              17
+            ],
+            "alphaChangedFromPrevious": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "rgbChangedPixelsFromFrame0": [
+              0,
+              92,
+              98,
+              89,
+              88,
+              94,
+              92,
+              91,
+              87
+            ]
+          }
+        }
+      }
+    },
+    {
+      "label": "idle-north",
+      "direction": "north",
+      "previousQualityReport": {
+        "note": "The clip has large standing/crouched posture changes instead of quiet idle breathing; transitions into and out of the crouched pose are abrupt.",
+        "model": "gpt-5.6-luna",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "issues": [
+          "DISCONTINUITY",
+          "IDLE_MOTION"
+        ],
+        "passed": false,
+        "version": "sprite-quality-v1",
+        "edgeFrames": [],
+        "reviewedAt": "2026-10-07T02:24:59.061670947Z",
+        "inputSha256": "eb06d108be1b4a2a6e337e6a823d176876731efed22bee1c5b451e3227dafd79",
+        "rulesSha256": "6fae1b5ad7b062411172441cc8ac9eb6ec11c6cef905f6c1a0dd4c35014100ec",
+        "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "rawEditReview": {
+          "note": "Frames 6–8 show a clear scale/pose expansion compared with frames 0–5, inconsistent with quiet north-facing IDLE motion; the change begins between frames 5 and 6.",
+          "model": "gpt-5.6-luna",
+          "frames": [
+            5,
+            6,
+            7,
+            8
+          ],
+          "issues": [
+            "DISCONTINUITY",
+            "IDLE_MOTION"
+          ],
+          "passed": false,
+          "version": "sprite-quality-v1",
+          "edgeFrames": [],
+          "reviewedAt": "2026-10-07T02:25:13.356840445Z",
+          "rulesSha256": "6fae1b5ad7b062411172441cc8ac9eb6ec11c6cef905f6c1a0dd4c35014100ec",
+          "rulesRevision": "sprite-regressions-2026-10-06-v9",
+          "detachedFrames": [],
+          "idleMotionFrames": [],
+          "silhouetteFrames": []
+        },
+        "rawEditSha256": "ca14206a9c0328b6eded606467bc9c87597ec46f25a7f277b56651014a4aca49",
+        "rulesRevision": "sprite-regressions-2026-10-06-v9",
+        "detachedFrames": [],
+        "learnedLessons": [],
+        "idleMotionFrames": [],
+        "silhouetteFrames": []
+      },
+      "actualRecheckReport": {
+        "note": "",
+        "model": "gpt-5.6-luna",
+        "frames": [],
+        "issues": [
+          "IDLE_MOTION"
+        ],
+        "passed": false,
+        "version": "sprite-quality-v1",
+        "edgeFrames": [],
+        "reviewedAt": "2026-10-07T03:05:06.851045161Z",
+        "inputSha256": "eb06d108be1b4a2a6e337e6a823d176876731efed22bee1c5b451e3227dafd79",
+        "rulesSha256": "7596b2ccbe0383f08190d6623683599fbdec6d279911568d979dc2248f14fc79",
+        "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "pixelEvidence": {
+          "version": "native-frame-delta-v1",
+          "reference": "frame0",
+          "frameCount": 9,
+          "alphaStable": true,
+          "boundsExclusive": [
+            [
+              5,
+              3,
+              27,
+              31
+            ],
+            [
+              5,
+              3,
+              27,
+              31
+            ],
+            [
+              5,
+              3,
+              27,
+              31
+            ],
+            [
+              5,
+              3,
+              27,
+              31
+            ],
+            [
+              5,
+              3,
+              27,
+              31
+            ],
+            [
+              5,
+              3,
+              27,
+              31
+            ],
+            [
+              5,
+              3,
+              27,
+              31
+            ],
+            [
+              5,
+              3,
+              27,
+              31
+            ],
+            [
+              5,
+              3,
+              27,
+              31
+            ]
+          ],
+          "subtleShadingOnly": true,
+          "maxVisibleRgbDelta": 15,
+          "maxRgbDeltaFromFrame0": [
+            0,
+            15,
+            15,
+            15,
+            15,
+            15,
+            15,
+            15,
+            15
+          ],
+          "alphaChangedFromFrame0": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "maxRgbDeltaFromPrevious": [
+            0,
+            15,
+            15,
+            15,
+            3,
+            15,
+            15,
+            15,
+            15
+          ],
+          "alphaChangedFromPrevious": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "rgbChangedPixelsFromFrame0": [
+            0,
+            78,
+            72,
+            70,
+            74,
+            84,
+            118,
+            77,
+            70
+          ]
+        },
+        "rawEditReview": {
+          "note": "The north-facing dog otherwise matches the approved identity and direction, but the tail visibly shifts/swishes across the later idle frames instead of remaining stationary.",
+          "model": "gpt-5.6-luna",
+          "frames": [
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "issues": [
+            "IDLE_MOTION"
+          ],
+          "passed": false,
+          "version": "sprite-quality-v1",
+          "edgeFrames": [],
+          "reviewedAt": "2026-10-07T03:05:15.961790208Z",
+          "rulesSha256": "7596b2ccbe0383f08190d6623683599fbdec6d279911568d979dc2248f14fc79",
+          "pixelEvidence": {
+            "version": "native-frame-delta-v1",
+            "reference": "frame0",
+            "frameCount": 9,
+            "alphaStable": true,
+            "boundsExclusive": [
+              [
+                5,
+                3,
+                27,
+                31
+              ],
+              [
+                5,
+                3,
+                27,
+                31
+              ],
+              [
+                5,
+                3,
+                27,
+                31
+              ],
+              [
+                5,
+                3,
+                27,
+                31
+              ],
+              [
+                5,
+                3,
+                27,
+                31
+              ],
+              [
+                5,
+                3,
+                27,
+                31
+              ],
+              [
+                5,
+                3,
+                27,
+                31
+              ],
+              [
+                5,
+                3,
+                27,
+                31
+              ],
+              [
+                5,
+                3,
+                27,
+                31
+              ]
+            ],
+            "subtleShadingOnly": true,
+            "maxVisibleRgbDelta": 17,
+            "maxRgbDeltaFromFrame0": [
+              0,
+              12,
+              12,
+              12,
+              12,
+              13,
+              17,
+              12,
+              12
+            ],
+            "alphaChangedFromFrame0": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxRgbDeltaFromPrevious": [
+              0,
+              12,
+              10,
+              7,
+              7,
+              14,
+              17,
+              16,
+              13
+            ],
+            "alphaChangedFromPrevious": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "rgbChangedPixelsFromFrame0": [
+              0,
+              103,
+              93,
+              111,
+              117,
+              153,
+              211,
+              123,
+              120
+            ]
+          },
+          "rulesRevision": "sprite-regressions-2026-10-07-v10",
+          "detachedFrames": [],
+          "idleMotionFrames": [],
+          "silhouetteFrames": []
+        },
+        "rawEditSha256": "ca14206a9c0328b6eded606467bc9c87597ec46f25a7f277b56651014a4aca49",
+        "rulesRevision": "sprite-regressions-2026-10-07-v10",
+        "detachedFrames": [],
+        "learnedLessons": [],
+        "idleMotionFrames": [],
+        "silhouetteFrames": []
+      },
+      "variants": {
+        "raw": {
+          "file": "idle-review-recheck/idle-north-raw.png",
+          "sha256": "ca14206a9c0328b6eded606467bc9c87597ec46f25a7f277b56651014a4aca49",
+          "pixelEvidence": {
+            "version": "native-frame-delta-v1",
+            "reference": "frame0",
+            "frameCount": 9,
+            "alphaStable": true,
+            "boundsExclusive": [
+              [
+                5,
+                3,
+                27,
+                31
+              ],
+              [
+                5,
+                3,
+                27,
+                31
+              ],
+              [
+                5,
+                3,
+                27,
+                31
+              ],
+              [
+                5,
+                3,
+                27,
+                31
+              ],
+              [
+                5,
+                3,
+                27,
+                31
+              ],
+              [
+                5,
+                3,
+                27,
+                31
+              ],
+              [
+                5,
+                3,
+                27,
+                31
+              ],
+              [
+                5,
+                3,
+                27,
+                31
+              ],
+              [
+                5,
+                3,
+                27,
+                31
+              ]
+            ],
+            "subtleShadingOnly": true,
+            "maxVisibleRgbDelta": 17,
+            "maxRgbDeltaFromFrame0": [
+              0,
+              12,
+              12,
+              12,
+              12,
+              13,
+              17,
+              12,
+              12
+            ],
+            "alphaChangedFromFrame0": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxRgbDeltaFromPrevious": [
+              0,
+              12,
+              10,
+              7,
+              7,
+              14,
+              17,
+              16,
+              13
+            ],
+            "alphaChangedFromPrevious": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "rgbChangedPixelsFromFrame0": [
+              0,
+              103,
+              93,
+              111,
+              117,
+              153,
+              211,
+              123,
+              120
+            ]
+          }
+        },
+        "candidate": {
+          "file": "idle-review-recheck/idle-north-candidate.png",
+          "sha256": "eb06d108be1b4a2a6e337e6a823d176876731efed22bee1c5b451e3227dafd79",
+          "pixelEvidence": {
+            "version": "native-frame-delta-v1",
+            "reference": "frame0",
+            "frameCount": 9,
+            "alphaStable": true,
+            "boundsExclusive": [
+              [
+                5,
+                3,
+                27,
+                31
+              ],
+              [
+                5,
+                3,
+                27,
+                31
+              ],
+              [
+                5,
+                3,
+                27,
+                31
+              ],
+              [
+                5,
+                3,
+                27,
+                31
+              ],
+              [
+                5,
+                3,
+                27,
+                31
+              ],
+              [
+                5,
+                3,
+                27,
+                31
+              ],
+              [
+                5,
+                3,
+                27,
+                31
+              ],
+              [
+                5,
+                3,
+                27,
+                31
+              ],
+              [
+                5,
+                3,
+                27,
+                31
+              ]
+            ],
+            "subtleShadingOnly": true,
+            "maxVisibleRgbDelta": 15,
+            "maxRgbDeltaFromFrame0": [
+              0,
+              15,
+              15,
+              15,
+              15,
+              15,
+              15,
+              15,
+              15
+            ],
+            "alphaChangedFromFrame0": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxRgbDeltaFromPrevious": [
+              0,
+              15,
+              15,
+              15,
+              3,
+              15,
+              15,
+              15,
+              15
+            ],
+            "alphaChangedFromPrevious": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "rgbChangedPixelsFromFrame0": [
+              0,
+              78,
+              72,
+              70,
+              74,
+              84,
+              118,
+              77,
+              70
+            ]
+          }
+        }
+      }
+    },
+    {
+      "label": "idle-west",
+      "direction": "west",
+      "previousQualityReport": {
+        "note": "No clear visible defects; all frames remain west-facing with consistent anatomy, tail carriage, and quiet idle posture.",
+        "model": "gpt-5.6-luna",
+        "frames": [],
+        "issues": [],
+        "passed": true,
+        "version": "sprite-quality-v1",
+        "edgeFrames": [],
+        "reviewedAt": "2026-10-07T02:26:08.068139417Z",
+        "inputSha256": "0a56537e22b6ba882b57fefd4503e0a1906bcb64a28507f418277ae141fc6009",
+        "rulesSha256": "6fae1b5ad7b062411172441cc8ac9eb6ec11c6cef905f6c1a0dd4c35014100ec",
+        "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "rawEditReview": {
+          "note": "All frames preserve the approved west-facing dog’s identity, direction, planted paws, and stationary tail. Motion is limited to subtle idle breathing.",
+          "model": "gpt-5.6-luna",
+          "frames": [],
+          "issues": [],
+          "passed": true,
+          "version": "sprite-quality-v1",
+          "edgeFrames": [],
+          "reviewedAt": "2026-10-07T02:26:13.361855729Z",
+          "rulesSha256": "6fae1b5ad7b062411172441cc8ac9eb6ec11c6cef905f6c1a0dd4c35014100ec",
+          "rulesRevision": "sprite-regressions-2026-10-06-v9",
+          "detachedFrames": [],
+          "idleMotionFrames": [],
+          "silhouetteFrames": []
+        },
+        "rawEditSha256": "90a25bce1c78bb72f33a0e3c69b8aa20c51cca6568ae73308eb1bc768d04d000",
+        "rulesRevision": "sprite-regressions-2026-10-06-v9",
+        "detachedFrames": [],
+        "learnedLessons": [],
+        "idleMotionFrames": [],
+        "silhouetteFrames": []
+      },
+      "actualRecheckReport": {
+        "note": "All frames maintain the west-facing identity, stationary idle posture, and consistent tail carriage without a clear visible defect.",
+        "model": "gpt-5.6-luna",
+        "frames": [],
+        "issues": [
+          "IDLE_MOTION"
+        ],
+        "passed": false,
+        "version": "sprite-quality-v1",
+        "edgeFrames": [],
+        "reviewedAt": "2026-10-07T03:05:48.355151880Z",
+        "inputSha256": "0a56537e22b6ba882b57fefd4503e0a1906bcb64a28507f418277ae141fc6009",
+        "rulesSha256": "7596b2ccbe0383f08190d6623683599fbdec6d279911568d979dc2248f14fc79",
+        "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "pixelEvidence": {
+          "version": "native-frame-delta-v1",
+          "reference": "frame0",
+          "frameCount": 9,
+          "alphaStable": true,
+          "boundsExclusive": [
+            [
+              3,
+              4,
+              29,
+              31
+            ],
+            [
+              3,
+              4,
+              29,
+              31
+            ],
+            [
+              3,
+              4,
+              29,
+              31
+            ],
+            [
+              3,
+              4,
+              29,
+              31
+            ],
+            [
+              3,
+              4,
+              29,
+              31
+            ],
+            [
+              3,
+              4,
+              29,
+              31
+            ],
+            [
+              3,
+              4,
+              29,
+              31
+            ],
+            [
+              3,
+              4,
+              29,
+              31
+            ],
+            [
+              3,
+              4,
+              29,
+              31
+            ]
+          ],
+          "subtleShadingOnly": false,
+          "maxVisibleRgbDelta": 55,
+          "maxRgbDeltaFromFrame0": [
+            0,
+            55,
+            55,
+            55,
+            55,
+            48,
+            48,
+            48,
+            48
+          ],
+          "alphaChangedFromFrame0": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "maxRgbDeltaFromPrevious": [
+            0,
+            55,
+            41,
+            55,
+            23,
+            68,
+            29,
+            29,
+            29
+          ],
+          "alphaChangedFromPrevious": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "rgbChangedPixelsFromFrame0": [
+            0,
+            105,
+            108,
+            113,
+            115,
+            108,
+            111,
+            107,
+            107
+          ]
+        },
+        "rawEditReview": {
+          "note": "Idle clip shows excessive internal animation beyond subtle breathing/blinking, including a pronounced change around frames 3–6; paws and tail remain planted.",
+          "model": "gpt-5.6-luna",
+          "frames": [
+            3,
+            4,
+            5,
+            6
+          ],
+          "issues": [
+            "IDLE_MOTION"
+          ],
+          "passed": false,
+          "version": "sprite-quality-v1",
+          "edgeFrames": [],
+          "reviewedAt": "2026-10-07T03:05:55.958273177Z",
+          "rulesSha256": "7596b2ccbe0383f08190d6623683599fbdec6d279911568d979dc2248f14fc79",
+          "pixelEvidence": {
+            "version": "native-frame-delta-v1",
+            "reference": "frame0",
+            "frameCount": 9,
+            "alphaStable": true,
+            "boundsExclusive": [
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ]
+            ],
+            "subtleShadingOnly": false,
+            "maxVisibleRgbDelta": 55,
+            "maxRgbDeltaFromFrame0": [
+              0,
+              34,
+              41,
+              55,
+              55,
+              29,
+              29,
+              29,
+              22
+            ],
+            "alphaChangedFromFrame0": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxRgbDeltaFromPrevious": [
+              0,
+              34,
+              41,
+              55,
+              23,
+              68,
+              29,
+              29,
+              29
+            ],
+            "alphaChangedFromPrevious": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "rgbChangedPixelsFromFrame0": [
+              0,
+              89,
+              92,
+              97,
+              99,
+              92,
+              95,
+              91,
+              91
+            ]
+          },
+          "rulesRevision": "sprite-regressions-2026-10-07-v10",
+          "detachedFrames": [],
+          "idleMotionFrames": [],
+          "silhouetteFrames": []
+        },
+        "rawEditSha256": "90a25bce1c78bb72f33a0e3c69b8aa20c51cca6568ae73308eb1bc768d04d000",
+        "rulesRevision": "sprite-regressions-2026-10-07-v10",
+        "detachedFrames": [],
+        "learnedLessons": [],
+        "idleMotionFrames": [],
+        "silhouetteFrames": []
+      },
+      "variants": {
+        "raw": {
+          "file": "idle-review-recheck/idle-west-raw.png",
+          "sha256": "90a25bce1c78bb72f33a0e3c69b8aa20c51cca6568ae73308eb1bc768d04d000",
+          "pixelEvidence": {
+            "version": "native-frame-delta-v1",
+            "reference": "frame0",
+            "frameCount": 9,
+            "alphaStable": true,
+            "boundsExclusive": [
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ]
+            ],
+            "subtleShadingOnly": false,
+            "maxVisibleRgbDelta": 55,
+            "maxRgbDeltaFromFrame0": [
+              0,
+              34,
+              41,
+              55,
+              55,
+              29,
+              29,
+              29,
+              22
+            ],
+            "alphaChangedFromFrame0": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxRgbDeltaFromPrevious": [
+              0,
+              34,
+              41,
+              55,
+              23,
+              68,
+              29,
+              29,
+              29
+            ],
+            "alphaChangedFromPrevious": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "rgbChangedPixelsFromFrame0": [
+              0,
+              89,
+              92,
+              97,
+              99,
+              92,
+              95,
+              91,
+              91
+            ]
+          }
+        },
+        "candidate": {
+          "file": "idle-review-recheck/idle-west-candidate.png",
+          "sha256": "0a56537e22b6ba882b57fefd4503e0a1906bcb64a28507f418277ae141fc6009",
+          "pixelEvidence": {
+            "version": "native-frame-delta-v1",
+            "reference": "frame0",
+            "frameCount": 9,
+            "alphaStable": true,
+            "boundsExclusive": [
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ]
+            ],
+            "subtleShadingOnly": false,
+            "maxVisibleRgbDelta": 55,
+            "maxRgbDeltaFromFrame0": [
+              0,
+              55,
+              55,
+              55,
+              55,
+              48,
+              48,
+              48,
+              48
+            ],
+            "alphaChangedFromFrame0": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxRgbDeltaFromPrevious": [
+              0,
+              55,
+              41,
+              55,
+              23,
+              68,
+              29,
+              29,
+              29
+            ],
+            "alphaChangedFromPrevious": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "rgbChangedPixelsFromFrame0": [
+              0,
+              105,
+              108,
+              113,
+              115,
+              108,
+              111,
+              107,
+              107
+            ]
+          }
+        }
+      }
+    },
+    {
+      "label": "idle-east",
+      "direction": "east",
+      "previousQualityReport": {
+        "note": "",
+        "model": "gpt-5.6-luna",
+        "frames": [],
+        "issues": [],
+        "passed": true,
+        "version": "sprite-quality-v1",
+        "edgeFrames": [],
+        "reviewedAt": "2026-10-07T00:45:48.315005822Z",
+        "inputSha256": "a4e5873cbf30bd5f4750b66f872fab57be07d94d3035c7535ef0a64c136e60c0",
+        "rulesSha256": "6fae1b5ad7b062411172441cc8ac9eb6ec11c6cef905f6c1a0dd4c35014100ec",
+        "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "rawEditReview": {
+          "note": "No clear visible defects.",
+          "model": "gpt-5.6-luna",
+          "frames": [],
+          "issues": [],
+          "passed": true,
+          "version": "sprite-quality-v1",
+          "edgeFrames": [],
+          "reviewedAt": "2026-10-07T00:46:00.458977614Z",
+          "rulesSha256": "6fae1b5ad7b062411172441cc8ac9eb6ec11c6cef905f6c1a0dd4c35014100ec",
+          "rulesRevision": "sprite-regressions-2026-10-06-v9",
+          "detachedFrames": [],
+          "idleMotionFrames": [],
+          "silhouetteFrames": []
+        },
+        "rawEditSha256": "2e0e18fe7f2d83cfd9d91006cf897aed90663ccb7845a1097b9b1d8f25779140",
+        "rulesRevision": "sprite-regressions-2026-10-06-v9",
+        "detachedFrames": [],
+        "learnedLessons": [],
+        "idleMotionFrames": [],
+        "silhouetteFrames": []
+      },
+      "actualRecheckReport": {
+        "note": "The IDLE clip shows repeated internal motion beyond quiet breathing/blinking, including changing body/face shading and apparent leg/pose detail changes across the sequence.",
+        "model": "gpt-5.6-luna",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "issues": [
+          "IDLE_MOTION"
+        ],
+        "passed": false,
+        "version": "sprite-quality-v1",
+        "edgeFrames": [],
+        "reviewedAt": "2026-10-07T03:06:29.248230103Z",
+        "inputSha256": "a4e5873cbf30bd5f4750b66f872fab57be07d94d3035c7535ef0a64c136e60c0",
+        "rulesSha256": "7596b2ccbe0383f08190d6623683599fbdec6d279911568d979dc2248f14fc79",
+        "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "pixelEvidence": {
+          "version": "native-frame-delta-v1",
+          "reference": "frame0",
+          "frameCount": 9,
+          "alphaStable": true,
+          "boundsExclusive": [
+            [
+              3,
+              4,
+              29,
+              31
+            ],
+            [
+              3,
+              4,
+              29,
+              31
+            ],
+            [
+              3,
+              4,
+              29,
+              31
+            ],
+            [
+              3,
+              4,
+              29,
+              31
+            ],
+            [
+              3,
+              4,
+              29,
+              31
+            ],
+            [
+              3,
+              4,
+              29,
+              31
+            ],
+            [
+              3,
+              4,
+              29,
+              31
+            ],
+            [
+              3,
+              4,
+              29,
+              31
+            ],
+            [
+              3,
+              4,
+              29,
+              31
+            ]
+          ],
+          "subtleShadingOnly": false,
+          "maxVisibleRgbDelta": 55,
+          "maxRgbDeltaFromFrame0": [
+            0,
+            34,
+            41,
+            55,
+            55,
+            29,
+            29,
+            29,
+            22
+          ],
+          "alphaChangedFromFrame0": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "maxRgbDeltaFromPrevious": [
+            0,
+            34,
+            41,
+            55,
+            23,
+            68,
+            29,
+            29,
+            29
+          ],
+          "alphaChangedFromPrevious": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "rgbChangedPixelsFromFrame0": [
+            0,
+            89,
+            92,
+            97,
+            99,
+            92,
+            95,
+            91,
+            91
+          ]
+        },
+        "rawEditReview": {
+          "note": "The first six idle frames show excessive visible changes rather than quiet breathing or a brief blink; later frames hold still.",
+          "model": "gpt-5.6-luna",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "issues": [
+            "IDLE_MOTION"
+          ],
+          "passed": false,
+          "version": "sprite-quality-v1",
+          "edgeFrames": [],
+          "reviewedAt": "2026-10-07T03:06:37.050361498Z",
+          "rulesSha256": "7596b2ccbe0383f08190d6623683599fbdec6d279911568d979dc2248f14fc79",
+          "pixelEvidence": {
+            "version": "native-frame-delta-v1",
+            "reference": "frame0",
+            "frameCount": 9,
+            "alphaStable": true,
+            "boundsExclusive": [
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ]
+            ],
+            "subtleShadingOnly": false,
+            "maxVisibleRgbDelta": 66,
+            "maxRgbDeltaFromFrame0": [
+              0,
+              20,
+              29,
+              64,
+              66,
+              24,
+              24,
+              24,
+              24
+            ],
+            "alphaChangedFromFrame0": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxRgbDeltaFromPrevious": [
+              0,
+              20,
+              29,
+              46,
+              20,
+              66,
+              24,
+              24,
+              24
+            ],
+            "alphaChangedFromPrevious": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "rgbChangedPixelsFromFrame0": [
+              0,
+              39,
+              49,
+              72,
+              64,
+              57,
+              60,
+              66,
+              62
+            ]
+          },
+          "rulesRevision": "sprite-regressions-2026-10-07-v10",
+          "detachedFrames": [],
+          "idleMotionFrames": [],
+          "silhouetteFrames": []
+        },
+        "rawEditSha256": "2e0e18fe7f2d83cfd9d91006cf897aed90663ccb7845a1097b9b1d8f25779140",
+        "rulesRevision": "sprite-regressions-2026-10-07-v10",
+        "detachedFrames": [],
+        "learnedLessons": [],
+        "idleMotionFrames": [],
+        "silhouetteFrames": []
+      },
+      "variants": {
+        "raw": {
+          "file": "idle-review-recheck/idle-east-raw.png",
+          "sha256": "2e0e18fe7f2d83cfd9d91006cf897aed90663ccb7845a1097b9b1d8f25779140",
+          "pixelEvidence": {
+            "version": "native-frame-delta-v1",
+            "reference": "frame0",
+            "frameCount": 9,
+            "alphaStable": true,
+            "boundsExclusive": [
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ]
+            ],
+            "subtleShadingOnly": false,
+            "maxVisibleRgbDelta": 66,
+            "maxRgbDeltaFromFrame0": [
+              0,
+              20,
+              29,
+              64,
+              66,
+              24,
+              24,
+              24,
+              24
+            ],
+            "alphaChangedFromFrame0": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxRgbDeltaFromPrevious": [
+              0,
+              20,
+              29,
+              46,
+              20,
+              66,
+              24,
+              24,
+              24
+            ],
+            "alphaChangedFromPrevious": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "rgbChangedPixelsFromFrame0": [
+              0,
+              39,
+              49,
+              72,
+              64,
+              57,
+              60,
+              66,
+              62
+            ]
+          }
+        },
+        "candidate": {
+          "file": "idle-review-recheck/idle-east-candidate.png",
+          "sha256": "a4e5873cbf30bd5f4750b66f872fab57be07d94d3035c7535ef0a64c136e60c0",
+          "pixelEvidence": {
+            "version": "native-frame-delta-v1",
+            "reference": "frame0",
+            "frameCount": 9,
+            "alphaStable": true,
+            "boundsExclusive": [
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ],
+              [
+                3,
+                4,
+                29,
+                31
+              ]
+            ],
+            "subtleShadingOnly": false,
+            "maxVisibleRgbDelta": 55,
+            "maxRgbDeltaFromFrame0": [
+              0,
+              34,
+              41,
+              55,
+              55,
+              29,
+              29,
+              29,
+              22
+            ],
+            "alphaChangedFromFrame0": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "maxRgbDeltaFromPrevious": [
+              0,
+              34,
+              41,
+              55,
+              23,
+              68,
+              29,
+              29,
+              29
+            ],
+            "alphaChangedFromPrevious": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "rgbChangedPixelsFromFrame0": [
+              0,
+              89,
+              92,
+              97,
+              99,
+              92,
+              95,
+              91,
+              91
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

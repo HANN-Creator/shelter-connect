@@ -31,6 +31,27 @@ def decode_recorded_alpha(rows):
 
 
 class QualityRegressionTest(unittest.TestCase):
+    def test_live_recheck_preserves_failed_verdicts_and_all_original_pixels(self):
+        from styled_dog.tail_repair import read_sheet
+        root=Path(__file__).parent/'fixtures'
+        fixture=read(root/'idle-review-recheck.json')
+        self.assertFalse(fixture['newPresentationLiveVerified'])
+        self.assertFalse(fixture['sourcePixelsChanged'])
+        self.assertEqual(fixture['newPixelLabRequests'],0)
+        self.assertEqual(len(fixture['cases']),4)
+        for case in fixture['cases']:
+            self.assertFalse(case['actualRecheckReport']['passed'])
+            self.assertIn('IDLE_MOTION',case['actualRecheckReport']['issues'])
+            for record in case['variants'].values():
+                path=root/record['file'];frames=read_sheet(path)
+                before=[f.tobytes() for f in frames]
+                self.assertEqual(digest(path),record['sha256'])
+                self.assertEqual(len(frames),9)
+                self.assertEqual(pixel_evidence(frames),record['pixelEvidence'])
+                self.assertTrue(frame_audit(frames,frames[0],'IDLE',case['direction'],'UNKNOWN')['structuralPassed'])
+                self.assertEqual(before,[f.tobytes() for f in frames])
+        self.assertEqual(load_quality()['reviewPresentation']['version'],'matched-direction-frame-pairs-v1')
+
     def test_actual_idle_shading_has_fixed_alpha_without_overriding_visual_failure(self):
         from styled_dog.tail_repair import read_sheet
         root=Path(__file__).parent/'fixtures'
