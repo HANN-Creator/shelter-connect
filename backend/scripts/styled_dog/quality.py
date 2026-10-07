@@ -154,6 +154,33 @@ def idle_motion_frames(frames, seed, action):
 
 
 
+def pixel_evidence(frames):
+    """Exact visible changes, shared with server vision input; not a quality verdict."""
+    if len(frames) != 9 or any(f.size != (32, 32) or f.mode != 'RGBA' for f in frames):
+        raise ValueError('Expected nine native 32px RGBA frames')
+    data = [list(f.getdata()) for f in frames]
+    first = data[0]
+    alpha_first, alpha_previous, rgb_first, rgb_previous, rgb_changed, bounds = [], [], [], [], [], []
+    for i, (frame, pixels) in enumerate(zip(frames, data)):
+        previous = data[max(0, i-1)]
+        alpha_first.append(sum(p[3] != b[3] for p, b in zip(pixels, first)))
+        alpha_previous.append(sum(p[3] != b[3] for p, b in zip(pixels, previous)))
+        def differences(reference):
+            return [max(abs(p[c]-b[c]) for c in range(3)) for p, b in zip(pixels, reference) if p[3] or b[3]]
+        delta = differences(first)
+        rgb_first.append(max(delta, default=0))
+        rgb_previous.append(max(differences(previous), default=0))
+        rgb_changed.append(sum(d != 0 for d in delta))
+        bounds.append(list(frame.getchannel('A').getbbox() or (-1, -1, -1, -1)))
+    stable, maximum = not any(alpha_first), max(rgb_first)
+    return {'version':'native-frame-delta-v1', 'reference':'frame0', 'frameCount':9,
+            'alphaStable':stable, 'maxVisibleRgbDelta':maximum,
+            'subtleShadingOnly':stable and all(b[0]>=0 for b in bounds) and maximum<=load_quality()['pixelEvidence']['subtleRgbChannelDelta'],
+            'alphaChangedFromFrame0':alpha_first, 'alphaChangedFromPrevious':alpha_previous,
+            'maxRgbDeltaFromFrame0':rgb_first, 'maxRgbDeltaFromPrevious':rgb_previous,
+            'rgbChangedPixelsFromFrame0':rgb_changed, 'boundsExclusive':bounds}
+
+
 def frame_audit(frames, seed, action=None, direction=None, tail=None):
     if len(frames) != 9 or frames[0].tobytes() != seed.tobytes():
         raise ValueError('Expected nine frames and an unchanged approved first frame')
@@ -171,7 +198,8 @@ def frame_audit(frames, seed, action=None, direction=None, tail=None):
     detached=[i for i,frame in enumerate(frames) if len(components(frame))!=1] if action=='TAIL_WAG' else []
     issues=(['CANVAS_CLIPPING'] if edges else [])+(['TAIL_CARRIAGE'] if upper else [])+(['DETACHED_PIXELS'] if detached else [])+(['IDLE_MOTION'] if idle else [])
     return {'structuralPassed':not issues, 'issues':issues, 'silhouetteFrames':upper,
-            'idleMotionFrames':idle, 'edgeFrames':edges, 'detachedFrames':detached, 'visualReviewRequired':True, 'qualityRules':quality_binding()}
+            'idleMotionFrames':idle, 'edgeFrames':edges, 'detachedFrames':detached, 'visualReviewRequired':True, 'qualityRules':quality_binding(),
+            'pixelEvidence':pixel_evidence(frames)}
 
 
 def audit_run(root):

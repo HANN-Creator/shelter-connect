@@ -13,6 +13,45 @@ class StyledQualityAgentTest {
     final JsonMapper json=JsonMapper.builder().build();
     final OpenAiResponsesClient client=mock(OpenAiResponsesClient.class);
     final StyledQualityAgent agent=new StyledQualityAgent(client,new AiProperties(true,"test-key","gpt-5.6-luna",30),json);
+    @Test void actualIdlePixelEvidenceMatchesCliAndIsSentToVisionWithoutOverridingItsVerdict()throws Exception {
+        var root=java.nio.file.Path.of("scripts/fixtures");
+        var fixture=json.readTree(java.nio.file.Files.readString(root.resolve("idle-review-evidence.json")));
+        assertThat(fixture.path("originalQualityReport").path("passed").asBoolean()).isFalse();
+        var modelFailure=json.readTree("{\"issues\":[\"IDENTITY_DRIFT\"],\"frames\":[6],\"note\":\"Independent eye or internal detail failure must not be bypassed by stable alpha\"}");
+        when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(modelFailure);
+        for(String name:List.of("raw","candidate")) {
+            var record=fixture.path("clips").path(name);byte[] sheet=java.nio.file.Files.readAllBytes(root.resolve(record.path("file").asText()));
+            assertThat(StyledSpriteCodec.sha(sheet)).isEqualTo(record.path("sha256").asText());
+            var image=ImageIO.read(new ByteArrayInputStream(sheet));var frames=new ArrayList<byte[]>();
+            for(int i=0;i<9;i++) {var out=new ByteArrayOutputStream();ImageIO.write(image.getSubimage(i*32,0,32,32),"png",out);frames.add(out.toByteArray());}
+            var hashes=frames.stream().map(StyledSpriteCodec::sha).toList();
+            var report=agent.review(json.readTree("{\"tailCarriage\":\"UNKNOWN\"}"),Collections.nCopies(4,frames.getFirst()),frames,"IDLE","north");
+            assertThat(report.path("pixelEvidence")).isEqualTo(record.path("pixelEvidence"));
+            assertThat(report.path("pixelEvidence").path("subtleShadingOnly").asBoolean()).isTrue();
+            assertThat(report.path("passed").asBoolean()).isFalse();
+            assertThat(report.path("issues").toString()).contains("IDENTITY_DRIFT");
+            assertThat(frames.stream().map(StyledSpriteCodec::sha).toList()).isEqualTo(hashes);
+        }
+        var tasks=ArgumentCaptor.forClass(String.class);var instructions=ArgumentCaptor.forClass(String.class);
+        verify(client,times(2)).structuredImage(instructions.capture(),tasks.capture(),any(),anyMap());
+        assertThat(tasks.getAllValues()).allSatisfy(t->assertThat(t).contains("\"alphaStable\":true","\"alphaChangedFromFrame0\":[0,0,0,0,0,0,0,0,0]","NOT animation frames"));
+        assertThat(instructions.getAllValues()).allSatisfy(t->assertThat(t).contains("do NOT prove identity","Never suppress clipping"));
+    }
+    @Test void highContrastDetailsAndSameBoundsAlphaChangesAreNotSubtleShading()throws Exception {
+        var image=new BufferedImage(32,32,BufferedImage.TYPE_INT_ARGB);
+        for(int y=5;y<27;y++)for(int x=8;x<24;x++)image.setRGB(x,y,0xff464646);
+        var bytes=new ByteArrayOutputStream();ImageIO.write(image,"png",bytes);byte[] seed=bytes.toByteArray();
+        var frames=new ArrayList<>(Collections.nCopies(9,seed));image.setRGB(10,10,0xffffffff);
+        bytes.reset();ImageIO.write(image,"png",bytes);frames.set(8,bytes.toByteArray());
+        var evidence=StyledQualityAgent.pixelEvidence(frames,StyledSpriteCodec.qualityRules(json),json);
+        assertThat(evidence.path("alphaStable").asBoolean()).isTrue();
+        assertThat(evidence.path("subtleShadingOnly").asBoolean()).isFalse();
+        image.setRGB(10,10,0);bytes.reset();ImageIO.write(image,"png",bytes);frames.set(8,bytes.toByteArray());
+        evidence=StyledQualityAgent.pixelEvidence(frames,StyledSpriteCodec.qualityRules(json),json);
+        assertThat(evidence.path("boundsExclusive").get(0)).isEqualTo(evidence.path("boundsExclusive").get(8));
+        assertThat(evidence.path("alphaChangedFromFrame0").get(8).asInt()).isEqualTo(1);
+        assertThat(evidence.path("subtleShadingOnly").asBoolean()).isFalse();
+    }
     @Test void actualSeatedTailClippingOverridesVisionPassIncludingTheFinalHold()throws Exception {
         var fixture=json.readTree(java.nio.file.Files.readString(java.nio.file.Path.of("scripts/fixtures/sit-tail-alpha.json")));
         when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(json.readTree("{\"issues\":[],\"frames\":[],\"note\":\"Mock pass to exercise deterministic border gate, not live visual accuracy\"}"));

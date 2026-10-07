@@ -9,7 +9,7 @@ import unittest
 from PIL import Image, ImageDraw
 from styled_dog.client import digest, read, write
 from styled_dog.pipeline import load_rules, motion_payload, record_review
-from styled_dog.quality import load_quality, quality_binding, frame_audit, audit_run, idle_motion_frames, TAILS
+from styled_dog.quality import load_quality, quality_binding, frame_audit, audit_run, idle_motion_frames, pixel_evidence, TAILS
 
 
 def dog_frame():
@@ -31,6 +31,33 @@ def decode_recorded_alpha(rows):
 
 
 class QualityRegressionTest(unittest.TestCase):
+    def test_actual_idle_shading_has_fixed_alpha_without_overriding_visual_failure(self):
+        from styled_dog.tail_repair import read_sheet
+        root=Path(__file__).parent/'fixtures'
+        fixture=read(root/'idle-review-evidence.json')
+        self.assertFalse(fixture['originalQualityReport']['passed'])
+        self.assertFalse(fixture['newModelReviewPerformed'])
+        for record in fixture['clips'].values():
+            frames=read_sheet(root/record['file']);before=[f.tobytes() for f in frames]
+            self.assertEqual(digest(root/record['file']),record['sha256'])
+            self.assertEqual(pixel_evidence(frames),record['pixelEvidence'])
+            self.assertTrue(pixel_evidence(frames)['subtleShadingOnly'])
+            self.assertTrue(frame_audit(frames,frames[0],'IDLE','north','UNKNOWN')['visualReviewRequired'])
+            self.assertEqual(before,[f.tobytes() for f in frames])
+
+    def test_same_bounds_movement_and_high_contrast_details_are_not_subtle_shading(self):
+        seed=dog_frame();frames=[seed.copy() for _ in range(9)]
+        frames[8].putpixel((10,10),(255,255,255,255))
+        evidence=pixel_evidence(frames)
+        self.assertTrue(evidence['alphaStable']);self.assertFalse(evidence['subtleShadingOnly'])
+        frames[8]=seed.copy();frames[8].putpixel((10,10),(0,0,0,0))
+        evidence=pixel_evidence(frames)
+        self.assertEqual(evidence['boundsExclusive'][0],evidence['boundsExclusive'][8])
+        self.assertEqual(evidence['alphaChangedFromFrame0'][8],1)
+        self.assertFalse(evidence['subtleShadingOnly'])
+        empty=[Image.new('RGBA',(32,32)) for _ in range(9)]
+        self.assertFalse(pixel_evidence(empty)['subtleShadingOnly'])
+
     def test_continuation_replays_actual_failures_and_all_nine_candidate_frames(self):
         from styled_dog.tail_repair import read_sheet, seed_idle_payload
         root=Path(__file__).parent/'fixtures'

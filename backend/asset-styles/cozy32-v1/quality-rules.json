@@ -1,5 +1,9 @@
 {
-  "revision": "sprite-regressions-2026-10-06-v9",
+  "revision": "sprite-regressions-2026-10-07-v10",
+  "pixelEvidence": {
+    "version": "native-frame-delta-v1",
+    "subtleRgbChannelDelta": 24
+  },
   "frontalLowTail": {
     "upperBandPercent": 65,
     "seedTolerancePixels": 1,
@@ -44,10 +48,20 @@
     "ACTION_MISSING: requested motion absent. IDLE may use subtle breathing only. TAIL_WAG may be occluded or foreshortened; do not require an invented raised tail.",
     "DISCONTINUITY: large pose, position or scale jump between neighbors. SIT ends seated and holds; WALK is an in-place gait.",
     "Canvas clipping is checked separately from original alpha pixels. Never infer cropping from the contact sheet grid.",
+    "Use the supplied native-pixel measurements to distinguish motion from minor shading. alphaStable means all nine transparency masks are identical: the silhouette does not grow, shrink or translate. subtleShadingOnly additionally means every visible RGB channel stays within 24/255 of frame 0; this is measured color variation, not evidence of a standing-to-crouching scale jump. Such small shading is acceptable for IDLE. Do not invent large silhouette motion from the layout or lighting of the contact sheet. These measurements do NOT prove identity, eye form, facing or action correctness; still report clear visible internal defects. Never suppress clipping or other independently detected issues.",
     "SIT: inspect the tail through descent AND the final seated hold. Keep the approved anatomy tucked beside the haunch. A missing or bluntly amputated tip is IDENTITY_DRIFT even when the remaining pixels clear the border. Never fix a tail by shrinking the whole dog or replacing seated frames with a standing pose.",
     "EYES: compare open-eye frames with the approved seed: keep pupil shape, position and local contrast. A brief natural blink is allowed. Eyes that stay erased, become hollow rings, or merge into fur in open-eye frames are IDENTITY_DRIFT. North has no face; do not invent eyes."
   ],
   "regressions": [
+    {
+      "id": "idle-shading-mistaken-for-large-pose-change",
+      "action": "IDLE",
+      "direction": "north",
+      "issue": "IDLE_MOTION",
+      "check": "pixel-evidence-and-vision",
+      "fixture": "idle-review-evidence.json",
+      "expected": "Keep the actual raw and restored images and Luna failures. Their nine alpha masks are identical, with maximum RGB channel differences of 17 and 15. Send these measurements to vision and retain its verdict; do not force a pass. Older real moving-tail frames must remain detectable, and high-contrast internal changes must never be treated as subtle shading. Live rereview after deployment remains required."
+    },
     {
       "id": "front-tail-raised",
       "action": "TAIL_WAG",
