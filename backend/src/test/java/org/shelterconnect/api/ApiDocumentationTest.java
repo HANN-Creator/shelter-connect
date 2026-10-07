@@ -39,7 +39,7 @@ class ApiDocumentationTest {
             for(String path:mapping.getPatternValues()) if(path.startsWith("/v1/"))
                 for(var method:mapping.getMethodsCondition().getMethods()) actual.add(method+" "+path);
         });
-        assertThat(documented).containsExactlyElementsOf(actual).hasSize(95);
+        assertThat(documented).containsExactlyElementsOf(actual).hasSize(96);
         assertThat(root.at("/servers/0/url").asText()).isEqualTo("/");
         assertThat(root.at("/components/securitySchemes/supabaseBearer/scheme").asText()).isEqualTo("bearer");
         assertThat(root.path("paths").path("/v1/dogs/{dogId}/assets").path("get").path("security").size()).isZero();
@@ -49,6 +49,8 @@ class ApiDocumentationTest {
     @Test void requestsAndMapResponsesHaveUsefulSchemasIncludingMultipartAndDistinctJobs() throws Exception {
         var root=spec();var schemas=root.at("/components/schemas");
         assertThat(schemas.path("AssetJob").path("properties").has("actionPlan")).isTrue();
+        assertThat(schemas.at("/StyledLearningRecovery/properties/expectedSheetHashes/maxProperties").asInt()).isEqualTo(4);
+        assertThat(schemas.at("/StyledLearningRecovery/required").toString()).contains("requestId","expectedSeedHashes","expectedSheetHashes");
         assertThat(schemas.at("/StyledQualityRecheck/required").toString()).contains("expectedSeedHashes","expectedRulesSha256","note");
         assertThat(schemas.at("/StyledMotionContinuation/required").toString()).contains("expectedSeedHashes","expectedSheetHashes","requestId");
         assertThat(root.path("paths").path("/v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/repair-continuation").path("post").path("security").get(0).has("supabaseBearer")).isTrue();

@@ -15,7 +15,7 @@ import tools.jackson.databind.json.JsonMapper;
 @Service
 public class StyledAssetStore {
     @io.swagger.v3.oas.annotations.media.Schema(name="StyledAssetStep")
-    public record Step(String label,String action,String direction,String status,JsonNode result,JsonNode qualityReport,int repairCount) {}
+    public record Step(String label,String action,String direction,String status,JsonNode result,JsonNode qualityReport,int repairCount,JsonNode learningRecovery) {}
     @io.swagger.v3.oas.annotations.media.Schema(name="StyledAssetJob")
     public record Job(UUID id,UUID dogId,String status,String failureCode,String pipelineVersion,List<Step> steps,JsonNode seedReview,
                       List<String> actionPlan,JsonNode generationPlan,JsonNode qualityPolicy) {
@@ -183,7 +183,7 @@ public class StyledAssetStore {
               jsonb_build_object('recheckFromRulesSha256',:previous,'recheckNote',:note,'recheckedAt',now()),
               seed_review=CASE WHEN :recheckSeed THEN NULL ELSE seed_review END,
               status='QUEUED',failure_code=NULL,next_run_at=now(),lease_token=NULL,lease_until=NULL WHERE id=:id
-            """).param("policy",json.writeValueAsString(recheckSeed?newSeedQualityPolicy():qualityPolicy()))
+            """).param("policy",json.writeValueAsString(recheckSeed?seedQualityPolicy():qualityPolicy()))
                 .param("recheckSeed",recheckSeed).param("previous",expected).param("note",note).param("id",id).update();
         return job(id);
     }
@@ -271,7 +271,8 @@ public class StyledAssetStore {
         "rulesRevision",StyledSpriteCodec.qualityRules(json).path("revision").asText(),"rulesSha256",StyledSpriteCodec.qualityRulesSha(),
         "lowTailRepair", "REGENERATE_THEN_EDIT_ONCE", "idleRepair",StyledSpriteCodec.IDLE_EDIT_VERSION,
         "marginRepair",StyledSpriteCodec.MARGIN_EDIT_VERSION,"seedIdleRepair",StyledSpriteCodec.SEED_IDLE_VERSION);}
-    private Map<String,Object> newSeedQualityPolicy(){var p=new HashMap<String,Object>(qualityPolicy());p.put("seedQualityVersion",StyledSeedQualityAgent.VERSION);return p;}
+    private Map<String,Object> seedQualityPolicy(){var p=new HashMap<String,Object>(qualityPolicy());p.put("seedQualityVersion",StyledSeedQualityAgent.VERSION);return p;}
+    private Map<String,Object> newSeedQualityPolicy(){var p=seedQualityPolicy();p.put("learningRecovery",StyledLearningRecoveryStore.VERSION);return p;}
     private boolean seedQualityPassed(Job j) {
         var step=j.steps().getFirst();return StyledSeedQualityAgent.passed(step.qualityReport(),step.result()==null?json.createObjectNode():step.result().path("hashes"),j.qualityPolicy());
     }
@@ -279,6 +280,8 @@ public class StyledAssetStore {
     @Transactional public Job recover(UUID subject,UUID id,JsonNode body) {
         operator(subject);properties.requireEnabled();lock(id);legacy.valid(id,true);var j=job(id);
         AssetInput.fields(body,"providerJobId");
+        if("PROVIDER_JOB_FAILED".equals(j.failureCode()) && jdbc.sql("SELECT count(*) FROM shelter.styled_learning_recoveries WHERE job_id=:j AND state='FAILED' AND required_lessons<>'[]'::jsonb")
+            .param("j",id).query(Integer.class).single()>0)throw new AssetException(409,"LEARNING_PROVIDER_RETRY_FORBIDDEN");
         if(j.status().equals("OUTCOME_UNKNOWN")) {
             UUID provider=AssetInput.id(body,"providerJobId");
             jdbc.sql("UPDATE shelter.styled_asset_steps SET status='WAITING',provider_job_id=:p,submitted_at=now() WHERE job_id=:id AND status='OUTCOME_UNKNOWN'")
@@ -301,6 +304,9 @@ public class StyledAssetStore {
                 WHERE job_id=:id AND status='FAILED'
                 """).param("id",id).update();
         } else throw new AssetException(409,"ASSET_RETRY_NOT_ALLOWED");
+        // Resume only the reserved learned attempt, retaining its required rules through an explicit recovery.
+        jdbc.sql("UPDATE shelter.styled_learning_recoveries SET state='QUEUED',reason='EXPLICIT_ATTEMPT_RECOVERY',updated_at=now() WHERE job_id=:j AND state='FAILED' AND required_lessons<>'[]'::jsonb")
+            .param("j",id).update();
         jdbc.sql("UPDATE shelter.asset_jobs SET status='QUEUED',failure_code=NULL,next_run_at=now(),lease_token=NULL,lease_until=NULL WHERE id=:id").param("id",id).update();
         return job(id);
     }
@@ -343,6 +349,16 @@ public class StyledAssetStore {
             WHERE s.job_id=:j AND s.label=:l AND NOT EXISTS(SELECT 1 FROM shelter.styled_quality_lessons q
               WHERE q.id::text=item->>'id' AND q.status='ACTIVE' AND q.candidate_sha256=item->>'sha256')
             """).param("j",w.id()).param("l",w.label()).query(Integer.class).single();
+        var recovery=learningRecovery(w);
+        if(!recovery.isEmpty()) {
+            var pinned=json.readTree(jdbc.sql("SELECT learned_lessons::text FROM shelter.styled_asset_steps WHERE job_id=:j AND label=:l")
+                .param("j",w.id()).param("l",w.label()).query(String.class).single());
+            var required=recovery.path("requiredLessons");
+            boolean applied=disabled==0 && !required.isEmpty() && required.valueStream().allMatch(r->pinned.valueStream().anyMatch(p->
+                p.path("id").equals(r.path("id")) && p.path("sha256").equals(r.path("sha256"))
+                && payload.path("description").asText().contains(p.path("prevention").asText())));
+            if(!applied)throw new AssetException(409,"LEARNED_RULE_NOT_APPLIED");
+        }
         if(disabled>0){defer(w,0);return false;}
         if(jdbc.sql("UPDATE shelter.styled_asset_steps SET status='SUBMITTING',submitted_at=now(),request_sha256=:h WHERE job_id=:id AND label=:l AND status='PENDING'")
             .param("h",StyledSpriteCodec.sha(json.writeValueAsBytes(payload))).param("id",w.id()).param("l",w.label()).update()!=1)return false;
@@ -432,6 +448,8 @@ public class StyledAssetStore {
         if(!authorized(w))return;
         jdbc.sql("UPDATE shelter.styled_asset_steps SET result=CAST(:r AS jsonb),provider_result=NULL,status='SUCCEEDED' WHERE job_id=:id AND label=:l AND status IN ('PERSISTING','CHECKING')")
             .param("r",json.writeValueAsString(result)).param("id",w.id()).param("l",w.label()).update();
+        jdbc.sql("UPDATE shelter.styled_learning_recoveries SET state=CASE WHEN (SELECT quality_report->>'passed' FROM shelter.styled_asset_steps WHERE job_id=:id AND label=:l)='true' THEN 'COMPLETED' ELSE 'EXHAUSTED' END,reason='LEARNED_ATTEMPT_REVIEWED',updated_at=now() WHERE job_id=:id AND label=:l AND state='QUEUED'")
+            .param("id",w.id()).param("l",w.label()).update();
         if(w.character())status(w.id(),"SEED_REVIEW",seedQualityPassed(job(w.id()))?null:"SEED_QUALITY_REVIEW_REQUIRED");
         else if(job(w.id()).complete())status(w.id(),"REVIEW",qualityPassed(job(w.id()))?null:"QUALITY_REPAIR_EXHAUSTED");
         else defer(w,0);
@@ -443,6 +461,8 @@ public class StyledAssetStore {
     }
     @Transactional public void fail(Work w,boolean unknown,String code) {
         if(!owned(w))return;
+        jdbc.sql("UPDATE shelter.styled_learning_recoveries SET state='FAILED',reason=:reason,updated_at=now() WHERE job_id=:id AND label=:l AND state='QUEUED'")
+            .param("reason",code).param("id",w.id()).param("l",w.label()).update();
         String state=unknown?"OUTCOME_UNKNOWN":"FAILED";
         jdbc.sql("UPDATE shelter.styled_asset_steps SET status=:s WHERE job_id=:id AND label=:l").param("s",state).param("id",w.id()).param("l",w.label()).update();
         status(w.id(),state,code);
@@ -459,9 +479,13 @@ public class StyledAssetStore {
         .param("id",w.id()).param("t",w.token()).query(UUID.class).optional().isPresent(); }
     private void lock(UUID id) { if(jdbc.sql("SELECT id FROM shelter.asset_jobs WHERE id=:id AND pipeline_version=:v FOR UPDATE").param("id",id).param("v",StyledSpriteCodec.VERSION).query(UUID.class).optional().isEmpty())throw missing(); }
     private void operator(UUID subject) { if(!accounts.lockProfile(subject,false).role().equals("OPERATOR"))throw new AssetException(403,"FORBIDDEN"); }
+    @Transactional(readOnly=true) public JsonNode learningRecovery(Work w) {
+        return jdbc.sql("SELECT jsonb_build_object('requiredLessons',required_lessons)::text FROM shelter.styled_learning_recoveries WHERE job_id=:j AND label=:l AND state='QUEUED'")
+            .param("j",w.id()).param("l",w.label()).query(String.class).optional().map(json::readTree).orElse(json.createObjectNode());
+    }
     private Job job(UUID id) {
-        var steps=jdbc.sql("SELECT label,action,direction,status,result::text,quality_report::text,repair_count FROM shelter.styled_asset_steps WHERE job_id=:id ORDER BY ordinal").param("id",id)
-            .query((r,n)->new Step(r.getString(1),r.getString(2),r.getString(3),r.getString(4),node(r.getString(5)),node(r.getString(6)),r.getInt(7))).list();
+        var steps=jdbc.sql("SELECT s.label,s.action,s.direction,s.status,s.result::text,s.quality_report::text,s.repair_count,(SELECT jsonb_build_object('state',r.state,'reason',r.reason,'requiredLessons',r.required_lessons,'referenceReport',r.reference_report)::text FROM shelter.styled_learning_recoveries r WHERE r.job_id=s.job_id AND r.label=s.label) FROM shelter.styled_asset_steps s WHERE s.job_id=:id ORDER BY s.ordinal").param("id",id)
+            .query((r,n)->new Step(r.getString(1),r.getString(2),r.getString(3),r.getString(4),node(r.getString(5)),node(r.getString(6)),r.getInt(7),node(r.getString(8)))).list();
         return jdbc.sql("SELECT dog_id,status,failure_code,seed_review::text,action_plan::text,behavior_plan::text,quality_policy::text FROM shelter.asset_jobs WHERE id=:id AND pipeline_version=:v")
             .param("id",id).param("v",StyledSpriteCodec.VERSION).query((r,n)->new Job(id,r.getObject(1,UUID.class),r.getString(2),r.getString(3),StyledSpriteCodec.VERSION,steps,r.getString(4)==null?null:json.readTree(r.getString(4)),
                 json.readTree(r.getString(5)).valueStream().map(JsonNode::asText).toList(),node(r.getString(6)),node(r.getString(7)))).optional().orElseThrow(StyledAssetStore::missing);

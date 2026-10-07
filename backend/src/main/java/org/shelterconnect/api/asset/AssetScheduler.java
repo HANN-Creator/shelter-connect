@@ -13,8 +13,8 @@ public class AssetScheduler {
     private static final Logger log=LoggerFactory.getLogger(AssetScheduler.class);
     private final AssetWorker worker;
     private final StyledAssetWorker styled;
-    private final StyledLessonWorker lessons;
-    public AssetScheduler(AssetWorker worker,StyledAssetWorker styled,StyledLessonWorker lessons) { this.worker=worker;this.styled=styled;this.lessons=lessons; }
+    private final StyledLessonWorker lessons;private final StyledLearningRecoveryWorker recovery;
+    public AssetScheduler(AssetWorker worker,StyledAssetWorker styled,StyledLessonWorker lessons,StyledLearningRecoveryWorker recovery) { this.worker=worker;this.styled=styled;this.lessons=lessons;this.recovery=recovery; }
     @Scheduled(fixedDelay=5000,initialDelay=10000)
     public void advance() {
         try { styled.tick();worker.tick(); }
@@ -22,7 +22,7 @@ public class AssetScheduler {
     }
     @Scheduled(fixedDelay=10000,initialDelay=20000)
     public void learn() {
-        try { lessons.tick(); }
+        try { recovery.tick();lessons.tick(); }
         catch(RuntimeException e) { log.warn("Asset lesson tick interrupted; type={}",e.getClass().getSimpleName()); }
     }
 }
