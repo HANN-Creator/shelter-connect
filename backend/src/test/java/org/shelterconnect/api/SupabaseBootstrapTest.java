@@ -57,7 +57,7 @@ class SupabaseBootstrapTest {
 				assertThat(flyway.migrate().migrationsExecuted).isEqualTo(16);
 				flyway.validate();
 				assertThat(flyway.migrate().migrationsExecuted).isZero();
-				assertThat(flyway.info().current().getVersion().toString()).isEqualTo("17");
+				assertThat(flyway.info().current().getVersion().toString()).isEqualTo("18");
 				try (var connection = DriverManager.getConnection(isolatedUrl, username, password);
 						var check = connection.createStatement();
 						var rows = check.executeQuery("SELECT revision,status,settings::text FROM shelter.dog_behavior_profiles")) {

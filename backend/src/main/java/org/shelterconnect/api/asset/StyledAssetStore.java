@@ -187,10 +187,73 @@ public class StyledAssetStore {
                 .param("recheckSeed",recheckSeed).param("previous",expected).param("note",note).param("id",id).update();
         return job(id);
     }
+    /** One explicit continuation, hash-bound to failed clips; replay can never buy another attempt. */
+    @Transactional public Job continueRepair(UUID subject,UUID dog,UUID id,JsonNode body) {
+        var actor=access.requireDogForWrite(subject,dog);properties.requireEnabled();
+        AssetInput.fields(body,"requestId","note","expectedSeedHashes","expectedSheetHashes");
+        UUID requestId=AssetInput.id(body,"requestId");String note=AssetInput.text(body,"note",2000);
+        var expected=body.path("expectedSheetHashes");
+        if(note.length()<20 || !expected.isObject() || expected.isEmpty() || expected.size()>32
+            || expected.properties().stream().anyMatch(e->!e.getValue().isTextual() || !e.getValue().asText().matches("[a-f0-9]{64}")))throw AssetException.invalid();
+        var canonical=new TreeMap<String,Object>();canonical.put("note",note);
+        for(String field:List.of("expectedSeedHashes","expectedSheetHashes")) {
+            var sorted=new TreeMap<String,String>();body.path(field).properties().forEach(e->sorted.put(e.getKey(),e.getValue().asText()));canonical.put(field,sorted);
+        }
+        String requestSha=StyledSpriteCodec.sha(json.writeValueAsBytes(canonical));
+        lock(id);var j=job(id);if(!j.dogId().equals(dog))throw missing();legacy.valid(id,true);
+        var policy=j.qualityPolicy();
+        if(policy==null)throw new AssetException(409,"MOTION_CONTINUATION_NOT_ALLOWED");
+        var prior=policy.path("repairContinuation");
+        if(!prior.isMissingNode()) {
+            if(prior.path("requestId").asText().equals(requestId.toString()) && prior.path("requestSha256").asText().equals(requestSha))return j;
+            throw new AssetException(409,"MOTION_CONTINUATION_ALREADY_USED");
+        }
+        if(!j.status().equals("REVIEW") || !j.complete() || policy.path("referenceOnly").asBoolean()
+            || !StyledSpriteCodec.qualityRulesSha().equals(policy.path("rulesSha256").asText()))throw new AssetException(409,"MOTION_CONTINUATION_NOT_ALLOWED");
+        var seeds=j.steps().getFirst().result().path("hashes");
+        if(!seeds.equals(body.path("expectedSeedHashes")) || j.seedReview()==null || !seeds.equals(j.seedReview().path("hashes")) || !seedQualityPassed(j))
+            throw new AssetException(409,"SEED_REVIEW_STALE");
+        var plans=new TreeMap<String,Object>();
+        for(var item:expected.properties()) {
+            var step=j.steps().stream().filter(s->s.label().equals(item.getKey())).findFirst().orElseThrow(AssetException::invalid);
+            if(step.action().equals("BASE") || step.repairCount()!=2 || step.qualityReport()==null || step.qualityReport().path("passed").asBoolean()
+                || !item.getValue().asText().equals(step.result().path("sha256").asText())
+                || !boundQuality(step,policy))throw new AssetException(409,"MOTION_CONTINUATION_STALE");
+            var plan=new TreeMap<String,Object>();plan.put("attempt",3);plan.put("previousSha256",item.getValue().asText());
+            String opposite=step.direction().equals("west")?"east":step.direction().equals("east")?"west":"";
+            var source=j.steps().stream().filter(s->s.action().equals(step.action()) && opposite.equals(s.direction())
+                && s.qualityReport()!=null && s.qualityReport().path("passed").asBoolean() && boundQuality(s,policy)).findFirst();
+            if(!opposite.isEmpty() && Set.of("IDLE","WALK","SIT").contains(step.action()) && source.isPresent()) {
+                plan.put("strategy",StyledSpriteCodec.MIRROR_VERSION);plan.put("sourceLabel",source.get().label());
+                plan.put("sourceDirection",opposite);plan.put("sourceSha256",source.get().result().path("sha256").asText());
+            } else if(step.action().equals("IDLE"))plan.put("strategy",StyledSpriteCodec.SEED_IDLE_VERSION);
+            else throw new AssetException(409,"MOTION_CONTINUATION_SOURCE_REQUIRED");
+            plans.put(step.label(),plan);
+        }
+        var grant=Map.of("requestId",requestId,"requestSha256",requestSha,"note",note,"requestedBy",actor.userId(),
+            "requestedAt",Instant.now(),"seedHashes",seeds,"plans",plans);
+        for(String label:plans.keySet())jdbc.sql("""
+            UPDATE shelter.styled_asset_steps SET attempt_history=attempt_history || jsonb_build_array(jsonb_build_object(
+              'continuationRequestId',CAST(:request AS text),'providerJobId',provider_job_id,'submittedAt',submitted_at,
+              'requestSha256',request_sha256,'result',result,'quality',quality_report,'repairCount',repair_count,'learnedLessons',learned_lessons)),
+              repair_count=3,status='PENDING',provider_job_id=NULL,submitted_at=NULL,request_sha256=NULL,provider_result=NULL,
+              result=NULL,learned_lessons='[]'::jsonb WHERE job_id=:id AND label=:l
+            """).param("request",requestId.toString()).param("id",id).param("l",label).update();
+        jdbc.sql("""
+            UPDATE shelter.asset_jobs SET quality_policy=quality_policy || jsonb_build_object('repairContinuation',CAST(:g AS jsonb)),
+              status='QUEUED',failure_code=NULL,next_run_at=now(),lease_token=NULL,lease_until=NULL WHERE id=:id
+            """).param("g",json.writeValueAsString(grant)).param("id",id).update();
+        return job(id);
+    }
+    private boolean boundQuality(Step step,JsonNode policy) {
+        return step.result()!=null && step.qualityReport()!=null
+            && step.result().path("sha256").asText().equals(step.qualityReport().path("inputSha256").asText())
+            && policy.path("rulesSha256").asText().equals(step.qualityReport().path("rulesSha256").asText());
+    }
     private Map<String,Object> qualityPolicy(){return Map.of("version",StyledQualityAgent.VERSION,"maxRepairsPerClip",2,
         "rulesRevision",StyledSpriteCodec.qualityRules(json).path("revision").asText(),"rulesSha256",StyledSpriteCodec.qualityRulesSha(),
         "lowTailRepair", "REGENERATE_THEN_EDIT_ONCE", "idleRepair",StyledSpriteCodec.IDLE_EDIT_VERSION,
-        "marginRepair",StyledSpriteCodec.MARGIN_EDIT_VERSION);}
+        "marginRepair",StyledSpriteCodec.MARGIN_EDIT_VERSION,"seedIdleRepair",StyledSpriteCodec.SEED_IDLE_VERSION);}
     private Map<String,Object> newSeedQualityPolicy(){var p=new HashMap<String,Object>(qualityPolicy());p.put("seedQualityVersion",StyledSeedQualityAgent.VERSION);return p;}
     private boolean seedQualityPassed(Job j) {
         var step=j.steps().getFirst();return StyledSeedQualityAgent.passed(step.qualityReport(),step.result()==null?json.createObjectNode():step.result().path("hashes"),j.qualityPolicy());
@@ -293,6 +356,22 @@ public class StyledAssetStore {
         if(!result.path("key").asText().startsWith(w.prefix()+"sheets/") || !result.path("sha256").asText().matches("[a-f0-9]{64}"))
             throw new AssetException(409,"TAIL_EDIT_INPUT_INVALID");
         return result;
+    }
+    @Transactional public JsonNode mirrorSource(Work w) {
+        if(!authorized(w))throw new AssetException(409,"ASSET_LEASE_LOST");
+        var plan=w.qualityPolicy().at("/repairContinuation/plans/"+w.label());var j=job(w.id());
+        var source=j.steps().stream().filter(s->s.label().equals(plan.path("sourceLabel").asText())).findFirst().orElseThrow(AssetException::invalid);
+        if(!source.status().equals("SUCCEEDED") || !source.action().equals(w.action()) || !source.qualityReport().path("passed").asBoolean()
+            || !boundQuality(source,j.qualityPolicy()) || !source.result().path("sha256").asText().equals(plan.path("sourceSha256").asText()))
+            throw new AssetException(409,"MOTION_CONTINUATION_SOURCE_CHANGED");
+        return source.result();
+    }
+    @Transactional public void derivedCheckpoint(Work w,JsonNode result) {
+        if(!authorized(w))return;
+        if(!StyledAssetWorker.mirrorRepair(w))throw new AssetException(409,"MOTION_CONTINUATION_NOT_ALLOWED");
+        jdbc.sql("UPDATE shelter.styled_asset_steps SET provider_result=CAST(:r AS jsonb),status='PERSISTING' WHERE job_id=:id AND label=:l AND status='PENDING'")
+            .param("r",json.writeValueAsString(result)).param("id",w.id()).param("l",w.label()).update();
+        defer(w,0);
     }
     @Transactional public boolean startContract(Work w) {
         if(!authorized(w))return false;

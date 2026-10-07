@@ -124,6 +124,31 @@ def margin_edit_payload(frames, action, direction):
     return payload
 
 
+def seed_idle_payload(seed, direction):
+    """Restart a defective idle from the approved pose, not its moving tail.
+
+    All nine input frames are references, not an accepted animation. The provider
+    result still needs the complete raw/restored quality reviews.
+    """
+    if seed.mode != 'RGBA' or seed.size != (32, 32):
+        raise ValueError('Expected an approved native 32px seed')
+    payload = idle_edit_payload([seed.copy() for _ in range(9)], direction)
+    payload['description'] = (
+        'Create a very calm nine-frame idle from these identical approved standing references. '
+        'Keep every outer silhouette pixel, planted paw, ear and tail fixed. Do not move or '
+        'invent any tail, limb, head or body shape. Use only a barely perceptible ONE-pixel '
+        'interior chest shading change for breathing, returning to the reference in the final frame. '
+        'Do not add eyes to a rear view. No translation, bobbing, turning, crouching or stepping. '
+        'Keep the original palette, identity, native crisp 32px pixels, transparent background '
+        'and all nine frames. Remain ' + direction + ' facing. '
+        + load_quality()['actions']['IDLE'] + ' ' + load_quality()['commonMotion']
+        + (' ' + load_quality()['rearView'] if direction == 'north' else '')
+    )
+    if len(payload['description']) > 2000:
+        raise ValueError('Seed idle prompt exceeds provider limit')
+    return payload
+
+
 def compose_tail(seed, source_seed, frames, mask, review):
     direction = review.get('direction')
     source_direction = review.get('sourceDirection')
