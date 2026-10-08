@@ -15,6 +15,20 @@ import tools.jackson.databind.json.JsonMapper;
 /** The approved CLI builds payloads; Java stores native pixels without resampling. */
 @Component
 public class StyledSpriteCodec {
+    record SeedAlignment(byte[] image,int dx,int dy) {}
+    /** Translate an UNAPPROVED seed only when the entire silhouette fits; no scaling, cropping or masking. */
+    static SeedAlignment alignSeed(byte[] png,int margin) {
+        var source=nativeFrame(png);if(margin!=2)throw AssetException.invalid();
+        int left=32,top=32,right=-1,bottom=-1;
+        for(int y=0;y<32;y++)for(int x=0;x<32;x++)if((source.getRGB(x,y)>>>24)!=0){left=Math.min(left,x);top=Math.min(top,y);right=Math.max(right,x);bottom=Math.max(bottom,y);}
+        if(right-left+1>32-2*margin || bottom-top+1>32-2*margin)return new SeedAlignment(png,0,0);
+        int dx=Math.max(margin-left,Math.min(0,31-margin-right)),dy=Math.max(margin-top,Math.min(0,31-margin-bottom));
+        if(dx==0 && dy==0)return new SeedAlignment(png,0,0);
+        var aligned=new BufferedImage(32,32,BufferedImage.TYPE_INT_ARGB);
+        for(int y=top;y<=bottom;y++)for(int x=left;x<=right;x++)aligned.setRGB(x+dx,y+dy,source.getRGB(x,y));
+        try {var out=new ByteArrayOutputStream();ImageIO.write(aligned,"png",out);return new SeedAlignment(out.toByteArray(),dx,dy);}
+        catch(IOException e){throw new AssetException(422,"STYLED_FRAME_INVALID");}
+    }
     public static final String VERSION="cozy32-photo-style-v1";
     public static final String IDLE_EDIT_VERSION="calm-idle-edit-v1";
     public static final String MARGIN_EDIT_VERSION="frame-margin-edit-v1";

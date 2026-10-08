@@ -181,3 +181,5 @@ B-43: [스프라이트 자동 품질 검수·선택 보완](sprite-quality-repai
 - B-62 생성·검수 학습 규칙 고정 2개 제한 제거: [노션](https://app.notion.com/p/3f25b2d1a55f80979009e4daad46c40d), [전체 규칙 간결화](all-lesson-compaction.md). 브랜치 `backend/b-62-remove-lesson-cap`. 적용 범위의 모든 활성 규칙을 Luna로 간결화하고 별도 의미 보존 검증, 원본 전체의 후속 검수·필수 규칙 연결, 영구 기록·동일 입력 결과 재사용·실패 차단. DB V21, 공통 품질 기준 v12 및 이미지 보완 예산 유지.
 
 - B-63 기본 도트·최종 팩 품질 통과 자동 승인: [노션](https://app.notion.com/p/3f25b2d1a55f801b83efdf64490d1b83), [동작·검증 경계](automatic-quality-approval.md). 브랜치 `backend/b-63-automatic-quality-approval`. 새 일반 작업의 수동 승인 두 단계 제거, 이미지·검수·전체 행동·권한 일치 시 SYSTEM 승인 근거 저장, 실패 예외 보존. DB V22. 기존 작업 일괄 전환·학습 전용 공개·전체 동물 자동 수집은 제외한다.
+
+- B-64 스프라이트 품질과 WALK/SIT 학습 복구: [노션](https://app.notion.com/p/3f35b2d1a55f800b9befe8f8a1f21e59), [변경·실제 검증 경계](motion-learning-quality-repair.md). 브랜치 `backend/b-64-motion-learning-repair`. 최초 도트 2px 여백, IDLE 근거 재검수, WALK/SIT의 검증된 학습 규칙 추가 보완, 과거 정상 동작 현재 재검수, 거절 후보의 피드백 재작성. DB V23, 공통 규칙 v13. 기존 승인·원본·비용 이력 보존.

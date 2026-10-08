@@ -1,5 +1,5 @@
 {
-  "revision": "sprite-regressions-2026-10-07-v12",
+  "revision": "sprite-regressions-2026-10-08-v13",
   "pixelEvidence": {
     "version": "native-frame-delta-v1",
     "subtleRgbChannelDelta": 24
@@ -53,6 +53,15 @@
     "EYES: compare open-eye frames with the approved seed: keep pupil shape, position and local contrast. A brief natural blink is allowed. Eyes that stay erased, become hollow rings, or merge into fur in open-eye frames are IDENTITY_DRIFT. North has no face; do not invent eyes."
   ],
   "regressions": [
+    {
+      "id": "oshu-motion-learning-recovery",
+      "action": "IDLE/WALK/SIT",
+      "direction": "all",
+      "issue": "CANVAS_CLIPPING/IDLE_MOTION",
+      "check": "measured-clearance-and-validated-motion-recovery",
+      "fixture": "oshu-motion-learning-v13/evidence.json",
+      "expected": "Retain the actual v12 seed and every native motion frame. New seeds require two clear pixels on every edge before animation. WALK/SIT may use one newly validated rule continuation with all nine real motion inputs, never a standing reference as positive evidence. Rejected candidates are rewritten with aggregate feedback and independently replayed at most twice. Stable alpha alone never forces IDLE to pass; one bounded consistency review may correct only a measured small RGB-only IDLE finding, preserving both opinions and all other defects."
+    },
     {
       "id": "paired-review-must-not-remove-moving-pose-context",
       "action": "SIT",
@@ -250,5 +259,14 @@
       "IDLE"
     ],
     "otherActions": "four-direction-temporal-grid-v1"
+  },
+  "seedMotionMargin": {
+    "minimumClearPixels": 2,
+    "correction": "Redraw the complete dog within the inner twenty-eight pixel area in ALL four views; leave two transparent pixels on every side, including paws and tail tip. Keep rounded proportions, identity, eyes and complete anatomy; do not crop or erase extremities."
+  },
+  "idleConsistencyReview": {
+    "version": "measured-idle-consistency-v1",
+    "maximumRgbDelta": 64,
+    "instruction": "A stable transparency mask rules out silhouette translation or size change, but does not rule out moving internal features. Inspect pupil, muzzle, paw and tail outline clusters. Distinguish localized breathing or lighting changes from actual moving limbs, disappearing features, or persistent recoloring. Only clearly harmless shading with preserved features may be SHADING_ONLY. Conflicting or insufficient evidence is UNCERTAIN. Never use this review to waive clipping, direction, identity or other independent defects."
   }
 }

@@ -10,6 +10,31 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class StyledSeedQualityAgentTest {
+    @Test void unapprovedSeedAlignmentPreservesEveryVisiblePixelAndCannotShrinkAnOversizedDog()throws Exception {
+        var im=new java.awt.image.BufferedImage(32,32,java.awt.image.BufferedImage.TYPE_INT_ARGB);
+        for(int y=3;y<31;y++)for(int x=6;x<26;x++)im.setRGB(x,y,0xff000000|(x*7<<16)|(y*6<<8)|33);
+        var out=new java.io.ByteArrayOutputStream();javax.imageio.ImageIO.write(im,"png",out);
+        var aligned=StyledSpriteCodec.alignSeed(out.toByteArray(),2);assertThat(aligned.dx()).isZero();assertThat(aligned.dy()).isEqualTo(-1);
+        var result=StyledSpriteCodec.nativeFrame(aligned.image());int count=0;
+        for(int y=0;y<32;y++)for(int x=0;x<32;x++)if((im.getRGB(x,y)>>>24)!=0) {
+            assertThat(result.getRGB(x,y-1)).isEqualTo(im.getRGB(x,y));count++;
+        }
+        int after=0;for(int y=0;y<32;y++)for(int x=0;x<32;x++)if((result.getRGB(x,y)>>>24)!=0)after++;
+        assertThat(after).isEqualTo(count);
+        byte[] original=Files.readAllBytes(Path.of("scripts/fixtures/oshu-motion-learning-v13/directions/west.png"));
+        assertThat(StyledSpriteCodec.alignSeed(original,2).image()).isSameAs(original);
+    }
+    @Test void actualOshuSeedClearanceFailsOnlyNewAnimationPolicyWithoutChangingPixels()throws Exception {
+        var seeds=new ArrayList<byte[]>();for(String d:StyledSpriteCodec.DIRECTIONS)seeds.add(Files.readAllBytes(Path.of("scripts/fixtures/oshu-motion-learning-v13/directions/"+d+".png")));
+        var hashes=seeds.stream().map(StyledSpriteCodec::sha).toList();
+        var original=json.valueToTree(Map.of("passed",true,"issues",List.of()));
+        assertThat(StyledSeedQualityAgent.motionMargin(original,seeds,json.createObjectNode(),json)).isSameAs(original);
+        var checked=StyledSeedQualityAgent.motionMargin(original,seeds,json.readTree("{\"seedMotionMargin\":2}"),json);
+        assertThat(checked.path("passed").asBoolean()).isFalse();assertThat(checked.path("marginDirections").size()).isEqualTo(4);
+        assertThat(checked.path("issues").toString()).contains("SEED_MOTION_MARGIN");
+        assertThat(checked.at("/clearPixelsLeftTopRightBottom/west").toString()).isEqualTo("[1,2,1,1]");
+        assertThat(seeds.stream().map(StyledSpriteCodec::sha).toList()).isEqualTo(hashes);
+    }
     final JsonMapper json=JsonMapper.builder().build();
     final OpenAiResponsesClient client=mock(OpenAiResponsesClient.class);
     final StyledSeedQualityAgent agent=new StyledSeedQualityAgent(client,new AiProperties(true,"test-key","gpt-5.6-luna",30),json);
@@ -91,7 +116,7 @@ class StyledSeedQualityAgentTest {
             "identityDescription","a".repeat(850),"motionDescription","same puppy","rearDescription","same puppy rear",
             "reviewNote","reviewed original photo and face crop"));
         for(int attempt=0;attempt<=2;attempt++) {
-            var policy=json.valueToTree(Map.of("attempt",attempt,"rulesSha256",StyledSpriteCodec.qualityRulesSha(),"issues",List.of("EYE_READABILITY")));
+            var policy=json.valueToTree(Map.of("attempt",attempt,"rulesSha256",StyledSpriteCodec.qualityRulesSha(),"issues",List.of("EYE_READABILITY","SEED_MOTION_MARGIN")));
             var p=codec.character(UUID.randomUUID(),traits,seed(),policy);
             assertThat(p.path("description").asText()).contains("Soft filled dark pupils","No hollow eye rings");
             assertThat(p.path("description").asText().length()).isLessThanOrEqualTo(2000);

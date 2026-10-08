@@ -86,6 +86,27 @@ public class StyledSeedQualityAgent {
     static String binding(List<byte[]> seeds) {
         return StyledSpriteCodec.sha(String.join("|",seeds.stream().map(StyledSpriteCodec::sha).toList()).getBytes(StandardCharsets.UTF_8));
     }
+    /** Enforce animation clearance only for jobs that explicitly pinned the new policy. */
+    static JsonNode motionMargin(JsonNode report,List<byte[]> seeds,JsonNode policy,JsonMapper json) {
+        int minimum=policy.path("seedMotionMargin").asInt();
+        if(minimum==0)return report;
+        if(minimum!=2 || seeds.size()!=4)throw invalid();
+        var result=(tools.jackson.databind.node.ObjectNode)report.deepCopy();
+        var directions=new ArrayList<String>();var measured=new LinkedHashMap<String,List<Integer>>();
+        for(int i=0;i<4;i++) {
+            var image=StyledSpriteCodec.nativeFrame(seeds.get(i));int left=32,top=32,right=-1,bottom=-1;
+            for(int y=0;y<32;y++)for(int x=0;x<32;x++)if((image.getRGB(x,y)>>>24)!=0) {
+                left=Math.min(left,x);top=Math.min(top,y);right=Math.max(right,x);bottom=Math.max(bottom,y);
+            }
+            var margins=List.of(left,top,31-right,31-bottom);measured.put(StyledSpriteCodec.DIRECTIONS.get(i),margins);
+            if(right<0 || margins.stream().anyMatch(n->n<minimum))directions.add(StyledSpriteCodec.DIRECTIONS.get(i));
+        }
+        var issues=new TreeSet<String>();report.path("issues").forEach(n->issues.add(n.asText()));
+        if(!directions.isEmpty())issues.add("SEED_MOTION_MARGIN");
+        result.put("passed",report.path("passed").asBoolean() && directions.isEmpty());result.set("issues",json.valueToTree(issues));
+        result.put("minimumClearPixels",minimum);result.set("marginDirections",json.valueToTree(directions));
+        result.set("clearPixelsLeftTopRightBottom",json.valueToTree(measured));return result;
+    }
     static String hashBinding(JsonNode hashes) {
         return StyledSpriteCodec.sha(String.join("|",StyledSpriteCodec.DIRECTIONS.stream()
             .map(d->hashes.path(d).asText()).toList()).getBytes(StandardCharsets.UTF_8));
@@ -97,6 +118,8 @@ public class StyledSeedQualityAgent {
         return report!=null && VERSION.equals(policy.path("seedQualityVersion").asText())
             && VERSION.equals(report.path("version").asText()) && report.path("passed").isBoolean() && report.path("passed").asBoolean()
             && report.path("issues").isArray() && report.path("issues").isEmpty()
+            && (!policy.has("seedMotionMargin") || (policy.path("seedMotionMargin").asInt()==2
+                && report.path("minimumClearPixels").asInt()==2 && report.path("marginDirections").isArray() && report.path("marginDirections").isEmpty()))
             && expected.equals(report.path("inputSha256").asText())
             && policy.path("rulesSha256").asText().equals(report.path("rulesSha256").asText());
     }

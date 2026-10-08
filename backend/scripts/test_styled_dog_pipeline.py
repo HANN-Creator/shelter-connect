@@ -29,9 +29,12 @@ class PipelineTest(unittest.TestCase):
         write(self.root/'traits.json',self.traits)
         prepare(self.root,self.root/'traits.json')
         (self.root/'directions').mkdir()
-        for d in load_rules()['directions']:
-            (self.root/'directions'/(d+'.png')).write_bytes((STYLE/'style.png').read_bytes())
-        (self.root/'base.png').write_bytes((STYLE/'style.png').read_bytes())
+        # Synthetic seeds explicitly leave the clearance required for animation.
+        seed=Image.new('RGBA',(32,32))
+        for x in range(6,26):
+            for y in range(4,30): seed.putpixel((x,y),(150,100,60,255))
+        for d in load_rules()['directions']: seed.save(self.root/'directions'/(d+'.png'))
+        seed.save(self.root/'base.png')
 
     def review(self):
         record_review(self.root,'Reviewed photo likeness, ears, muzzle, rounded style and all four directions. Rear details inferred.', 'LOW')
@@ -130,7 +133,7 @@ class PipelineTest(unittest.TestCase):
 
     def test_allowlist_bundle_and_partial_coverage_are_honest(self):
         self.review()
-        frames = [{'base64':base64.b64encode((STYLE/'style.png').read_bytes()).decode()}]*9
+        frames = [{'base64':base64.b64encode((self.root/'directions/south.png').read_bytes()).decode()}]*9
         save_clip(self.root,'BACK_OFF','west',{'last_response':{'images':frames}})
         (self.root/'raw').mkdir(exist_ok=True)
         (self.root/'raw'/'secrets.txt').write_text('never published')
@@ -154,7 +157,7 @@ class PipelineTest(unittest.TestCase):
 
     def test_failed_raw_clip_cannot_be_published_by_holding_an_earlier_frame(self):
         self.review()
-        seed=(STYLE/'style.png').read_bytes()
+        seed=(self.root/'directions/south.png').read_bytes()
         bad=Image.open(io.BytesIO(seed)).convert('RGBA');bad.putpixel((31,16),(1,2,3,128))
         encoded=io.BytesIO();bad.save(encoded,format='PNG')
         frames=[{'base64':base64.b64encode(seed).decode()} for _ in range(9)]
