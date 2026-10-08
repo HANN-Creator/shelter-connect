@@ -1,9 +1,9 @@
 {
-  "version": "cozy32-photo-style-v1",
-  "styleSha256": "8582f9e73ac74abee1b4619ec4ef878bb1e2cf173c5ee44dbf71bf13c4fe4320",
-  "approvedAt": "2026-10-05",
-  "approval": "User approved the photo-plus-original-style sample and requested backend persistence.",
-  "styleOrigin": "PixelLab generated sprite, first public dog trial 426333202601081; style only, not identity.",
+  "version": "flat32-photo-style-v2",
+  "styleSha256": "c111fc1c88baea8b33cf98f05373a856923d7d272796814d21142438deb83f35",
+  "approvedAt": "2026-10-08",
+  "approval": "User supplied a flat pixel-dog breed sheet and explicitly requested this appearance for the dogs.",
+  "styleOrigin": "Four illustration-only crops from the user-supplied pixel-dog style sheet; reference only, never actual dog identity.",
   "characterEndpoint": "create-character-pro",
   "characterMethod": "create_from_concept",
   "animationEndpoint": "animate-pixminimax",
@@ -20,7 +20,7 @@
     16,
     30
   ],
-  "styleDescription": "Copy the attached pixel sprite's rounded cute proportions, compact silhouette, large head/small body balance, short readable paws, friendly natural small eyes, one-pixel dark outline, soft stepped highlights and shadows, cozy game-sprite finish, and pixel cluster density. Preserve its style across every rotation. ONLY change the dog's identity and markings to match the photos. Do not copy the reference dog's tricolor palette, white forehead stripe, floppy ears or tail unless those are visible in the actual photo. Crisp native pixels, no blur, no photorealism, no elongated realistic proportions.",
+  "styleDescription": "Match the attached FLAT PIXEL DOG ICON examples. STYLE controls proportions; PHOTO supplies coat color, ear shape, markings and tail ONLY. Deliberately caricature the adult dog: a broad oversized rounded head taking about half the visible height, tiny squat torso, very short chunky 3-4 pixel legs, tiny muzzle. Do NOT trace the realistic photo silhouette, slender neck, tall body or long legs. Use a continuous bold near-black pixel outline, tiny filled black dot eyes, tiny nose and understated closed mouth. About 4-8 flat solid colors, almost no interior shading, no fur texture or lighting. Keep the entire dog INCLUDING ear tips, feet and complete outlined tail inside the central 28x28 area with clear space on all sides. Preserve the actual dog identity; do not copy the reference breed. NO white sticker border, drop shadow, text or props. Crisp native 32px cute game icon.",
   "actions": {
     "IDLE": {
       "motion": "Stand in place with subtle breathing and one gentle blink. All four paws stay planted.",
@@ -73,5 +73,6 @@
     "Repeated/uncertain paid requests are never submitted automatically.",
     "Photo appearance must not be treated as verified temperament.",
     "Assets remain local review outputs; production publication is a separate approval."
-  ]
+  ],
+  "styleReferenceFile": "flat-style-reference.png"
 }

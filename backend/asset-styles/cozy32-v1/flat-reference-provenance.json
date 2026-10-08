@@ -1,0 +1,37 @@
+{
+  "source": "User-supplied style reference on 2026-10-08",
+  "sourceSha256": "3b8a2c832d2d2563b2412ff5ea0ab347378ab1c1aae62dfbcf07e6c426cad0c4",
+  "sourceSize": [
+    794,
+    1027
+  ],
+  "crops": [
+    [
+      405,
+      280,
+      506,
+      374
+    ],
+    [
+      531,
+      279,
+      637,
+      373
+    ],
+    [
+      652,
+      154,
+      770,
+      242
+    ],
+    [
+      165,
+      714,
+      296,
+      812
+    ]
+  ],
+  "referenceOnlyProcessing": "Illustration crops contained into four 80px tiles using nearest-neighbor, composed on 168px white board. Generated sprites are not resampled.",
+  "styleSha256": "c111fc1c88baea8b33cf98f05373a856923d7d272796814d21142438deb83f35",
+  "previousStyleFilePreserved": "style.png"
+}

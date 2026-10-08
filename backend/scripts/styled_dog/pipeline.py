@@ -11,18 +11,29 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from PIL import Image, ImageDraw
 from .client import API, digest, download, image_argument, native_image, read, write
 from .source import prepare_concept
-from .quality import TAILS, POLICY, load_quality, quality_binding, motion_guidance, learned_guidance, learned_seed_guidance, frame_audit, seed_margin_audit, align_seed
+from .quality import TAILS, POLICY, SEED_ISSUES, load_quality, quality_binding, motion_guidance, learned_guidance, learned_seed_guidance, frame_audit, seed_margin_audit, align_seed
 
 STYLE = Path(__file__).resolve().parents[2] / 'asset-styles' / 'cozy32-v1'
 FACING = {'south':'facing the viewer, front view', 'north':'facing away, rear view',
           'west':'facing left, left side view', 'east':'facing right, right side view'}
 
 
+def style_reference_path(rules):
+    name=rules.get('styleReferenceFile','style.png')
+    if not isinstance(name,str) or not name.endswith('.png') or Path(name).name != name or '/' in name or '\\' in name:
+        raise ValueError('Invalid style reference filename')
+    return STYLE/name
+
+
 def load_rules():
     rules = read(STYLE / 'rules.json')
-    if digest(STYLE / 'style.png') != rules['styleSha256']:
+    reference=style_reference_path(rules)
+    if digest(reference) != rules['styleSha256']:
         raise ValueError('Approved style changed; a new reviewed version is required')
-    native_image((STYLE / 'style.png').read_bytes())
+    # A style illustration may be larger than a sprite; output validation stays native 32px.
+    with Image.open(reference) as image:
+        if image.format != 'PNG' or not 1 <= image.width <= 168 or not 1 <= image.height <= 168:
+            raise ValueError('Style reference must be a PNG up to 168x168')
     return rules
 
 
@@ -34,11 +45,13 @@ def character_request(root, traits, rules, quality=None):
         if not traits.get(key, '').strip() or len(traits[key]) > 300:
             raise ValueError(key + ' must contain 1–300 characters')
     eye_rules = load_quality()['seedEyes']
+    appearance = load_quality()['seedAppearance']
+    style_description = rules['styleDescription']+' '+appearance['styleGuidance']
     description = (
         'Draw the photographed dog in the attached PIXEL GAME ART STYLE. '
         'Full-body and face PHOTOS define IDENTITY: '
         + identity + ' '
-        'STYLE: compact body, rounded large head, short paws, dark outline, crisp shaded pixel clusters and stepped highlights. '
+        + appearance['prevention'] + ' '
         + eye_rules['prevention'] + ' '
         'Use photo ears, coat and markings, not the style dog identity. '
         'Closed neutral mouth, no grin. Stand on four legs, low top-down. '
@@ -50,21 +63,23 @@ def character_request(root, traits, rules, quality=None):
         if type(attempt) is not int or not 0 <= attempt <= 2 or quality.get('rulesSha256') != digest(POLICY):
             raise ValueError('Invalid or stale seed quality policy')
         issues = quality.get('issues', [])
-        if not isinstance(issues, list) or len(issues) > 6 or any(i not in ('EYE_READABILITY','EYE_STYLE','EYE_DIRECTION','SEED_IDENTITY','CANVAS_CLIPPING','SEED_MOTION_MARGIN') for i in issues):
+        if not isinstance(issues, list) or len(issues) > len(SEED_ISSUES) or any(i not in SEED_ISSUES for i in issues):
             raise ValueError('Invalid seed defect codes')
         if attempt:
+            if any(i in ('SEED_STYLE','SEED_TAIL') for i in issues):
+                style_description += ' '+appearance['correction']
             if any(i.startswith('EYE_') or i == 'SEED_IDENTITY' for i in issues):
-                description += ' '+eye_rules['correction']
+                style_description += ' '+eye_rules['correction']
             if any(i in ('CANVAS_CLIPPING','SEED_MOTION_MARGIN') for i in issues):
                 description = description.replace(load_quality()['seedMargin'], load_quality()['seedMotionMargin']['correction'])
                 description = description.replace('Full character in transparent 32x32. ', 'Transparent 32x32. ')
         description += learned_seed_guidance(quality)
-    if len(description) > 2000:
+    if len(description) > 2000 or len(style_description) > 2000:
         raise ValueError('Character prompt exceeds provider limit')
     return {'description':description, 'image_size':{'width':32,'height':32},
             'method':rules['characterMethod'], 'concept_image':image_argument(root/'photo-concept.png'),
             'reference_image':image_argument(root/'style-reference.png'), 'template_id':'dog',
-            'view':'low top-down', 'style_description':rules['styleDescription'],
+            'view':'low top-down', 'style_description':style_description,
             'seed':(traits['seed'] + 7919 * attempt) % 2147483647, 'no_background':True}
 
 
@@ -77,14 +92,14 @@ def prepare(root, traits_path):
                   'rulesSha256':digest(STYLE/'rules.json'), 'sourcePhotoSha256':traits['sourcePhotoSha256'],
                   'actualPhotoIncluded':True, 'approvedStyleIncluded':True, 'qualityRules':quality_binding(),
                   'conceptRole':'Photographed identity, ears and coat markings only',
-                  'styleRole':'Approved rounded proportions, outlines and pixel shading only',
+                  'styleRole':'User-selected flat icon proportions, dot eyes, outline and solid colors only',
                   'unknownFeatures':traits.get('unknownFeatures', [])}
     if (root/'reference-provenance.json').exists():
         previous = read(root/'reference-provenance.json')
         if any(previous.get(k) != v for k,v in provenance.items()):
             raise ValueError('Prepared inputs changed; use a new run directory')
     prepare_concept(root, traits)
-    shutil.copyfile(STYLE/'style.png', root/'style-reference.png')
+    shutil.copyfile(style_reference_path(rules), root/'style-reference.png')
     if traits_path.resolve() != (root/'traits.json').resolve():
         shutil.copyfile(traits_path, root/'traits.json')
     provenance['conceptSha256'] = digest(root/'photo-concept.png')

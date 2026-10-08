@@ -11,6 +11,7 @@ from .client import digest, native_image, read, write
 POLICY = Path(__file__).resolve().parents[2]/'asset-styles/cozy32-v1/quality-rules.json'
 TAILS = ('LOW', 'LEVEL', 'HIGH', 'CURLED', 'UNKNOWN')
 DIRECTIONS = ('south', 'north', 'west', 'east')
+SEED_ISSUES = ('EYE_READABILITY','EYE_STYLE','EYE_DIRECTION','SEED_IDENTITY','CANVAS_CLIPPING','SEED_MOTION_MARGIN','SEED_STYLE','SEED_TAIL')
 
 
 def learned_guidance(action, direction, quality):
@@ -44,7 +45,7 @@ def learned_seed_guidance(quality):
     for lesson in lessons:
         if (not isinstance(lesson, dict) or lesson.get('action') != 'BASE' or lesson.get('direction') != 'all'
             or lesson.get('tail') != 'UNKNOWN' or lesson.get('rulesSha256') != digest(POLICY)
-            or lesson.get('issue') not in ('EYE_READABILITY','EYE_STYLE','EYE_DIRECTION','SEED_IDENTITY','CANVAS_CLIPPING','SEED_MOTION_MARGIN')
+            or lesson.get('issue') not in SEED_ISSUES
             or not re.fullmatch(r'[a-f0-9]{64}', str(lesson.get('sha256', '')))
             or not re.fullmatch(r'[a-f0-9-]{36}', str(lesson.get('id', '')))):
             raise ValueError('Stale or mismatched seed lesson')

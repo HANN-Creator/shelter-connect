@@ -185,3 +185,5 @@ B-43: [스프라이트 자동 품질 검수·선택 보완](sprite-quality-repai
 - B-64 스프라이트 품질과 WALK/SIT 학습 복구: [노션](https://app.notion.com/p/3f35b2d1a55f800b9befe8f8a1f21e59), [변경·실제 검증 경계](motion-learning-quality-repair.md). 브랜치 `backend/b-64-motion-learning-repair`. 최초 도트 2px 여백, IDLE 근거 재검수, WALK/SIT의 검증된 학습 규칙 추가 보완, 과거 정상 동작 현재 재검수, 거절 후보의 피드백 재작성. DB V23, 공통 규칙 v13. 기존 승인·원본·비용 이력 보존.
 
 - B-65 작은 기준 도트 눈 가독성: [노션](https://app.notion.com/p/3f35b2d1a55f80259740f5e442e89e65), [자동 눈 편집과 실제 검증 경계](small-seed-eye-repair.md). 브랜치 `backend/b-65-small-seed-eyes`. 최초 생성/보완의 국소 명암 규칙, AI 눈 위치 탐색, PixelLab 제한 영역 편집, 눈 밖 픽셀 보존과 재검수. 공통 규칙 v14. DB/API 변경 없음. 배포와 B-64의 미완료 모션은 별도.
+
+- B-66 기본 도트 그림체·양옆 꼬리 보존: [노션](https://app.notion.com/p/3f35b2d1a55f80068837c3f2f2d88341), [검수·예방·실제 검증 경계](seed-appearance-tail.md). 브랜치 `backend/b-66-seed-style-tail`. 전신 그림체·꼬리 누락 독립 검사, 첫 생성/보완 공통 지침, 실패 원본 회귀 보존, 새 공공 강아지 실제 검증. v15, DB V24. 기존 승인 팩·운영 배포·B-64 잔여 모션은 별도.

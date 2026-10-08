@@ -113,7 +113,7 @@ public class StyledSpriteCodec {
             dir=Files.createTempDirectory("styled-sprite-");
             for(String name:List.of("scripts/styled_dog/__init__.py","scripts/styled_dog/client.py","scripts/styled_dog/source.py",
                 "scripts/styled_dog/pipeline.py","scripts/styled_dog/quality.py","scripts/styled_dog/tail_repair.py","scripts/styled_dog/server_bridge.py",
-                "asset-styles/cozy32-v1/style.png","asset-styles/cozy32-v1/rules.json","asset-styles/cozy32-v1/quality-rules.json")) {
+                "asset-styles/cozy32-v1/style.png","asset-styles/cozy32-v1/flat-style-reference.png","asset-styles/cozy32-v1/rules.json","asset-styles/cozy32-v1/quality-rules.json")) {
                 Path file=dir.resolve(name);Files.createDirectories(file.getParent());
                 try(var in=getClass().getResourceAsStream("/styled-pipeline/"+name)) {
                     if(in==null) throw new IOException("Missing pipeline");Files.copy(in,file);
