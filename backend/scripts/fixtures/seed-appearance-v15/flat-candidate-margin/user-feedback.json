@@ -1,0 +1,8 @@
+{
+  "date": "2026-10-08",
+  "source": "Direct user feedback in this task",
+  "accepted": false,
+  "reason": "The generated dogs do not match the supplied cute flat icon reference. User rejected the elongated angular face, detailed shading and overall appearance.",
+  "modelRenderingPassIsFalsePositive": true,
+  "publicationAllowed": false
+}

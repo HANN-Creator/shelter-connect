@@ -22,7 +22,8 @@
     "flat-candidate-margin/north.png": "3eaea74734056455cb3f61f37d8dfe1925ca83c6ae746b80cdfab4b07e1712ed",
     "flat-candidate-margin/east.png": "2721b07c4aa0338f34be605a40aa39bffb7f0e554b773f5983f63664bafea140",
     "flat-candidate-margin/south.png": "5d2a29dac9d82f89c0253b7a83fbb90834410720aa2be56ed383623e0f05ad59",
-    "flat-candidate-margin/live-quality.json": "acdaefc33ed4cda19e1fb5608984f9849a6eab572c371e37392b4e035419c852"
+    "flat-candidate-margin/live-quality.json": "acdaefc33ed4cda19e1fb5608984f9849a6eab572c371e37392b4e035419c852",
+    "flat-candidate-margin/user-feedback.json": "5cf8102a99d88be051232083473cc33c24371b17f4fcb372dba1a02f8fe263b1"
   },
-  "flatCandidate": "Actual new-dog PixelLab candidate under final v15 rules. Real Luna passed style, identity and tails; deterministic 2px margin failed north/west/east. Not approved or published."
+  "flatCandidate": "Actual PixelLab candidate: Luna passed rendering but USER REJECTED the style. Treat the model rendering PASS as a false positive. 2px margin also fails. Never an approved positive example."
 }
