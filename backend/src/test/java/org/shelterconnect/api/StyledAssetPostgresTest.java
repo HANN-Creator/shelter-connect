@@ -80,7 +80,9 @@ class StyledAssetPostgresTest {
             var hashes=new ArrayList<String>();
             for(byte[] image:images)hashes.add(java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(image)));
             String binding=java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(String.join("|",hashes).getBytes(java.nio.charset.StandardCharsets.UTF_8)));
-            return json.valueToTree(Map.of("version",StyledSeedQualityAgent.VERSION,"passed",passed,"inputSha256",binding,
+            return json.valueToTree(Map.of("appearanceVersion",StyledSeedQualityAgent.APPEARANCE_VERSION,"sourceTail","KNOWN_PRESENT","tailConsistency","PASS",
+                "views",List.of("south","north","west","east").stream().map(d->Map.of("direction",d,"rendering","PASS","tail","VISIBLE")).toList(),
+                "version",StyledSeedQualityAgent.VERSION,"passed",passed,"inputSha256",binding,
                 "rulesSha256",java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("asset-styles/cozy32-v1/quality-rules.json")))),"issues",passed?List.of():List.of("EYE_READABILITY")));
         }catch(Exception e){throw new AssertionError(e);}
     }
@@ -1466,7 +1468,7 @@ class StyledAssetPostgresTest {
         var r=(tools.jackson.databind.node.ObjectNode)seedReport(images,passed);
         r.put("identity",passed?"PASS":"UNCERTAIN");r.put("model","fixture-vision");r.put("reviewedAt",java.time.Instant.now().toString());
         r.putArray("edgeDirections");var views=r.putArray("views");
-        for(String d:List.of("south","north","west","east"))views.add(json.valueToTree(Map.of("direction",d,"readability",d.equals("north")?"NOT_VISIBLE":"PASS","style","PASS")));
+        for(String d:List.of("south","north","west","east"))views.add(json.valueToTree(Map.of("direction",d,"readability",d.equals("north")?"NOT_VISIBLE":"PASS","style","PASS","rendering","PASS","tail","VISIBLE")));
         return r;
     }
     JsonNode automaticMotionReport(boolean passed) {
@@ -1513,6 +1515,36 @@ class StyledAssetPostgresTest {
         assertThat(step(id,"character").at("/qualityReport/issues").toString()).contains("SEED_MOTION_MARGIN");
         assertThat(step(id,"character").path("repairCount").asInt()).isEqualTo(2);
         verify(provider,times(3)).submit(eq(true),any());verify(provider,never()).submit(eq(false),any());
+    }
+    @Test void missingTailAndStyleDriftAreLearnedAndBoundedlyRegeneratedBeforeMotion()throws Exception {
+        UUID id=automaticRequest();
+        when(seedQuality.review(any(),anyList())).thenAnswer(c->{
+            var r=(tools.jackson.databind.node.ObjectNode)automaticSeedReport(c.getArgument(1),true);
+            r.put("passed",false);r.set("issues",json.valueToTree(List.of("SEED_TAIL","SEED_STYLE")));
+            ((tools.jackson.databind.node.ObjectNode)r.path("views").get(2)).put("tail","MISSING").put("rendering","FAIL");
+            return r;
+        });
+        finish(id);var j=read(id);
+        assertThat(j.path("status").asText()).isEqualTo("SEED_REVIEW");
+        assertThat(j.path("seedReview").isNull()).isTrue();assertThat(j.path("qualityApproval").isNull()).isTrue();
+        assertThat(step(id,"character").path("repairCount").asInt()).isEqualTo(2);
+        verify(provider,times(3)).submit(eq(true),any());verify(provider,never()).submit(eq(false),any());
+        verify(provider,never()).editSeedEyes(any());
+        assertThat(jdbc.queryForList("SELECT issue FROM shelter.styled_quality_lessons WHERE source_job_id=? ORDER BY issue",String.class,id))
+            .containsExactly("SEED_STYLE","SEED_TAIL");
+        assertThatThrownBy(()->jdbc.update("UPDATE shelter.styled_quality_lessons SET action='WALK',direction='west' WHERE source_job_id=?",id))
+            .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+        var requests=org.mockito.ArgumentCaptor.forClass(JsonNode.class);verify(provider,times(3)).submit(eq(true),requests.capture());
+        assertThat(requests.getAllValues().get(1).at("/quality/issues").toString()).contains("SEED_TAIL","SEED_STYLE");
+        review(id,true,"APPROVE",409);publicStatus(404);
+    }
+    @Test void forgedPassWithoutNewAppearanceEvidenceNeverAutomaticallyApproves()throws Exception {
+        UUID id=automaticRequest();
+        when(seedQuality.review(any(),anyList())).thenAnswer(c->{
+            var r=(tools.jackson.databind.node.ObjectNode)automaticSeedReport(c.getArgument(1),true);r.remove("appearanceVersion");return r;
+        });
+        finish(id);assertThat(read(id).path("seedReview").isNull()).isTrue();
+        verify(provider,never()).submit(eq(false),any());publicStatus(404);
     }
     UUID eyeRepairJob()throws Exception {
         UUID id=automaticRequest();var reviews=new java.util.concurrent.atomic.AtomicInteger();
@@ -1619,7 +1651,7 @@ class StyledAssetPostgresTest {
             var r=(tools.jackson.databind.node.ObjectNode)automaticSeedReport(c.getArgument(1),true);r.remove(missing);return r;});
         if(missing.equals("source-photo"))jdbc.update("UPDATE shelter.asset_jobs SET styled_input=jsonb_set(styled_input,'{sourcePhotoSha256}',to_jsonb(CAST(? AS text))) WHERE id=?","0".repeat(64),id);
         finish(id);assertThat(read(id).path("status").asText()).isEqualTo("SEED_REVIEW");
-        assertThat(read(id).path("failureCode").asText()).isEqualTo("AUTO_APPROVAL_EVIDENCE_REQUIRED");
+        assertThat(read(id).path("failureCode").asText()).isEqualTo(missing.equals("views")?"SEED_QUALITY_REVIEW_REQUIRED":"AUTO_APPROVAL_EVIDENCE_REQUIRED");
         assertThat(read(id).path("seedReview").isNull()).isTrue();verify(provider,never()).submit(eq(false),any());
     }
     @Test void recoveryOfCompletedWorkIsIdempotentAndDatabaseRequiresMachineEvidence()throws Exception {
@@ -1637,7 +1669,7 @@ class StyledAssetPostgresTest {
     // Existing cases exercise persisted pre-B63 jobs and their explicit manual review contract.
     UUID request() throws Exception {
         UUID id=UUID.fromString(post(subject,"/v1/shelter-admin/dogs/"+dog+"/styled-assets",input(),202).at("/data/id").asText());
-        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=quality_policy-'automaticApproval'-'seedMotionMargin'-'lessonRevision'-'seedEyeRepair' WHERE id=?",id);return id;
+        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=quality_policy-'automaticApproval'-'seedMotionMargin'-'lessonRevision'-'seedEyeRepair'-'seedAppearanceVersion' WHERE id=?",id);return id;
     }
     String path(UUID id) {return "/v1/shelter-admin/dogs/"+dog+"/styled-assets/"+id;}
     JsonNode read(UUID id) throws Exception {return get(subject,path(id),200).path("data");}

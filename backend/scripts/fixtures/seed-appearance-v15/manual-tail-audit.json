@@ -1,0 +1,86 @@
+{
+  "validationMode": "assistant visual review + deterministic pixel/margin checks; not Luna review or production approval",
+  "rawStrictMaskCheck": "REJECTED, retained in ../tail-fix-1/rejected-audit.json",
+  "manualReview": "Tail-only edits in rump regions accepted as a local preview; original body pixels outside those regions remain exact before whole-frame translation.",
+  "directions": {
+    "west": {
+      "reviewedTailRegion": [
+        26,
+        16,
+        31,
+        26
+      ],
+      "tailRootChangedPixels": 10,
+      "addedTailPixels": 20,
+      "faceAndBodyOutsideTailRegionChanged": 0,
+      "wholeSpriteTranslation": [
+        -1,
+        0
+      ],
+      "resampled": false,
+      "pixelsLost": 0,
+      "sourceSha256": "eb91440ae0f9f46189ce705dbe36453e44bc55cb0adea461168cdd820a358165",
+      "resultSha256": "18c46f5eaf337d56e528df4024792c9c18c85798e1362f19105b2484267433c5"
+    },
+    "east": {
+      "reviewedTailRegion": [
+        1,
+        16,
+        6,
+        26
+      ],
+      "tailRootChangedPixels": 9,
+      "addedTailPixels": 20,
+      "faceAndBodyOutsideTailRegionChanged": 0,
+      "wholeSpriteTranslation": [
+        1,
+        0
+      ],
+      "resampled": false,
+      "pixelsLost": 0,
+      "sourceSha256": "36ab7846d16f5322be1c9009b91c2d04f0aae8508d58a35c023b3a05a0b8f0c0",
+      "resultSha256": "1f06aaf058d25ea72e953fc42f5eeaa0550bfb5a8bd80cf651b8759fd3ec40c3"
+    },
+    "south": {
+      "byteIdentical": true,
+      "resultSha256": "d0cc3e4fa6b611c17bda637a0a4055c3f212cda4bf417613dc4877a52c0e8fa8"
+    },
+    "north": {
+      "byteIdentical": true,
+      "resultSha256": "53b3960afad3dfe7d33ac8a29732507bd38ed7c437de07b0bc727e958fe0fba5"
+    }
+  },
+  "margin": {
+    "minimumClearPixels": 2,
+    "marginDirections": [],
+    "clearPixelsLeftTopRightBottom": {
+      "south": [
+        6,
+        4,
+        6,
+        2
+      ],
+      "north": [
+        6,
+        4,
+        6,
+        2
+      ],
+      "west": [
+        2,
+        4,
+        2,
+        2
+      ],
+      "east": [
+        2,
+        4,
+        2,
+        2
+      ]
+    },
+    "issues": []
+  },
+  "backendChanged": false,
+  "productionPublished": false
+}

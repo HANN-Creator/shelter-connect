@@ -1,0 +1,28 @@
+{
+  "source": "Actual PixelLab outputs, 2026-10-08; user identified missing side tails after margin PASS.",
+  "visualLabels": "Human/user feedback, not deterministic detection or a fabricated AI verdict.",
+  "automaticRepairPassed": false,
+  "manualTailPreviewPublished": false,
+  "styleFailureReference": "../small-seed-eyes-v14/automatic (user feedback: lost cute style)",
+  "sha256": {
+    "manual-tail-audit.json": "1699edb281480645ca73f4eef467aa30a84ecbba64a22da56afed00d9a86b4eb",
+    "missing-tail/east.png": "36ab7846d16f5322be1c9009b91c2d04f0aae8508d58a35c023b3a05a0b8f0c0",
+    "missing-tail/north.png": "53b3960afad3dfe7d33ac8a29732507bd38ed7c437de07b0bc727e958fe0fba5",
+    "missing-tail/south.png": "d0cc3e4fa6b611c17bda637a0a4055c3f212cda4bf417613dc4877a52c0e8fa8",
+    "missing-tail/west.png": "eb91440ae0f9f46189ce705dbe36453e44bc55cb0adea461168cdd820a358165",
+    "raw-inpaint.png": "c7e37c924e9c40f60d5860c2430f73eb0ec216b53bc24ba61e12df74063390b0",
+    "rejected-inpaint-audit.json": "8c89dbac45e511e6533f0ae89c32bded6ca2248a3429521fddd076c091b1e6d1",
+    "reviewed-tail/east.png": "1f06aaf058d25ea72e953fc42f5eeaa0550bfb5a8bd80cf651b8759fd3ec40c3",
+    "reviewed-tail/north.png": "53b3960afad3dfe7d33ac8a29732507bd38ed7c437de07b0bc727e958fe0fba5",
+    "reviewed-tail/south.png": "d0cc3e4fa6b611c17bda637a0a4055c3f212cda4bf417613dc4877a52c0e8fa8",
+    "reviewed-tail/west.png": "18c46f5eaf337d56e528df4024792c9c18c85798e1362f19105b2484267433c5",
+    "style-feedback.json": "6d69bba662ca6034b6f1648890b42d34e59525409a3fd6d9836716125e11d9e8",
+    "flat-candidate-margin/preview.png": "0cf5df329648efde86d7acadb855506bb84938c69f25e933ce42a15fd7e48f4e",
+    "flat-candidate-margin/west.png": "291436b6c33047976602cc91b48331d06a065c73ef479bec10e6c5a1158a68e0",
+    "flat-candidate-margin/north.png": "3eaea74734056455cb3f61f37d8dfe1925ca83c6ae746b80cdfab4b07e1712ed",
+    "flat-candidate-margin/east.png": "2721b07c4aa0338f34be605a40aa39bffb7f0e554b773f5983f63664bafea140",
+    "flat-candidate-margin/south.png": "5d2a29dac9d82f89c0253b7a83fbb90834410720aa2be56ed383623e0f05ad59",
+    "flat-candidate-margin/live-quality.json": "acdaefc33ed4cda19e1fb5608984f9849a6eab572c371e37392b4e035419c852"
+  },
+  "flatCandidate": "Actual new-dog PixelLab candidate under final v15 rules. Real Luna passed style, identity and tails; deterministic 2px margin failed north/west/east. Not approved or published."
+}

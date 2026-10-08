@@ -27,7 +27,7 @@ public class StyledSeedExampleController {
         String sourceSha=AssetInput.text(body,"sourcePhotoSha256",64),assessment=AssetInput.text(body,"assessment",8),note=AssetInput.text(body,"note",1000);
         if(!sourceSha.matches("[a-f0-9]{64}") || !Set.of("POSITIVE","NEGATIVE").contains(assessment) || note.length()<20)throw AssetException.invalid();
         var issues=body.path("issues");
-        if(!issues.isArray() || issues.size()>5 || issues.valueStream().anyMatch(n->!n.isTextual() || !StyledLessonAgent.SEED_ISSUES.contains(n.asText()))
+        if(!issues.isArray() || issues.size()>StyledLessonAgent.SEED_ISSUES.size() || issues.valueStream().anyMatch(n->!n.isTextual() || !StyledLessonAgent.SEED_ISSUES.contains(n.asText()))
             || issues.valueStream().map(JsonNode::asText).distinct().count()!=issues.size()
             || (assessment.equals("POSITIVE")?!issues.isEmpty():issues.isEmpty()))throw AssetException.invalid();
         AssetInput.fields(body.path("expectedSeedHashes"),"south","north","west","east");

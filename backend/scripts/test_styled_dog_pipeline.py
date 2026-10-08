@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 from PIL import Image
 from styled_dog.client import Client, digest, native_image, read, write
-from styled_dog.pipeline import (STYLE, load_rules, prepare, verify_inputs, character_request,
+from styled_dog.pipeline import (STYLE, load_rules, style_reference_path, prepare, verify_inputs, character_request,
     record_review, require_review, motion_request, save_clip, animate)
 from styled_dog.source import secure_photo_url, prepare_concept
 from styled_dog.package import package, sheet_for, reviewed_frames
@@ -58,11 +58,53 @@ class PipelineTest(unittest.TestCase):
             with self.subTest(change=change),self.assertRaises(ValueError):
                 character_request(self.root,self.traits,load_rules(),{'rulesSha256':digest(POLICY),'lessons':[bad]})
 
+    def test_appearance_prevention_applies_to_first_generation_and_every_repair(self):
+        from styled_dog.quality import POLICY, SEED_ISSUES, load_quality
+        appearance=load_quality()['seedAppearance']
+        traits=dict(self.traits,identityDescription='a'*850)
+        for attempt in range(3):
+            p=character_request(self.root,traits,load_rules(),{'attempt':attempt,'rulesSha256':digest(POLICY),'issues':list(SEED_ISSUES)})
+            self.assertIn(appearance['prevention'],p['description'])
+            self.assertIn(appearance['styleGuidance'],p['style_description'])
+            self.assertLessEqual(len(p['description']),2000)
+            if attempt:self.assertIn(appearance['correction'],p['style_description'])
+        rule={'id':'12345678-1234-1234-1234-123456789abc','sha256':'a'*64,'rulesSha256':digest(POLICY),
+              'action':'BASE','direction':'all','tail':'UNKNOWN','issue':'SEED_TAIL',
+              'prevention':'Keep the entire attached tail visible in both side views.',
+              'criterion':'A side tail is missing while the photo does not confirm absence.'}
+        p=character_request(self.root,self.traits,load_rules(),{'rulesSha256':digest(POLICY),'lessons':[rule]})
+        self.assertIn(rule['prevention'],p['description'])
+
+    def test_user_selected_flat_reference_is_style_only_and_generated_frames_remain_native(self):
+        rules=load_rules()
+        self.assertEqual(rules['version'],'flat32-photo-style-v2')
+        self.assertEqual(Image.open(style_reference_path(rules)).size,(168,168))
+        body=character_request(self.root,self.traits,rules)
+        self.assertIn('Small filled black dot eyes',body['description'])
+        self.assertIn('solid colors',body['style_description'])
+        self.assertIn('NO white sticker border',body['style_description'])
+        self.assertIn(self.traits['identityDescription'],body['description'])
+        self.assertEqual(body['image_size'],{'width':32,'height':32})
+        for name in ('../style.png','/tmp/style.png','nested/style.png','bad.txt'):
+            with self.assertRaises(ValueError):style_reference_path(dict(rules,styleReferenceFile=name))
+        with self.assertRaises(ValueError):native_image(style_reference_path(rules).read_bytes())
+
+    def test_actual_missing_tail_fixture_has_clear_margins_but_is_not_automatically_good(self):
+        from styled_dog.quality import seed_margin_audit
+        f=Path(__file__).parent/'fixtures/seed-appearance-v15'
+        evidence=read(f/'evidence.json')
+        for path,expected in evidence['sha256'].items():self.assertEqual(digest(f/path),expected)
+        for variant in ('missing-tail','reviewed-tail'):
+            seeds={d:native_image((f/variant/(d+'.png')).read_bytes()) for d in load_rules()['directions']}
+            self.assertEqual(seed_margin_audit(seeds)['issues'],[])
+        self.assertFalse(evidence['automaticRepairPassed'])
+        for d in ('south','north'):self.assertEqual(digest(f/'missing-tail'/(d+'.png')),digest(f/'reviewed-tail'/(d+'.png')))
+
     def test_both_images_are_transmitted_with_distinct_roles(self):
         body = character_request(self.root,self.traits,load_rules())
         self.assertEqual(body['method'],'create_from_concept')
         self.assertEqual(base64.b64decode(body['concept_image']['base64']),(self.root/'photo-concept.png').read_bytes())
-        self.assertEqual(base64.b64decode(body['reference_image']['base64']),(STYLE/'style.png').read_bytes())
+        self.assertEqual(base64.b64decode(body['reference_image']['base64']),style_reference_path(load_rules()).read_bytes())
         self.assertNotEqual(body['reference_image'],body['concept_image'])
         self.assertIn(self.traits['identityDescription'],body['description'])
         self.assertLessEqual(len(body['description']),2000)

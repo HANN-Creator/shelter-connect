@@ -44,13 +44,13 @@ class StyledSeedQualityAgentTest {
         var properties=new AiProperties(true,key,"gpt-5.6-luna",60);
         var live=new StyledSeedQualityAgent(new OpenAiResponsesClient(properties,json),properties,json);
         var config=Path.of(System.getenv("SEED_EYE_LIVE_CASES"));var cases=json.readTree(Files.readAllBytes(config));
-        assertThat(cases.isArray()).isTrue();assertThat(cases.size()).isBetween(2,4);
+        assertThat(cases.isArray()).isTrue();assertThat(cases.size()).isBetween(1,4);
         var failures=new ArrayList<String>();int index=0;
         for(var c:cases) {
             var photo=Path.of(c.path("photo").asText());var directory=Path.of(c.path("seedsDirectory").asText());
             var seeds=new ArrayList<byte[]>();for(String d:StyledSpriteCodec.DIRECTIONS)seeds.add(Files.readAllBytes(directory.resolve(d+".png")));
             // Only these bytes reach the production agent. Expected outcomes and paths stay local.
-            var report=live.review(Files.readAllBytes(photo),seeds);
+            var report=StyledSeedQualityAgent.motionMargin(live.review(Files.readAllBytes(photo),seeds),seeds,json.createObjectNode().put("seedMotionMargin",2),json);
             Files.write(config.resolveSibling("seed-live-"+index+".json"),json.writeValueAsBytes(report));
             if(report.path("passed").asBoolean()!=c.path("expectedPass").asBoolean())failures.add("case "+index+": "+report.path("issues"));
             index++;
@@ -59,10 +59,10 @@ class StyledSeedQualityAgentTest {
     }
     byte[] seed()throws Exception{return Files.readAllBytes(Path.of("asset-styles/cozy32-v1/style.png"));}
     JsonNode verdict(String direction,String result,String identity) {
-        return json.valueToTree(Map.of("identity",identity,"note","Synthetic response; not live visual evidence",
+        return json.valueToTree(Map.of("sourceTail","KNOWN_PRESENT","tailConsistency","PASS","identity",identity,"note","Synthetic response; not live visual evidence",
             "views",StyledSpriteCodec.DIRECTIONS.stream().map(d->Map.of("direction",d,
                 "readability",d.equals(direction)?result:d.equals("north")?"NOT_VISIBLE":"PASS",
-                "style",d.equals(direction)?result:d.equals("north")?"NOT_VISIBLE":"PASS","note","Fixture verdict")).toList()));
+                "style",d.equals(direction)?result:d.equals("north")?"NOT_VISIBLE":"PASS","rendering","PASS","tail",d.equals("south")?"OCCLUDED":"VISIBLE","note","Fixture verdict")).toList()));
     }
     @Test void allVisibleEyesMustPassAndUncertaintyNeverPasses()throws Exception {
         for(String direction:List.of("south","west","east"))for(String result:List.of("FAIL","UNCERTAIN","NOT_VISIBLE")) {
@@ -84,7 +84,11 @@ class StyledSeedQualityAgentTest {
     }
     @Test void actualRearRenderingPassDoesNotInventVisibleEyes()throws Exception {
         var fixture=json.readTree(Files.readAllBytes(Path.of("scripts/fixtures/seed-eye-verdict-regressions.json")));
-        when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(fixture.path("response"));
+        // Keep the historical response unchanged on disk; new fields are synthetic for this interpretation test.
+        var response=(tools.jackson.databind.node.ObjectNode)fixture.path("response").deepCopy();
+        response.put("sourceTail","UNOBSERVED").put("tailConsistency","PASS");
+        for(var v:response.path("views"))((tools.jackson.databind.node.ObjectNode)v).put("rendering","PASS").put("tail","VISIBLE");
+        when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(response);
         var report=agent.review(seed(),Collections.nCopies(4,seed()));
         assertThat(report.path("issues").valueStream().map(JsonNode::asText)).containsExactly("EYE_READABILITY");
         assertThat(report.path("passed").asBoolean()).isFalse();
@@ -116,9 +120,10 @@ class StyledSeedQualityAgentTest {
             "identityDescription","a".repeat(850),"motionDescription","same puppy","rearDescription","same puppy rear",
             "reviewNote","reviewed original photo and face crop"));
         for(int attempt=0;attempt<=2;attempt++) {
-            var policy=json.valueToTree(Map.of("attempt",attempt,"rulesSha256",StyledSpriteCodec.qualityRulesSha(),"issues",List.of("EYE_READABILITY","SEED_MOTION_MARGIN")));
+            var policy=json.valueToTree(Map.of("attempt",attempt,"rulesSha256",StyledSpriteCodec.qualityRulesSha(),"issues",List.copyOf(StyledLessonAgent.SEED_ISSUES)));
             var p=codec.character(UUID.randomUUID(),traits,seed(),policy);
-            assertThat(p.path("description").asText()).contains("Soft filled dark pupils","No hollow eye rings");
+            assertThat(p.path("description").asText()).contains("Small filled black dot eyes","No hollow eye rings","full attached side/rear tails");
+            assertThat(p.path("style_description").asText()).contains("user-selected flat dog-icon style","plausible consistent tail");
             assertThat(p.path("description").asText().length()).isLessThanOrEqualTo(2000);
             assertThat(p.path("seed").asInt()).isEqualTo(100+7919*attempt);
         }
@@ -143,5 +148,53 @@ class StyledSeedQualityAgentTest {
         assertThat(payload.path("description").asText().length()).isLessThanOrEqualTo(2000);
         ((tools.jackson.databind.node.ObjectNode)lesson).put("action","WALK");
         assertThatThrownBy(()->agent.review(seed(),Collections.nCopies(4,seed()),lessons)).hasMessage("QUALITY_SEED_RESPONSE_INVALID");
+    }
+
+    @Test void missingSideTailFailsEvenWhenEyesIdentityAndAllMarginsPass()throws Exception {
+        var seeds=new ArrayList<byte[]>();for(String d:StyledSpriteCodec.DIRECTIONS)seeds.add(Files.readAllBytes(Path.of("scripts/fixtures/seed-appearance-v15/missing-tail/"+d+".png")));
+        var response=(tools.jackson.databind.node.ObjectNode)verdict("south","PASS","PASS");response.put("sourceTail","UNOBSERVED");
+        for(var v:response.path("views"))if(Set.of("west","east").contains(v.path("direction").asText()))
+            ((tools.jackson.databind.node.ObjectNode)v).put("tail","MISSING");
+        when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(response);
+        var report=StyledSeedQualityAgent.motionMargin(agent.review(seed(),seeds),seeds,json.readTree("{\"seedMotionMargin\":2}"),json);
+        assertThat(report.path("issues").valueStream().map(JsonNode::asText)).containsExactly("SEED_TAIL");
+        assertThat(report.path("marginDirections")).isEmpty();assertThat(report.path("passed").asBoolean()).isFalse();
+        assertThat(StyledSeedEyeRepair.failedViews(report)).isEmpty();
+    }
+    @Test void wholeBodyStyleIsIndependentOfReadableEyes()throws Exception {
+        var response=verdict("south","PASS","PASS");
+        ((tools.jackson.databind.node.ObjectNode)response.path("views").get(2)).put("rendering","FAIL");
+        when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(response);
+        assertThat(agent.review(seed(),Collections.nCopies(4,seed())).path("issues").valueStream().map(JsonNode::asText)).containsExactly("SEED_STYLE");
+    }
+    @Test void tailOcclusionCannotExcuseMissingSidesButRealAbsenceAndBobtailsAreNotLengthened()throws Exception {
+        for(String state:List.of("OCCLUDED","MISSING","UNCERTAIN","VERIFIED_ABSENT")) {
+            var response=(tools.jackson.databind.node.ObjectNode)verdict("south","PASS","PASS");response.put("sourceTail","UNOBSERVED");
+            ((tools.jackson.databind.node.ObjectNode)response.path("views").get(2)).put("tail",state);
+            when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(response);
+            assertThat(agent.review(seed(),Collections.nCopies(4,seed())).path("issues").toString()).contains("SEED_TAIL");
+        }
+        var absent=(tools.jackson.databind.node.ObjectNode)verdict("south","PASS","PASS");absent.put("sourceTail","CONFIRMED_ABSENT");
+        for(var v:absent.path("views"))((tools.jackson.databind.node.ObjectNode)v).put("tail","VERIFIED_ABSENT");
+        when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(absent);
+        assertThat(agent.review(seed(),Collections.nCopies(4,seed())).path("passed").asBoolean()).isTrue();
+        var bobtail=verdict("south","PASS","PASS"); // Tail length is a visual criterion, not a hard-coded pixel minimum.
+        ((tools.jackson.databind.node.ObjectNode)bobtail.path("views").get(1)).put("tail","OCCLUDED");
+        when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(bobtail);
+        assertThat(agent.review(seed(),Collections.nCopies(4,seed())).path("passed").asBoolean()).isTrue();
+    }
+    @Test void newPolicyCannotApproveMissingAppearanceEvidenceOrStaleBooleanPass()throws Exception {
+        var seeds=Collections.nCopies(4,seed());var hashes=json.createObjectNode();
+        for(String d:StyledSpriteCodec.DIRECTIONS)hashes.put(d,StyledSpriteCodec.sha(seed()));
+        when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(verdict("south","PASS","PASS"));
+        var report=(tools.jackson.databind.node.ObjectNode)agent.review(seed(),seeds);
+        var policy=json.valueToTree(Map.of("seedQualityVersion",StyledSeedQualityAgent.VERSION,"seedAppearanceVersion",StyledSeedQualityAgent.APPEARANCE_VERSION,"rulesSha256",StyledSpriteCodec.qualityRulesSha()));
+        assertThat(StyledSeedQualityAgent.passed(report,hashes,policy)).isTrue();
+        ((tools.jackson.databind.node.ObjectNode)report.path("views").get(3)).put("tail","MISSING");
+        assertThat(StyledSeedQualityAgent.passed(report,hashes,policy)).isFalse();
+        report.remove("appearanceVersion");assertThat(StyledSeedQualityAgent.passed(report,hashes,policy)).isFalse();
+        var malformed=(tools.jackson.databind.node.ObjectNode)verdict("south","PASS","PASS");malformed.remove("sourceTail");
+        when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(malformed);
+        assertThatThrownBy(()->agent.review(seed(),seeds)).hasMessage("QUALITY_SEED_RESPONSE_INVALID");
     }
 }

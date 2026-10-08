@@ -22,6 +22,7 @@ public class StyledSeedEyeRepair {
             || report.path("minimumClearPixels").asInt()!=2 || !report.path("marginDirections").isArray()
             || !report.path("marginDirections").isEmpty() || !report.path("issues").isArray() || report.path("issues").isEmpty()
             || report.path("issues").valueStream().anyMatch(n->!Set.of("EYE_READABILITY","EYE_STYLE").contains(n.asText())))return Set.of();
+        if(report.has("appearanceVersion") && !StyledSeedQualityAgent.appearancePassed(report))return Set.of();
         var dirs=new TreeSet<String>();
         for(var v:report.path("views"))if(v.path("direction").asText().equals("north")
             && (!v.path("readability").asText().equals("NOT_VISIBLE") || !Set.of("PASS","NOT_VISIBLE").contains(v.path("style").asText())))return Set.of();

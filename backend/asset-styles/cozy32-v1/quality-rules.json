@@ -1,5 +1,5 @@
 {
-  "revision": "sprite-regressions-2026-10-08-v14",
+  "revision": "sprite-regressions-2026-10-08-v15",
   "pixelEvidence": {
     "version": "native-frame-delta-v1",
     "subtleRgbChannelDelta": 24
@@ -53,6 +53,15 @@
     "EYES: compare open-eye frames with the approved seed: keep pupil shape, position and local contrast. A brief natural blink is allowed. Eyes that stay erased, become hollow rings, or merge into fur in open-eye frames are IDENTITY_DRIFT. North has no face; do not invent eyes."
   ],
   "regressions": [
+    {
+      "id": "cute-seed-loses-style-or-side-tails",
+      "stage": "BASE",
+      "direction": "all",
+      "issue": "SEED_STYLE/SEED_TAIL",
+      "check": "seed-appearance-and-tail-review",
+      "fixture": "seed-appearance-v15/evidence.json",
+      "expected": "Preserve actual style-feedback and missing-tail native outputs, plus the manually reviewed tail edit. The missing-tail output passes margin checks: require independent appearance/tail verdicts before animation. Initial and repair prompts use the same prevention rules. UNKNOWN photo tail is not absence; front occlusion and verified bobtails remain valid. Never treat manual ROI expansion as automatic repair success. New fail codes flow into bounded regeneration and BASE lessons; no approval override."
+    },
     {
       "id": "small-dark-seed-eyes-merge-with-coat",
       "stage": "BASE",
@@ -238,17 +247,17 @@
   },
   "seedEyeEdit": {
     "version": "native-seed-eye-inpaint-v1",
-    "prompt": "Repair ONLY the masked eye regions of the SAME puppy. The 128x32 strip contains four separate native 32x32 views left-to-right: SOUTH/front, NORTH/rear, WEST/left, EAST/right. Preserve this exact layout. Make each selected eye a calm small filled dark pupil with ONE muted light-tan catchlight at its upper corner and a few lighter coat-colored eyelid pixels to distinguish it from dark fur. Keep most pupil pixels dark; no white eyeballs, eye rings, hollow sockets, angry slits, extra eyes or grin. Preserve the existing eye position, head, ears, muzzle, coat, body, paws, tail, pixel scale and ALL visible pixels outside the white masks. Never add eyes to north. Do not recolor the whole face or change the silhouette."
+    "prompt": "Repair ONLY the masked eye regions of this SAME dog. The strip has four native 32x32 views: SOUTH, NORTH, WEST, EAST. Preserve the layout. Make each selected eye a tiny calm filled dark dot, distinct from adjacent fur and nose. Use at most a few coat-colored eyelid pixels for contrast. A tiny muted highlight is optional; never add shine, white eyeballs, rings, hollow sockets or angry slits. Keep the flat solid-color style and exact head, ears, muzzle, body, tail and ALL visible pixels outside the masks. No eyes on north. No grin, global recoloring, silhouette or scale changes."
   },
   "seedEyes": {
-    "version": "seed-eyes-v2-local-contrast",
-    "prevention": "Soft filled dark pupils, each with ONE visible muted light-tan catchlight pixel. A few lighter coat-colored pixels beside each pupil separate eyes from dark fur. Keep pupils small and mostly dark. No hollow eye rings, white eyeballs or angry slits. Front: two eyes; sides: one eye; rear: none. Match eye scale across views.",
-    "correction": "Restore readable filled pupils with a tiny catchlight and local fur contrast. Keep coat, anatomy and style; no global recoloring.",
+    "version": "flat-dot-eyes-v3",
+    "prevention": "Small filled black dot eyes, clearly separate from fur and nose. At most a tiny subtle highlight if needed; never require sparkle. No hollow eye rings, white eyeballs or angry slits. Front: two eyes; sides: one; rear: none.",
+    "correction": "Restore tiny readable filled dot eyes and local contrast; keep the flat palette. No added shine, white rings or global recoloring.",
     "reviewInstructions": [
       "Judge new seeds independently against the approved STYLE and photographed IDENTITY. These seeds are unapproved; never treat a flawed seed as a correct reference.",
       "In south, both eyes must read separately from the surrounding coat and muzzle. In west/east the visible eye must read clearly. Compare eye placement, scale and rounded filled pupil treatment across views. North must show no eyes or face.",
-      "Accept compact dark filled pupils and a restrained small catchlight. Reject hollow ring or socket eyes, large white eyeballs, angry slash-shaped eyes, misaligned pupils, or eyes that disappear into dark fur. A dark coat still needs readable local contrast without changing coat identity.",
-      "Do not demand photorealistic eyes, identical coat colors across dogs, or extra sparkle. Preserve the approved soft pixel-art style. Return UNCERTAIN when eye form cannot be confidently judged; uncertainty does not pass.",
+      "Accept tiny solid dark dot pupils with or without a restrained catchlight. A catchlight is optional, never required. Reject hollow eye rings, large white eyeballs, angry slits or pupils that merge invisibly with fur. If the coat is dark, a few coat-colored surrounding pixels can provide local contrast without adding glossy eyeballs.",
+      "Do not demand photorealistic eyes, mandatory highlights, identical coat colors across dogs or extra sparkle. Preserve the user-selected simple flat dot-eye style. Return UNCERTAIN when the eyes cannot confidently be judged; uncertainty does not pass.",
       "Identity compares visible coat/markings, ears, muzzle and puppy/body proportions with the real photo. Do not infer temperament. The style reference supplies rendering only, never the dog identity.",
       "For north with no face or eyes, readability is NOT_VISIBLE. style may be NOT_VISIBLE or PASS for appropriate rendering; a style PASS alone is never evidence of visible eyes. North showing face or eyes must have readability FAIL. A style FAIL or UNCERTAIN still fails quality."
     ],
@@ -281,5 +290,17 @@
     "version": "measured-idle-consistency-v1",
     "maximumRgbDelta": 64,
     "instruction": "A stable transparency mask rules out silhouette translation or size change, but does not rule out moving internal features. Inspect pupil, muzzle, paw and tail outline clusters. Distinguish localized breathing or lighting changes from actual moving limbs, disappearing features, or persistent recoloring. Only clearly harmless shading with preserved features may be SHADING_ONLY. Conflicting or insufficient evidence is UNCERTAIN. Never use this review to waive clipping, direction, identity or other independent defects."
+  },
+  "seedAppearance": {
+    "version": "seed-appearance-v1",
+    "prevention": "Match the flat cute STYLE proportions, not photo proportions: oversized head, squat body, stubby legs, dot eyes, bold outline. Keep full attached side/rear tails.",
+    "styleGuidance": "Use the user-selected flat dog-icon style: a simple rounded large head, short broad muzzle, compact body, short thick paws, bold near-black outline and a few solid color areas. Do not use realistic anatomy, tiny fur strokes, glossy eyes or complex shaded clusters. Preserve photographed breed, ears and markings. Show a complete attached tail in both side views with the same length, shape and carriage as the rear. Match visible photo anatomy. When the photo hides the tail, keep its detail unverified but draw a plausible consistent tail; do not delete it. A verified short or absent tail is an exception. Front occlusion is allowed. Never erase anatomy to fit margins.",
+    "correction": "Restore oversized rounded head, squat torso, stubby legs, dot eyes, flat colors and a fully outlined attached tail. Keep photo ears, coat and markings, not its realistic proportions.",
+    "reviewInstructions": [
+      "Judge whole-body rendering separately from eye readability and photo identity. Each view rendering must match the selected FLAT STYLE examples: simple rounded head, short muzzle, compact body, short readable legs, bold dark outline, flat limited color areas and minimal shading. Reject realistic elongated proportions, fine fur noise, glossy modeling, large detailed eyeballs or complicated multitone texture. Breed ears and distinctive markings must remain recognizable. Reference sticker borders, shadows and labels are not part of the generated asset.",
+      "Inspect the rump and tail in WEST and EAST separately, then compare with NORTH. A clear canvas border does not prove a complete dog: a missing tail or amputated tip fails even if every pixel has safe margins. Both side views need a complete connected tail with consistent length, shape and carriage. Return MISSING if absent, UNCERTAIN if you cannot distinguish tail from leg/body.",
+      "sourceTail is KNOWN_PRESENT if the photo shows a tail, CONFIRMED_ABSENT only if the photo clearly establishes actual absence, otherwise UNOBSERVED. A tail outside the photo is UNOBSERVED, never evidence of absence. A visible natural bobtail is still a VISIBLE tail and must not be lengthened. Do not copy the style reference dog anatomy.",
+      "Tail VISIBLE means a complete attached tail reads clearly. OCCLUDED is acceptable in SOUTH or NORTH if geometrically plausible and consistent with both sides; it cannot excuse a missing side tail. VERIFIED_ABSENT is acceptable only with sourceTail CONFIRMED_ABSENT. A front tail need not protrude. tailConsistency compares all views against visible photo anatomy; unobserved details remain inference. Report FAIL or UNCERTAIN when inconsistent or ambiguous. Never force PASS from a border check."
+    ]
   }
 }

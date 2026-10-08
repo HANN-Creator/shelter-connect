@@ -271,7 +271,7 @@ public class StyledAssetStore {
         "rulesRevision",StyledSpriteCodec.qualityRules(json).path("revision").asText(),"rulesSha256",StyledSpriteCodec.qualityRulesSha(),
         "lowTailRepair", "REGENERATE_THEN_EDIT_ONCE", "idleRepair",StyledSpriteCodec.IDLE_EDIT_VERSION,
         "marginRepair",StyledSpriteCodec.MARGIN_EDIT_VERSION,"seedIdleRepair",StyledSpriteCodec.SEED_IDLE_VERSION);}
-    private Map<String,Object> seedQualityPolicy(){var p=new HashMap<String,Object>(qualityPolicy());p.put("seedQualityVersion",StyledSeedQualityAgent.VERSION);return p;}
+    private Map<String,Object> seedQualityPolicy(){var p=new HashMap<String,Object>(qualityPolicy());p.put("seedQualityVersion",StyledSeedQualityAgent.VERSION);p.put("seedAppearanceVersion",StyledSeedQualityAgent.APPEARANCE_VERSION);return p;}
     private Map<String,Object> newSeedQualityPolicy(){var p=seedQualityPolicy();p.put("learningRecovery",StyledLearningRecoveryStore.VERSION);
         p.put("lessonRevision",StyledLessonStore.REVISION_VERSION);p.put("seedMotionMargin",2);p.put("seedEyeRepair",StyledSeedEyeRepair.VERSION);
         p.put("automaticApproval",StyledAutoApproval.VERSION);return p;}
