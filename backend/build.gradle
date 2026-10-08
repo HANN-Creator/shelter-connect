@@ -150,6 +150,11 @@ tasks.named('test') {
 // ImageIO tests render buffers only; never initialize a native desktop on macOS.
 tasks.withType(Test).configureEach {
 	systemProperty 'java.awt.headless', 'true'
+	// Every explicitly approved live review must inspect its current image inputs.
+	outputs.upToDateWhen { System.getenv('SEED_EYE_LIVE_APPROVED') != 'true' }
+	outputs.doNotCacheIf('Live image reviews must not reuse a cached verdict') {
+		System.getenv('SEED_EYE_LIVE_APPROVED') == 'true'
+	}
 }
 
 tasks.register('integrationTest', Test) {
