@@ -88,6 +88,29 @@ public class StyledQualityAgent {
         if(directionIndex<0)throw invalid();
         var idle=idleMotionFrames(seeds.get(directionIndex),frames,action,rules.path("idleMotion"));
         if(!idle.isEmpty())issues.add("IDLE_MOTION");
+        JsonNode consistency=null;
+        var consistencyRules=rules.path("idleConsistencyReview");
+        if(paired && issues.contains("IDLE_MOTION") && edges.isEmpty() && idle.isEmpty()
+            && evidence.path("alphaStable").asBoolean() && evidence.path("maxVisibleRgbDelta").asInt()>0
+            && evidence.path("maxVisibleRgbDelta").asInt()<=consistencyRules.path("maximumRgbDelta").asInt()) {
+            // One independent, evidence-scoped check, not a numeric pass or a repeated retry until acceptance.
+            var fields=new HashMap<String,Object>();fields.put("issues",Map.of("type","array","maxItems",allowedIssues.size(),"items",Map.of("type","string","enum",allowedIssues)));
+            fields.put("frames",Map.of("type","array","maxItems",9,"items",Map.of("type","integer","minimum",0,"maximum",8)));
+            fields.put("note",Map.of("type","string","maxLength",400));
+            fields.put("classification",Map.of("type","string","enum",List.of("SHADING_ONLY","VISIBLE_MOTION","UNCERTAIN")));
+            consistency=call(instructions+" "+consistencyRules.path("instruction").asText(),
+                task+" Independently determine whether the measured RGB-only variation is harmless shading, visible motion or uncertain. "
+                    +"Expected verdict and the first review are withheld. SHADING_ONLY requires preserved internal features in every frame; inspect all nine.",
+                pairedBoard(seeds,frames,direction),object(fields));
+            if(!Set.of("SHADING_ONLY","VISIBLE_MOTION","UNCERTAIN").contains(consistency.path("classification").asText())
+                || !consistency.path("issues").isArray() || consistency.path("issues").size()>allowedIssues.size()
+                || !consistency.path("frames").isArray() || consistency.path("frames").size()>9
+                || !consistency.path("note").isString() || consistency.path("note").asText().length()>400)throw invalid();
+            for(var issue:consistency.path("issues"))if(!issue.isString() || !allowedIssues.contains(issue.asText()))throw invalid();
+            for(var frame:consistency.path("frames"))if(!frame.isIntegralNumber() || frame.asInt()<0 || frame.asInt()>8)throw invalid();
+            if(consistency.path("classification").asText().equals("SHADING_ONLY") && consistency.path("issues").isEmpty())issues.remove("IDLE_MOTION");
+            consistency.path("issues").forEach(n->issues.add(n.asText()));
+        }
         JsonNode result=json.valueToTree(Map.of("version",VERSION,"passed",issues.isEmpty(),"issues",issues,"frames",r.path("frames"),
             "edgeFrames",edges,"note",r.path("note").asText(),"model",properties.model(),"reviewedAt",Instant.now(),
             "rulesRevision",rules.path("revision").asText(),"rulesSha256",StyledSpriteCodec.qualityRulesSha()));
@@ -95,6 +118,14 @@ public class StyledQualityAgent {
         ((tools.jackson.databind.node.ObjectNode)result).set("detachedFrames",json.valueToTree(detached));
         ((tools.jackson.databind.node.ObjectNode)result).set("idleMotionFrames",json.valueToTree(idle));
         ((tools.jackson.databind.node.ObjectNode)result).set("pixelEvidence",evidence);
+        if(consistency!=null) {
+            ((tools.jackson.databind.node.ObjectNode)result).set("initialVision",r);
+            ((tools.jackson.databind.node.ObjectNode)result).set("consistencyReview",consistency);
+            ((tools.jackson.databind.node.ObjectNode)result).put("consistencyVersion",consistencyRules.path("version").asText());
+            var mergedFrames=new TreeSet<Integer>();r.path("frames").forEach(n->mergedFrames.add(n.asInt()));consistency.path("frames").forEach(n->mergedFrames.add(n.asInt()));
+            ((tools.jackson.databind.node.ObjectNode)result).set("frames",json.valueToTree(mergedFrames));
+            ((tools.jackson.databind.node.ObjectNode)result).put("note",consistency.path("note").asText());
+        }
         ((tools.jackson.databind.node.ObjectNode)result).put("reviewLayout",paired?"matched-direction-frame-pairs-v1":"four-direction-temporal-grid-v1");
         return result;
     }

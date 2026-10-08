@@ -21,8 +21,9 @@ public class StyledAssetWorker {
         var w=store.claim();if(w==null)return;boolean submitted=false;
         try {
             if(!store.authorized(w))return;
-            boolean learnedEdit=!store.learningRecovery(w).isEmpty();
-            boolean edit=motionEdit(w) || learnedEdit;
+            boolean learning=!store.learningRecovery(w).isEmpty();
+            boolean learnedEdit=learning && w.action().equals("IDLE");
+            boolean edit=learnedEdit || (!learning && motionEdit(w));
             if(w.qualityPolicy()!=null && w.qualityPolicy().has("rulesSha256")
                 && !StyledSpriteCodec.qualityRulesSha().equals(w.qualityPolicy().path("rulesSha256").asText()))
                 throw new AssetException(409,"QUALITY_RULES_CHANGED");
@@ -51,7 +52,7 @@ public class StyledAssetWorker {
                 inspect(w,frames,w.result());return;
             }
             if(w.status().equals("PENDING")) {
-                if(!learnedEdit && mirrorRepair(w)) {
+                if(!learning && mirrorRepair(w)) {
                     var plan=continuation(w);var source=store.mirrorSource(w);var base=store.seed(w);
                     if(!base.path("hashes").equals(w.qualityPolicy().at("/repairContinuation/seedHashes")))throw new AssetException(409,"STYLED_SEED_CHANGED");
                     byte[] sheet=storage.asset(source.path("key").asText());
@@ -70,7 +71,7 @@ public class StyledAssetWorker {
                         json.valueToTree(Map.of("contract",w.qualityPolicy().path("contract"),"attempt",w.repairCount(),
                             "rulesSha256",w.qualityPolicy().path("rulesSha256").asText(),
                             "issues",w.qualityReport()!=null && w.qualityReport().path("issues").isArray()?w.qualityReport().path("issues"):json.createArrayNode()));
-                JsonNode payload=learnedEdit?codec.seedIdle(w.direction(),seed(w),(int)(((long)w.traits().path("seed").asInt()+7919L*w.repairCount())%2147483647)):motionEdit(w)?motionEditPayload(w):w.character()?codec.character(w.dogId(),w.traits(),storage.photo(w.dogId(),w.bucket(),w.key()),policy):
+                JsonNode payload=learning?learnedPayload(w,policy):motionEdit(w)?motionEditPayload(w):w.character()?codec.character(w.dogId(),w.traits(),storage.photo(w.dogId(),w.bucket(),w.key()),policy):
                     codec.motion(w.traits(),w.action(),w.direction(),seed(w),policy);
                 var selected=lessons.pin(w);
                 if(!selected.isEmpty()) {
@@ -94,13 +95,20 @@ public class StyledAssetWorker {
             if(!store.authorized(w))return;
             if(w.character()) {
                 Map<String,String> keys=new LinkedHashMap<>(),hashes=new LinkedHashMap<>();
+                var alignments=new LinkedHashMap<String,Object>();
                 var seeds=new ArrayList<byte[]>();
                 for(String d:StyledSpriteCodec.DIRECTIONS) {
                     byte[] image=StyledPixelLabClient.decode(result.path("directions").path(d).asText());
+                    if(w.qualityPolicy()!=null && w.qualityPolicy().path("seedMotionMargin").asInt()==2) {
+                        String rawKey=w.prefix()+"raw-directions/"+w.repairCount()+"/"+d+".png";storage.put(rawKey,image);
+                        var aligned=StyledSpriteCodec.alignSeed(image,2);
+                        alignments.put(d,Map.of("rawKey",rawKey,"rawSha256",StyledSpriteCodec.sha(image),"dx",aligned.dx(),"dy",aligned.dy(),"resampled",false));
+                        image=aligned.image();
+                    }
                     String key=w.prefix()+"directions/"+(w.repairCount()==0?"":"repair-"+w.repairCount()+"/")+d+".png";
                     storage.put(key,image);keys.put(d,key);hashes.put(d,StyledSpriteCodec.sha(image));seeds.add(image);
                 }
-                var metadata=json.valueToTree(Map.of("keys",keys,"hashes",hashes));
+                var metadata=json.valueToTree(Map.of("keys",keys,"hashes",hashes,"seedAlignment",alignments));
                 if(w.qualityPolicy()!=null && w.qualityPolicy().has("seedQualityVersion")) {
                     inspectSeeds(w,seeds,metadata,true);return;
                 }
@@ -108,7 +116,7 @@ public class StyledAssetWorker {
             } else {
                 var frames=result.path("frames").valueStream().map(n->StyledPixelLabClient.decode(n.asText())).toList();
                 JsonNode rawEdit=null;
-                if(edit || mirrorRepair(w)) {
+                if(edit || (!learning && mirrorRepair(w))) {
                     byte[] raw=StyledSpriteCodec.rawSheet(frames);String rawKey=w.prefix()+"raw-edits/"+w.label()+"-"+w.repairCount()+".png";
                     storage.put(rawKey,raw);rawEdit=json.valueToTree(Map.of("key",rawKey,"sha256",StyledSpriteCodec.sha(raw)));
                     frames=StyledSpriteCodec.restoreEditPalette(frames,seed(w));
@@ -141,6 +149,7 @@ public class StyledAssetWorker {
             || !StyledSpriteCodec.qualityRulesSha().equals(report.path("rulesSha256").asText())) {
             if(!store.startQuality(w))return;
             var checked=selected.isEmpty()?seedQuality.review(photo,seeds):seedQuality.review(photo,seeds,selected);
+            checked=StyledSeedQualityAgent.motionMargin(checked,seeds,w.qualityPolicy(),json);
             var details=(tools.jackson.databind.node.ObjectNode)checked.deepCopy();
             details.put("photoSha256",StyledSpriteCodec.sha(photo));details.put("lessonsSha256",lessonSha);details.set("learnedLessons",selected);
             report=details;store.quality(w,report);
@@ -249,6 +258,16 @@ public class StyledAssetWorker {
     static boolean mirrorRepair(StyledAssetStore.Work w) {
         return Set.of("IDLE","WALK","SIT").contains(w.action()) && Set.of("west","east").contains(w.direction())
             && StyledSpriteCodec.MIRROR_VERSION.equals(continuation(w).path("strategy").asText());
+    }
+    private JsonNode learnedPayload(StyledAssetStore.Work w,JsonNode policy) {
+        if(!StyledLearningRecoveryStore.ACTIONS.contains(w.action()))throw new AssetException(409,"LEARNING_RECOVERY_NOT_ALLOWED");
+        int seed=(int)(((long)w.traits().path("seed").asInt()+7919L*w.repairCount())%2147483647);
+        if(w.action().equals("IDLE"))return codec.seedIdle(w.direction(),seed(w),seed);
+        // Repeated Pro edits kept clipping the same tail. Restart PixMiniMax from the approved seed,
+        // with every validated rule pinned below. The full failed strip remains in attempt_history.
+        var traits=(tools.jackson.databind.node.ObjectNode)w.traits().deepCopy();traits.put("seed",seed);
+        var fresh=(tools.jackson.databind.node.ObjectNode)policy.deepCopy();fresh.put("attempt",0);
+        return codec.motion(traits,w.action(),w.direction(),seed(w),fresh);
     }
     private JsonNode motionEditPayload(StyledAssetStore.Work w) {
         int seed=(int)(((long)w.traits().path("seed").asInt()+7919L*w.repairCount())%2147483647);

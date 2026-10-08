@@ -11,7 +11,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from PIL import Image, ImageDraw
 from .client import API, digest, download, image_argument, native_image, read, write
 from .source import prepare_concept
-from .quality import TAILS, POLICY, load_quality, quality_binding, motion_guidance, learned_guidance, learned_seed_guidance, frame_audit
+from .quality import TAILS, POLICY, load_quality, quality_binding, motion_guidance, learned_guidance, learned_seed_guidance, frame_audit, seed_margin_audit, align_seed
 
 STYLE = Path(__file__).resolve().parents[2] / 'asset-styles' / 'cozy32-v1'
 FACING = {'south':'facing the viewer, front view', 'north':'facing away, rear view',
@@ -51,10 +51,14 @@ def character_request(root, traits, rules, quality=None):
         if type(attempt) is not int or not 0 <= attempt <= 2 or quality.get('rulesSha256') != digest(POLICY):
             raise ValueError('Invalid or stale seed quality policy')
         issues = quality.get('issues', [])
-        if not isinstance(issues, list) or len(issues) > 5 or any(i not in ('EYE_READABILITY','EYE_STYLE','EYE_DIRECTION','SEED_IDENTITY','CANVAS_CLIPPING') for i in issues):
+        if not isinstance(issues, list) or len(issues) > 6 or any(i not in ('EYE_READABILITY','EYE_STYLE','EYE_DIRECTION','SEED_IDENTITY','CANVAS_CLIPPING','SEED_MOTION_MARGIN') for i in issues):
             raise ValueError('Invalid seed defect codes')
         if attempt:
-            description += ' '+eye_rules['correction']
+            if any(i.startswith('EYE_') or i == 'SEED_IDENTITY' for i in issues):
+                description += ' '+eye_rules['correction']
+            if any(i in ('CANVAS_CLIPPING','SEED_MOTION_MARGIN') for i in issues):
+                description = description.replace(load_quality()['seedMargin'], load_quality()['seedMotionMargin']['correction'])
+                description = description.replace('Full character in transparent 32x32. ', 'Transparent 32x32. ')
         description += learned_seed_guidance(quality)
     if len(description) > 2000:
         raise ValueError('Character prompt exceeds provider limit')
@@ -132,7 +136,10 @@ def generate_character(root, client):
             names = [n for n in z.namelist() if n == 'rotations/'+direction+'.png' or n.endswith('/rotations/'+direction+'.png')]
             if len(names) != 1 or z.getinfo(names[0]).file_size > 100_000:
                 raise ValueError('Unexpected character rotation archive')
-            native_image(z.read(names[0])).save(folder/(direction+'.png'))
+            raw=native_image(z.read(names[0]));raw_folder=root/'raw-directions';raw_folder.mkdir(exist_ok=True)
+            raw.save(raw_folder/(direction+'.png'))
+            aligned,dx,dy=align_seed(raw);aligned.save(folder/(direction+'.png'))
+            write(raw_folder/(direction+'.json'),{'rawSha256':digest(raw_folder/(direction+'.png')),'dx':dx,'dy':dy,'resampled':False})
     shutil.copyfile(folder/'south.png', root/'base.png')
     preview = Image.new('RGB',(4*192,224),'#e8f0d8')
     draw = ImageDraw.Draw(preview)
@@ -156,6 +163,10 @@ def record_review(root, note, tail_carriage=None):
         raise ValueError('Record one shared tail carriage (UNKNOWN if not visible) before animation')
     if len(note.strip()) < 20:
         raise ValueError('Describe the visual likeness, style, directions and limitations reviewed')
+    audit=seed_margin_audit({d:native_image((root/'directions'/(d+'.png')).read_bytes()) for d in load_rules()['directions']})
+    write(root/'seed-margin-audit.json',audit)
+    if audit['issues']:
+        raise ValueError('SEED_MOTION_MARGIN: leave two clear pixels before animation; original seeds retained')
     write(root/'seed-review.json',dict(review_binding(root), approvedForAnimations=True,
           reviewer='operator visual review', note=note, tailCarriage=tail_carriage, productionApproved=False))
 

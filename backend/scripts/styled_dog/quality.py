@@ -44,7 +44,7 @@ def learned_seed_guidance(quality):
     for lesson in lessons:
         if (not isinstance(lesson, dict) or lesson.get('action') != 'BASE' or lesson.get('direction') != 'all'
             or lesson.get('tail') != 'UNKNOWN' or lesson.get('rulesSha256') != digest(POLICY)
-            or lesson.get('issue') not in ('EYE_READABILITY','EYE_STYLE','EYE_DIRECTION','SEED_IDENTITY','CANVAS_CLIPPING')
+            or lesson.get('issue') not in ('EYE_READABILITY','EYE_STYLE','EYE_DIRECTION','SEED_IDENTITY','CANVAS_CLIPPING','SEED_MOTION_MARGIN')
             or not re.fullmatch(r'[a-f0-9]{64}', str(lesson.get('sha256', '')))
             or not re.fullmatch(r'[a-f0-9-]{36}', str(lesson.get('id', '')))):
             raise ValueError('Stale or mismatched seed lesson')
@@ -229,3 +229,32 @@ def audit_run(root):
               'visualReviewRequired':True, 'qualityRules':quality_binding()}
     write(root/'quality-audit.json',report)
     return report
+
+
+def seed_margin_audit(seeds):
+    """Measure original pixels, never shrink or crop to manufacture clearance."""
+    minimum = load_quality()['seedMotionMargin']['minimumClearPixels']
+    margins, failed = {}, []
+    for direction in DIRECTIONS:
+        seed = seeds[direction]
+        if seed.mode != 'RGBA' or seed.size != (32, 32):
+            raise ValueError('Expected native RGBA seeds')
+        box = seed.getchannel('A').getbbox()
+        margins[direction] = [box[0], box[1], 32-box[2], 32-box[3]] if box else [0, 0, 0, 0]
+        if not box or min(margins[direction]) < minimum:
+            failed.append(direction)
+    return {'minimumClearPixels': minimum, 'marginDirections': failed,
+            'clearPixelsLeftTopRightBottom': margins,
+            'issues': ['SEED_MOTION_MARGIN'] if failed else []}
+
+
+def align_seed(seed):
+    """Losslessly position an unapproved seed inside the safe area, if its full extent fits."""
+    from PIL import Image
+    if seed.mode != 'RGBA' or seed.size != (32, 32): raise ValueError('Expected native RGBA seed')
+    margin=load_quality()['seedMotionMargin']['minimumClearPixels'];box=seed.getchannel('A').getbbox()
+    if not box or box[2]-box[0]>32-2*margin or box[3]-box[1]>32-2*margin: return seed.copy(),0,0
+    dx=max(margin-box[0],min(0,32-margin-box[2]));dy=max(margin-box[1],min(0,32-margin-box[3]))
+    if not dx and not dy: return seed.copy(),0,0
+    aligned=Image.new('RGBA',(32,32));aligned.paste(seed.crop(box),(box[0]+dx,box[1]+dy))
+    return aligned,dx,dy

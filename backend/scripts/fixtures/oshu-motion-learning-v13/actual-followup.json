@@ -1,0 +1,1467 @@
+{
+  "rulesSha256": "22ccead13dac1aaaeaaaf9d292778a6c49b37cc0f074f2f8241c00021c54fd94",
+  "deployed": false,
+  "productionDataChanged": false,
+  "model": "gpt-5.6-luna",
+  "initialPassed": 5,
+  "recheckPassed": 8,
+  "clipCount": 12,
+  "manualApprovalCalls": 0,
+  "pixelLabSubmissions": 11,
+  "pixelLabUsageUnit": "HTTP submissions, not billed generations",
+  "phases": {
+    "edits": [
+      {
+        "label": "sit-east",
+        "rulesSha256": "22ccead13dac1aaaeaaaf9d292778a6c49b37cc0f074f2f8241c00021c54fd94",
+        "productionPublished": false,
+        "state": "EXHAUSTED",
+        "providerJobId": "67fe9817-336c-4417-9201-3adfc896b6af",
+        "rawIssues": [
+          "CANVAS_CLIPPING"
+        ],
+        "restoredIssues": [
+          "CANVAS_CLIPPING"
+        ],
+        "rawReport": {
+          "edgeFrames": [
+            1,
+            2
+          ],
+          "model": "gpt-5.6-luna",
+          "rulesRevision": "sprite-regressions-2026-10-08-v13",
+          "reviewedAt": "2026-10-08T02:20:37.725754Z",
+          "passed": false,
+          "version": "sprite-quality-v1",
+          "frames": [],
+          "issues": [
+            "CANVAS_CLIPPING"
+          ],
+          "note": "The east-facing dog transitions clearly from standing to seated and holds the seated pose through frame 8. No clear defects visible.",
+          "rulesSha256": "22ccead13dac1aaaeaaaf9d292778a6c49b37cc0f074f2f8241c00021c54fd94",
+          "silhouetteFrames": [],
+          "detachedFrames": [],
+          "idleMotionFrames": [],
+          "pixelEvidence": {
+            "version": "native-frame-delta-v1",
+            "reference": "frame0",
+            "frameCount": 9,
+            "alphaStable": false,
+            "maxVisibleRgbDelta": 112,
+            "subtleShadingOnly": false,
+            "alphaChangedFromFrame0": [
+              0,
+              69,
+              128,
+              147,
+              159,
+              179,
+              179,
+              177,
+              177
+            ],
+            "alphaChangedFromPrevious": [
+              0,
+              69,
+              99,
+              83,
+              54,
+              40,
+              0,
+              4,
+              0
+            ],
+            "maxRgbDeltaFromFrame0": [
+              0,
+              112,
+              111,
+              112,
+              102,
+              102,
+              102,
+              107,
+              102
+            ],
+            "maxRgbDeltaFromPrevious": [
+              0,
+              112,
+              112,
+              112,
+              112,
+              112,
+              17,
+              64,
+              18
+            ],
+            "rgbChangedPixelsFromFrame0": [
+              0,
+              402,
+              465,
+              468,
+              454,
+              504,
+              495,
+              501,
+              511
+            ],
+            "boundsExclusive": [
+              [
+                1,
+                2,
+                31,
+                31
+              ],
+              [
+                1,
+                2,
+                32,
+                31
+              ],
+              [
+                2,
+                1,
+                32,
+                31
+              ],
+              [
+                1,
+                1,
+                31,
+                31
+              ],
+              [
+                1,
+                1,
+                30,
+                31
+              ],
+              [
+                1,
+                1,
+                29,
+                31
+              ],
+              [
+                1,
+                1,
+                29,
+                31
+              ],
+              [
+                1,
+                1,
+                29,
+                31
+              ],
+              [
+                1,
+                1,
+                29,
+                31
+              ]
+            ]
+          },
+          "reviewLayout": "four-direction-temporal-grid-v1"
+        },
+        "prevention": {
+          "criterion": "Reject the sequence if any visible dog pixel is cut by the canvas boundary in any frame, while ignoring blink or subtle breathing changes.",
+          "prevention": "Keep every animation frame fully inside the native canvas while allowing natural blink or breathing changes."
+        },
+        "file": "edits/sit-east.png",
+        "sha256": "fd1748f6dc43fdadcd535f40716ad83e6d5950bbe9ac8f5ac0c7a7f13910cbdf"
+      },
+      {
+        "label": "sit-west",
+        "rulesSha256": "22ccead13dac1aaaeaaaf9d292778a6c49b37cc0f074f2f8241c00021c54fd94",
+        "productionPublished": false,
+        "state": "EXHAUSTED",
+        "providerJobId": "0ba07f6f-389c-457d-8129-64f55e8ed786",
+        "rawIssues": [
+          "CANVAS_CLIPPING"
+        ],
+        "restoredIssues": [
+          "CANVAS_CLIPPING"
+        ],
+        "rawReport": {
+          "edgeFrames": [
+            1,
+            2,
+            3,
+            5,
+            8
+          ],
+          "model": "gpt-5.6-luna",
+          "rulesRevision": "sprite-regressions-2026-10-08-v13",
+          "reviewedAt": "2026-10-08T02:18:08.922787Z",
+          "passed": false,
+          "version": "sprite-quality-v1",
+          "frames": [
+            3
+          ],
+          "issues": [
+            "CANVAS_CLIPPING"
+          ],
+          "note": "The west-facing dog performs a clear sit and holds the seated posture. One frame visibly touches the native canvas edge.",
+          "rulesSha256": "22ccead13dac1aaaeaaaf9d292778a6c49b37cc0f074f2f8241c00021c54fd94",
+          "silhouetteFrames": [],
+          "detachedFrames": [],
+          "idleMotionFrames": [],
+          "pixelEvidence": {
+            "version": "native-frame-delta-v1",
+            "reference": "frame0",
+            "frameCount": 9,
+            "alphaStable": false,
+            "maxVisibleRgbDelta": 112,
+            "subtleShadingOnly": false,
+            "alphaChangedFromFrame0": [
+              0,
+              55,
+              108,
+              190,
+              231,
+              232,
+              231,
+              231,
+              234
+            ],
+            "alphaChangedFromPrevious": [
+              0,
+              55,
+              83,
+              118,
+              57,
+              11,
+              11,
+              0,
+              5
+            ],
+            "maxRgbDeltaFromFrame0": [
+              0,
+              97,
+              112,
+              112,
+              110,
+              107,
+              110,
+              110,
+              107
+            ],
+            "maxRgbDeltaFromPrevious": [
+              0,
+              97,
+              111,
+              95,
+              111,
+              63,
+              63,
+              78,
+              78
+            ],
+            "rgbChangedPixelsFromFrame0": [
+              0,
+              270,
+              453,
+              562,
+              595,
+              585,
+              581,
+              587,
+              591
+            ],
+            "boundsExclusive": [
+              [
+                1,
+                2,
+                31,
+                31
+              ],
+              [
+                1,
+                2,
+                32,
+                31
+              ],
+              [
+                2,
+                2,
+                32,
+                31
+              ],
+              [
+                0,
+                1,
+                31,
+                31
+              ],
+              [
+                5,
+                1,
+                31,
+                31
+              ],
+              [
+                5,
+                1,
+                32,
+                31
+              ],
+              [
+                5,
+                1,
+                31,
+                31
+              ],
+              [
+                5,
+                1,
+                31,
+                31
+              ],
+              [
+                5,
+                1,
+                32,
+                31
+              ]
+            ]
+          },
+          "reviewLayout": "four-direction-temporal-grid-v1"
+        },
+        "prevention": {
+          "criterion": "Reject any frame whose visible dog pixels touch or extend beyond the native canvas edge.",
+          "prevention": "Keep the full approved silhouette inside the native canvas throughout all nine frames."
+        },
+        "file": "edits/sit-west.png",
+        "sha256": "c7822f4c2a6f1e7feb9e1bc975832aa86e21d9b160609724fae1ddf785a34676"
+      },
+      {
+        "label": "walk-east",
+        "rulesSha256": "22ccead13dac1aaaeaaaf9d292778a6c49b37cc0f074f2f8241c00021c54fd94",
+        "productionPublished": false,
+        "state": "EXHAUSTED",
+        "providerJobId": "4565478e-a6b2-4925-86da-8dfab2063aea",
+        "rawIssues": [
+          "CANVAS_CLIPPING"
+        ],
+        "restoredIssues": [
+          "CANVAS_CLIPPING"
+        ],
+        "rawReport": {
+          "edgeFrames": [
+            0,
+            2,
+            3,
+            4,
+            5,
+            6,
+            8
+          ],
+          "model": "gpt-5.6-luna",
+          "rulesRevision": "sprite-regressions-2026-10-08-v13",
+          "reviewedAt": "2026-10-08T02:16:28.768600Z",
+          "passed": false,
+          "version": "sprite-quality-v1",
+          "frames": [
+            0,
+            2,
+            3,
+            5,
+            6,
+            8
+          ],
+          "issues": [
+            "CANVAS_CLIPPING"
+          ],
+          "note": "East-facing in-place walking motion is present and the dog’s identity and direction remain consistent. Several frames visibly reach the native canvas edge.",
+          "rulesSha256": "22ccead13dac1aaaeaaaf9d292778a6c49b37cc0f074f2f8241c00021c54fd94",
+          "silhouetteFrames": [],
+          "detachedFrames": [],
+          "idleMotionFrames": [],
+          "pixelEvidence": {
+            "version": "native-frame-delta-v1",
+            "reference": "frame0",
+            "frameCount": 9,
+            "alphaStable": false,
+            "maxVisibleRgbDelta": 99,
+            "subtleShadingOnly": false,
+            "alphaChangedFromFrame0": [
+              0,
+              99,
+              159,
+              150,
+              149,
+              127,
+              96,
+              102,
+              0
+            ],
+            "alphaChangedFromPrevious": [
+              0,
+              99,
+              84,
+              89,
+              79,
+              78,
+              61,
+              106,
+              102
+            ],
+            "maxRgbDeltaFromFrame0": [
+              0,
+              96,
+              99,
+              99,
+              99,
+              97,
+              95,
+              97,
+              53
+            ],
+            "maxRgbDeltaFromPrevious": [
+              0,
+              96,
+              94,
+              99,
+              97,
+              96,
+              96,
+              96,
+              98
+            ],
+            "rgbChangedPixelsFromFrame0": [
+              0,
+              348,
+              510,
+              493,
+              497,
+              460,
+              473,
+              402,
+              149
+            ],
+            "boundsExclusive": [
+              [
+                0,
+                2,
+                31,
+                31
+              ],
+              [
+                1,
+                2,
+                31,
+                31
+              ],
+              [
+                1,
+                3,
+                32,
+                31
+              ],
+              [
+                2,
+                3,
+                32,
+                31
+              ],
+              [
+                3,
+                3,
+                32,
+                30
+              ],
+              [
+                2,
+                3,
+                32,
+                31
+              ],
+              [
+                1,
+                3,
+                32,
+                31
+              ],
+              [
+                3,
+                3,
+                31,
+                31
+              ],
+              [
+                0,
+                2,
+                31,
+                31
+              ]
+            ]
+          },
+          "reviewLayout": "four-direction-temporal-grid-v1"
+        },
+        "prevention": {
+          "criterion": "Any animated pixel content cut off by the native canvas edge is a clipping defect; normal blinking or subtle breathing alone is acceptable.",
+          "prevention": "Check every native frame for edge contact, while allowing minor changes from blinking or breathing."
+        },
+        "file": "edits/walk-east.png",
+        "sha256": "8c4f26c884ea29c846dbdc2006f60dd076414d870a892f70e4cf3b9a242e98d3"
+      },
+      {
+        "label": "walk-west",
+        "rulesSha256": "22ccead13dac1aaaeaaaf9d292778a6c49b37cc0f074f2f8241c00021c54fd94",
+        "productionPublished": false,
+        "state": "EXHAUSTED",
+        "providerJobId": "bd73def2-1ef4-48db-bb2e-4a25b8962003",
+        "rawIssues": [
+          "CANVAS_CLIPPING"
+        ],
+        "restoredIssues": [
+          "CANVAS_CLIPPING"
+        ],
+        "rawReport": {
+          "edgeFrames": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "model": "gpt-5.6-luna",
+          "rulesRevision": "sprite-regressions-2026-10-08-v13",
+          "reviewedAt": "2026-10-08T02:14:12.190471Z",
+          "passed": false,
+          "version": "sprite-quality-v1",
+          "frames": [],
+          "issues": [
+            "CANVAS_CLIPPING"
+          ],
+          "note": "The west-facing WALK animation is consistent across frames, with visible in-place gait variation and no clear clipping or identity defects.",
+          "rulesSha256": "22ccead13dac1aaaeaaaf9d292778a6c49b37cc0f074f2f8241c00021c54fd94",
+          "silhouetteFrames": [],
+          "detachedFrames": [],
+          "idleMotionFrames": [],
+          "pixelEvidence": {
+            "version": "native-frame-delta-v1",
+            "reference": "frame0",
+            "frameCount": 9,
+            "alphaStable": false,
+            "maxVisibleRgbDelta": 111,
+            "subtleShadingOnly": false,
+            "alphaChangedFromFrame0": [
+              0,
+              53,
+              90,
+              73,
+              66,
+              69,
+              88,
+              51,
+              0
+            ],
+            "alphaChangedFromPrevious": [
+              0,
+              53,
+              77,
+              49,
+              69,
+              45,
+              69,
+              71,
+              51
+            ],
+            "maxRgbDeltaFromFrame0": [
+              0,
+              107,
+              111,
+              111,
+              107,
+              111,
+              111,
+              107,
+              38
+            ],
+            "maxRgbDeltaFromPrevious": [
+              0,
+              107,
+              107,
+              111,
+              96,
+              107,
+              107,
+              107,
+              107
+            ],
+            "rgbChangedPixelsFromFrame0": [
+              0,
+              164,
+              240,
+              233,
+              211,
+              237,
+              322,
+              203,
+              67
+            ],
+            "boundsExclusive": [
+              [
+                1,
+                2,
+                31,
+                31
+              ],
+              [
+                1,
+                2,
+                32,
+                31
+              ],
+              [
+                1,
+                2,
+                32,
+                31
+              ],
+              [
+                1,
+                2,
+                32,
+                31
+              ],
+              [
+                1,
+                2,
+                32,
+                31
+              ],
+              [
+                1,
+                2,
+                32,
+                31
+              ],
+              [
+                2,
+                2,
+                32,
+                31
+              ],
+              [
+                1,
+                2,
+                32,
+                31
+              ],
+              [
+                1,
+                2,
+                31,
+                31
+              ]
+            ]
+          },
+          "reviewLayout": "four-direction-temporal-grid-v1"
+        },
+        "prevention": {
+          "criterion": "Reject any frame whose visible artwork is cut off by the canvas edge, while allowing normal blinking or subtle breathing.",
+          "prevention": "Keep every moving part inside the native canvas on every frame without altering approved animation."
+        },
+        "file": "edits/walk-west.png",
+        "sha256": "bcf4405b90c8ab674e02025d561bd81b20d8428e61bb12f80f290978f216fdd0"
+      }
+    ],
+    "regenerated": [
+      {
+        "label": "sit-east",
+        "rulesSha256": "22ccead13dac1aaaeaaaf9d292778a6c49b37cc0f074f2f8241c00021c54fd94",
+        "productionPublished": false,
+        "strategy": "validated-pixminimax-regeneration",
+        "qualityReviewCount": 1,
+        "state": "EXHAUSTED",
+        "providerJobId": "5d82e00b-90a3-4caa-a2cd-6c6fddd640ba",
+        "rawIssues": [
+          "CANVAS_CLIPPING"
+        ],
+        "restoredIssues": [
+          "CANVAS_CLIPPING"
+        ],
+        "rawReport": {
+          "reviewedAt": "2026-10-08T02:28:55.433103Z",
+          "passed": false,
+          "version": "sprite-quality-v1",
+          "frames": [],
+          "issues": [
+            "CANVAS_CLIPPING"
+          ],
+          "note": "East-facing dog visibly descends into a seated posture and holds it through frames 4–8. No clear clipping, identity drift, direction drift, or discontinuity is visible.",
+          "rulesSha256": "22ccead13dac1aaaeaaaf9d292778a6c49b37cc0f074f2f8241c00021c54fd94",
+          "edgeFrames": [
+            1
+          ],
+          "model": "gpt-5.6-luna",
+          "rulesRevision": "sprite-regressions-2026-10-08-v13",
+          "silhouetteFrames": [],
+          "detachedFrames": [],
+          "idleMotionFrames": [],
+          "pixelEvidence": {
+            "version": "native-frame-delta-v1",
+            "reference": "frame0",
+            "frameCount": 9,
+            "alphaStable": false,
+            "maxVisibleRgbDelta": 113,
+            "subtleShadingOnly": false,
+            "alphaChangedFromFrame0": [
+              0,
+              80,
+              109,
+              146,
+              173,
+              171,
+              171,
+              171,
+              171
+            ],
+            "alphaChangedFromPrevious": [
+              0,
+              80,
+              91,
+              95,
+              53,
+              2,
+              0,
+              0,
+              0
+            ],
+            "maxRgbDeltaFromFrame0": [
+              0,
+              113,
+              113,
+              108,
+              108,
+              108,
+              108,
+              108,
+              108
+            ],
+            "maxRgbDeltaFromPrevious": [
+              0,
+              113,
+              108,
+              113,
+              113,
+              41,
+              94,
+              41,
+              113
+            ],
+            "rgbChangedPixelsFromFrame0": [
+              0,
+              324,
+              362,
+              396,
+              442,
+              440,
+              437,
+              438,
+              439
+            ],
+            "boundsExclusive": [
+              [
+                1,
+                2,
+                31,
+                31
+              ],
+              [
+                1,
+                2,
+                32,
+                31
+              ],
+              [
+                1,
+                1,
+                31,
+                31
+              ],
+              [
+                1,
+                1,
+                30,
+                31
+              ],
+              [
+                1,
+                1,
+                29,
+                31
+              ],
+              [
+                1,
+                1,
+                29,
+                31
+              ],
+              [
+                1,
+                1,
+                29,
+                31
+              ],
+              [
+                1,
+                1,
+                29,
+                31
+              ],
+              [
+                1,
+                1,
+                29,
+                31
+              ]
+            ]
+          },
+          "reviewLayout": "four-direction-temporal-grid-v1"
+        },
+        "prevention": {
+          "criterion": "Reject the sequence if any visible dog pixel is cut by the canvas boundary in any frame, while ignoring blink or subtle breathing changes.",
+          "prevention": "Keep every animation frame fully inside the native canvas while allowing natural blink or breathing changes."
+        },
+        "file": "regenerated/sit-east.png",
+        "sha256": "75a3fccbe41003342b871e2e66d6ca71514183f0ce5d5ba9ace2542aac99c508"
+      },
+      {
+        "label": "sit-west",
+        "rulesSha256": "22ccead13dac1aaaeaaaf9d292778a6c49b37cc0f074f2f8241c00021c54fd94",
+        "productionPublished": false,
+        "strategy": "validated-pixminimax-regeneration",
+        "qualityReviewCount": 1,
+        "state": "EXHAUSTED",
+        "providerJobId": "eeb03163-7fcd-46a5-946a-d15e766c3da4",
+        "rawIssues": [
+          "CANVAS_CLIPPING"
+        ],
+        "restoredIssues": [
+          "CANVAS_CLIPPING"
+        ],
+        "rawReport": {
+          "reviewedAt": "2026-10-08T02:28:05.815162Z",
+          "passed": false,
+          "version": "sprite-quality-v1",
+          "frames": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "issues": [
+            "CANVAS_CLIPPING"
+          ],
+          "note": "Frames 1–8 have visible dog pixels touching the right canvas edge. The west-facing SIT progression and final seated hold otherwise appear consistent.",
+          "rulesSha256": "22ccead13dac1aaaeaaaf9d292778a6c49b37cc0f074f2f8241c00021c54fd94",
+          "edgeFrames": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "model": "gpt-5.6-luna",
+          "rulesRevision": "sprite-regressions-2026-10-08-v13",
+          "silhouetteFrames": [],
+          "detachedFrames": [],
+          "idleMotionFrames": [],
+          "pixelEvidence": {
+            "version": "native-frame-delta-v1",
+            "reference": "frame0",
+            "frameCount": 9,
+            "alphaStable": false,
+            "maxVisibleRgbDelta": 108,
+            "subtleShadingOnly": false,
+            "alphaChangedFromFrame0": [
+              0,
+              67,
+              174,
+              196,
+              197,
+              198,
+              198,
+              197,
+              197
+            ],
+            "alphaChangedFromPrevious": [
+              0,
+              67,
+              173,
+              66,
+              7,
+              3,
+              0,
+              1,
+              0
+            ],
+            "maxRgbDeltaFromFrame0": [
+              0,
+              108,
+              108,
+              108,
+              108,
+              108,
+              108,
+              108,
+              108
+            ],
+            "maxRgbDeltaFromPrevious": [
+              0,
+              108,
+              102,
+              113,
+              69,
+              55,
+              0,
+              23,
+              0
+            ],
+            "rgbChangedPixelsFromFrame0": [
+              0,
+              150,
+              460,
+              501,
+              506,
+              507,
+              507,
+              506,
+              506
+            ],
+            "boundsExclusive": [
+              [
+                1,
+                2,
+                31,
+                31
+              ],
+              [
+                1,
+                2,
+                32,
+                31
+              ],
+              [
+                3,
+                1,
+                32,
+                31
+              ],
+              [
+                4,
+                1,
+                32,
+                31
+              ],
+              [
+                4,
+                1,
+                32,
+                31
+              ],
+              [
+                4,
+                1,
+                32,
+                31
+              ],
+              [
+                4,
+                1,
+                32,
+                31
+              ],
+              [
+                4,
+                1,
+                32,
+                31
+              ],
+              [
+                4,
+                1,
+                32,
+                31
+              ]
+            ]
+          },
+          "reviewLayout": "four-direction-temporal-grid-v1"
+        },
+        "prevention": {
+          "criterion": "Reject any frame whose visible dog pixels touch or extend beyond the native canvas edge.",
+          "prevention": "Keep the full approved silhouette inside the native canvas throughout all nine frames."
+        },
+        "file": "regenerated/sit-west.png",
+        "sha256": "8129009eded4c19c870ce1300d6b1aeb259750c93e121173aab6d84e2eaf32fb"
+      },
+      {
+        "label": "walk-east",
+        "rulesSha256": "22ccead13dac1aaaeaaaf9d292778a6c49b37cc0f074f2f8241c00021c54fd94",
+        "productionPublished": false,
+        "strategy": "validated-pixminimax-regeneration",
+        "qualityReviewCount": 1,
+        "state": "EXHAUSTED",
+        "providerJobId": "df9c1367-c72c-4696-9a92-289ec747cb44",
+        "rawIssues": [
+          "CANVAS_CLIPPING"
+        ],
+        "restoredIssues": [
+          "CANVAS_CLIPPING"
+        ],
+        "rawReport": {
+          "reviewedAt": "2026-10-08T02:26:57.309399Z",
+          "passed": false,
+          "version": "sprite-quality-v1",
+          "frames": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "issues": [
+            "CANVAS_CLIPPING"
+          ],
+          "note": "Several frames visibly reach and are cut off by the native canvas edges; the east-facing head clips at the right edge in frames 2–6, while the rear/tail area reaches the left edge in frames 1–3 and 6–7.",
+          "rulesSha256": "22ccead13dac1aaaeaaaf9d292778a6c49b37cc0f074f2f8241c00021c54fd94",
+          "edgeFrames": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "model": "gpt-5.6-luna",
+          "rulesRevision": "sprite-regressions-2026-10-08-v13",
+          "silhouetteFrames": [],
+          "detachedFrames": [],
+          "idleMotionFrames": [],
+          "pixelEvidence": {
+            "version": "native-frame-delta-v1",
+            "reference": "frame0",
+            "frameCount": 9,
+            "alphaStable": false,
+            "maxVisibleRgbDelta": 113,
+            "subtleShadingOnly": false,
+            "alphaChangedFromFrame0": [
+              0,
+              53,
+              134,
+              156,
+              116,
+              100,
+              112,
+              53,
+              0
+            ],
+            "alphaChangedFromPrevious": [
+              0,
+              53,
+              105,
+              104,
+              70,
+              70,
+              70,
+              95,
+              53
+            ],
+            "maxRgbDeltaFromFrame0": [
+              0,
+              102,
+              113,
+              113,
+              113,
+              113,
+              113,
+              102,
+              75
+            ],
+            "maxRgbDeltaFromPrevious": [
+              0,
+              102,
+              113,
+              113,
+              113,
+              108,
+              113,
+              113,
+              102
+            ],
+            "rgbChangedPixelsFromFrame0": [
+              0,
+              141,
+              371,
+              446,
+              375,
+              361,
+              375,
+              176,
+              30
+            ],
+            "boundsExclusive": [
+              [
+                1,
+                2,
+                31,
+                31
+              ],
+              [
+                0,
+                2,
+                31,
+                31
+              ],
+              [
+                0,
+                2,
+                32,
+                31
+              ],
+              [
+                0,
+                2,
+                32,
+                31
+              ],
+              [
+                2,
+                2,
+                32,
+                31
+              ],
+              [
+                1,
+                2,
+                32,
+                31
+              ],
+              [
+                0,
+                2,
+                32,
+                31
+              ],
+              [
+                0,
+                2,
+                31,
+                31
+              ],
+              [
+                1,
+                2,
+                31,
+                31
+              ]
+            ]
+          },
+          "reviewLayout": "four-direction-temporal-grid-v1"
+        },
+        "prevention": {
+          "criterion": "Any animated pixel content cut off by the native canvas edge is a clipping defect; normal blinking or subtle breathing alone is acceptable.",
+          "prevention": "Check every native frame for edge contact, while allowing minor changes from blinking or breathing."
+        },
+        "file": "regenerated/walk-east.png",
+        "sha256": "70d9186d8a212e9682b8040484cb964a7c9e5d2258a1c5966b136400f367fc14"
+      },
+      {
+        "label": "walk-west",
+        "rulesSha256": "22ccead13dac1aaaeaaaf9d292778a6c49b37cc0f074f2f8241c00021c54fd94",
+        "productionPublished": false,
+        "strategy": "validated-pixminimax-regeneration",
+        "qualityReviewCount": 1,
+        "state": "EXHAUSTED",
+        "providerJobId": "57dea13f-82ec-45fa-90ac-ebf1377bcb06",
+        "rawIssues": [
+          "CANVAS_CLIPPING"
+        ],
+        "restoredIssues": [
+          "CANVAS_CLIPPING"
+        ],
+        "rawReport": {
+          "reviewedAt": "2026-10-08T02:25:46.112773Z",
+          "passed": false,
+          "version": "sprite-quality-v1",
+          "frames": [
+            7
+          ],
+          "issues": [
+            "CANVAS_CLIPPING"
+          ],
+          "note": "West-facing in-place walking motion is present and the dog’s identity remains consistent. Frame 7 visibly reaches the left canvas edge and is clipped.",
+          "rulesSha256": "22ccead13dac1aaaeaaaf9d292778a6c49b37cc0f074f2f8241c00021c54fd94",
+          "edgeFrames": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "model": "gpt-5.6-luna",
+          "rulesRevision": "sprite-regressions-2026-10-08-v13",
+          "silhouetteFrames": [],
+          "detachedFrames": [],
+          "idleMotionFrames": [],
+          "pixelEvidence": {
+            "version": "native-frame-delta-v1",
+            "reference": "frame0",
+            "frameCount": 9,
+            "alphaStable": false,
+            "maxVisibleRgbDelta": 113,
+            "subtleShadingOnly": false,
+            "alphaChangedFromFrame0": [
+              0,
+              87,
+              113,
+              143,
+              121,
+              88,
+              54,
+              75,
+              0
+            ],
+            "alphaChangedFromPrevious": [
+              0,
+              87,
+              46,
+              70,
+              64,
+              57,
+              66,
+              61,
+              75
+            ],
+            "maxRgbDeltaFromFrame0": [
+              0,
+              113,
+              113,
+              108,
+              113,
+              113,
+              108,
+              113,
+              55
+            ],
+            "maxRgbDeltaFromPrevious": [
+              0,
+              113,
+              102,
+              113,
+              113,
+              108,
+              113,
+              113,
+              113
+            ],
+            "rgbChangedPixelsFromFrame0": [
+              0,
+              359,
+              388,
+              441,
+              393,
+              319,
+              162,
+              336,
+              34
+            ],
+            "boundsExclusive": [
+              [
+                1,
+                2,
+                31,
+                31
+              ],
+              [
+                2,
+                2,
+                32,
+                31
+              ],
+              [
+                2,
+                2,
+                32,
+                31
+              ],
+              [
+                2,
+                3,
+                32,
+                31
+              ],
+              [
+                1,
+                3,
+                32,
+                31
+              ],
+              [
+                1,
+                3,
+                32,
+                30
+              ],
+              [
+                1,
+                2,
+                32,
+                30
+              ],
+              [
+                0,
+                2,
+                32,
+                31
+              ],
+              [
+                1,
+                2,
+                31,
+                31
+              ]
+            ]
+          },
+          "reviewLayout": "four-direction-temporal-grid-v1"
+        },
+        "prevention": {
+          "criterion": "Reject any frame whose visible artwork is cut off by the canvas edge, while allowing normal blinking or subtle breathing.",
+          "prevention": "Keep every moving part inside the native canvas on every frame without altering approved animation."
+        },
+        "file": "regenerated/walk-west.png",
+        "sha256": "b34ba4742d6a8d933506fc107f1e5708f812e27f1df337df9087f7e9382107df"
+      }
+    ]
+  },
+  "newSeedPassed": false,
+  "newSeedAttempts": [
+    {
+      "attempt": "attempt-0",
+      "passed": false,
+      "issues": [
+        "EYE_DIRECTION",
+        "EYE_READABILITY",
+        "SEED_MOTION_MARGIN"
+      ],
+      "margins": {
+        "south": [
+          6,
+          4,
+          6,
+          2
+        ],
+        "north": [
+          6,
+          3,
+          6,
+          1
+        ],
+        "west": [
+          2,
+          3,
+          2,
+          2
+        ],
+        "east": [
+          2,
+          3,
+          2,
+          2
+        ]
+      }
+    },
+    {
+      "attempt": "attempt-1",
+      "passed": false,
+      "issues": [
+        "EYE_READABILITY",
+        "SEED_MOTION_MARGIN"
+      ],
+      "margins": {
+        "south": [
+          6,
+          3,
+          6,
+          2
+        ],
+        "north": [
+          6,
+          3,
+          6,
+          1
+        ],
+        "west": [
+          3,
+          4,
+          3,
+          2
+        ],
+        "east": [
+          3,
+          4,
+          3,
+          2
+        ]
+      }
+    },
+    {
+      "attempt": "attempt-2",
+      "passed": false,
+      "issues": [
+        "EYE_READABILITY"
+      ],
+      "margins": {
+        "south": [
+          6,
+          4,
+          6,
+          2
+        ],
+        "north": [
+          7,
+          3,
+          7,
+          2
+        ],
+        "west": [
+          2,
+          4,
+          2,
+          2
+        ],
+        "east": [
+          2,
+          4,
+          2,
+          2
+        ]
+      }
+    }
+  ],
+  "limits": [
+    "Actual production DB/Render deployment not changed.",
+    "Old approved Oshu clip geometry still fails; no artifact promoted to public.",
+    "Three new seed attempts failed eye quality.",
+    "Source seeds with oversized silhouettes cannot be fixed by lossless translation.",
+    "Live edit/seed runs produced complete artifacts but simultaneous Gradle report writers collided; those runs are recorded from per-stage artifacts, not counted as successful Gradle test executions.",
+    "The final PixMiniMax regeneration live check ran alone and completed; all four image quality outcomes remained failed."
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "sourceJobId": "60fcdd67-b594-4b27-90d6-36fc29de02fb",
+  "animalId": "413582202600790",
+  "sourceRulesRevision": "sprite-regressions-2026-10-07-v12",
+  "sourceDate": "2026-10-08",
+  "originalsUnmodified": true,
+  "sha256": {
+    "directions/west.png": "b6490c82a69d42850ebf66cf81e7165bbeb36936eb68f083d5deb13ad366ab70",
+    "directions/north.png": "c31cb76e0e2dac891e21f57b1e31632fdc5ac61b2759f96ccf781d740ca82196",
+    "directions/east.png": "0822c2f095ba08cc8ad901011fba46b5f49e96365ec499edf7d31146a56d537d",
+    "directions/south.png": "e2f982839ce621e3495872ff9d51faa58aef6296abbad3522ab23c5cc018c977",
+    "sheets/walk-north.png": "0add3652a39ac44d3990582f212a00067ec438e74ebf0cdaeb9dfc8d90556da4",
+    "sheets/walk-south.png": "58cffaad5439bdf82df65798758451e740aa85e4b0b61beaf4c6792dc70f33c9",
+    "sheets/idle-south.png": "5d538581fd362ec8fa78d41e801ba2ef8be05a0713b7f51b27689c785a6fd5d4",
+    "sheets/sit-north.png": "17ed8aeb0de06eac9aaed75424f3fe90a32dac8f6a56ec5fc74439d585ccc129",
+    "sheets/walk-west.png": "ed5e7280c4e6e164abd014869eaee84a0690fa040540abfb6fe25b401ed6142e",
+    "sheets/sit-west.png": "10eb920524320cb6f55e9b5ed5ca980bc97f060206c27abe244ab1ca06846a6f",
+    "sheets/idle-east.png": "8b2badf1c2e271b3d23cc1ef86857e4ab5e2d8ee18f43afaa8e43c99bcf4da24",
+    "sheets/sit-east.png": "26620cb11695dda2e123d07aed5828a0af8a14083d74ad9e7653fb35f0b56a44",
+    "sheets/idle-north.png": "c11f419c97aef2e9de7e3a0760da8227f2c463ae2df46870e8ea6acdaa989a06",
+    "sheets/sit-south.png": "f33ba8a2572836abe6f9cb4247b7a0963dda976a2d1fad333638f9eeb1f548f3",
+    "sheets/idle-west.png": "4763f920909174c7d465f51277a2868443dbc8f8c130271b0c713ea2d6fd517a",
+    "sheets/walk-east.png": "78a01f24bd6ff6ade25547cdc5c0f45e0cd8cd0965e0223b8dde710114c0ebf2"
+  },
+  "observedFailed": {
+    "idle-north": [
+      "IDLE_MOTION"
+    ],
+    "idle-west": [
+      "IDLE_MOTION"
+    ],
+    "idle-east": [
+      "IDLE_MOTION"
+    ],
+    "walk-west": [
+      "CANVAS_CLIPPING",
+      "TAIL_CARRIAGE"
+    ],
+    "walk-east": [
+      "CANVAS_CLIPPING"
+    ],
+    "sit-west": [
+      "CANVAS_CLIPPING"
+    ],
+    "sit-east": [
+      "CANVAS_CLIPPING"
+    ]
+  },
+  "note": "Historical findings, not labels invented by this fixture. Small RGB-only IDLE requires independent visual review; no numeric automatic pass."
+}

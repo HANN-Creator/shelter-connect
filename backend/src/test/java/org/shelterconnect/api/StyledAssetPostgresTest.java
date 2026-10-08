@@ -697,7 +697,7 @@ class StyledAssetPostgresTest {
         post(subject,path(id)+"/repair-continuation",original,200);post(subject,path(id)+"/repair-continuation",next,200);
         post(subject,path(id)+"/repair-continuation",continuationBody(id,"idle-west"),409);tick();verify(provider,times(1)).editAnimation(any());
         assertThatThrownBy(()->jdbc.update("UPDATE shelter.styled_asset_steps SET repair_count=6 WHERE job_id=? AND label='idle-west'",id)).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
-        assertThatThrownBy(()->jdbc.update("UPDATE shelter.styled_asset_steps SET repair_count=4 WHERE job_id=? AND label='walk-west'",id)).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+        assertThatThrownBy(()->jdbc.update("UPDATE shelter.styled_asset_steps SET repair_count=5 WHERE job_id=? AND label='walk-west'",id)).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
     }
     @Test void legacyFallbackRejectsOtherDefectsPriorSeedRepairAndUnspentNormalBudget() throws Exception {
         UUID id=continuationFixture("idle-west");legacyMirroredIdle(id);var body=continuationBody(id,"idle-west");
@@ -1026,7 +1026,7 @@ class StyledAssetPostgresTest {
         post(opSubject,"/v1/operations/styled-quality-lessons/"+lesson+"/disable",Map.of("note","Stop this lesson for later generations"),200);
         clearInvocations(provider);var request=json.valueToTree(input());((tools.jackson.databind.node.ObjectNode)request.path("traits")).put("seed",43);
         UUID after=UUID.fromString(post(subject,"/v1/shelter-admin/dogs/"+dog+"/styled-assets",request,202).at("/data/id").asText());
-        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=quality_policy-'automaticApproval' WHERE id=?",after);
+        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=quality_policy-'automaticApproval'-'seedMotionMargin'-'lessonRevision' WHERE id=?",after);
         tick();tick();review(after,true,"APPROVE",200);finish(after);
         var afterPayloads=org.mockito.ArgumentCaptor.forClass(JsonNode.class);verify(provider,atLeastOnce()).submit(eq(false),afterPayloads.capture());
         assertThat(afterPayloads.getAllValues().stream().anyMatch(n->n.path("description").asText().contains(learnedPrevention()))).isFalse();
@@ -1177,6 +1177,81 @@ class StyledAssetPostgresTest {
         UUID id=learningRecoveryJob(true);recoveryTick();when(lessonAgent.replay(any(),any(),anyList())).thenAnswer(c->replayAnswer(c.getArgument(2),true));
         lessonWorker.tick();lessonWorker.tick();assertThat(lessonStatus(onlyLesson())).isEqualTo("REJECTED");
         clearInvocations(provider);recoveryTick();assertThat(recoveryState(id).path("state").asText()).isEqualTo("WAITING_RULE");verifyNoInteractions(provider);
+    }
+    @Test void rejectedCandidateIsRewrittenWithFeedbackThenIndependentlyReplayed()throws Exception {
+        UUID id=learningRecoveryJob(true);
+        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=quality_policy || '{\"lessonRevision\":\"validated-rule-rewrite-v1\"}'::jsonb WHERE id=?",id);
+        recoveryTick();when(lessonAgent.replay(any(),any(),anyList())).thenAnswer(c->replayAnswer(c.getArgument(2),true));
+        lessonWorker.tick();lessonWorker.tick();assertThat(lessonStatus(onlyLesson())).isEqualTo("WAITING_EVIDENCE");
+        var record=lessonStore.read(opSubject,onlyLesson());assertThat(record.path("revisionCount").asInt()).isEqualTo(1);
+        assertThat(record.at("/revisionFeedback/failedChecks").toString()).contains("REJECTS_KNOWN_GOOD_EXAMPLE");
+        assertThat(record.path("events").toString()).contains("REJECTED","candidateSha256","REVISION_QUEUED");
+        clearInvocations(provider,lessonAgent);
+        when(lessonAgent.replay(any(),any(),anyList())).thenAnswer(c->replayAnswer(c.getArgument(2),false));
+        lessonWorker.tick();lessonWorker.tick();assertThat(lessonStatus(onlyLesson())).isEqualTo("ACTIVE");
+        var proposal=org.mockito.ArgumentCaptor.forClass(JsonNode.class);verify(lessonAgent).propose(proposal.capture(),any());
+        assertThat(proposal.getValue().path("revisionFeedback").toString()).contains("REJECTS_KNOWN_GOOD_EXAMPLE");
+        var replay=org.mockito.ArgumentCaptor.forClass(JsonNode.class);verify(lessonAgent).replay(replay.capture(),any(),anyList());
+        assertThat(replay.getValue().has("revisionFeedback")).isFalse();verifyNoInteractions(provider);
+        recoveryTick();tick();tick();finish(id);assertThat(recoveryState(id).path("state").asText()).isEqualTo("COMPLETED");
+    }
+    @Test void repeatedBadRulesStopAfterTwoRewritesWithoutSpendingOnImages()throws Exception {
+        UUID id=learningRecoveryJob(true);
+        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=quality_policy || '{\"lessonRevision\":\"validated-rule-rewrite-v1\"}'::jsonb WHERE id=?",id);
+        recoveryTick();when(lessonAgent.replay(any(),any(),anyList())).thenAnswer(c->replayAnswer(c.getArgument(2),true));
+        clearInvocations(provider,lessonAgent);
+        for(int i=0;i<10;i++)lessonWorker.tick();
+        assertThat(lessonStatus(onlyLesson())).isEqualTo("REJECTED");
+        assertThat(lessonStore.read(opSubject,onlyLesson()).path("revisionCount").asInt()).isEqualTo(2);
+        verify(lessonAgent,times(3)).propose(any(),any());verify(lessonAgent,times(3)).replay(any(),any(),anyList());
+        recoveryTick();verifyNoInteractions(provider);
+    }
+    @org.junit.jupiter.params.ParameterizedTest @org.junit.jupiter.params.provider.CsvSource({"WALK,false","SIT,false","WALK,true","SIT,true"})
+    void walkingAndSittingLearnFromRealMotionFramesAndContinueExactlyOnce(String action,boolean historical)throws Exception {
+        var changed=ImageIO.read(new ByteArrayInputStream(png));changed.setRGB(12,12,0xff00ff00);
+        var out=new ByteArrayOutputStream();ImageIO.write(changed,"png",out);byte[] raw=out.toByteArray();
+        var edited=new java.util.concurrent.atomic.AtomicBoolean();
+        when(provider.poll(any(),eq(false))).thenAnswer(c->json.valueToTree(Map.of("status","COMPLETED","frames",
+            java.util.stream.IntStream.range(0,9).mapToObj(i->Base64.getEncoder().encodeToString(i==0 || !edited.get()?png:raw)).toList())));
+        when(quality.review(any(),anyList(),anyList(),eq(action),eq("west"))).thenAnswer(c->{
+            boolean pass=ImageIO.read(new ByteArrayInputStream(c.<List<byte[]>>getArgument(2).get(1))).getRGB(12,12)==0xff00ff00;
+            return json.valueToTree(Map.of("passed",pass,"issues",pass?List.of():List.of("CANVAS_CLIPPING"),"rulesSha256",currentRules()));
+        });
+        when(codec.marginEdit(eq(action),eq("west"),any(),anyInt())).thenAnswer(c->{
+            assertThat(sheetFrames(c.getArgument(2))).hasSize(9);return json.valueToTree(Map.of("description","Repair the complete motion while keeping all nine original frames."));
+        });
+        when(provider.editAnimation(any())).thenAnswer(c->{edited.set(true);return UUID.randomUUID();});
+        when(lessonAgent.propose(any(),any())).thenReturn(json.valueToTree(Map.of("prevention",learnedPrevention(),"criterion","The tail tip touches the canvas boundary during the requested motion.")));
+        when(lessonAgent.replay(any(),any(),anyList())).thenAnswer(c->replayAnswer(c.getArgument(2),false));
+        UUID id=request();tick();tick();review(id,true,"APPROVE",200);finish(id);String label=action.toLowerCase()+"-west";
+        assertThat(step(id,label).at("/learningRecovery/state").asText()).isEqualTo("WAITING_EVIDENCE");
+        assertThat(step(id,label).at("/qualityReport/rawEditReview/passed").asBoolean()).isTrue();
+        var original=step(id,label).path("result");
+        if(historical) {
+            jdbc.update("UPDATE shelter.styled_quality_examples SET rules_sha256=? WHERE job_id=? AND label=? AND passed","0".repeat(64),id,label);
+            jdbc.update("UPDATE shelter.styled_asset_steps SET quality_report=jsonb_set(quality_report,'{rawEditReview,passed}','false') WHERE job_id=? AND label=?",id,label);
+        }
+        clearInvocations(provider,codec);
+        recoveryTick();
+        if(historical)assertThat(step(id,label).at("/learningRecovery/referenceReport/evidenceKind").asText()).isEqualTo("REVALIDATED_HISTORICAL_MOTION");verifyNoInteractions(provider);verify(codec,never()).seedIdle(anyString(),any(),anyInt());
+        lessonWorker.tick();lessonWorker.tick();assertThat(lessonStatus(onlyLesson())).isEqualTo("ACTIVE");
+        recoveryTick();assertThat(step(id,label).at("/learningRecovery/state").asText()).isEqualTo("QUEUED");
+        when(quality.review(any(),anyList(),anyList(),eq(action),eq("west"),any())).thenReturn(json.valueToTree(Map.of("passed",true,"issues",List.of(),"rulesSha256",currentRules())));
+        tick();tick();finish(id);
+        assertThat(step(id,label).at("/learningRecovery/state").asText()).isEqualTo("COMPLETED");
+        assertThat(step(id,label).path("repairCount").asInt()).isEqualTo(3);
+        verify(codec).motion(any(),eq(action),eq("west"),any(),any());
+        verify(codec,never()).marginEdit(anyString(),anyString(),any(),anyInt());
+        verify(codec,never()).seedIdle(anyString(),any(),anyInt());verify(provider,times(1)).submit(eq(false),any());verify(provider,never()).editAnimation(any());
+        assertThat(jdbc.queryForObject("SELECT attempt_history::text FROM shelter.styled_asset_steps WHERE job_id=? AND label=?",String.class,id,label)).contains(original.path("sha256").asText());
+        for(int i=0;i<3;i++)recoveryTick();verify(provider,times(1)).submit(eq(false),any());
+    }
+    @Test void failedWalkingWithoutPositiveMotionNeverUsesStandingReference()throws Exception {
+        when(quality.review(any(),anyList(),anyList(),eq("WALK"),eq("west"))).thenReturn(json.valueToTree(Map.of("passed",false,"issues",List.of("ACTION_MISSING"),"rulesSha256",currentRules())));
+        UUID id=request();tick();tick();review(id,true,"APPROVE",200);finish(id);
+        clearInvocations(provider,storage,quality);recoveryTick();
+        assertThat(step(id,"walk-west").at("/learningRecovery/reason").asText()).isEqualTo("NO_APPROVED_MOTION_REFERENCE");
+        verifyNoInteractions(provider,storage,quality);
     }
     @Test void lostOrUnappliedLearnedRuleCannotBuyAnUninformedRepair()throws Exception {
         UUID id=learningRecoveryJob(true);recoveryTick();lessonWorker.tick();lessonWorker.tick();recoveryTick();
@@ -1428,6 +1503,16 @@ class StyledAssetPostgresTest {
         assertThat(replay.path("id").asText()).isEqualTo(id.toString());assertThat(replay.path("qualityApproval")).isEqualTo(j.path("qualityApproval"));
         verifyNoInteractions(provider);
     }
+    @Test void newSeedWithTooLittleMotionClearanceStopsBeforeAnyAnimation()throws Exception {
+        UUID id=automaticRequest();var directions=new LinkedHashMap<String,String>();
+        for(String d:List.of("south","north","west","east"))directions.put(d,Base64.getEncoder().encodeToString(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/oshu-motion-learning-v13/directions/"+d+".png"))));
+        when(provider.poll(any(),eq(true))).thenReturn(json.valueToTree(Map.of("status","COMPLETED","directions",directions)));
+        finish(id);assertThat(read(id).path("status").asText()).isEqualTo("SEED_REVIEW");
+        assertThat(read(id).path("seedReview").isNull()).isTrue();
+        assertThat(step(id,"character").at("/qualityReport/issues").toString()).contains("SEED_MOTION_MARGIN");
+        assertThat(step(id,"character").path("repairCount").asInt()).isEqualTo(2);
+        verify(provider,times(3)).submit(eq(true),any());verify(provider,never()).submit(eq(false),any());
+    }
     @Test void automaticApprovalPreservesDogShelterAndSourceAccessBoundaries()throws Exception {
         UUID id=automaticRequest();jdbc.update("UPDATE shelter.dogs SET is_public=false WHERE id=?",dog);finish(id);
         assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");publicStatus(404);
@@ -1508,7 +1593,7 @@ class StyledAssetPostgresTest {
     // Existing cases exercise persisted pre-B63 jobs and their explicit manual review contract.
     UUID request() throws Exception {
         UUID id=UUID.fromString(post(subject,"/v1/shelter-admin/dogs/"+dog+"/styled-assets",input(),202).at("/data/id").asText());
-        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=quality_policy-'automaticApproval' WHERE id=?",id);return id;
+        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=quality_policy-'automaticApproval'-'seedMotionMargin'-'lessonRevision' WHERE id=?",id);return id;
     }
     String path(UUID id) {return "/v1/shelter-admin/dogs/"+dog+"/styled-assets/"+id;}
     JsonNode read(UUID id) throws Exception {return get(subject,path(id),200).path("data");}

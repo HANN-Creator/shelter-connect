@@ -31,6 +31,63 @@ def decode_recorded_alpha(rows):
 
 
 class QualityRegressionTest(unittest.TestCase):
+    def test_unapproved_seed_alignment_only_translates_complete_native_pixels(self):
+        from styled_dog.quality import align_seed, seed_margin_audit
+        seed=Image.new('RGBA',(32,32))
+        for y in range(3,31):
+            for x in range(6,26): seed.putpixel((x,y),(x*7,y*6,33,255))
+        before=seed.tobytes();aligned,dx,dy=align_seed(seed)
+        self.assertEqual((dx,dy),(0,-1));self.assertEqual(seed.tobytes(),before)
+        self.assertEqual(sorted(p for p in seed.getdata() if p[3]),sorted(p for p in aligned.getdata() if p[3]))
+        self.assertFalse(seed_margin_audit({d:aligned for d in ('south','north','west','east')})['issues'])
+        original=Image.open(Path(__file__).parent/'fixtures/oshu-motion-learning-v13/directions/west.png').convert('RGBA')
+        unchanged,dx,dy=align_seed(original);self.assertEqual((dx,dy),(0,0));self.assertEqual(unchanged.tobytes(),original.tobytes())
+
+    def test_actual_oshu_margin_and_clipping_preserve_original_hashes_and_nine_frames(self):
+        from styled_dog.quality import seed_margin_audit
+        from styled_dog.tail_repair import read_sheet
+        root=Path(__file__).parent/'fixtures/oshu-motion-learning-v13'
+        evidence=read(root/'evidence.json')
+        for name,sha in evidence['sha256'].items(): self.assertEqual(digest(root/name),sha)
+        seeds={d:Image.open(root/'directions'/f'{d}.png').convert('RGBA') for d in ('south','north','west','east')}
+        result=seed_margin_audit(seeds)
+        self.assertEqual(result['marginDirections'],['south','north','west','east'])
+        self.assertEqual(result['clearPixelsLeftTopRightBottom']['west'],[1,2,1,1])
+        for action,direction in product(('WALK','SIT'),('west','east')):
+            frames=read_sheet(root/'sheets'/f'{action.lower()}-{direction}.png')
+            self.assertEqual(len(frames),9)
+            self.assertIn('CANVAS_CLIPPING',frame_audit(frames,seeds[direction],action,direction,'LOW')['issues'])
+        for direction in ('north','west','east'):
+            pixels=pixel_evidence(read_sheet(root/'sheets'/f'idle-{direction}.png'))
+            self.assertTrue(pixels['alphaStable'])
+            self.assertLessEqual(pixels['maxVisibleRgbDelta'],64)
+        # The fixture preserves historical IDLE failures: these measurements alone never pass them.
+        self.assertEqual(evidence['observedFailed']['idle-east'],['IDLE_MOTION'])
+
+    def test_actual_learned_edits_and_regeneration_keep_every_failed_frame(self):
+        from styled_dog.tail_repair import read_sheet
+        root=Path(__file__).parent/'fixtures/oshu-motion-learning-v13'
+        evidence=read(root/'actual-followup.json')
+        self.assertFalse(evidence['deployed'])
+        self.assertFalse(evidence['productionDataChanged'])
+        self.assertEqual(evidence['recheckPassed'],8)
+        self.assertFalse(evidence['newSeedPassed'])
+        for strategy in ('edits','regenerated'):
+            cases=evidence['phases'][strategy]
+            self.assertEqual(len(cases),4)
+            for case in cases:
+                path=root/case['file'];frames=read_sheet(path)
+                self.assertEqual(digest(path),case['sha256'])
+                self.assertEqual(len(frames),9)
+                self.assertEqual(case['state'],'EXHAUSTED')
+                self.assertFalse(case['productionPublished'])
+                self.assertFalse(case['rawReport']['passed'])
+                self.assertEqual(pixel_evidence(frames),case['rawReport']['pixelEvidence'])
+                action,direction=case['label'].split('-')
+                audit=frame_audit(frames,frames[0],action.upper(),direction,'UNKNOWN')
+                self.assertIn('CANVAS_CLIPPING',audit['issues'])
+                self.assertEqual(audit['edgeFrames'],case['rawReport']['edgeFrames'])
+
     def test_live_paired_review_keeps_idle_and_sit_failures_without_overriding_vision(self):
         from styled_dog.tail_repair import read_sheet
         root=Path(__file__).parent/'fixtures'

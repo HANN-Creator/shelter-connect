@@ -26,6 +26,7 @@ public class StyledLearningRecoveryWorker {
             var learned=store.newLessons(w);
             if(!learned.isEmpty()){store.schedule(w,learned);return;}
             if(store.hasPositive(w)){store.waitForRule(w,"VALIDATING_OR_WAITING_FOR_RULE");return;}
+            if(!w.action().equals("IDLE")){motionReference(w);return;}
             if(w.referenceReport()!=null){store.stop(w,"NEEDS_REVIEW","NO_ACCEPTED_POSITIVE_REFERENCE");return;}
             var seeds=new ArrayList<byte[]>();
             for(String d:StyledSpriteCodec.DIRECTIONS)seeds.add(load(w,w.seeds().at("/keys/"+d).asText(),w.seeds().at("/hashes/"+d).asText()));
@@ -44,6 +45,23 @@ public class StyledLearningRecoveryWorker {
             if(store.hasPositive(w))store.waitForRule(w,"VALIDATING_OR_WAITING_FOR_RULE");
             else store.stop(w,"NEEDS_REVIEW","REFERENCE_FAILED_OR_CONFLICTING_LABEL");
         }catch(RuntimeException e){store.stop(w,"FAILED",e instanceof AssetException a?a.code:"REFERENCE_MODEL_OR_STORAGE_FAILED");}
+    }
+    private void motionReference(StyledLearningRecoveryStore.Work w) {
+        if(w.referenceReport()!=null){store.waitForRule(w,"NO_APPROVED_MOTION_REFERENCE");return;}
+        var reference=store.historical(w);
+        if(reference==null){store.waitForRule(w,"NO_APPROVED_MOTION_REFERENCE");return;}
+        store.startReference(w);var seeds=new ArrayList<byte[]>();
+        for(String direction:StyledSpriteCodec.DIRECTIONS)seeds.add(loadReference(w,reference,reference.seeds().at("/keys/"+direction).asText(),reference.seeds().at("/hashes/"+direction).asText()));
+        byte[] sheet=loadReference(w,reference,reference.result().path("key").asText(),reference.result().path("sha256").asText());
+        var report=(tools.jackson.databind.node.ObjectNode)quality.review(w.policy().path("contract"),seeds,StyledSpriteCodec.frames(sheet),w.action(),w.direction()).deepCopy();
+        report.put("evidenceKind","REVALIDATED_HISTORICAL_MOTION").put("sourceExampleId",reference.id().toString())
+            .put("inputSha256",StyledSpriteCodec.sha(sheet));
+        store.historicalEvidence(w,reference,report);
+        store.waitForRule(w,report.path("passed").asBoolean()?"VALIDATING_OR_WAITING_FOR_RULE":"NO_APPROVED_MOTION_REFERENCE");
+    }
+    private byte[] loadReference(StyledLearningRecoveryStore.Work w,StyledLearningRecoveryStore.Reference reference,String key,String sha) {
+        if(!key.startsWith(reference.prefix()) || !sha.matches("[a-f0-9]{64}") || !store.referenceAllowed(w,reference))throw new AssetException(409,"LEARNING_EVIDENCE_CHANGED");
+        byte[] bytes=storage.asset(key);if(!StyledSpriteCodec.sha(bytes).equals(sha))throw new AssetException(409,"LEARNING_EVIDENCE_CHANGED");return bytes;
     }
     private byte[] load(StyledLearningRecoveryStore.Work w,String key,String sha) {
         if(!key.startsWith(w.prefix()) || !sha.matches("[a-f0-9]{64}"))throw new AssetException(409,"LEARNING_EVIDENCE_CHANGED");

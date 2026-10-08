@@ -12,6 +12,7 @@ import tools.jackson.databind.json.JsonMapper;
 /** Durable lesson queue. No network/model call runs inside these transactions. */
 @Service
 public class StyledLessonStore {
+    static final String REVISION_VERSION="validated-rule-rewrite-v1";
     public record Example(UUID id,UUID jobId,String action,String direction,String tail,String rulesSha256,
                           String inputSha256,JsonNode result,JsonNode seeds,JsonNode report,boolean passed) {}
     public record Work(UUID id,UUID token,String status,String issue,JsonNode scope,JsonNode candidate,List<Example> examples) {}
@@ -92,8 +93,10 @@ public class StyledLessonStore {
         jdbc.sql("UPDATE shelter.styled_quality_lessons SET status=:s,lease_token=:t,lease_until=now()+interval '5 minutes',validation_examples=CAST(:e AS jsonb),updated_at=now() WHERE id=:id")
             .param("s",status).param("t",token).param("e",json.writeValueAsString(examples.stream().map(e->Map.of("id",e.id(),"sha256",e.inputSha256())).toList())).param("id",id).update();
         event(id,status,Map.of("caseCount",examples.size()));
-        return new Work(id,token,status,issue,json.valueToTree(Map.of("action",source.action(),"direction",source.direction(),"tail",source.tail(),"issue",issue,
-            "sourceExampleId",source.id().toString())),candidate.map(json::readTree).orElse(null),List.copyOf(examples));
+        var scope=json.createObjectNode().put("action",source.action()).put("direction",source.direction()).put("tail",source.tail()).put("issue",issue)
+            .put("sourceExampleId",source.id().toString());
+        if(status.equals("PROPOSING"))scope.set("revisionFeedback",lesson(id).path("revisionFeedback"));
+        return new Work(id,token,status,issue,scope,candidate.map(json::readTree).orElse(null),List.copyOf(examples));
     }
     @Transactional public boolean authorized(Work w) {
         return owned(w) && w.examples().stream().allMatch(this::valid);
@@ -102,32 +105,56 @@ public class StyledLessonStore {
         if(!authorized(w))return;StyledLessonAgent.validateText(candidate);
         jdbc.sql("UPDATE shelter.styled_quality_lessons SET candidate=CAST(:c AS jsonb),candidate_sha256=:h,status='CANDIDATE',lease_token=NULL,lease_until=NULL,updated_at=now() WHERE id=:id")
             .param("c",json.writeValueAsString(candidate)).param("h",StyledSpriteCodec.sha(json.writeValueAsBytes(candidate))).param("id",w.id()).update();
-        event(w.id(),"PROPOSED",Map.of("modelGenerated",true,"model",ai.model(),"version",StyledLessonAgent.VERSION));
+        event(w.id(),"PROPOSED",Map.of("modelGenerated",true,"model",ai.model(),"version",StyledLessonAgent.VERSION,
+            "candidate",candidate,"candidateSha256",StyledSpriteCodec.sha(json.writeValueAsBytes(candidate))));
     }
     @Transactional public void validated(Work w,JsonNode verdict) {
         if(!authorized(w))return;
         boolean pass=verdict.path("safeAndGeneral").asBoolean();var results=new HashMap<String,JsonNode>();
+        var feedback=new TreeSet<String>();if(!pass)feedback.add("CONFLICTS_WITH_IMMUTABLE_RULES_OR_NOT_GENERAL");
         for(var v:verdict.path("cases"))results.put(v.path("key").asText(),v);
         for(int i=0;i<w.examples().size();i++) {
             var e=w.examples().get(i);var v=results.get("CASE_"+i);
-            if(v==null || v.path("violates").asBoolean()==e.passed())pass=false;
+            if(v==null || v.path("violates").asBoolean()==e.passed()) {
+                pass=false;feedback.add(e.passed()?"REJECTS_KNOWN_GOOD_EXAMPLE":"MISSES_RECORDED_DEFECT");
+            }
             if(e.action().equals("BASE")) {
                 if(v==null || !v.path("directions").isArray())pass=false;
                 if(!e.passed() && v!=null && w.issue().equals("CANVAS_CLIPPING"))for(var direction:e.report().path("edgeDirections"))
+                    if(v.path("directions").valueStream().noneMatch(n->n.asText().equals(direction.asText())))pass=false;
+                if(!e.passed() && v!=null && w.issue().equals("SEED_MOTION_MARGIN"))for(var direction:e.report().path("marginDirections"))
                     if(v.path("directions").valueStream().noneMatch(n->n.asText().equals(direction.asText())))pass=false;
                 continue;
             }
             // Recorded deterministic findings, including frame 8, cannot be omitted by the replay model.
             String frames=switch(w.issue()){case "CANVAS_CLIPPING"->"edgeFrames";case "IDLE_MOTION"->"idleMotionFrames";case "DETACHED_PIXELS"->"detachedFrames";case "TAIL_CARRIAGE"->"silhouetteFrames";default->"none";};
             if(!e.passed() && v!=null)for(var index:e.report().path(frames))
-                if(v.path("frames").valueStream().noneMatch(n->n.asInt()==index.asInt()))pass=false;
+                if(v.path("frames").valueStream().noneMatch(n->n.asInt()==index.asInt())) {
+                    pass=false;feedback.add("MISSES_MEASURED_DEFECT_FRAME");
+                }
         }
         var report=json.createObjectNode();report.put("passed",pass);report.put("version",StyledLessonAgent.VERSION);
         report.put("validatedAt",Instant.now().toString());report.put("model",ai.model());report.set("replay",verdict);
         report.put("scopeLimited",true);report.put("freshGenerationVerified",false);
+        // Record the failed candidate/verdict/bindings BEFORE replacing the candidate.
+        event(w.id(),pass?"ACTIVATED":"REJECTED",Map.of("passed",pass,"candidate",w.candidate(),
+            "candidateSha256",StyledSpriteCodec.sha(json.writeValueAsBytes(w.candidate())),"validation",report,
+            "examples",w.examples().stream().map(e->Map.of("id",e.id(),"sha256",e.inputSha256())).toList()));
+        boolean revise=!pass && jdbc.sql("""
+            SELECT count(*) FROM shelter.styled_quality_lessons l JOIN shelter.asset_jobs j ON j.id=l.source_job_id
+            WHERE l.id=:id AND l.revision_count<2 AND j.quality_policy->>'lessonRevision'=:version
+            """).param("id",w.id()).param("version",REVISION_VERSION).query(Integer.class).single()==1;
         jdbc.sql("UPDATE shelter.styled_quality_lessons SET validation=CAST(:v AS jsonb),status=:s,lease_token=NULL,lease_until=NULL,updated_at=now() WHERE id=:id")
             .param("v",json.writeValueAsString(report)).param("s",pass?"ACTIVE":"REJECTED").param("id",w.id()).update();
-        event(w.id(),pass?"ACTIVATED":"REJECTED",Map.of("passed",pass));
+        if(revise) {
+            var revision=Map.of("previousCandidate",w.candidate(),"failedChecks",feedback,
+                "reviewReason",verdict.path("reason").asText(),"instruction","Narrow or correct the rule while retaining all immutable checks.");
+            jdbc.sql("""
+                UPDATE shelter.styled_quality_lessons SET revision_count=revision_count+1,revision_feedback=CAST(:f AS jsonb),
+                  candidate=NULL,candidate_sha256=NULL,status='WAITING_EVIDENCE' WHERE id=:id
+                """).param("f",json.writeValueAsString(revision)).param("id",w.id()).update();
+            event(w.id(),"REVISION_QUEUED",Map.of("version",REVISION_VERSION,"feedback",revision));
+        }
     }
     @Transactional public void failed(Work w,String code) {if(owned(w))terminal(w.id(),"FAILED",code);}
     /** Pin every applicable active rule; the composer, not selection, handles the provider text budget. */
@@ -193,7 +220,8 @@ public class StyledLessonStore {
     private JsonNode lesson(UUID id) {
         return jdbc.sql("SELECT * FROM shelter.styled_quality_lessons WHERE id=:id").param("id",id).query((r,n)->{
             var o=json.createObjectNode();o.put("id",id.toString());for(var f:Map.of("status","status","action","action","direction","direction","tail","tail","issue","issue","rulesSha256","rules_sha256","candidateSha256","candidate_sha256").entrySet())o.put(f.getKey(),r.getString(f.getValue()));
-            for(var f:Map.of("candidate","candidate","validationExamples","validation_examples","validation","validation").entrySet())o.set(f.getKey(),json.readTree(Optional.ofNullable(r.getString(f.getValue())).orElse("null")));
+            for(var f:Map.of("candidate","candidate","validationExamples","validation_examples","validation","validation","revisionFeedback","revision_feedback").entrySet())o.set(f.getKey(),json.readTree(Optional.ofNullable(r.getString(f.getValue())).orElse("null")));
+            o.put("revisionCount",r.getInt("revision_count"));
             o.put("createdAt",r.getTimestamp("created_at").toInstant().toString());o.put("updatedAt",r.getTimestamp("updated_at").toInstant().toString());return (JsonNode)o;
         }).optional().orElseThrow(()->new AssetException(404,"LESSON_NOT_FOUND"));
     }

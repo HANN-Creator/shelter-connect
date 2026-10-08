@@ -93,7 +93,7 @@ public class StyledAssetStore {
     }
     @Transactional public Job referenceInsert(UUID subject,UUID dog,UUID photo,UUID id,String selection,JsonNode body,JsonNode result) {
         var actor=access.requireDogForWrite(subject,dog);referencePhoto(subject,dog,photo);
-        var policy=new HashMap<String,Object>(newSeedQualityPolicy());policy.remove("automaticApproval");policy.put("referenceOnly",true);policy.put("referenceInput",body);
+        var policy=new HashMap<String,Object>(newSeedQualityPolicy());policy.remove("automaticApproval");policy.remove("seedMotionMargin");policy.put("referenceOnly",true);policy.put("referenceInput",body);
         policy.put("referenceRecordedBy",actor.userId().toString());policy.put("referenceRecordedAt",Instant.now().toString());
         var inserted=jdbc.sql("""
             INSERT INTO shelter.asset_jobs(id,photo_id,dog_id,shelter_id,permission_id,pipeline_version,selection_key,action_plan,styled_input,quality_policy)
@@ -272,7 +272,8 @@ public class StyledAssetStore {
         "lowTailRepair", "REGENERATE_THEN_EDIT_ONCE", "idleRepair",StyledSpriteCodec.IDLE_EDIT_VERSION,
         "marginRepair",StyledSpriteCodec.MARGIN_EDIT_VERSION,"seedIdleRepair",StyledSpriteCodec.SEED_IDLE_VERSION);}
     private Map<String,Object> seedQualityPolicy(){var p=new HashMap<String,Object>(qualityPolicy());p.put("seedQualityVersion",StyledSeedQualityAgent.VERSION);return p;}
-    private Map<String,Object> newSeedQualityPolicy(){var p=seedQualityPolicy();p.put("learningRecovery",StyledLearningRecoveryStore.VERSION);p.put("automaticApproval",StyledAutoApproval.VERSION);return p;}
+    private Map<String,Object> newSeedQualityPolicy(){var p=seedQualityPolicy();p.put("learningRecovery",StyledLearningRecoveryStore.VERSION);
+        p.put("lessonRevision",StyledLessonStore.REVISION_VERSION);p.put("seedMotionMargin",2);p.put("automaticApproval",StyledAutoApproval.VERSION);return p;}
     private boolean seedQualityPassed(Job j) {
         var step=j.steps().getFirst();return StyledSeedQualityAgent.passed(step.qualityReport(),step.result()==null?json.createObjectNode():step.result().path("hashes"),j.qualityPolicy());
     }

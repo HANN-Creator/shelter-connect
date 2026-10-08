@@ -10,6 +10,50 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import org.mockito.ArgumentCaptor;
 class StyledQualityAgentTest {
+    @Test void liveAuthorizedOshuMotionReview()throws Exception {
+        org.junit.jupiter.api.Assumptions.assumeTrue("true".equals(System.getenv("OSHU_MOTION_LIVE")));
+        var properties=new AiProperties(true,System.getenv("OPENAI_API_KEY"),"gpt-5.6-luna",60);
+        var live=new StyledQualityAgent(new OpenAiResponsesClient(properties,json),properties,json);
+        var root=java.nio.file.Path.of("scripts/fixtures/oshu-motion-learning-v13");var seeds=new ArrayList<byte[]>();
+        for(String d:StyledSpriteCodec.DIRECTIONS)seeds.add(java.nio.file.Files.readAllBytes(root.resolve("directions/"+d+".png")));
+        var output=java.nio.file.Path.of(System.getenv("OSHU_MOTION_REPORT"));java.nio.file.Files.createDirectories(output);
+        for(String action:List.of("IDLE","WALK","SIT"))for(String d:StyledSpriteCodec.DIRECTIONS) {
+            String label=action.toLowerCase()+"-"+d;
+            if(java.nio.file.Files.exists(output.resolve(label+".json")))continue;
+            byte[] source=java.nio.file.Files.readAllBytes(root.resolve("sheets/"+label+".png"));
+            var result=live.review(json.readTree("{\"tailCarriage\":\"UNKNOWN\"}"),seeds,StyledSpriteCodec.frames(source),action,d);
+            ((tools.jackson.databind.node.ObjectNode)result).put("inputSha256",StyledSpriteCodec.sha(source));
+            java.nio.file.Files.write(output.resolve(label+".json"),json.writeValueAsBytes(result));
+            System.out.println(label+": "+result.path("issues"));
+        }
+    }
+    @Test void smallRgbOnlyIdleGetsOneIndependentCheckButOtherDefectsAndUncertaintyRemain()throws Exception {
+        var seed=png(false);var im=StyledSpriteCodec.nativeFrame(seed);int old=im.getRGB(16,20);im.setRGB(16,20,old^0x00010101);
+        var out=new ByteArrayOutputStream();ImageIO.write(im,"png",out);var frames=new ArrayList<>(Collections.nCopies(9,seed));frames.set(8,out.toByteArray());
+        for(String decision:List.of("SHADING_ONLY","VISIBLE_MOTION","UNCERTAIN"))for(boolean identity:List.of(false,true)) {
+            reset(client);
+            var first=json.valueToTree(Map.of("issues",identity?List.of("IDLE_MOTION","IDENTITY_DRIFT"):List.of("IDLE_MOTION"),"frames",List.of(8),"note","Initial simulated motion finding"));
+            var second=json.valueToTree(Map.of("classification",decision,"issues",List.of(),"frames",List.of(),"note","Independent synthetic classification, not a live accuracy result"));
+            when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(first,second);
+            var r=agent.review(json.readTree("{\"tailCarriage\":\"LOW\"}"),Collections.nCopies(4,seed),frames,"IDLE","south");
+            assertThat(r.path("passed").asBoolean()).isEqualTo(decision.equals("SHADING_ONLY") && !identity);
+            assertThat(r.path("initialVision")).isEqualTo(first);assertThat(r.path("consistencyReview")).isEqualTo(second);
+            var tasks=ArgumentCaptor.forClass(String.class);verify(client,times(2)).structuredImage(anyString(),tasks.capture(),any(),anyMap());
+            assertThat(tasks.getAllValues().get(1)).doesNotContain("Initial simulated motion finding");
+        }
+    }
+    @Test void actualClippedWalkAndSitKeepLastFrameAndFailEvenWhenVisionPasses()throws Exception {
+        var root=java.nio.file.Path.of("scripts/fixtures/oshu-motion-learning-v13");var seeds=new ArrayList<byte[]>();
+        for(String d:StyledSpriteCodec.DIRECTIONS)seeds.add(java.nio.file.Files.readAllBytes(root.resolve("directions/"+d+".png")));
+        when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(json.readTree("{\"issues\":[],\"frames\":[],\"note\":\"Synthetic vision pass; structural check must reject\"}"));
+        for(String a:List.of("WALK","SIT"))for(String d:List.of("west","east")) {
+            var frames=StyledSpriteCodec.frames(java.nio.file.Files.readAllBytes(root.resolve("sheets/"+a.toLowerCase()+"-"+d+".png")));
+            var hashes=frames.stream().map(StyledSpriteCodec::sha).toList();
+            var r=agent.review(json.readTree("{\"tailCarriage\":\"LOW\"}"),seeds,frames,a,d);
+            assertThat(r.path("passed").asBoolean()).isFalse();assertThat(r.path("issues").toString()).contains("CANVAS_CLIPPING");
+            assertThat(frames).hasSize(9);assertThat(frames.stream().map(StyledSpriteCodec::sha).toList()).isEqualTo(hashes);
+        }
+    }
     final JsonMapper json=JsonMapper.builder().build();
     final OpenAiResponsesClient client=mock(OpenAiResponsesClient.class);
     final StyledQualityAgent agent=new StyledQualityAgent(client,new AiProperties(true,"test-key","gpt-5.6-luna",30),json);

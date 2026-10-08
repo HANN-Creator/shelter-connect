@@ -11,9 +11,14 @@ import tools.jackson.databind.json.JsonMapper;
 /** Durable learning handoff. No image, provider or model calls in a transaction. */
 @Service
 public class StyledLearningRecoveryStore {
-    static final String VERSION="validated-idle-learning-v1";
-    record Work(UUID job,UUID dog,String label,UUID token,String direction,JsonNode policy,JsonNode seeds,
+    static final String VERSION="validated-motion-learning-v2";
+    static final String LEGACY_VERSION="validated-idle-learning-v1";
+    static final Set<String> ACTIONS=Set.of("IDLE","WALK","SIT");
+    record Work(UUID job,UUID dog,String label,UUID token,String action,String direction,JsonNode policy,JsonNode seeds,
                 JsonNode result,JsonNode report,JsonNode referenceReport) {
+        String prefix(){return dog+"/"+job+"/native-32/";}
+    }
+    record Reference(UUID id,UUID job,UUID dog,String label,JsonNode result,JsonNode seeds) {
         String prefix(){return dog+"/"+job+"/native-32/";}
     }
     private final JdbcClient jdbc;private final JsonMapper json;private final AssetStore assets;
@@ -26,7 +31,7 @@ public class StyledLearningRecoveryStore {
         AssetInput.fields(body,"requestId","note","expectedSeedHashes","expectedSheetHashes");
         UUID requestId=AssetInput.id(body,"requestId");if(AssetInput.text(body,"note",2000).length()<20)throw AssetException.invalid();
         var expected=body.path("expectedSheetHashes");
-        if(!expected.isObject() || expected.isEmpty() || expected.size()>4)throw AssetException.invalid();
+        if(!expected.isObject() || expected.isEmpty() || expected.size()>12)throw AssetException.invalid();
         // Canonicalize hashes so equivalent JSON ordering does not change consent.
         var canonical=new TreeMap<String,Object>();canonical.put("requestId",body.path("requestId").asText());canonical.put("note",body.path("note").asText());
         for(String field:List.of("expectedSeedHashes","expectedSheetHashes")) {
@@ -57,13 +62,13 @@ public class StyledLearningRecoveryStore {
         return styled.read(subject,dog,id);
     }
     @Transactional public void observe(StyledAssetStore.Work w,JsonNode report,JsonNode result,JsonNode seeds) {
-        if(w.qualityPolicy()==null || !VERSION.equals(w.qualityPolicy().path("learningRecovery").asText()) || w.status().equals("CHECKING"))return;
+        if(w.qualityPolicy()==null || !Set.of(VERSION,LEGACY_VERSION).contains(w.qualityPolicy().path("learningRecovery").asText()) || w.status().equals("CHECKING"))return;
         if(!styled.authorized(w))return;
         var step=new StyledAssetStore.Step(w.label(),w.action(),w.direction(),"SUCCEEDED",result,report,w.repairCount(),null);
-        if(eligible(step,w.qualityPolicy()))insert(w.id(),step,seeds,w.qualityPolicy(),null,null);
+        if((w.action().equals("IDLE") || VERSION.equals(w.qualityPolicy().path("learningRecovery").asText())) && eligible(step,w.qualityPolicy()))insert(w.id(),step,seeds,w.qualityPolicy(),null,null);
     }
     private boolean eligible(StyledAssetStore.Step step,JsonNode policy) {
-        return step.action().equals("IDLE") && step.repairCount()>=2 && step.repairCount()<=4 && step.result()!=null && step.qualityReport()!=null
+        return ACTIONS.contains(step.action()) && step.repairCount()>=2 && step.repairCount()<=(step.action().equals("IDLE")?4:3) && step.result()!=null && step.qualityReport()!=null
             && !step.qualityReport().path("passed").asBoolean() && !step.qualityReport().path("issues").isEmpty()
             && step.result().path("sha256").asText().equals(step.qualityReport().path("inputSha256").asText())
             && policy.path("rulesSha256").asText().equals(step.qualityReport().path("rulesSha256").asText());
@@ -87,11 +92,11 @@ public class StyledLearningRecoveryStore {
         jdbc.sql("UPDATE shelter.styled_learning_recoveries SET lease_token=:t,lease_until=now()+interval '5 minutes' WHERE job_id=:j AND label=:l")
             .param("t",token).param("j",job).param("l",label).update();
         var w=jdbc.sql("""
-            SELECT j.dog_id,j.quality_policy::text,b.result::text,s.direction,s.result::text,s.quality_report::text,r.reference_report::text
+            SELECT j.dog_id,j.quality_policy::text,b.result::text,s.direction,s.result::text,s.quality_report::text,r.reference_report::text,s.action
             FROM shelter.styled_learning_recoveries r JOIN shelter.asset_jobs j ON j.id=r.job_id
             JOIN shelter.styled_asset_steps s ON s.job_id=r.job_id AND s.label=r.label
             JOIN shelter.styled_asset_steps b ON b.job_id=r.job_id AND b.label='character' WHERE r.job_id=:j AND r.label=:l
-            """).param("j",job).param("l",label).query((r,n)->new Work(job,r.getObject(1,UUID.class),label,token,r.getString(4),
+            """).param("j",job).param("l",label).query((r,n)->new Work(job,r.getObject(1,UUID.class),label,token,r.getString(8),r.getString(4),
                 node(r.getString(2)),node(r.getString(3)),node(r.getString(5)),node(r.getString(6)),node(r.getString(7)))).single();
         return authorized(w)?w:null;
     }
@@ -117,8 +122,8 @@ public class StyledLearningRecoveryStore {
     }
     @Transactional public boolean hasPositive(Work w) {
         if(!authorized(w))return false;
-        var jobs=jdbc.sql("SELECT DISTINCT job_id FROM shelter.styled_quality_examples WHERE action='IDLE' AND direction=:d AND tail=:t AND rules_sha256=:r AND passed")
-            .param("d",w.direction()).param("t",w.policy().at("/contract/tailCarriage").asText()).param("r",StyledSpriteCodec.qualityRulesSha()).query(UUID.class).list();
+        var jobs=jdbc.sql("SELECT DISTINCT job_id FROM shelter.styled_quality_examples WHERE action=:a AND direction=:d AND tail=:t AND rules_sha256=:r AND passed")
+            .param("a",w.action()).param("d",w.direction()).param("t",w.policy().at("/contract/tailCarriage").asText()).param("r",StyledSpriteCodec.qualityRulesSha()).query(UUID.class).list();
         for(UUID job:jobs)try{assets.valid(job,false);return true;}catch(AssetException revoked){/* Ignore unavailable evidence. */}
         return false;
     }
@@ -127,16 +132,52 @@ public class StyledLearningRecoveryStore {
         return json.valueToTree(jdbc.sql("""
             SELECT l.id,l.candidate_sha256,l.issue FROM shelter.styled_quality_lessons l
             JOIN shelter.styled_asset_steps s ON s.job_id=:j AND s.label=:label
-            WHERE l.status='ACTIVE' AND l.action='IDLE' AND l.direction=:d AND l.tail=:t AND l.rules_sha256=:r
+            WHERE l.status='ACTIVE' AND l.action=:a AND l.direction=:d AND l.tail=:t AND l.rules_sha256=:r
               AND s.quality_report->'issues' @> jsonb_build_array(l.issue)
               AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements(s.learned_lessons) old WHERE old->>'sha256'=l.candidate_sha256)
             ORDER BY l.id
-            """).param("j",w.job()).param("label",w.label()).param("d",w.direction()).param("t",w.policy().at("/contract/tailCarriage").asText())
+            """).param("j",w.job()).param("label",w.label()).param("a",w.action()).param("d",w.direction()).param("t",w.policy().at("/contract/tailCarriage").asText())
             .param("r",StyledSpriteCodec.qualityRulesSha()).query((r,n)->Map.of("id",r.getObject(1,UUID.class).toString(),"sha256",r.getString(2),"issue",r.getString(3))).list());
+    }
+    /** Old positive pixels are evidence candidates, never copied across rule versions as accepted labels. */
+    @Transactional public Reference historical(Work w) {
+        if(!authorized(w))return null;
+        var candidates=jdbc.sql("""
+            SELECT e.id,e.job_id,j.dog_id,e.label,e.result::text,e.seeds::text
+            FROM shelter.styled_quality_examples e JOIN shelter.asset_jobs j ON j.id=e.job_id
+            WHERE e.action=:a AND e.direction=:d AND e.tail=:t AND e.passed AND e.rules_sha256<>:r
+              AND e.input_sha256=e.result->>'sha256' AND j.seed_review->'hashes'=e.seeds->'hashes'
+              AND j.status NOT IN ('CANCELLED','REJECTED') ORDER BY e.created_at DESC LIMIT 16
+            """).param("a",w.action()).param("d",w.direction()).param("t",w.policy().at("/contract/tailCarriage").asText())
+            .param("r",StyledSpriteCodec.qualityRulesSha()).query((r,n)->new Reference(r.getObject(1,UUID.class),r.getObject(2,UUID.class),r.getObject(3,UUID.class),r.getString(4),node(r.getString(5)),node(r.getString(6)))).list();
+        for(var reference:candidates)if(referenceAllowed(w,reference))return reference;return null;
+    }
+    @Transactional public boolean referenceAllowed(Work w,Reference reference) {
+        if(!authorized(w))return false;
+        try{assets.valid(reference.job(),true);}catch(AssetException denied){return false;}
+        return jdbc.sql("""
+            SELECT count(*) FROM shelter.styled_quality_examples e JOIN shelter.asset_jobs j ON j.id=e.job_id
+            WHERE e.id=:id AND e.job_id=:j AND e.passed AND e.result=CAST(:result AS jsonb) AND e.seeds=CAST(:seeds AS jsonb)
+              AND j.seed_review->'hashes'=e.seeds->'hashes' AND j.status NOT IN ('CANCELLED','REJECTED')
+            """).param("id",reference.id()).param("j",reference.job()).param("result",json.writeValueAsString(reference.result()))
+            .param("seeds",json.writeValueAsString(reference.seeds())).query(Integer.class).single()==1;
+    }
+    @Transactional public void historicalEvidence(Work w,Reference reference,JsonNode report) {
+        if(!referenceAllowed(w,reference))throw new AssetException(409,"LEARNING_EVIDENCE_CHANGED");
+        if(!reference.result().path("sha256").equals(report.path("inputSha256"))
+            || !StyledSpriteCodec.qualityRulesSha().equals(report.path("rulesSha256").asText()))throw new AssetException(409,"LEARNING_REFERENCE_REPORT_INVALID");
+        jdbc.sql("UPDATE shelter.styled_learning_recoveries SET reference_result=CAST(:result AS jsonb),reference_report=CAST(:report AS jsonb) WHERE job_id=:j AND label=:l")
+            .param("result",json.writeValueAsString(reference.result())).param("report",json.writeValueAsString(report)).param("j",w.job()).param("l",w.label()).update();
+        if(report.path("passed").asBoolean())jdbc.sql("""
+            INSERT INTO shelter.styled_quality_examples(job_id,label,action,direction,tail,rules_sha256,input_sha256,result,seeds,report,passed)
+            SELECT job_id,label,action,direction,tail,:rules,input_sha256,result,seeds,CAST(:report AS jsonb),true
+            FROM shelter.styled_quality_examples WHERE id=:id ON CONFLICT(job_id,label,input_sha256,rules_sha256) DO NOTHING
+            """).param("rules",StyledSpriteCodec.qualityRulesSha()).param("report",json.writeValueAsString(report)).param("id",reference.id()).update();
     }
     @Transactional public void startReference(Work w) {
         if(!authorized(w))throw new AssetException(409,"LEARNING_RECOVERY_STALE");
-        jdbc.sql("UPDATE shelter.styled_learning_recoveries SET state='CHECKING_REFERENCE',reason='CHECKING_APPROVED_IDLE_REFERENCE' WHERE job_id=:j AND label=:l")
+        jdbc.sql("UPDATE shelter.styled_learning_recoveries SET state='CHECKING_REFERENCE',reason=:reason WHERE job_id=:j AND label=:l")
+            .param("reason",w.action().equals("IDLE")?"CHECKING_APPROVED_IDLE_REFERENCE":"REVALIDATING_HISTORICAL_MOTION")
             .param("j",w.job()).param("l",w.label()).update();
     }
     /** Preserve the report even when no positive example can be accepted. Never promote a conflicting old label. */
@@ -146,9 +187,9 @@ public class StyledLearningRecoveryStore {
             .param("result",json.writeValueAsString(result)).param("report",json.writeValueAsString(report)).param("j",w.job()).param("l",w.label()).update();
         if(report.path("passed").asBoolean())jdbc.sql("""
             INSERT INTO shelter.styled_quality_examples(job_id,label,action,direction,tail,rules_sha256,input_sha256,result,seeds,report,passed)
-            VALUES (:j,:l,'IDLE',:d,:t,:rules,:h,CAST(:result AS jsonb),CAST(:seeds AS jsonb),CAST(:report AS jsonb),true)
+            VALUES (:j,:l,:a,:d,:t,:rules,:h,CAST(:result AS jsonb),CAST(:seeds AS jsonb),CAST(:report AS jsonb),true)
             ON CONFLICT(job_id,label,input_sha256,rules_sha256) DO NOTHING
-            """).param("j",w.job()).param("l",w.label()).param("d",w.direction()).param("t",w.policy().at("/contract/tailCarriage").asText())
+            """).param("j",w.job()).param("l",w.label()).param("a",w.action()).param("d",w.direction()).param("t",w.policy().at("/contract/tailCarriage").asText())
             .param("rules",StyledSpriteCodec.qualityRulesSha()).param("h",result.path("sha256").asText()).param("result",json.writeValueAsString(result))
             .param("seeds",json.writeValueAsString(w.seeds())).param("report",json.writeValueAsString(report)).update();
     }
@@ -156,9 +197,11 @@ public class StyledLearningRecoveryStore {
         if(!authorized(w))return;
         var states=jdbc.sql("SELECT status FROM shelter.styled_quality_lessons WHERE source_job_id=:j AND source_label=:l AND rules_sha256=:r")
             .param("j",w.job()).param("l",w.label()).param("r",StyledSpriteCodec.qualityRulesSha()).query(String.class).list();
-        if(states.isEmpty())reason="NO_MATCHING_RULE_CANDIDATE";
-        else if(states.stream().noneMatch(s->Set.of("WAITING_EVIDENCE","CANDIDATE","PROPOSING","VALIDATING","ACTIVE").contains(s)))reason="RULE_VALIDATION_FAILED_OR_DISABLED";
-        finish(w,"WAITING_RULE",reason);
+        if(!reason.equals("NO_APPROVED_MOTION_REFERENCE")) {
+            if(states.isEmpty())reason="NO_MATCHING_RULE_CANDIDATE";
+            else if(states.stream().noneMatch(s->Set.of("WAITING_EVIDENCE","CANDIDATE","PROPOSING","VALIDATING","ACTIVE").contains(s)))reason="RULE_VALIDATION_FAILED_OR_DISABLED";
+        }
+        finish(w,reason.equals("NO_APPROVED_MOTION_REFERENCE")?"WAITING_EVIDENCE":"WAITING_RULE",reason);
     }
     @Transactional public void stop(Work w,String state,String reason) {if(owned(w))finish(w,state,reason);}
     @Transactional public void schedule(Work w,JsonNode required) {
