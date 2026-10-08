@@ -39,6 +39,7 @@ class StyledAssetPostgresTest {
     @MockitoBean StyledSpriteCodec codec;@MockitoBean BehaviorSuggestionProvider suggestions;
     @MockitoBean StyledQualityAgent quality;
     @MockitoBean StyledSeedQualityAgent seedQuality;
+    @MockitoBean org.shelterconnect.api.chat.OpenAiResponsesClient eyeAi;
     UUID op,user,opSubject,subject,shelter,dog,photo,permission;byte[] png;
     Map<String,byte[]> objects=new ConcurrentHashMap<>();
     List<UUID> extraDogs=new ArrayList<>();
@@ -1513,6 +1514,49 @@ class StyledAssetPostgresTest {
         assertThat(step(id,"character").path("repairCount").asInt()).isEqualTo(2);
         verify(provider,times(3)).submit(eq(true),any());verify(provider,never()).submit(eq(false),any());
     }
+    UUID eyeRepairJob()throws Exception {
+        UUID id=automaticRequest();var reviews=new java.util.concurrent.atomic.AtomicInteger();
+        when(seedQuality.review(any(),anyList())).thenAnswer(c->{outsideTransaction();
+            var report=(tools.jackson.databind.node.ObjectNode)automaticSeedReport(c.getArgument(1),true);
+            if(reviews.getAndIncrement()==0){report.put("passed",false);report.set("issues",json.valueToTree(List.of("EYE_READABILITY")));
+                for(var v:report.path("views"))if(v.path("direction").asText().equals("west"))((tools.jackson.databind.node.ObjectNode)v).put("readability","FAIL");}
+            return report;
+        });
+        when(eyeAi.structuredImage(anyString(),anyString(),any(),anyMap())).thenAnswer(c->{outsideTransaction();return json.readTree("{\"confident\":true,\"note\":\"synthetic locator fixture\",\"regions\":[{\"direction\":\"west\",\"x\":12,\"y\":10,\"width\":3,\"height\":3}]}");});
+        when(provider.editSeedEyes(any())).thenAnswer(c->{outsideTransaction();var p=c.<JsonNode>getArgument(0);
+            var sheet=ImageIO.read(new ByteArrayInputStream(Base64.getDecoder().decode(p.at("/inpainting_image/image/base64").asText())));
+            sheet.setRGB(64+13,11,0xffccbba0);var out=new ByteArrayOutputStream();ImageIO.write(sheet,"png",out);
+            when(provider.pollSeedEyes(any())).thenAnswer(call->{outsideTransaction();return json.valueToTree(Map.of("status","COMPLETED","eyeSheet",Base64.getEncoder().encodeToString(out.toByteArray()),"usage",Map.of("type","fixture","generations",1)));});
+            return UUID.randomUUID();
+        });
+        return id;
+    }
+    @Test void eyeOnlyRepairUsesArchivedPlanAfterCheckpointAndDoesNotBuyAnotherCharacter()throws Exception {
+        UUID id=eyeRepairJob();tick();tick();
+        assertThat(step(id,"character").path("repairCount").asInt()).isEqualTo(1);
+        tick();
+        doThrow(new RuntimeException("storage interrupted")).when(storage).put(contains("directions/repair-1/"),any());
+        tick();assertThat(read(id).path("status").asText()).isEqualTo("FAILED");
+        assertThat(jdbc.queryForObject("SELECT provider_result IS NOT NULL FROM shelter.styled_asset_steps WHERE job_id=? AND label='character'",Boolean.class,id)).isTrue();
+        doAnswer(c->{outsideTransaction();objects.put(c.getArgument(0),c.getArgument(1));return null;}).when(storage).put(contains("directions/repair-1/"),any());
+        jdbc.update("UPDATE shelter.styled_asset_steps SET status='PERSISTING',quality_report='{}'::jsonb WHERE job_id=? AND label='character'",id);
+        jdbc.update("UPDATE shelter.asset_jobs SET status='RUNNING',failure_code=NULL WHERE id=?",id);
+        tick();assertThat(read(id).path("status").asText()).isEqualTo("QUEUED");
+        assertThat(step(id,"character").at("/result/eyeRepair/visiblePixelsChangedOutsideMask").asInt()).isZero();
+        assertThat(step(id,"character").at("/result/providerUsage/generations").asInt()).isEqualTo(1);
+        assertThat(step(id,"character").at("/result/eyeRepair/sourceHashes/north").asText()).isEqualTo(step(id,"character").at("/result/hashes/north").asText());
+        verify(provider,times(1)).submit(eq(true),any());verify(provider,times(1)).editSeedEyes(any());verify(provider,times(1)).pollSeedEyes(any());
+        verify(provider,never()).submit(eq(false),any());
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.asset_submissions WHERE job_id=?",Integer.class,id)).isEqualTo(2);
+        assertThat(jdbc.queryForObject("SELECT attempt_history::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='character'",String.class,id)).contains("eyeRepairPlan","EYE_READABILITY","providerJobId");
+    }
+    @Test void eyeRepairUnknownPaidOutcomeNeverResubmits()throws Exception {
+        UUID id=eyeRepairJob();tick();tick();
+        doThrow(new RuntimeException("lost acknowledgement")).when(provider).editSeedEyes(any());
+        tick();assertThat(read(id).path("status").asText()).isEqualTo("OUTCOME_UNKNOWN");
+        for(int i=0;i<3;i++)tick();verify(provider,times(1)).editSeedEyes(any());verify(provider,times(1)).submit(eq(true),any());
+        verify(provider,never()).submit(eq(false),any());publicStatus(404);
+    }
     @Test void automaticApprovalPreservesDogShelterAndSourceAccessBoundaries()throws Exception {
         UUID id=automaticRequest();jdbc.update("UPDATE shelter.dogs SET is_public=false WHERE id=?",dog);finish(id);
         assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");publicStatus(404);
@@ -1593,7 +1637,7 @@ class StyledAssetPostgresTest {
     // Existing cases exercise persisted pre-B63 jobs and their explicit manual review contract.
     UUID request() throws Exception {
         UUID id=UUID.fromString(post(subject,"/v1/shelter-admin/dogs/"+dog+"/styled-assets",input(),202).at("/data/id").asText());
-        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=quality_policy-'automaticApproval'-'seedMotionMargin'-'lessonRevision' WHERE id=?",id);return id;
+        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=quality_policy-'automaticApproval'-'seedMotionMargin'-'lessonRevision'-'seedEyeRepair' WHERE id=?",id);return id;
     }
     String path(UUID id) {return "/v1/shelter-admin/dogs/"+dog+"/styled-assets/"+id;}
     JsonNode read(UUID id) throws Exception {return get(subject,path(id),200).path("data");}

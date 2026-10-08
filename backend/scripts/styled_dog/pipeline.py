@@ -35,14 +35,13 @@ def character_request(root, traits, rules, quality=None):
             raise ValueError(key + ' must contain 1–300 characters')
     eye_rules = load_quality()['seedEyes']
     description = (
-        'Create the photographed rescue dog in the attached PIXEL SPRITE GAME ART STYLE. '
-        'The concept shows one dog full-body and face close-up; PHOTOS define IDENTITY: '
+        'Draw the photographed dog in the attached PIXEL GAME ART STYLE. '
+        'Full-body and face PHOTOS define IDENTITY: '
         + identity + ' '
-        'STYLE defines rounded compact proportions, softly rounded large head, short paws, dark outline, '
-        'crisp shaded pixel clusters and stepped highlights. Preserve stylized proportions. '
+        'STYLE: compact body, rounded large head, short paws, dark outline, crisp shaded pixel clusters and stepped highlights. '
         + eye_rules['prevention'] + ' '
-        'Copy photo ears, coat and markings; never borrow the style dog identity. '
-        'Closed neutral mouth, no grin. Four-legged standing pose, low top-down view. '
+        'Use photo ears, coat and markings, not the style dog identity. '
+        'Closed neutral mouth, no grin. Stand on four legs, low top-down. '
         'Full character in transparent 32x32. '+load_quality()['seedMargin']+
         ' No text, scenery, collar, props, blur or realistic long legs.')
     attempt = 0

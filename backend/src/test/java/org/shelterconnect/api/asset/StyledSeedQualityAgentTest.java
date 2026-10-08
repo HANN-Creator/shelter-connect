@@ -41,7 +41,7 @@ class StyledSeedQualityAgentTest {
     @Test void liveApprovedSeedCasesAreJudgedIndependentlyWithoutExpectedLabels()throws Exception {
         org.junit.jupiter.api.Assumptions.assumeTrue("true".equals(System.getenv("SEED_EYE_LIVE_APPROVED")));
         String key=System.getenv("OPENAI_API_KEY");assertThat(key).isNotBlank();
-        var properties=new AiProperties(true,key,"gpt-5.6-luna",120);
+        var properties=new AiProperties(true,key,"gpt-5.6-luna",60);
         var live=new StyledSeedQualityAgent(new OpenAiResponsesClient(properties,json),properties,json);
         var config=Path.of(System.getenv("SEED_EYE_LIVE_CASES"));var cases=json.readTree(Files.readAllBytes(config));
         assertThat(cases.isArray()).isTrue();assertThat(cases.size()).isBetween(2,4);

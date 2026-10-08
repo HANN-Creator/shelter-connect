@@ -31,6 +31,33 @@ def decode_recorded_alpha(rows):
 
 
 class QualityRegressionTest(unittest.TestCase):
+    def test_actual_small_eye_edit_preserves_body_alpha_and_all_direction_hashes(self):
+        from styled_dog.quality import seed_margin_audit
+        root=Path(__file__).parent/'fixtures/small-seed-eyes-v14'
+        evidence=read(root/'evidence.json')
+        for file,sha in evidence['sha256'].items(): self.assertEqual(digest(root/file),sha)
+        self.assertFalse(evidence['productionPublished'])
+        self.assertTrue(evidence['automaticLocatorUsed'])
+        self.assertFalse(evidence['operatorCoordinatesUsedInAutomatic'])
+        self.assertEqual(evidence['repairTrigger'],'USER_REQUESTED_EYE_EDIT')
+        self.assertTrue(read(root/'automatic/before-review.json')['passed'])
+        self.assertFalse(read(root/'source/historical-review.json')['passed'])
+        plan=read(root/'automatic/plan.json');changed=0;after={}
+        for direction in ('south','north','west','east'):
+            old=Image.open(root/'source'/f'{direction}.png').convert('RGBA')
+            new=Image.open(root/'automatic'/f'{direction}.png').convert('RGBA');after[direction]=new
+            self.assertEqual(new.size,(32,32))
+            self.assertEqual(old.getchannel('A').tobytes(),new.getchannel('A').tobytes())
+            for y in range(32):
+                for x in range(32):
+                    if old.getpixel((x,y))==new.getpixel((x,y)): continue
+                    changed+=1
+                    self.assertTrue(any(b['direction']==direction and b['x']<=x<b['x']+b['width']
+                                        and b['y']<=y<b['y']+b['height'] for b in plan['regions']))
+        self.assertEqual(changed,64)
+        self.assertFalse(seed_margin_audit(after)['issues'])
+        self.assertEqual(digest(root/'source/north.png'),digest(root/'automatic/north.png'))
+
     def test_unapproved_seed_alignment_only_translates_complete_native_pixels(self):
         from styled_dog.quality import align_seed, seed_margin_audit
         seed=Image.new('RGBA',(32,32))

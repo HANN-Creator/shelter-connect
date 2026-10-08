@@ -13,8 +13,10 @@ public class StyledAssetWorker {
     private final StyledLessonStore lessons;
     private final StyledSeedQualityAgent seedQuality;
     private final StyledLearningRecoveryStore recovery;private final StyledLessonPromptComposer prompts;
-    public StyledAssetWorker(StyledAssetStore store,StyledAssetProvider provider,AssetStorage storage,StyledSpriteCodec codec,AssetProperties properties,JsonMapper json,StyledQualityAgent quality,StyledLessonStore lessons,StyledSeedQualityAgent seedQuality,StyledLearningRecoveryStore recovery,StyledLessonPromptComposer prompts) {
+    private final StyledSeedEyeRepair eyes;
+    public StyledAssetWorker(StyledAssetStore store,StyledAssetProvider provider,AssetStorage storage,StyledSpriteCodec codec,AssetProperties properties,JsonMapper json,StyledQualityAgent quality,StyledLessonStore lessons,StyledSeedQualityAgent seedQuality,StyledLearningRecoveryStore recovery,StyledLessonPromptComposer prompts,StyledSeedEyeRepair eyes) {
         this.store=store;this.provider=provider;this.storage=storage;this.codec=codec;this.properties=properties;this.json=json;this.quality=quality;this.lessons=lessons;this.seedQuality=seedQuality;this.recovery=recovery;this.prompts=prompts;
+        this.eyes=eyes;
     }
     public void tick() {
         if(!properties.enabled)return;
@@ -27,6 +29,8 @@ public class StyledAssetWorker {
             if(w.qualityPolicy()!=null && w.qualityPolicy().has("rulesSha256")
                 && !StyledSpriteCodec.qualityRulesSha().equals(w.qualityPolicy().path("rulesSha256").asText()))
                 throw new AssetException(409,"QUALITY_RULES_CHANGED");
+            var eyeAttempt=w.character()?store.previousSeedEyeAttempt(w):json.createObjectNode();
+            boolean eyeEdit=eyeAttempt!=null && !eyeAttempt.isEmpty();
             if(!w.character() && w.qualityPolicy()!=null && !w.qualityPolicy().has("contract")) {
                 if(!store.startContract(w))return;
                 var contract=quality.contract(storage.photo(w.dogId(),w.bucket(),w.key()),w.traits());
@@ -71,7 +75,9 @@ public class StyledAssetWorker {
                         json.valueToTree(Map.of("contract",w.qualityPolicy().path("contract"),"attempt",w.repairCount(),
                             "rulesSha256",w.qualityPolicy().path("rulesSha256").asText(),
                             "issues",w.qualityReport()!=null && w.qualityReport().path("issues").isArray()?w.qualityReport().path("issues"):json.createArrayNode()));
-                JsonNode payload=learning?learnedPayload(w,policy):motionEdit(w)?motionEditPayload(w):w.character()?codec.character(w.dogId(),w.traits(),storage.photo(w.dogId(),w.bucket(),w.key()),policy):
+                JsonNode payload=eyeEdit?eyes.payload(eyeSeeds(w,eyeAttempt),eyeAttempt.at("/quality/eyeRepairPlan"),
+                    (int)Math.floorMod(w.traits().path("seed").asLong()+7919L*w.repairCount(),2147483647L)):
+                    learning?learnedPayload(w,policy):motionEdit(w)?motionEditPayload(w):w.character()?codec.character(w.dogId(),w.traits(),storage.photo(w.dogId(),w.bucket(),w.key()),policy):
                     codec.motion(w.traits(),w.action(),w.direction(),seed(w),policy);
                 var selected=lessons.pin(w);
                 if(!selected.isEmpty()) {
@@ -80,12 +86,12 @@ public class StyledAssetWorker {
                 }
                 if(!store.reserve(w,payload))return;
                 submitted=true;
-                UUID id=edit?provider.editAnimation(payload):provider.submit(w.character(),payload);store.accepted(w,id);return;
+                UUID id=eyeEdit?provider.editSeedEyes(payload):edit?provider.editAnimation(payload):provider.submit(w.character(),payload);store.accepted(w,id);return;
             }
             JsonNode result=w.providerResult();
             if(result==null) {
                 if(w.submittedAt()==null || w.submittedAt().plusSeconds(7200).isBefore(Instant.now())) { store.fail(w,true,"PROVIDER_WAIT_EXPIRED");return; }
-                try { result=provider.poll(w.providerId(),w.character()); }
+                try { result=eyeEdit?provider.pollSeedEyes(w.providerId()):provider.poll(w.providerId(),w.character()); }
                 catch(AssetProvider.Failure e) { store.defer(w,20);return; }
                 if(result.path("status").asText().equals("WAITING")) { store.defer(w,5);return; }
                 if(result.path("status").asText().equals("FAILED")) { store.fail(w,false,"PROVIDER_JOB_FAILED");return; }
@@ -94,11 +100,22 @@ public class StyledAssetWorker {
             }
             if(!store.authorized(w))return;
             if(w.character()) {
+                JsonNode eyeEvidence=null;Map<String,byte[]> editedSeeds=new LinkedHashMap<>();
+                if(eyeEdit) {
+                    byte[] raw=Base64.getDecoder().decode(result.path("eyeSheet").asText());StyledSeedEyeRepair.rawStrip(raw);
+                    String rawKey=w.prefix()+"raw-seed-eyes/"+w.repairCount()+".png";storage.put(rawKey,raw);
+                    var plan=eyeAttempt.at("/quality/eyeRepairPlan");var source=eyeSeeds(w,eyeAttempt);
+                    var repaired=StyledSeedEyeRepair.apply(source,plan,raw);
+                    for(int i=0;i<4;i++)editedSeeds.put(StyledSpriteCodec.DIRECTIONS.get(i),repaired.seeds().get(i));
+                    eyeEvidence=json.valueToTree(Map.of("version",StyledSeedEyeRepair.VERSION,"rawKey",rawKey,"rawSha256",StyledSpriteCodec.sha(raw),
+                        "plan",plan,"sourceHashes",eyeAttempt.at("/result/hashes"),"changedPixels",repaired.changedPixels(),
+                        "visiblePixelsChangedOutsideMask",0,"resampled",false));
+                }
                 Map<String,String> keys=new LinkedHashMap<>(),hashes=new LinkedHashMap<>();
                 var alignments=new LinkedHashMap<String,Object>();
                 var seeds=new ArrayList<byte[]>();
                 for(String d:StyledSpriteCodec.DIRECTIONS) {
-                    byte[] image=StyledPixelLabClient.decode(result.path("directions").path(d).asText());
+                    byte[] image=eyeEdit?editedSeeds.get(d):StyledPixelLabClient.decode(result.path("directions").path(d).asText());
                     if(w.qualityPolicy()!=null && w.qualityPolicy().path("seedMotionMargin").asInt()==2) {
                         String rawKey=w.prefix()+"raw-directions/"+w.repairCount()+"/"+d+".png";storage.put(rawKey,image);
                         var aligned=StyledSpriteCodec.alignSeed(image,2);
@@ -109,6 +126,8 @@ public class StyledAssetWorker {
                     storage.put(key,image);keys.put(d,key);hashes.put(d,StyledSpriteCodec.sha(image));seeds.add(image);
                 }
                 var metadata=json.valueToTree(Map.of("keys",keys,"hashes",hashes,"seedAlignment",alignments));
+                if(eyeEvidence!=null)((tools.jackson.databind.node.ObjectNode)metadata).set("eyeRepair",eyeEvidence);
+                if(result.has("usage"))((tools.jackson.databind.node.ObjectNode)metadata).set("providerUsage",result.path("usage"));
                 if(w.qualityPolicy()!=null && w.qualityPolicy().has("seedQualityVersion")) {
                     inspectSeeds(w,seeds,metadata,true);return;
                 }
@@ -151,6 +170,9 @@ public class StyledAssetWorker {
             var checked=selected.isEmpty()?seedQuality.review(photo,seeds):seedQuality.review(photo,seeds,selected);
             checked=StyledSeedQualityAgent.motionMargin(checked,seeds,w.qualityPolicy(),json);
             var details=(tools.jackson.databind.node.ObjectNode)checked.deepCopy();
+            if(allowRepair && w.repairCount()<2 && !w.qualityPolicy().path("referenceOnly").asBoolean()
+                && StyledSeedEyeRepair.VERSION.equals(w.qualityPolicy().path("seedEyeRepair").asText())
+                && !StyledSeedEyeRepair.failedViews(checked).isEmpty())details.set("eyeRepairPlan",eyes.locate(seeds,checked));
             details.put("photoSha256",StyledSpriteCodec.sha(photo));details.put("lessonsSha256",lessonSha);details.set("learnedLessons",selected);
             report=details;store.quality(w,report);
         }
@@ -170,6 +192,18 @@ public class StyledAssetWorker {
             lessons.record(w,evidence,metadata,metadata);
         if(allowRepair && store.retryQuality(w,report,metadata))return;
         store.success(w,metadata);
+    }
+    private List<byte[]> eyeSeeds(StyledAssetStore.Work w,JsonNode previous) {
+        var result=new ArrayList<byte[]>();
+        for(String d:StyledSpriteCodec.DIRECTIONS) {
+            String key=previous.at("/result/keys/"+d).asText();
+            if(!key.startsWith(w.prefix()+"directions/"))throw StyledSeedEyeRepair.invalid();
+            byte[] bytes=storage.asset(key);StyledSpriteCodec.nativeFrame(bytes);
+            if(!StyledSpriteCodec.sha(bytes).equals(previous.at("/result/hashes/"+d).asText()))throw new AssetException(409,"STYLED_SEED_CHANGED");
+            result.add(bytes);
+        }
+        StyledSeedEyeRepair.mask(result,previous.at("/quality/eyeRepairPlan"),StyledSeedEyeRepair.failedViews(previous.path("quality")));
+        return result;
     }
     private void inspect(StyledAssetStore.Work w,List<byte[]> frames,JsonNode metadata) {
         if(w.qualityPolicy()==null){store.success(w,metadata);return;}

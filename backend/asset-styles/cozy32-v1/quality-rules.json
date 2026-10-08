@@ -1,5 +1,5 @@
 {
-  "revision": "sprite-regressions-2026-10-08-v13",
+  "revision": "sprite-regressions-2026-10-08-v14",
   "pixelEvidence": {
     "version": "native-frame-delta-v1",
     "subtleRgbChannelDelta": 24
@@ -53,6 +53,15 @@
     "EYES: compare open-eye frames with the approved seed: keep pupil shape, position and local contrast. A brief natural blink is allowed. Eyes that stay erased, become hollow rings, or merge into fur in open-eye frames are IDENTITY_DRIFT. North has no face; do not invent eyes."
   ],
   "regressions": [
+    {
+      "id": "small-dark-seed-eyes-merge-with-coat",
+      "stage": "BASE",
+      "direction": "south/west/east",
+      "issue": "EYE_READABILITY",
+      "check": "native-seed-eyes-and-preservation",
+      "fixture": "small-seed-eyes-v14/evidence.json",
+      "expected": "Preserve the actual 32px dark puppy failure and provider edits. Initial generation and eye repair both require solid small pupils, one restrained visible catchlight and local coat-colored contrast; never lighten the whole dog or draw white rings. North remains faceless. Every candidate must independently pass identity, eye quality and two-pixel margins. Record operator-selected experiments separately from the production AI locator. Automatic masks must be bounded, opaque, nonoverlapping head regions with exact source/rule bindings. Reject any changed visible pixel outside the mask. Keep raw edits and receipts; never publish failures or weaken review criteria."
+    },
     {
       "id": "oshu-motion-learning-recovery",
       "action": "IDLE/WALK/SIT",
@@ -227,10 +236,14 @@
     "CURLED": "Keep the seed tail curl and position fixed.",
     "UNKNOWN": "Keep seed tail shape and position fixed. If hidden, keep hidden; never add a tail above the head."
   },
+  "seedEyeEdit": {
+    "version": "native-seed-eye-inpaint-v1",
+    "prompt": "Repair ONLY the masked eye regions of the SAME puppy. The 128x32 strip contains four separate native 32x32 views left-to-right: SOUTH/front, NORTH/rear, WEST/left, EAST/right. Preserve this exact layout. Make each selected eye a calm small filled dark pupil with ONE muted light-tan catchlight at its upper corner and a few lighter coat-colored eyelid pixels to distinguish it from dark fur. Keep most pupil pixels dark; no white eyeballs, eye rings, hollow sockets, angry slits, extra eyes or grin. Preserve the existing eye position, head, ears, muzzle, coat, body, paws, tail, pixel scale and ALL visible pixels outside the white masks. Never add eyes to north. Do not recolor the whole face or change the silhouette."
+  },
   "seedEyes": {
-    "version": "seed-eyes-v1",
-    "prevention": "Soft filled dark pupils, distinct from fur, with a tiny muted catchlight. No hollow eye rings, white eyeballs, angry slits or merged black sockets. Match eye size and placement across views; rear has no eyes.",
-    "correction": "Fix eye readability and rounded filled pupil shape before animation; preserve this dog and the approved art style.",
+    "version": "seed-eyes-v2-local-contrast",
+    "prevention": "Soft filled dark pupils, each with ONE visible muted light-tan catchlight pixel. A few lighter coat-colored pixels beside each pupil separate eyes from dark fur. Keep pupils small and mostly dark. No hollow eye rings, white eyeballs or angry slits. Front: two eyes; sides: one eye; rear: none. Match eye scale across views.",
+    "correction": "Restore readable filled pupils with a tiny catchlight and local fur contrast. Keep coat, anatomy and style; no global recoloring.",
     "reviewInstructions": [
       "Judge new seeds independently against the approved STYLE and photographed IDENTITY. These seeds are unapproved; never treat a flawed seed as a correct reference.",
       "In south, both eyes must read separately from the surrounding coat and muzzle. In west/east the visible eye must read clearly. Compare eye placement, scale and rounded filled pupil treatment across views. North must show no eyes or face.",

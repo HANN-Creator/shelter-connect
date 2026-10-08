@@ -22,6 +22,7 @@ class StyledPixelLabClientTest {
         assertThat(client.submit(true,json.readTree("{}"))).isEqualTo(id);assertThat(requestPath).isEqualTo("/create-character-pro");
         assertThat(client.submit(false,json.readTree("{}"))).isEqualTo(id);assertThat(requestPath).isEqualTo("/animate-pixminimax");
         assertThat(client.editAnimation(json.readTree("{}"))).isEqualTo(id);assertThat(requestPath).isEqualTo("/edit-animation-v2");
+        assertThat(client.editSeedEyes(json.readTree("{}"))).isEqualTo(id);assertThat(requestPath).isEqualTo("/inpaint-v3");
         body="{}";assertThatThrownBy(()->client.submit(true,json.readTree("{}"))).isInstanceOfSatisfying(AssetProvider.Failure.class,e->assertThat(e.uncertain).isTrue());
         status=429;assertThatThrownBy(()->client.submit(true,json.readTree("{}"))).isInstanceOfSatisfying(AssetProvider.Failure.class,e->assertThat(e.uncertain).isFalse());
     }
@@ -41,5 +42,15 @@ class StyledPixelLabClientTest {
         assertThat(client.poll(UUID.randomUUID(),false).path("frames").size()).isEqualTo(9);
         body=json.writeValueAsString(Map.of("status","completed","last_response",Map.of("images",List.of(Map.of("url","http://127.0.0.1/internal")))));
         assertThatThrownBy(()->client.poll(UUID.randomUUID(),false)).isInstanceOf(AssetException.class);
+    }
+    @Test void eyeEditRequiresAnExactNativeFourViewStripAndNeverFollowsUrls() {
+        byte[] raw=StyledSeedEyeRepair.png(StyledSeedEyeRepair.strip(Collections.nCopies(4,png)));
+        body=json.writeValueAsString(Map.of("status","completed","last_response",Map.of("image",StyledSeedEyeRepair.encoded(raw))));
+        assertThat(Base64.getDecoder().decode(client.pollSeedEyes(UUID.randomUUID()).path("eyeSheet").asText())).isEqualTo(raw);
+        body=json.writeValueAsString(Map.of("status","completed","last_response",Map.of("image",StyledSeedEyeRepair.encoded(png))));
+        assertThatThrownBy(()->client.pollSeedEyes(UUID.randomUUID())).isInstanceOf(AssetException.class);
+        body=json.writeValueAsString(Map.of("status","completed","last_response",Map.of("image",Map.of("url","http://127.0.0.1/internal"))));
+        assertThatThrownBy(()->client.pollSeedEyes(UUID.randomUUID())).isInstanceOf(AssetException.class);
+        assertThat(requestPath).startsWith("/background-jobs/");
     }
 }

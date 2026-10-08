@@ -29,6 +29,7 @@ class RuntimeDatabasePostgresTest {
     @Autowired MockMvc mvc; @Autowired JdbcTemplate jdbc; @Autowired JwtTestSupport tokens; @Autowired JsonMapper json;
     @MockitoBean org.shelterconnect.api.asset.StyledQualityAgent spriteQuality;
     @MockitoBean org.shelterconnect.api.asset.StyledSeedQualityAgent seedQuality;
+    @MockitoBean org.shelterconnect.api.asset.StyledSeedEyeRepair seedEyeRepair;
     @MockitoBean org.shelterconnect.api.asset.StyledLessonAgent spriteLessons;
     @MockitoBean org.shelterconnect.api.asset.StyledLessonPromptAgent spritePrompt;
     @MockitoBean AiProvider provider;
