@@ -127,6 +127,7 @@ public class StyledAssetWorker {
                 }
                 var metadata=json.valueToTree(Map.of("keys",keys,"hashes",hashes,"seedAlignment",alignments));
                 if(eyeEvidence!=null)((tools.jackson.databind.node.ObjectNode)metadata).set("eyeRepair",eyeEvidence);
+                if(result.has("usage"))((tools.jackson.databind.node.ObjectNode)metadata).set("providerUsage",result.path("usage"));
                 if(w.qualityPolicy()!=null && w.qualityPolicy().has("seedQualityVersion")) {
                     inspectSeeds(w,seeds,metadata,true);return;
                 }

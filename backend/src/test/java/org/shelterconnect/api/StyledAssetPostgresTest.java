@@ -1526,7 +1526,7 @@ class StyledAssetPostgresTest {
         when(provider.editSeedEyes(any())).thenAnswer(c->{outsideTransaction();var p=c.<JsonNode>getArgument(0);
             var sheet=ImageIO.read(new ByteArrayInputStream(Base64.getDecoder().decode(p.at("/inpainting_image/image/base64").asText())));
             sheet.setRGB(64+13,11,0xffccbba0);var out=new ByteArrayOutputStream();ImageIO.write(sheet,"png",out);
-            when(provider.pollSeedEyes(any())).thenAnswer(call->{outsideTransaction();return json.valueToTree(Map.of("status","COMPLETED","eyeSheet",Base64.getEncoder().encodeToString(out.toByteArray())));});
+            when(provider.pollSeedEyes(any())).thenAnswer(call->{outsideTransaction();return json.valueToTree(Map.of("status","COMPLETED","eyeSheet",Base64.getEncoder().encodeToString(out.toByteArray()),"usage",Map.of("type","fixture","generations",1)));});
             return UUID.randomUUID();
         });
         return id;
@@ -1543,6 +1543,7 @@ class StyledAssetPostgresTest {
         jdbc.update("UPDATE shelter.asset_jobs SET status='RUNNING',failure_code=NULL WHERE id=?",id);
         tick();assertThat(read(id).path("status").asText()).isEqualTo("QUEUED");
         assertThat(step(id,"character").at("/result/eyeRepair/visiblePixelsChangedOutsideMask").asInt()).isZero();
+        assertThat(step(id,"character").at("/result/providerUsage/generations").asInt()).isEqualTo(1);
         assertThat(step(id,"character").at("/result/eyeRepair/sourceHashes/north").asText()).isEqualTo(step(id,"character").at("/result/hashes/north").asText());
         verify(provider,times(1)).submit(eq(true),any());verify(provider,times(1)).editSeedEyes(any());verify(provider,times(1)).pollSeedEyes(any());
         verify(provider,never()).submit(eq(false),any());
