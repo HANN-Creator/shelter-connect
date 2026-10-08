@@ -23,6 +23,21 @@ public class StyledPixelLabClient implements StyledAssetProvider {
         return submitEndpoint(character?"create-character-pro":"animate-pixminimax",payload);
     }
     public UUID editAnimation(JsonNode payload) { return submitEndpoint("edit-animation-v2",payload); }
+    public UUID editSeedEyes(JsonNode payload) { return submitEndpoint("inpaint-v3",payload); }
+    public JsonNode pollSeedEyes(UUID id) {
+        var response=json.readTree(send("background-jobs/"+id,null,4_000_000));String state=response.path("status").asText();
+        if(Set.of("processing","queued","pending").contains(state))return json.valueToTree(Map.of("status","WAITING"));
+        if(state.equals("failed"))return json.valueToTree(Map.of("status","FAILED"));
+        if(!state.equals("completed"))throw new AssetProvider.Failure("PROVIDER_RESULT_INVALID",false);
+        String encoded=response.at("/last_response/image/base64").asText();
+        if(encoded.startsWith("data:image/png;base64,"))encoded=encoded.substring(22);
+        if(encoded.length()>140_000)throw StyledSeedEyeRepair.invalid();
+        byte[] raw;try{raw=Base64.getDecoder().decode(encoded);}catch(IllegalArgumentException e){throw StyledSeedEyeRepair.invalid();}
+        StyledSeedEyeRepair.rawStrip(raw);
+        var result=json.createObjectNode().put("status","COMPLETED").put("eyeSheet",Base64.getEncoder().encodeToString(raw));
+        var usage=response.path("usage");if(usage.isMissingNode() || usage.isNull())usage=response.at("/last_response/billing_usage");
+        if(!usage.isMissingNode() && !usage.isNull())result.set("usage",usage);return result;
+    }
     private UUID submitEndpoint(String endpoint,JsonNode payload) {
         properties.requireEnabled();
         var response=json.readTree(send(endpoint,json.writeValueAsBytes(payload),4_000_000));

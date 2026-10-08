@@ -273,7 +273,8 @@ public class StyledAssetStore {
         "marginRepair",StyledSpriteCodec.MARGIN_EDIT_VERSION,"seedIdleRepair",StyledSpriteCodec.SEED_IDLE_VERSION);}
     private Map<String,Object> seedQualityPolicy(){var p=new HashMap<String,Object>(qualityPolicy());p.put("seedQualityVersion",StyledSeedQualityAgent.VERSION);return p;}
     private Map<String,Object> newSeedQualityPolicy(){var p=seedQualityPolicy();p.put("learningRecovery",StyledLearningRecoveryStore.VERSION);
-        p.put("lessonRevision",StyledLessonStore.REVISION_VERSION);p.put("seedMotionMargin",2);p.put("automaticApproval",StyledAutoApproval.VERSION);return p;}
+        p.put("lessonRevision",StyledLessonStore.REVISION_VERSION);p.put("seedMotionMargin",2);p.put("seedEyeRepair",StyledSeedEyeRepair.VERSION);
+        p.put("automaticApproval",StyledAutoApproval.VERSION);return p;}
     private boolean seedQualityPassed(Job j) {
         var step=j.steps().getFirst();return StyledSeedQualityAgent.passed(step.qualityReport(),step.result()==null?json.createObjectNode():step.result().path("hashes"),j.qualityPolicy());
     }
@@ -429,6 +430,25 @@ public class StyledAssetStore {
         if(!result.path("key").asText().startsWith(w.prefix()+"sheets/") || !result.path("sha256").asText().matches("[a-f0-9]{64}"))
             throw new AssetException(409,"TAIL_EDIT_INPUT_INVALID");
         return result;
+    }
+    /** The archived attempt remains stable when the current quality report is replaced on resume. */
+    @Transactional public JsonNode previousSeedEyeAttempt(Work w) {
+        if(!authorized(w))throw new AssetException(409,"ASSET_LEASE_LOST");
+        var empty=json.createObjectNode();
+        if(!w.character() || w.status().equals("CHECKING") || w.repairCount()<1 || w.repairCount()>2
+            || w.qualityPolicy()==null || w.qualityPolicy().path("referenceOnly").asBoolean()
+            || !StyledSeedEyeRepair.VERSION.equals(w.qualityPolicy().path("seedEyeRepair").asText()))return empty;
+        var history=jdbc.sql("SELECT attempt_history->-1 FROM shelter.styled_asset_steps WHERE job_id=:id AND label=:l")
+            .param("id",w.id()).param("l",w.label()).query(String.class).single();
+        if(history==null)throw StyledSeedEyeRepair.invalid();
+        var previous=json.readTree(history);var report=previous.path("quality");var plan=report.path("eyeRepairPlan");
+        if(!StyledSeedEyeRepair.VERSION.equals(plan.path("version").asText()))return empty;
+        if(previous.path("repairCount").asInt()!=w.repairCount()-1 || StyledSeedEyeRepair.failedViews(report).isEmpty()
+            || !StyledSpriteCodec.qualityRulesSha().equals(report.path("rulesSha256").asText())
+            || !plan.path("sourceBinding").asText().equals(StyledSeedQualityAgent.hashBinding(previous.at("/result/hashes"))))throw StyledSeedEyeRepair.invalid();
+        for(String d:StyledSpriteCodec.DIRECTIONS)if(!previous.at("/result/keys/"+d).asText().startsWith(w.prefix()+"directions/")
+            || !previous.at("/result/hashes/"+d).asText().matches("[a-f0-9]{64}"))throw StyledSeedEyeRepair.invalid();
+        return previous;
     }
     @Transactional public JsonNode mirrorSource(Work w) {
         if(!authorized(w))throw new AssetException(409,"ASSET_LEASE_LOST");
