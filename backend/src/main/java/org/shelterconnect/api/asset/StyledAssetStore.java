@@ -162,14 +162,15 @@ public class StyledAssetStore {
         if(j.steps().isEmpty() || j.steps().getFirst().result()==null ||
             !j.steps().getFirst().result().path("hashes").equals(body.path("expectedSeedHashes")))
             throw new AssetException(409,"SEED_REVIEW_STALE");
-        if(j.qualityPolicy()==null || !Set.of("SEED_REVIEW","REVIEW","QUEUED","RUNNING").contains(j.status()))
+        boolean failedRecheck=failedSeedRecheck(j);
+        if(j.qualityPolicy()==null || (!failedRecheck && !Set.of("SEED_REVIEW","REVIEW","QUEUED","RUNNING").contains(j.status())))
             throw new AssetException(409,"QUALITY_RECHECK_NOT_ALLOWED");
         String current=StyledSpriteCodec.qualityRulesSha(),pinned=j.qualityPolicy().path("rulesSha256").asText();
-        if(current.equals(pinned) && expected.equals(j.qualityPolicy().path("recheckFromRulesSha256").asText()))return j;
+        if(!failedRecheck && current.equals(pinned) && expected.equals(j.qualityPolicy().path("recheckFromRulesSha256").asText()))return j;
         if(!expected.equals(pinned))throw new AssetException(409,"QUALITY_RECHECK_STALE");
         if(current.equals(pinned))throw new AssetException(409,"QUALITY_RULES_UNCHANGED");
-        boolean seedOnly=j.status().equals("SEED_REVIEW"),recheckSeed=j.qualityPolicy().has("seedQualityVersion");
-        if(seedOnly?(!recheckSeed || !j.steps().getFirst().status().equals("SUCCEEDED")):
+        boolean seedOnly=j.status().equals("SEED_REVIEW") || failedRecheck,recheckSeed=j.qualityPolicy().has("seedQualityVersion");
+        if(seedOnly?(!recheckSeed || (!failedRecheck && !j.steps().getFirst().status().equals("SUCCEEDED"))):
                 (!j.status().equals("REVIEW") || !j.complete()))throw new AssetException(409,"QUALITY_RECHECK_NOT_ALLOWED");
         jdbc.sql("""
             UPDATE shelter.styled_asset_steps SET attempt_history=attempt_history || jsonb_build_array(jsonb_build_object(
@@ -186,6 +187,20 @@ public class StyledAssetStore {
             """).param("policy",json.writeValueAsString(StyledRecovery.enabled(j.qualityPolicy())?newSeedQualityPolicy():recheckSeed?seedQualityPolicy():qualityPolicy()))
                 .param("recheckSeed",recheckSeed).param("previous",expected).param("note",note).param("id",id).update();
         return job(id);
+    }
+    /** Resume only the recorded pre-vision recheck failure, after a new rule deployment. */
+    private boolean failedSeedRecheck(Job j) {
+        if(!j.status().equals("FAILED") || !"RECOVERY_INPUT_CHANGED".equals(j.failureCode())
+            || !StyledRecovery.enabled(j.qualityPolicy()) || !StyledSeedRepair.enabled(j.qualityPolicy())
+            || !j.qualityPolicy().path("recheckFromRulesSha256").asText().matches("[a-f0-9]{64}") || j.steps().isEmpty())return false;
+        var base=j.steps().getFirst();
+        if(!base.action().equals("BASE") || !base.status().equals("FAILED") || base.repairCount()<1
+            || base.result()==null || base.qualityReport()!=null)return false;
+        var history=jdbc.sql("SELECT attempt_history->-1 FROM shelter.styled_asset_steps WHERE job_id=:id AND action='BASE'")
+            .param("id",j.id()).query(String.class).optional().orElse(null);
+        if(history==null)return false;var previous=json.readTree(history);
+        return previous.path("qualityRecheck").asBoolean() && previous.path("repairCount").asInt(-1)==base.repairCount()
+            && previous.path("result").equals(base.result());
     }
     /** Explicit, hash-bound continuations are bounded per clip/strategy; old requests never buy another attempt. */
     @Transactional public Job continueRepair(UUID subject,UUID dog,UUID id,JsonNode body) {

@@ -32,7 +32,9 @@ public class StyledAssetWorker {
             var eyeAttempt=w.character()?store.previousSeedEyeAttempt(w):json.createObjectNode();
             boolean eyeEdit=eyeAttempt!=null && !eyeAttempt.isEmpty();
             boolean recovery=StyledRecovery.enabled(w.qualityPolicy());
-            boolean baseEdit=recovery && w.character() && w.repairCount()>0;
+            // CHECKING audits the current stored result. Its latest archive is that result,
+            // not the previous paid attempt required when submitting/polling an edit.
+            boolean baseEdit=recovery && w.character() && !w.status().equals("CHECKING") && w.repairCount()>0;
             boolean selectedBase=baseEdit && StyledSeedRepair.enabled(w.qualityPolicy());
             var baseAttempt=selectedBase?store.previousRecoveryBase(w):json.createObjectNode();
             boolean regionalBase=selectedBase && StyledSeedRepair.regional(baseAttempt.path("quality"));

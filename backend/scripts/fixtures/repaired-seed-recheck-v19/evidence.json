@@ -1,0 +1,25 @@
+{
+  "source": "deployed backend API and immutable step history, 2026-10-09",
+  "jobId": "cfeed2f7-e904-4f72-a5ff-672c9b9b2e4a",
+  "pipelineVersion": "cozy32-photo-style-v1",
+  "oldRulesRevision": "sprite-regressions-2026-10-09-v17",
+  "recheckRulesRevision": "sprite-regressions-2026-10-09-v18",
+  "beforeStatus": "SEED_REVIEW",
+  "recheckStepStatus": "CHECKING",
+  "afterStatus": "FAILED",
+  "failureCode": "RECOVERY_INPUT_CHANGED",
+  "repairCount": 1,
+  "lastArchiveRepairCount": 1,
+  "lastArchiveIsRecheck": true,
+  "archivedResultEqualsCurrent": true,
+  "seedHashes": {
+    "east": "381fa45ba697787660169f8569f3cba3f80a272f902977a730d055f241a6c0b3",
+    "west": "01d1b5d3a30c85a1f5e8f34f754bd9067087892d9996ba8a97dbdf160ba68dd8",
+    "north": "a50c12ebaa1f0266886f1625f0c23a7e8e45677a52835cbce974b6196abe2096",
+    "south": "613a74ba820e7775bccd3385976fd6b5fb3c647c40daf61223c58b5fa56595bd"
+  },
+  "seedFixture": "../tail-refinement-v18",
+  "pixelLabCallsDuringRecheck": 0,
+  "visionCalledBeforeFailure": false,
+  "published": false
+}

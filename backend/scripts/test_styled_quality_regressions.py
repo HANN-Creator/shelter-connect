@@ -31,6 +31,22 @@ def decode_recorded_alpha(rows):
 
 
 class QualityRegressionTest(unittest.TestCase):
+    def test_deployed_repaired_seed_recheck_keeps_exact_original_evidence(self):
+        root=Path(__file__).parent/'fixtures/repaired-seed-recheck-v19'
+        evidence=read(root/'evidence.json')
+        self.assertEqual(evidence['failureCode'],'RECOVERY_INPUT_CHANGED')
+        self.assertEqual(evidence['repairCount'],1)
+        self.assertEqual(evidence['lastArchiveRepairCount'],evidence['repairCount'])
+        self.assertTrue(evidence['lastArchiveIsRecheck'])
+        self.assertTrue(evidence['archivedResultEqualsCurrent'])
+        self.assertEqual(evidence['pixelLabCallsDuringRecheck'],0)
+        self.assertFalse(evidence['visionCalledBeforeFailure'])
+        self.assertFalse(evidence['published'])
+        for direction,sha in evidence['seedHashes'].items():
+            self.assertEqual(digest(root/evidence['seedFixture']/f'{direction}.png'),sha)
+        cases=load_quality()['regressions']
+        self.assertTrue(any(c['fixture']=='repaired-seed-recheck-v19/evidence.json' for c in cases if c.get('fixture')))
+
     def test_actual_small_eye_edit_preserves_body_alpha_and_all_direction_hashes(self):
         from styled_dog.quality import seed_margin_audit
         root=Path(__file__).parent/'fixtures/small-seed-eyes-v14'

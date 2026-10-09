@@ -1746,6 +1746,92 @@ class StyledAssetPostgresTest {
             assertThat(current.at("/selectedRepair/plan/deferredDirections").toString()).isEqualTo("[\"east\"]");
         }
     }
+    UUID repairedSeedHold(int repairs)throws Exception {
+        UUID id=recoveryRequest(99,false);for(int i=0;i<repairs*2;i++)tick();
+        when(seedQuality.reviewRecovery(any(),anyList(),any(),any())).thenAnswer(c->{outsideTransaction();
+            var r=(tools.jackson.databind.node.ObjectNode)automaticSeedReport(c.getArgument(1),false);
+            return r.put("recoveryVersion","photo-grounded-recovery-v1").put("appearance","FAIL");});
+        tick();tick();assertThat(read(id).path("status").asText()).isEqualTo("SEED_REVIEW");return id;
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(ints={1,3})
+    void repairedSeedRecheckAuditsStoredBytesWithoutLoadingOrSpendingAnotherEdit(int repairs)throws Exception {
+        UUID id=repairedSeedHold(repairs);
+        var before=step(id,"character");var saved=new HashMap<>(objects);
+        assertThat(before.path("repairCount").asInt()).isEqualTo(repairs);
+        var body=seedRecheckBody(id);clearInvocations(provider,seedQuality);
+        post(subject,path(id)+"/quality-recheck",body,200);tick();
+        assertThat(read(id).path("status").asText()).isEqualTo("SEED_REVIEW");
+        assertThat(step(id,"character").path("result")).isEqualTo(before.path("result"));
+        assertThat(step(id,"character").path("repairCount").asInt()).isEqualTo(repairs);
+        verify(seedQuality).reviewRecovery(any(),anyList(),any(),any());verifyNoInteractions(provider);
+        for(var e:saved.entrySet())assertThat(objects.get(e.getKey())).isEqualTo(e.getValue());
+        assertThat(objects).hasSize(saved.size());
+        post(subject,path(id)+"/quality-recheck",body,200);tick();verifyNoInteractions(provider);
+    }
+    UUID failedRepairedSeedRecheck()throws Exception {
+        UUID id=repairedSeedHold(1);var body=seedRecheckBody(id);
+        post(subject,path(id)+"/quality-recheck",body,200);
+        // Replay the recorded live v18 failure: CHECKING was treated as another edit before vision.
+        jdbc.update("UPDATE shelter.styled_asset_steps SET status='FAILED' WHERE job_id=? AND action='BASE'",id);
+        jdbc.update("UPDATE shelter.asset_jobs SET status='FAILED',failure_code='RECOVERY_INPUT_CHANGED' WHERE id=?",id);
+        return id;
+    }
+    @Test void correctedDeploymentCanRecheckTheRecordedFailureWithoutResettingPaidHistory()throws Exception {
+        UUID id=failedRepairedSeedRecheck();var before=step(id,"character");var body=seedRecheckBody(id);
+        var history=jdbc.queryForObject("SELECT jsonb_array_length(attempt_history) FROM shelter.styled_asset_steps WHERE job_id=? AND action='BASE'",Integer.class,id);
+        clearInvocations(provider,seedQuality);
+        post(UUID.randomUUID(),path(id)+"/quality-recheck",body,403);
+        var stale=new HashMap<>(body);stale.put("expectedSeedHashes",Map.of());post(subject,path(id)+"/quality-recheck",stale,409);
+        stale=new HashMap<>(body);stale.put("expectedRulesSha256","1".repeat(64));post(subject,path(id)+"/quality-recheck",stale,409);
+        post(subject,path(id)+"/quality-recheck",body,200);post(subject,path(id)+"/quality-recheck",body,200);tick();
+        assertThat(read(id).path("status").asText()).isEqualTo("SEED_REVIEW");
+        assertThat(step(id,"character").path("result")).isEqualTo(before.path("result"));
+        assertThat(step(id,"character").path("repairCount").asInt()).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT jsonb_array_length(attempt_history) FROM shelter.styled_asset_steps WHERE job_id=? AND action='BASE'",Integer.class,id)).isEqualTo(history+1);
+        verify(seedQuality).reviewRecovery(any(),anyList(),any(),any());verifyNoInteractions(provider);
+        assertThat(read(id).path("seedReview").isNull()).isTrue();publicStatus(404);
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"other-failure","missing-history","different-count","different-result","missing-rule-origin"})
+    void failedRecheckResumeRejectsUnrelatedOrChangedEvidence(String defect)throws Exception {
+        UUID id=failedRepairedSeedRecheck();var body=seedRecheckBody(id);
+        switch(defect){
+            case "other-failure" -> jdbc.update("UPDATE shelter.asset_jobs SET failure_code='PROVIDER_JOB_FAILED' WHERE id=?",id);
+            case "missing-history" -> jdbc.update("UPDATE shelter.styled_asset_steps SET attempt_history='[]'::jsonb WHERE job_id=? AND action='BASE'",id);
+            case "different-count" -> jdbc.update("UPDATE shelter.styled_asset_steps SET repair_count=2 WHERE job_id=? AND action='BASE'",id);
+            case "different-result" -> jdbc.update("UPDATE shelter.styled_asset_steps SET result=result || '{\"tampered\":true}'::jsonb WHERE job_id=? AND action='BASE'",id);
+            case "missing-rule-origin" -> jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=quality_policy-'recheckFromRulesSha256' WHERE id=?",id);
+        }
+        clearInvocations(provider,seedQuality);post(subject,path(id)+"/quality-recheck",body,409);tick();
+        assertThat(read(id).path("status").asText()).isEqualTo("FAILED");verifyNoInteractions(provider,seedQuality);
+    }
+    @Test void repairedSeedRecheckPassCanReachSystemApprovalWithoutAnotherBaseGeneration()throws Exception {
+        UUID id=repairedSeedHold(1);var body=seedRecheckBody(id);var original=step(id,"character").path("result");
+        when(seedQuality.reviewRecovery(any(),anyList(),any(),any())).thenAnswer(c->{outsideTransaction();
+            var r=(tools.jackson.databind.node.ObjectNode)automaticSeedReport(c.getArgument(1),true);
+            return r.put("recoveryVersion","photo-grounded-recovery-v1").put("appearance","PASS");});
+        clearInvocations(provider);post(subject,path(id)+"/quality-recheck",body,200);finish(id);
+        assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
+        assertThat(read(id).at("/seedReview/actor").asText()).isEqualTo("SYSTEM");
+        assertThat(read(id).at("/qualityApproval/actor").asText()).isEqualTo("SYSTEM");
+        assertThat(step(id,"character").path("result")).isEqualTo(original);
+        verify(provider,never()).submit(eq(true),any());verify(provider,never()).editSeeds(any());
+        verify(provider,times(12)).submit(eq(false),any());
+    }
+    @Test void failedRecheckRequiresANewRuleVersionBeforeRetry()throws Exception {
+        UUID id=failedRepairedSeedRecheck();var j=read(id);
+        var body=Map.of("note","A repeated same-policy request must not restart the failed audit",
+            "expectedSeedHashes",j.at("/steps/0/result/hashes"),"expectedRulesSha256",j.at("/qualityPolicy/rulesSha256").asText());
+        clearInvocations(provider,seedQuality);post(subject,path(id)+"/quality-recheck",body,409);tick();verifyNoInteractions(provider,seedQuality);
+    }
+    @Test void repairedSeedRecheckStillRejectsChangedPixelsBeforeVision()throws Exception {
+        UUID id=repairedSeedHold(1);var body=seedRecheckBody(id);
+        post(subject,path(id)+"/quality-recheck",body,200);
+        objects.put(step(id,"character").at("/result/keys/south").asText(),png);
+        clearInvocations(provider,seedQuality);tick();
+        assertThat(read(id).path("failureCode").asText()).isEqualTo("STYLED_SEED_CHANGED");verifyNoInteractions(provider,seedQuality);
+    }
     @Test void recoveryBudgetExhaustionCannotStartMotionOrPublishFailedBase()throws Exception {
         UUID id=recoveryRequest(99,false);finish(id);assertThat(read(id).path("status").asText()).isEqualTo("SEED_REVIEW");
         assertThat(step(id,"character").path("repairCount").asInt()).isEqualTo(3);
