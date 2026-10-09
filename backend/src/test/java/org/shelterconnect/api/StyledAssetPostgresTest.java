@@ -1468,13 +1468,13 @@ class StyledAssetPostgresTest {
         r.put("identity",passed?"PASS":"UNCERTAIN");r.put("model","fixture-vision");r.put("reviewedAt",java.time.Instant.now().toString());r.put("photoSha256",sha(png));
         r.putArray("edgeDirections");var views=r.putArray("views");
         for(String d:List.of("south","north","west","east"))views.add(json.valueToTree(Map.of("direction",d,"readability",d.equals("north")?"NOT_VISIBLE":"PASS","style","PASS")));
-        var tail=json.createObjectNode().put("version","photo-tail-evidence-v1").put("passed",true).put("shortTailSupported",false)
-            .put("model","fixture-vision").put("reviewedAt",java.time.Instant.now().toString());tail.putArray("failedDirections");
+        var tail=json.createObjectNode().put("version","tail-anatomy-tristate-v2").put("passed",true).put("decision","PASS").put("shortTailSupported",false)
+            .put("model","fixture-vision").put("reviewedAt",java.time.Instant.now().toString());tail.putArray("failedDirections");tail.putArray("uncertainDirections");
         for(String field:List.of("inputSha256","photoSha256","rulesSha256"))tail.set(field,r.path(field));
-        tail.set("pixelAudit",json.valueToTree(Map.of("west",Map.of("completeContour",true),"east",Map.of("completeContour",true))));
-        tail.set("observation",json.valueToTree(Map.of("photoTail","OBSCURED","photoEvidence","Synthetic hidden photo tail","photoConfidence",.95,
-            "views",List.of(Map.of("direction","west","tail","COMPLETE_CONNECTED","visibleEvidence","Synthetic complete tail","confidence",.95),
-                Map.of("direction","east","tail","COMPLETE_CONNECTED","visibleEvidence","Synthetic complete tail","confidence",.95)))));
+        tail.set("geometry",json.valueToTree(Map.of("west",Map.of("edgeContact",false,"opaqueComponents",1,"branchVersion","rear-silhouette-branches-v1","rearBranchSupport",true),"east",Map.of("edgeContact",false,"opaqueComponents",1,"branchVersion","rear-silhouette-branches-v1","rearBranchSupport",true))));
+        tail.set("observation",json.valueToTree(Map.of("photoTail","OBSCURED","photoEvidence","Synthetic hidden photo tail",
+            "views",List.of(Map.of("direction","west","tail","COMPLETE_CONNECTED","visibleEvidence","Synthetic complete tail","attachment","CONNECTED","contour","DISTINCT","tip","VISIBLE"),
+                Map.of("direction","east","tail","COMPLETE_CONNECTED","visibleEvidence","Synthetic complete tail","attachment","CONNECTED","contour","DISTINCT","tip","VISIBLE")))));
         r.set("tailEvidence",tail);
         return r;
     }
@@ -1686,7 +1686,7 @@ class StyledAssetPostgresTest {
             return r;});
         finish(id);var j=read(id);
         assertThat(j.path("status").asText()).isEqualTo("SEED_REVIEW");assertThat(j.path("seedReview").isNull()).isTrue();
-        assertThat(j.at("/qualityPolicy/seedTailEvidenceVersion").asText()).isEqualTo("photo-tail-evidence-v1");
+        assertThat(j.at("/qualityPolicy/seedTailEvidenceVersion").asText()).isEqualTo("tail-anatomy-tristate-v2");
         verify(provider,never()).submit(eq(false),any());verify(provider,never()).editSeeds(any());
     }
     @Test void recoveryEditsBaseThenOnlyFailedMotionAndPublishesBoundFortyPixelBundle()throws Exception {
@@ -1734,6 +1734,10 @@ class StyledAssetPostgresTest {
             return r;
         });
         finish(id);var j=read(id);assertThat(j.path("status").asText()).isEqualTo("SEED_REVIEW");
+        assertThat(j.path("failureCode").asText()).isEqualTo("SEED_OBSERVATION_UNCERTAIN");
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=?",Integer.class,id)).isZero();
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_lessons WHERE source_job_id=?",Integer.class,id)).isZero();
+        assertThat(step(id,"character").path("qualityReport").path("tailEvidence").has("uncertainDirections")).isTrue();
         assertThat(j.path("seedReview").isNull()).isTrue();assertThat(j.path("qualityApproval").isNull()).isTrue();
         verify(provider,times(confirmed?1:0)).editSeeds(any());verify(provider,never()).submit(eq(false),any());publicStatus(404);
         assertThat(step(id,"character").path("repairCount").asInt()).isEqualTo(confirmed?1:0);

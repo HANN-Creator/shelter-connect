@@ -1,0 +1,106 @@
+{
+  "labelSource": "Agent visual inspection before provider calls, not independent human gold",
+  "cases": [
+    {
+      "key": "case-d",
+      "expected": true,
+      "hashes": {
+        "south": "665854c37db874dc6d1f79f387ff98e4bec9e175ed460e0a76e3ac31f494c065",
+        "north": "b4b40849a203bf37a10ff631fbd9baa9ea61ae27313b573e6554ac06ff236b0e",
+        "west": "9411e478265959a3df5b7cb295855afbde32dbc42b38ff31587d68ddc3747efd",
+        "east": "55b6b2d8c1f7ebbb29263ca9415ced9b14c98d31343d957fc680d695da7ab3c9"
+      }
+    },
+    {
+      "key": "case-b",
+      "expected": false,
+      "hashes": {
+        "south": "613a74ba820e7775bccd3385976fd6b5fb3c647c40daf61223c58b5fa56595bd",
+        "north": "a50c12ebaa1f0266886f1625f0c23a7e8e45677a52835cbce974b6196abe2096",
+        "west": "01d1b5d3a30c85a1f5e8f34f754bd9067087892d9996ba8a97dbdf160ba68dd8",
+        "east": "381fa45ba697787660169f8569f3cba3f80a272f902977a730d055f241a6c0b3"
+      }
+    },
+    {
+      "key": "case-e",
+      "expected": true,
+      "hashes": {
+        "south": "83e58f32ba2a4ffdbe62af04a84e074914f7a3cfdd232dbe09e1ff42b6a577da",
+        "north": "fc3862fac67fe43298862374bf9c7f246ede832c05d82457bc367e45f71fc86e",
+        "west": "86037f35ca4b7b49b84046d7cc84ee2fb06db8945b9b04c9bb4cc05d11080b96",
+        "east": "22afb2d9cbed37f0be9d9bed3f7e1bc5f45acfaf46d41d0fba8c8c3ac1bedcf0"
+      }
+    },
+    {
+      "key": "case-f",
+      "expected": false,
+      "hashes": {
+        "south": "97fc7456def7fa9015a2344d1e6e668bf085041af56466f92fd81c8d95db1491",
+        "north": "7971e02e8f9488a32625fb379dcc3cf26819533f5ad4e615c066257acd5957ff",
+        "west": "b74d3e01d57c5e4a0697e19fa20f6d69f82a560e181d955df13e4aefa5b6db18",
+        "east": "c50f10511af9e93fea31ae046bc28bdb2c8ed6e72f151b17c8fcb88c63e55ac4"
+      }
+    },
+    {
+      "key": "case-g",
+      "expected": false,
+      "hashes": {
+        "south": "c4a0a7992d0a3eeb7525a26eca4b97fd876d48d83bc67e8203a5b37e58300332",
+        "north": "9f94e90e6c9b9206fe2477a7de04169f8a0a76217b573168a9cc9180aff1895a",
+        "west": "ee4f24c06e1757462c275b5663e6178190dfe17459c767ec4f1cff39a55f5c88",
+        "east": "ff49a96ed61193b19b845ff37f78afa588e3a4ff1cf732b00c86c7b277634acd"
+      }
+    },
+    {
+      "key": "case-i",
+      "expected": true,
+      "hashes": {
+        "south": "158cfaf5acff96b872b7e258e3d4dfda612f4d59934a8c3208b39741c6b6b5ad",
+        "north": "09ed4d4d86c40ef3ad4ff626dbb4f48936e6dc21cd2bd19026245e6fcb38f74b",
+        "west": "1e16980964b81e1747e9ebe581bc6180d12b17def068259fab63e072e7730027",
+        "east": "cd099c844d69836ba9c1b222d2a7b781ee679491d72c1ab961e806d84b1b7fe6"
+      }
+    },
+    {
+      "key": "case-j",
+      "expected": false,
+      "hashes": {
+        "south": "158cfaf5acff96b872b7e258e3d4dfda612f4d59934a8c3208b39741c6b6b5ad",
+        "north": "09ed4d4d86c40ef3ad4ff626dbb4f48936e6dc21cd2bd19026245e6fcb38f74b",
+        "west": "1e16980964b81e1747e9ebe581bc6180d12b17def068259fab63e072e7730027",
+        "east": "2f84a2b3d1ba9f431cad56f573d386a0433e3d3ffc1703a16a1935744ab7d857"
+      }
+    },
+    {
+      "key": "case-c",
+      "expected": true,
+      "hashes": {
+        "south": "c4a0a7992d0a3eeb7525a26eca4b97fd876d48d83bc67e8203a5b37e58300332",
+        "north": "9f94e90e6c9b9206fe2477a7de04169f8a0a76217b573168a9cc9180aff1895a",
+        "west": "7c0acd1a93b57b5e40e1a047aec5c728ce4785d03fa6b5837b1a8a20c1182d94",
+        "east": "ff49a96ed61193b19b845ff37f78afa588e3a4ff1cf732b00c86c7b277634acd"
+      }
+    },
+    {
+      "key": "case-h",
+      "expected": null,
+      "hashes": {
+        "south": "b563cde013ae58f887e76f080e20d030ccc6924e1fc1e7ffe0bbbe8a4fef5897",
+        "north": "85c915eb6488474d872840982828b4380fa127a4c15dbb23425b934786144e99",
+        "west": "ab27366e7a03bff1629ab84e45eb6037263f1b00a2f578313cff06a1bc9bbb93",
+        "east": "bbf3db40caca7ab1609297192b44bfcc4113effd8027cb558351dc87e5f6048b"
+      }
+    },
+    {
+      "key": "case-a",
+      "expected": true,
+      "hashes": {
+        "south": "4d33c8ef0a6f2e6461fa547101805291e003a6a4bc7244d18cad775ba2742e20",
+        "north": "35f3c2dea252fbb0c840b37c45e972d54dff92d0f92085dc7c2535001e0eb63c",
+        "west": "81f256fb4aead87334508fd00f5798e30ab733fe46b18a4917b3532cad0bd9f9",
+        "east": "8f6f7f49aa3a73063f55ef59bde0409d4e8c3ab2f01aa5c072e9446a366156f5"
+      }
+    }
+  ],
+  "lowTailLimit": "441398202600396: downward tail visually present but merged into hindquarter alpha; must remain UNCERTAIN, never code-only defect."
+}

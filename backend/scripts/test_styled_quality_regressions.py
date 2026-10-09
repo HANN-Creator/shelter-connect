@@ -31,6 +31,25 @@ def decode_recorded_alpha(rows):
 
 
 class QualityRegressionTest(unittest.TestCase):
+    def test_normal_tail_false_rejections_are_audited_not_negative_training_fixtures(self):
+        root=Path(__file__).parent/'fixtures/tail-anatomy-v21'
+        evidence=read(root/'evidence.json')
+        for file,sha in evidence['sha256'].items():self.assertEqual(digest(root/file),sha)
+        self.assertFalse(evidence['imageBytesChanged']);self.assertFalse(evidence['published'])
+        deployed=read(root/'deployed-review.json');packaged=read(root/'packaged-review.json')
+        self.assertEqual(deployed['inputSha256'],packaged['inputSha256'])
+        west=next(v for v in deployed['tailEvidence']['observation']['views'] if v['direction']=='west')
+        self.assertEqual(west['tail'],'COMPLETE_CONNECTED');self.assertEqual(west['confidence'],0.72)
+        self.assertTrue(deployed['tailEvidence']['pixelAudit']['west']['completeContour'])
+        west=next(v for v in packaged['tailEvidence']['observation']['views'] if v['direction']=='west')
+        im=Image.open(root/'west.png').convert('RGBA')
+        invalid=[(p['x'],p['y']) for p in west['tailPixelPath'] if not im.getpixel((p['x'],p['y']))[3]]
+        self.assertEqual(invalid,[(29,10)])
+        rules=load_quality()['recovery']
+        rubric=Path(__file__).parent.parent/'asset-styles/cozy32-v1/tail-review-rubric.png'
+        self.assertEqual(digest(rubric),rules['tailAnatomyRubricSha256'])
+        self.assertTrue(any(c.get('fixture')=='tail-anatomy-v21/evidence.json' for c in load_quality()['regressions']))
+
     def test_deployed_tail_coordinate_failure_is_preserved_without_snapping(self):
         root=Path(__file__).parent/'fixtures/tail-coordinate-focus-v20'
         evidence=read(root/'evidence.json')

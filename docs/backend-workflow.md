@@ -195,3 +195,5 @@ B-43: [스프라이트 자동 품질 검수·선택 보완](sprite-quality-repai
 B-71: [보완된 기본 도트 재검수 상태 분리](repaired-seed-recheck.md). B-70 실제 배포 검사에서 발견된 `CHECKING`의 이전 편집 이력 오참조를 수정한다. 원본·보완 횟수·추가 유료 호출 차단을 유지하고, 명확히 식별된 실패만 다음 규칙 배포 후 권한·해시가 맞는 재검수로 재개한다. 브랜치 `backend/b-71-recheck-repaired-seeds`.
 
 - B-72 꼬리 좌표 방향별 확대 재검수: [노션](https://app.notion.com/p/3f45b2d1a55f802bb1e5e892c3f653b6), [실제 실패·입력·검증 범위](tail-coordinate-focus.md). 브랜치 `backend/b-72-tail-coordinate-focus`. 불확실한 방향마다 전체 원본·절대 좌표 확대본으로 1회 재관찰, 다른 방향/사진 판정·원본·호출 이력 보존. 실제 동일 강아지 EAST 좌표 재검수 통과. v20, DB/API/그림체/보완 예산 변경 없음. 전체 서버 재검수·12모션·최종 승인은 B-68에서 배포 후 검증.
+
+- B-73 꼬리 관찰 불확실성과 이미지 결함 분리: [노션](https://app.notion.com/p/3f45b2d1a55f80b1a59ceaf47465f365), [처리·비교·실제 검증](tail-anatomy-tristate.md). 브랜치 `backend/b-73-tail-review-tristate`. 코드의 픽셀 검사와 사진/도트 관찰 분리, 충돌 1회 재관찰, 미확정 유료 보완·부정 학습 차단. 공통 규칙 v21, DB 마이그레이션 없음.

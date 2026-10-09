@@ -291,7 +291,7 @@ public class StyledAssetStore {
         p.put("lessonRevision",StyledLessonStore.REVISION_VERSION);p.put("seedMotionMargin",2);p.put("seedEyeRepair",StyledSeedEyeRepair.VERSION);
         p.put("automaticApproval",StyledAutoApproval.VERSION);
         var recovery=StyledSpriteCodec.qualityRules(json).path("recovery");
-        p.put("recoveryVersion",StyledRecovery.VERSION);p.put("seedRepairVersion",StyledSeedRepair.VERSION);p.put("seedTailEvidenceVersion",StyledSeedTailEvidence.VERSION);p.put("motionFrameSize",40);p.put("seedMotionMargin",1);
+        p.put("recoveryVersion",StyledRecovery.VERSION);p.put("seedRepairVersion",StyledSeedRepair.VERSION);p.put("seedTailEvidenceVersion",StyledTailAnatomy.VERSION);p.put("motionFrameSize",40);p.put("seedMotionMargin",1);
         p.put("maxSeedRepairs",recovery.path("maxSeedRepairs").asInt());p.put("maxRepairsPerClip",recovery.path("maxMotionRepairs").asInt());
         p.remove("seedEyeRepair");p.remove("learningRecovery");return p;}
     private boolean seedQualityPassed(Job j) {
@@ -544,7 +544,7 @@ public class StyledAssetStore {
                 approveSeeds(j);status(w.id(),"QUEUED",null);
                 jdbc.sql("UPDATE shelter.asset_jobs SET next_run_at=now() WHERE id=:id").param("id",w.id()).update();
             } else status(w.id(),"SEED_REVIEW",seedQualityPassed(j)?
-                (StyledAutoApproval.enabled(j.qualityPolicy())?"AUTO_APPROVAL_EVIDENCE_REQUIRED":null):"SEED_QUALITY_REVIEW_REQUIRED");
+                (StyledAutoApproval.enabled(j.qualityPolicy())?"AUTO_APPROVAL_EVIDENCE_REQUIRED":null):(StyledTailAnatomy.unresolved(j.steps().get(0).qualityReport())?"SEED_OBSERVATION_UNCERTAIN":"SEED_QUALITY_REVIEW_REQUIRED"));
         }
         else if(j.complete())finishPack(j);
         else defer(w,0);

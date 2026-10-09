@@ -1,0 +1,27 @@
+{
+  "rulesSha256": "b004cb15e3f194ec16c034e2e6eb26ad3a7a4f9fdd39214dae5c224aa08b0b21",
+  "source": "Actual Luna production review; no PixelLab image edits in these three comparisons. Saved responses were reused to fix an overly broad test assertion; no AI result was rerolled.",
+  "results": [
+    {
+      "case": "case-a",
+      "overallPassed": true,
+      "tailDecision": "PASS",
+      "anatomyCalls": 1,
+      "sha256": "e1c6fd096291f9a0892c587ccabcdb2aa1a4f10f1c9b6679c4645f5ee13896f8"
+    },
+    {
+      "case": "case-d",
+      "overallPassed": false,
+      "tailDecision": "PASS",
+      "anatomyCalls": 1,
+      "sha256": "14e28670b9600e740a55a258f52350e919349f1a4f3dd835612e6baab0feea14"
+    },
+    {
+      "case": "case-f",
+      "overallPassed": false,
+      "tailDecision": "UNCERTAIN",
+      "anatomyCalls": 2,
+      "sha256": "b2cecea3b0f5f62cf6f39ea45ce1e254b0788472eaa898487fe9d91239a14706"
+    }
+  ]
+}
