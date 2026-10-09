@@ -129,6 +129,28 @@ final class StyledMotionReview {
         }
         return true;
     }
+    /** Repair the independently confirmed color defect; disagreement over its identity label remains unlearned. */
+    static boolean confirmedPaletteRepair(JsonNode report) {
+        if(!unresolved(report))return false;
+        var reports=new ArrayList<JsonNode>();reports.add(report);
+        for(String key:List.of("rawEditReview","restoredReview"))if(report.has(key))reports.add(report.path(key));
+        for(var r:reports) {
+            if(!VERSION.equals(r.path("motionReviewVersion").asText()) || r.path("passed").asBoolean() || r.path("observationCount").asInt()!=2
+                || !r.path("uncertainProperties").toString().equals("[\"identity\"]")
+                || !r.path("confirmedProperties").toString().equals("[\"palette\"]"))return false;
+            try {
+                var a=r.path("initialVision");var b=r.path("consistencyReview");var paletteFrames=new HashSet<Integer>();var identityFrames=new HashSet<Integer>();
+                var identityStates=new HashSet<String>();
+                for(var o:List.of(a,b))for(String key:PROPERTIES.keySet()) {
+                    var p=property(o,key);String state=p.path("state").asText();
+                    if(key.equals("palette")) {if(!state.equals("FAIL") || p.path("frames").isEmpty())return false;p.path("frames").forEach(f->paletteFrames.add(f.asInt()));}
+                    else if(key.equals("identity")){identityStates.add(state);if(state.equals("FAIL"))p.path("frames").forEach(f->identityFrames.add(f.asInt()));}
+                    else if(!state.equals("PASS"))return false;
+                }
+                if(!identityStates.equals(Set.of("PASS","FAIL")) || identityFrames.isEmpty() || !paletteFrames.containsAll(identityFrames))return false;
+            }catch(AssetException invalid){return false;}
+        }return true;
+    }
     static void bind(ObjectNode report,byte[] seed,List<byte[]> frames,JsonMapper json) {
         report.put("recoveryVersion",StyledRecovery.VERSION).put("motionSeedSha256",StyledSpriteCodec.sha(seed));
         report.set("frameHashes",json.valueToTree(frames.stream().map(StyledSpriteCodec::sha).toList()));

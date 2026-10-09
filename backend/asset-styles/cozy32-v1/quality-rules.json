@@ -1,5 +1,5 @@
 {
-  "revision": "sprite-regressions-2026-10-10-v27",
+  "revision": "sprite-regressions-2026-10-10-v28",
   "pixelEvidence": {
     "version": "native-frame-delta-v1",
     "subtleRgbChannelDelta": 24
@@ -27,7 +27,7 @@
     "SNIFF": "Tuck chin inward, lower nose BETWEEN front paws, sniff, lift head. Never extend muzzle forward.",
     "TAIL_WAG": "Tail alone wags left-right in DOG BODY coordinates, no vertical pumping. Still body/paws. Side view: subtle foreshortening.",
     "BACK_OFF": "Small reverse walking steps IN PLACE, same facing; paws lift upward, centered body.",
-    "SIT": "Fold hind legs; lower rump between planted paws. End seated, head fixed. Tuck tail beside haunch, complete tip INSIDE frame through final hold; never stretch outward.",
+    "SIT": "Fold hind legs; lower rump between planted paws. Hold seated with fixed head and coat patches. Keep complete tail tucked by haunch INSIDE every frame.",
     "LIE_DOWN": "Tuck legs inward, lower chest. End lying, hold. Locked head orientation and close tail."
   },
   "corrections": {
@@ -53,6 +53,24 @@
     "EYES: compare open-eye frames with the approved seed: keep pupil shape, position and local contrast. A brief natural blink is allowed. Eyes that stay erased, become hollow rings, or merge into fur in open-eye frames are IDENTITY_DRIFT. North has no face; do not invent eyes."
   ],
   "regressions": [
+    {
+      "id": "front-sit-color-only-entry-tail-occlusion",
+      "action": "SIT",
+      "direction": "south",
+      "issue": "MOTION_OBSERVATION_UNCERTAIN",
+      "check": "bound-tail-geometry-equivalence",
+      "fixture": "sit-conflicts-v28/sit-south-review.json",
+      "expected": "Preserve the raw UNCERTAIN observation and never learn it as a positive. Only for front SIT, restored review fully PASS plus raw tail-only PASS/UNCERTAIN observations with no defects may share tail-shape evidence when every alpha/dark-outline pixel agrees and actual frames 1..8 are exactly equal. Only frame0 color may differ. Bind both nine-frame hashes. Never waive a FAIL, other uncertainty, clipping, new head pixels, changed outline, or changed later frame. First generation and repairs preserve complete side/rear tails while allowing natural front occlusion."
+    },
+    {
+      "id": "confirmed-palette-with-overlapping-identity-label",
+      "action": "SIT",
+      "direction": "north",
+      "issue": "IDENTITY_DRIFT",
+      "check": "confirmed-palette-repair-only",
+      "fixture": "sit-conflicts-v28/sit-north-review.json",
+      "expected": "Both observations confirm conspicuous palette flicker while only identity is PASS/FAIL-disputed within the cited palette frames. Repair the confirmed color defect using the original remaining budget, preserving the uncertainty and learning hold. Every other property must PASS; missing palette confirmation, disjoint identity evidence or other uncertainty blocks repair. New output must pass all original QA. First generation and repairs keep approved coat colors stable throughout sit and never grow a contrasting crown."
+    },
     {
       "id": "confirmed-tail-with-overlapping-identity-label",
       "action": "all",

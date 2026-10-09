@@ -272,6 +272,7 @@ public class StyledAssetWorker {
                 // Identical bytes share one bounded observation; never ask the model twice for different labels.
                 var rawReview=StyledMotionReview.VERSION.equals(review.path("motionReviewVersion").asText()) && source.path("sha256").asText().equals(sha)?review.deepCopy():selected.isEmpty()?quality.review(w.qualityPolicy().path("contract"),seeds,rawFrames,w.action(),w.direction()):
                     quality.review(w.qualityPolicy().path("contract"),seeds,rawFrames,w.action(),w.direction(),selected);
+                rawReview=StyledMotionEquivalence.reconcile(rawReview,review,rawFrames,frames,w.action(),w.direction(),json);
                 var issues=new TreeSet<String>();review.path("issues").forEach(n->issues.add(n.asText()));rawReview.path("issues").forEach(n->issues.add(n.asText()));
                 var restored=review.deepCopy();
                 var combined=(tools.jackson.databind.node.ObjectNode)review;

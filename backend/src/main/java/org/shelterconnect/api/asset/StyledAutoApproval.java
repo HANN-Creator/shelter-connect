@@ -60,7 +60,8 @@ final class StyledAutoApproval {
             if(result.has("rawEdit") && (!sha(result.at("/rawEdit/sha256"))
                 || !result.at("/rawEdit/sha256").equals(r.path("rawEditSha256"))
                 || !report(r.path("rawEditReview"),StyledQualityAgent.VERSION)
-                || !report(r.path("restoredReview"),StyledQualityAgent.VERSION)))return false;
+                || !report(r.path("restoredReview"),StyledQualityAgent.VERSION)
+                || !StyledMotionEquivalence.bound(r.path("rawEditReview"),r.path("restoredReview"),step.action(),step.direction())))return false;
         }
         return true;
     }

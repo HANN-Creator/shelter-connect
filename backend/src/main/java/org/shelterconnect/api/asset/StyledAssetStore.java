@@ -714,7 +714,7 @@ public class StyledAssetStore {
         // Explicit rechecks judge the stored bytes, even if a new rule finds a defect with budget left.
         if(w.status().equals("CHECKING") && !seedResumeAllowed(w) && !motionResumeAllowed(w))return false;
         if(w.character() && StyledCoatReview.unresolved(report))return false;
-        if(StyledMotionReview.unresolved(report) && !StyledMotionReview.confirmedTailRepair(report))return false;
+        if(StyledMotionReview.unresolved(report) && !StyledMotionReview.confirmedTailRepair(report) && !StyledMotionReview.confirmedPaletteRepair(report))return false;
         if(w.qualityPolicy()!=null && w.qualityPolicy().path("referenceOnly").asBoolean())return false;
         if(report.path("passed").asBoolean() || w.repairCount()>=StyledRecovery.limit(w.qualityPolicy(),w.character()))return false;
         if(w.character() && StyledSeedRepair.enabled(w.qualityPolicy()) && !"READY".equals(report.at("/seedRepairPlan/status").asText()))return false;

@@ -129,7 +129,7 @@ class StyledQualityAgentTest {
             var quality=json.valueToTree(Map.of("contract",Map.of("tailCarriage","UNKNOWN"),"attempt",attempt,
                 "rulesSha256",StyledSpriteCodec.qualityRulesSha(),"issues",attempt==0?List.of():List.of("CANVAS_CLIPPING")));
             var payload=codec.motion(traits,"SIT","west",png(false),quality);
-            assertThat(payload.path("description").asText()).contains("Tuck tail beside haunch, complete tip INSIDE frame through final hold");
+            assertThat(payload.path("description").asText()).contains("Keep complete tail tucked by haunch INSIDE every frame");
             assertThat(payload.has("last_frame")).isFalse();
             assertThat(payload.path("description").asText().length()).isLessThanOrEqualTo(1000);
         }

@@ -24,6 +24,7 @@ public class StyledLessonStore {
         // Mixed reports are also withheld until observations resolve; confirmed directions can still be repaired.
         if(w.character() && (StyledTailAnatomy.unresolved(report) || StyledCoatReview.unresolved(report)))return;
         if(StyledMotionReview.unresolved(report))return;
+        if(report.has("tailGeometryReconciliation"))return; // Preserve the uncertain raw observation; no derived training label.
         if(!ownedAsset(w))return;assets.valid(w.id(),true);
         String tail=tail(w),direction=direction(w);
         String input=w.character()?report.path("inputSha256").asText():result.path("sha256").asText();

@@ -1821,6 +1821,19 @@ class StyledAssetPostgresTest {
         assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=? AND label='walk-north' AND NOT passed",Integer.class,id)).isZero();
         assertThat(calls.get()).isGreaterThanOrEqualTo(2);verify(provider,times(1)).editAnimation(any());
     }
+    @Test void confirmedPaletteRepairKeepsUncertaintyUnlearnedAndRequiresFreshQuality()throws Exception {
+        UUID id=recoveryRequest(0,false);var calls=new java.util.concurrent.atomic.AtomicInteger();
+        var actual=json.readTree(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/sit-conflicts-v28/sit-north-review.json")));
+        when(quality.review(any(),anyList(),anyList(),eq("SIT"),eq("north"))).thenAnswer(c->{outsideTransaction();
+            if(calls.getAndIncrement()>0)return b75MotionReport(c.getArgument(1),c.getArgument(2),"north",true,"PASS");
+            var r=(tools.jackson.databind.node.ObjectNode)actual.deepCopy();r.put("rulesSha256",currentRules());return r;});
+        finish(id);assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
+        assertThat(step(id,"sit-north").path("repairCount").asInt()).isEqualTo(1);
+        var history=json.readTree(jdbc.queryForObject("SELECT attempt_history FROM shelter.styled_asset_steps WHERE job_id=? AND label='sit-north'",String.class,id));
+        assertThat(history.get(0).at("/quality/motionDecision").asText()).isEqualTo("UNCERTAIN");
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=? AND label='sit-north' AND NOT passed",Integer.class,id)).isZero();
+        verify(provider,times(1)).editAnimation(any());
+    }
     Map<String,Object> b75ResumeBody(UUID id)throws Exception {
         jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=jsonb_set(quality_policy,'{rulesSha256}',to_jsonb(CAST(? AS text))) WHERE id=?","0".repeat(64),id);
         jdbc.update("UPDATE shelter.styled_asset_steps SET quality_report=jsonb_set(quality_report,'{rulesSha256}',to_jsonb(CAST(? AS text))) WHERE job_id=?","0".repeat(64),id);
