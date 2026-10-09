@@ -1711,6 +1711,32 @@ class StyledAssetPostgresTest {
         jdbc.update("UPDATE shelter.styled_asset_steps SET quality_report=jsonb_set(quality_report,'{frameHashes}','[]'::jsonb) WHERE job_id=? AND label='walk-south'",id);
         tick();assertThat(read(id).path("status").asText()).isEqualTo("REVIEW");publicStatus(404);verifyNoInteractions(provider);
     }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans={true,false})
+    void tailLocalizationHoldAllowsConfirmedRepairButNeverApprovesUncertainTail(boolean confirmed)throws Exception {
+        UUID id=recoveryRequest(0,false);var reviews=new java.util.concurrent.atomic.AtomicInteger();
+        when(seedQuality.reviewRecovery(any(),anyList(),any(),any())).thenAnswer(c->{outsideTransaction();boolean repaired=reviews.getAndIncrement()>0;
+            var r=(tools.jackson.databind.node.ObjectNode)automaticSeedReport(c.getArgument(1),repaired);
+            r.put("recoveryVersion","photo-grounded-recovery-v1").put("appearance",repaired?"PASS":"FAIL")
+                .put("repairDescription","Match the complete visible side tail silhouettes while preserving all other anatomy.");
+            var views=json.createArrayNode();for(String d:List.of("south","north","west","east")){
+                boolean side=List.of("west","east").contains(d);
+                var v=json.createObjectNode().put("direction",d).put("confidence",!repaired && side && !confirmed?.74:.94);
+                for(String f:List.of("identityMatches","eyesReadable","styleMatches","directionCorrect","tailPlausible"))v.put(f,true);
+                v.set("issues",json.valueToTree(!repaired && side && confirmed?List.of("TAIL_CARRIAGE"):List.of()));
+                if(side)v.put("tailObservationUncertain",true).put("repairEvidenceSource",confirmed?"GENERAL_PROPERTY_REVIEW":"UNRESOLVED_OBSERVATION");views.add(v);
+            }
+            r.set("propertyReview",json.valueToTree(Map.of("views",views,"tailConsistent",repaired || !confirmed)));
+            var tail=(tools.jackson.databind.node.ObjectNode)r.path("tailEvidence");tail.put("passed",false);
+            tail.set("failedDirections",json.valueToTree(List.of("east")));tail.set("uncertainDirections",json.valueToTree(List.of("east")));
+            return r;
+        });
+        finish(id);var j=read(id);assertThat(j.path("status").asText()).isEqualTo("SEED_REVIEW");
+        assertThat(j.path("seedReview").isNull()).isTrue();assertThat(j.path("qualityApproval").isNull()).isTrue();
+        verify(provider,times(confirmed?1:0)).editSeeds(any());verify(provider,never()).submit(eq(false),any());publicStatus(404);
+        assertThat(step(id,"character").path("repairCount").asInt()).isEqualTo(confirmed?1:0);
+        if(confirmed)verify(provider).pollSeeds(any(),eq(List.of("west","east")));
+    }
     @Test void recoveryBudgetExhaustionCannotStartMotionOrPublishFailedBase()throws Exception {
         UUID id=recoveryRequest(99,false);finish(id);assertThat(read(id).path("status").asText()).isEqualTo("SEED_REVIEW");
         assertThat(step(id,"character").path("repairCount").asInt()).isEqualTo(3);

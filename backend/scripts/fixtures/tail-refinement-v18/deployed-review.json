@@ -1,0 +1,320 @@
+{
+  "note": "측면 꼬리의 별도 관찰이 통과하지 않아 기본 도트 승인을 보류합니다. 기존 외형 판단과 원본은 보존했습니다.",
+  "model": "gpt-5.6-luna",
+  "views": [
+    {
+      "note": "정면 방향과 주요 얼굴·가슴 무늬가 사진과 잘 맞습니다.",
+      "style": "PASS",
+      "direction": "south",
+      "readability": "PASS"
+    },
+    {
+      "note": "얼굴 없는 후면 표현은 올바르며, 보이지 않는 사진 영역과 충돌하지 않습니다.",
+      "style": "PASS",
+      "direction": "north",
+      "readability": "NOT_VISIBLE"
+    },
+    {
+      "note": "방향과 코트 배치는 맞지만 EAST와 꼬리 carriage가 다릅니다.",
+      "style": "PASS",
+      "direction": "west",
+      "readability": "PASS"
+    },
+    {
+      "note": "방향과 주요 무늬는 맞지만 WEST보다 꼬리가 훨씬 높고 크게 표현되었습니다.",
+      "style": "PASS",
+      "direction": "east",
+      "readability": "PASS"
+    }
+  ],
+  "issues": [
+    "SEED_IDENTITY"
+  ],
+  "passed": false,
+  "version": "seed-eyes-v1",
+  "identity": "FAIL",
+  "appearance": "FAIL",
+  "reviewedAt": "2026-10-09T08:17:49.389963145Z",
+  "inputSha256": "3794b6e44555a50f392725845b78c4fd2243da98dfbae3f9f9e978f25fc814e1",
+  "photoSha256": "64e648c7d8372d2c49e093b25011b3b26798086f43a329394644931f1f4e36bf",
+  "rulesSha256": "84a6c987de69c9e911997aac3b91df0262566396ab4e42279101af2e82768082",
+  "tailEvidence": {
+    "model": "gpt-5.6-luna",
+    "passed": false,
+    "version": "photo-tail-evidence-v1",
+    "pixelAudit": {
+      "east": {
+        "span": 4,
+        "opaque": false,
+        "points": 6,
+        "connected": true,
+        "visiblePath": false,
+        "completeContour": false
+      },
+      "west": {
+        "span": 3,
+        "opaque": true,
+        "points": 5,
+        "connected": true,
+        "visiblePath": true,
+        "completeContour": true
+      }
+    },
+    "reviewedAt": "2026-10-09T08:18:08.454796998Z",
+    "inputSha256": "3794b6e44555a50f392725845b78c4fd2243da98dfbae3f9f9e978f25fc814e1",
+    "observation": {
+      "views": [
+        {
+          "tail": "COMPLETE_CONNECTED",
+          "direction": "west",
+          "confidence": 0.78,
+          "tailPixelPath": [
+            {
+              "x": 26,
+              "y": 16
+            },
+            {
+              "x": 27,
+              "y": 16
+            },
+            {
+              "x": 28,
+              "y": 17
+            },
+            {
+              "x": 28,
+              "y": 18
+            },
+            {
+              "x": 27,
+              "y": 19
+            }
+          ],
+          "visibleEvidence": "The sprite faces west, with the rump at the right. A small appendage is visibly attached at the rear outline around x26,y16 and projects slightly down/right to a discernible tip near x28,y19. It is a very short connected tail silhouette rather than a back corner or hind paw."
+        },
+        {
+          "tail": "COMPLETE_CONNECTED",
+          "direction": "east",
+          "confidence": 0.9,
+          "tailPixelPath": [
+            {
+              "x": 5,
+              "y": 16
+            },
+            {
+              "x": 4,
+              "y": 15
+            },
+            {
+              "x": 3,
+              "y": 15
+            },
+            {
+              "x": 2,
+              "y": 14
+            },
+            {
+              "x": 2,
+              "y": 13
+            },
+            {
+              "x": 1,
+              "y": 12
+            }
+          ],
+          "visibleEvidence": "The sprite faces east, with the rump at the left. A distinct raised tail is attached around x5,y16 and curves/project upward-left, with a visible contour ending near x1,y12."
+        }
+      ],
+      "photoTail": "OBSCURED",
+      "photoEvidence": "Across the supplied photographic views, the rump/tail region is either outside the frame or hidden behind the dog's body and framing. No actual tail tip is visible.",
+      "photoConfidence": 0.98
+    },
+    "photoSha256": "64e648c7d8372d2c49e093b25011b3b26798086f43a329394644931f1f4e36bf",
+    "rulesSha256": "84a6c987de69c9e911997aac3b91df0262566396ab4e42279101af2e82768082",
+    "failedDirections": [
+      "east"
+    ],
+    "shortTailSupported": false
+  },
+  "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "reviewVersion": "photo-observed-features-review-v4",
+  "edgeDirections": [],
+  "learnedLessons": [],
+  "propertyReview": {
+    "note": "WEST와 EAST의 꼬리 방향과 형태가 서로 달라 일관성이 낮습니다.",
+    "views": [
+      {
+        "note": "정면 방향과 주요 얼굴·가슴 무늬가 사진과 잘 맞습니다.",
+        "issues": [],
+        "direction": "south",
+        "confidence": 0.97,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "observedPhotoMarkings": "사진에서 이마 중앙의 넓은 흰 블레이즈, 흰 주둥이와 목·가슴, 흰 다리가 보입니다. 몸통 뒤쪽의 흰색 영역도 보이지만 꼬리는 정면에서 가려져 있습니다.",
+        "observedSpriteMarkings": "이마 중앙에 흰색 블레이즈가 있고 흰 주둥이와 넓은 흰 가슴, 흰 앞다리가 보입니다. 나머지 머리와 귀는 황갈색입니다."
+      },
+      {
+        "note": "얼굴 없는 후면 표현은 올바르며, 보이지 않는 사진 영역과 충돌하지 않습니다.",
+        "issues": [],
+        "direction": "north",
+        "confidence": 0.9,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "observedPhotoMarkings": "사진에는 뒷면 전체가 보이지 않아 등과 꼬리의 정확한 무늬는 알 수 없습니다. 보이는 정면 사진에서는 흰 목·가슴과 황갈색 머리가 확인됩니다.",
+        "observedSpriteMarkings": "뒷머리와 몸통은 황갈색이며, 목 뒤와 등 중앙에 작은 흰색 패치가 보입니다. 얼굴과 눈은 보이지 않습니다."
+      },
+      {
+        "note": "방향과 코트 배치는 맞지만 EAST와 꼬리 carriage가 다릅니다.",
+        "issues": [
+          "TAIL_CARRIAGE"
+        ],
+        "direction": "west",
+        "confidence": 0.94,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "observedPhotoMarkings": "사진의 옆면에서는 흰 주둥이와 목·가슴, 흰 다리, 황갈색 몸통이 보입니다. 꼬리는 사진에서 명확히 보이지 않습니다.",
+        "observedSpriteMarkings": "왼쪽을 향한 옆얼굴에 흰 주둥이가 있고, 목에서 몸통으로 이어지는 넓은 흰 띠가 보입니다. 다리 끝은 흰색이며 몸통은 황갈색입니다. 뒤쪽 꼬리는 짧고 거의 수평인 돌출부입니다."
+      },
+      {
+        "note": "방향과 주요 무늬는 맞지만 WEST보다 꼬리가 훨씬 높고 크게 표현되었습니다.",
+        "issues": [
+          "TAIL_CARRIAGE",
+          "TAIL_MISSING"
+        ],
+        "direction": "east",
+        "confidence": 0.74,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": false,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "observedPhotoMarkings": "사진에서 흰 주둥이, 흰 목·가슴과 흰 다리, 황갈색 몸통이 보입니다. 꼬리와 후면의 정확한 형태는 사진에서 가려져 있습니다.",
+        "observedSpriteMarkings": "오른쪽을 향한 옆얼굴에 흰 주둥이와 흰 목·가슴 띠가 있으며, 다리 끝도 흰색입니다. 몸통은 황갈색이고 꼬리는 왼쪽 위로 크게 올라간 곡선형입니다."
+      }
+    ],
+    "tailConsistent": false,
+    "repairDescription": "Keep the SOUTH and NORTH views unchanged. In WEST and EAST, make the visible tail carriage consistent: use one coherent short-tail silhouette and matching angle, while preserving the rounded compact proportions, dark outline, stepped shading, and the photographed white blaze, muzzle, chest, and legs."
+  },
+  "seedRepairPlan": {
+    "method": "VIEW",
+    "status": "UNCERTAIN_VERDICT",
+    "version": "selected-seed-repair-v1",
+    "directions": [
+      "west",
+      "east"
+    ],
+    "rulesSha256": "84a6c987de69c9e911997aac3b91df0262566396ab4e42279101af2e82768082",
+    "sourceBinding": "3794b6e44555a50f392725845b78c4fd2243da98dfbae3f9f9e978f25fc814e1"
+  },
+  "recoveryVersion": "photo-grounded-recovery-v1",
+  "marginDirections": [],
+  "repairDescription": "Keep the SOUTH and NORTH views unchanged. In WEST and EAST, make the visible tail carriage consistent: use one coherent short-tail silhouette and matching angle, while preserving the rounded compact proportions, dark outline, stepped shading, and the photographed white blaze, muzzle, chest, and legs. Show a clearly distinguishable complete connected tail in east; a hidden photo does not justify a missing tail or a stump. Keep the same modest inferred tail design and all unaffected anatomy.",
+  "reviewImageHashes": {
+    "Actual body photo": "64e648c7d8372d2c49e093b25011b3b26798086f43a329394644931f1f4e36bf",
+    "Actual face photo": "074024a348bef2f0f65940308428041994c2e8659ca87c02fbb2ce1174692468",
+    "Unapproved view: east": "e80684ee6894e0a9a1b23ec39eb602647ef8960510ea3a679bc0218f862699c9",
+    "Unapproved view: west": "def3a967028586130dd11ba8f1aab407dcd9c1c4bea3fdb287a1329e323f8149",
+    "Unapproved view: north": "154ef89acea4ebe1752e2be18d65b265ccd77dc17faa7f17382781a6b4626870",
+    "Unapproved view: south": "c17b6096015ace63e821702142cf3d9a89d5bad3b90c70c6a86c671512de5b63",
+    "Approved art style only; not this dog": "bf5e5641f0768a45f7a87f10bbb5bf26e987dee581b1b2cf4d08d2c4c0cd539c"
+  },
+  "minimumClearPixels": 1,
+  "generalPropertyReview": {
+    "note": "WEST와 EAST의 꼬리 방향과 형태가 서로 달라 일관성이 낮습니다.",
+    "views": [
+      {
+        "note": "정면 방향과 주요 얼굴·가슴 무늬가 사진과 잘 맞습니다.",
+        "issues": [],
+        "direction": "south",
+        "confidence": 0.97,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "observedPhotoMarkings": "사진에서 이마 중앙의 넓은 흰 블레이즈, 흰 주둥이와 목·가슴, 흰 다리가 보입니다. 몸통 뒤쪽의 흰색 영역도 보이지만 꼬리는 정면에서 가려져 있습니다.",
+        "observedSpriteMarkings": "이마 중앙에 흰색 블레이즈가 있고 흰 주둥이와 넓은 흰 가슴, 흰 앞다리가 보입니다. 나머지 머리와 귀는 황갈색입니다."
+      },
+      {
+        "note": "얼굴 없는 후면 표현은 올바르며, 보이지 않는 사진 영역과 충돌하지 않습니다.",
+        "issues": [],
+        "direction": "north",
+        "confidence": 0.9,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "observedPhotoMarkings": "사진에는 뒷면 전체가 보이지 않아 등과 꼬리의 정확한 무늬는 알 수 없습니다. 보이는 정면 사진에서는 흰 목·가슴과 황갈색 머리가 확인됩니다.",
+        "observedSpriteMarkings": "뒷머리와 몸통은 황갈색이며, 목 뒤와 등 중앙에 작은 흰색 패치가 보입니다. 얼굴과 눈은 보이지 않습니다."
+      },
+      {
+        "note": "방향과 코트 배치는 맞지만 EAST와 꼬리 carriage가 다릅니다.",
+        "issues": [
+          "TAIL_CARRIAGE"
+        ],
+        "direction": "west",
+        "confidence": 0.94,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "observedPhotoMarkings": "사진의 옆면에서는 흰 주둥이와 목·가슴, 흰 다리, 황갈색 몸통이 보입니다. 꼬리는 사진에서 명확히 보이지 않습니다.",
+        "observedSpriteMarkings": "왼쪽을 향한 옆얼굴에 흰 주둥이가 있고, 목에서 몸통으로 이어지는 넓은 흰 띠가 보입니다. 다리 끝은 흰색이며 몸통은 황갈색입니다. 뒤쪽 꼬리는 짧고 거의 수평인 돌출부입니다."
+      },
+      {
+        "note": "방향과 주요 무늬는 맞지만 WEST보다 꼬리가 훨씬 높고 크게 표현되었습니다.",
+        "issues": [
+          "TAIL_CARRIAGE"
+        ],
+        "direction": "east",
+        "confidence": 0.94,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "observedPhotoMarkings": "사진에서 흰 주둥이, 흰 목·가슴과 흰 다리, 황갈색 몸통이 보입니다. 꼬리와 후면의 정확한 형태는 사진에서 가려져 있습니다.",
+        "observedSpriteMarkings": "오른쪽을 향한 옆얼굴에 흰 주둥이와 흰 목·가슴 띠가 있으며, 다리 끝도 흰색입니다. 몸통은 황갈색이고 꼬리는 왼쪽 위로 크게 올라간 곡선형입니다."
+      }
+    ],
+    "tailConsistent": false,
+    "repairDescription": "Keep the SOUTH and NORTH views unchanged. In WEST and EAST, make the visible tail carriage consistent: use one coherent short-tail silhouette and matching angle, while preserving the rounded compact proportions, dark outline, stepped shading, and the photographed white blaze, muzzle, chest, and legs."
+  },
+  "clearPixelsLeftTopRightBottom": {
+    "east": [
+      2,
+      1,
+      1,
+      1
+    ],
+    "west": [
+      2,
+      1,
+      2,
+      1
+    ],
+    "north": [
+      6,
+      2,
+      6,
+      1
+    ],
+    "south": [
+      5,
+      2,
+      5,
+      1
+    ]
+  }
+}

@@ -189,3 +189,5 @@ B-43: [스프라이트 자동 품질 검수·선택 보완](sprite-quality-repai
 - B-68 통과 방향 보존·실패 부위 선택 보완: [노션](https://app.notion.com/p/3f45b2d1a55f80cb8d1bdd4a375b1ab6), [처리·검증](selected-seed-repair.md). 브랜치 `backend/b-68-targeted-seed-repair`. 실패 방향 편집과 통과 원본 보존, 눈·입 국소 마스크, 독립 재검수·기존 이력·중복·예산 유지. 공통 규칙 v16, DB 변경 없음.
 
 - B-69 사진 근거와 꼬리 관찰 분리: [노션](https://app.notion.com/p/3f45b2d1a55f80ec94c8da223b8e68c6), [처리·실제 검증](seed-tail-evidence.md). 브랜치 `backend/b-69-tail-evidence`. B-68 배포 실검증에서 발견한 BASE 꼬리 false PASS를 원본·픽셀 위치 근거로 차단하고 새 작업 자동 승인에 연결한다. 공통 규칙 v17, DB 변경 없음. 전체 12모션/최종 승인/프론트 검증은 배포 후 별도 확인.
+
+- B-70 꼬리 좌표 재검증과 확정 결함 보완 분리: [노션](https://app.notion.com/p/3f45b2d1a55f805bb97fe43cd3eeff74), [실패·처리·검증 경계](tail-evidence-refinement.md). 브랜치 `backend/b-70-tail-evidence-refinement`. 동일 원본 한 번 재관찰, 불확실한 방향 원본 보존과 확정 결함 선택 편집, 낮은 확신도 승인 차단. 공통 규칙 v18, DB 변경 없음. 실제 12모션·최종 공개·프론트는 B-68 후속.

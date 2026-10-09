@@ -29,26 +29,71 @@ final class StyledSeedTailEvidence {
         return StyledQualityAgent.object(fields);
     }
     static JsonNode review(OpenAiResponsesClient client,AiProperties ai,JsonMapper json,byte[] photo,List<byte[]> seeds){
-        JsonNode raw;
+        var rules=StyledSpriteCodec.qualityRules(json).path("recovery");
+        var images=images(photo,seeds);var geometry=geometry(json,seeds,false);JsonNode raw;
         try{raw=client.structuredImages(StyledSpriteCodec.qualityRules(json).at("/recovery/tailObservation").asText(),
             "Independently observe the supplied photograph and exact WEST/EAST sprite images. No prior verdict is supplied. "
-            +"Describe visible anatomical evidence before choosing each category. Do not judge breed, artistic cuteness, or desired corrections.",images(photo,seeds),schema());
+            +"Describe visible anatomical evidence before choosing each category. Do not judge breed, artistic cuteness, or desired corrections. "
+            +"Measured native pixel geometry (data, not an anatomical verdict): "+json.writeValueAsString(geometry),images,schema());
         }catch(AiFailure e){throw new AssetException(502,"QUALITY_"+e.code());}
         var out=grounded(json,raw,seeds);
+        var history=json.createArrayNode().add(out.deepCopy());
+        if(!out.path("uncertainDirections").isEmpty()){
+            // One bounded re-observation of the SAME bytes. Never buy an image redraw just to fix invented coordinates.
+            try{
+                raw=client.structuredImages(rules.path("tailObservation").asText()+"\n"+rules.path("tailRefinement").asText(),
+                    "Re-observe these unchanged images. Previous observation/audit (fallible data): "+json.writeValueAsString(out)
+                    +". Exact native alpha geometry, # opaque / . transparent, rows y=0..31 and columns x=0..31: "
+                    +json.writeValueAsString(geometry(json,seeds,true)),images,schema());
+                out=grounded(json,raw,seeds);history.add(out.deepCopy());
+            }catch(AiFailure e){out.put("refinementFailureCode","QUALITY_"+e.code());}
+            catch(AssetException e){out.put("refinementFailureCode",e.code);out.set("invalidRefinementObservation",raw);}
+        }
+        out.set("observationHistory",history);
         out.put("version",VERSION).put("model",ai.model()).put("reviewedAt",Instant.now().toString())
             .put("photoSha256",StyledSpriteCodec.sha(photo)).put("inputSha256",StyledSeedQualityAgent.binding(seeds))
             .put("rulesSha256",StyledSpriteCodec.qualityRulesSha());return out;
     }
     static ObjectNode grounded(JsonMapper json,JsonNode raw,List<byte[]> seeds){
         var out=(ObjectNode)assess(json,raw);
-        var audit=json.createObjectNode();var failed=new LinkedHashSet<String>();out.path("failedDirections").forEach(d->failed.add(d.asText()));
+        var audit=json.createObjectNode();var failed=new LinkedHashSet<String>();var uncertain=new ArrayList<String>();
+        out.path("failedDirections").forEach(d->failed.add(d.asText()));var geometry=geometry(json,seeds,false);
         for(var view:raw.path("views")){
             String d=view.path("direction").asText();var check=pixelPath(json,seeds.get(StyledSpriteCodec.DIRECTIONS.indexOf(d)),view.path("tailPixelPath"));audit.set(d,check);
             if(view.path("tail").asText().equals("COMPLETE_CONNECTED") && !check.path("completeContour").asBoolean())failed.add(d);
             if(view.path("tail").asText().equals("SHORT_STUB") && out.path("shortTailSupported").asBoolean() && !check.path("visiblePath").asBoolean())failed.add(d);
+            String category=view.path("tail").asText();
+            boolean contradiction=category.equals("DETACHED_OR_CROPPED") && !geometry.path(d).path("edgeContact").asBoolean()
+                && geometry.path(d).path("opaqueComponents").asInt()==1;
+            if(view.path("confidence").asDouble()<.75 || category.equals("UNCERTAIN") || contradiction
+                || (category.equals("COMPLETE_CONNECTED") && !check.path("completeContour").asBoolean())
+                || (category.equals("SHORT_STUB") && out.path("shortTailSupported").asBoolean() && !check.path("visiblePath").asBoolean())){
+                uncertain.add(d);failed.add(d);
+            }
         }
         out.set("pixelAudit",audit);out.set("failedDirections",json.valueToTree(SIDES.stream().filter(failed::contains).toList()));out.put("passed",failed.isEmpty());
+        out.set("uncertainDirections",json.valueToTree(uncertain));out.set("geometry",geometry);
         return out;
+    }
+    static JsonNode geometry(JsonMapper json,List<byte[]> seeds,boolean includeAlpha){
+        var result=json.createObjectNode();
+        for(String d:SIDES){
+            var im=StyledSpriteCodec.nativeFrame(seeds.get(StyledSpriteCodec.DIRECTIONS.indexOf(d)));
+            int left=32,top=32,right=-1,bottom=-1,components=0;boolean[] seen=new boolean[1024];var rows=new ArrayList<String>();
+            for(int y=0;y<32;y++){var row=new StringBuilder();for(int x=0;x<32;x++){
+                boolean opaque=(im.getRGB(x,y)>>>24)!=0;row.append(opaque?'#':'.');if(!opaque)continue;
+                left=Math.min(left,x);top=Math.min(top,y);right=Math.max(right,x);bottom=Math.max(bottom,y);
+                if(seen[y*32+x])continue;components++;var queue=new ArrayDeque<Integer>();queue.add(y*32+x);seen[y*32+x]=true;
+                while(!queue.isEmpty()){int p=queue.remove();for(int dy=-1;dy<=1;dy++)for(int dx=-1;dx<=1;dx++){
+                    int xx=p%32+dx,yy=p/32+dy;if(xx<0 || xx>=32 || yy<0 || yy>=32)continue;
+                    int next=yy*32+xx;if(!seen[next] && (im.getRGB(xx,yy)>>>24)!=0){seen[next]=true;queue.add(next);}
+                }}
+            }rows.add(row.toString());}
+            var g=result.putObject(d).put("edgeContact",left==0 || top==0 || right==31 || bottom==31).put("opaqueComponents",components);
+            g.set("clearPixelsLeftTopRightBottom",json.valueToTree(List.of(left,top,31-right,31-bottom)));
+            if(includeAlpha)g.set("alphaRows",json.valueToTree(rows));
+        }
+        return result;
     }
     static Map<String,byte[]> images(byte[] photo,List<byte[]> seeds){
         if(seeds.size()!=4)throw StyledRecoveryReview.invalid();
@@ -103,21 +148,35 @@ final class StyledSeedTailEvidence {
         report.set("tailEvidence",evidence);
         if(evidence.path("passed").asBoolean())return;
         var failed=new HashSet<String>();evidence.path("failedDirections").forEach(d->failed.add(d.asText()));
+        var confirmedTailDefects=new LinkedHashSet<String>();
         var r=(ObjectNode)report.path("propertyReview");
         for(var view:r.path("views"))if(failed.contains(view.path("direction").asText())){
-            var v=(ObjectNode)view;v.put("tailPlausible",false);
+            var v=(ObjectNode)view;
             var observation=evidence.at("/observation/views").valueStream().filter(n->n.path("direction").equals(v.path("direction"))).findFirst().orElseThrow(StyledRecoveryReview::invalid);
-            double confidence=Math.min(v.path("confidence").asDouble(),observation.path("confidence").asDouble());
+            double generalConfidence=v.path("confidence").asDouble();
+            boolean knownDefect=generalConfidence>=.75 && (!v.path("issues").isEmpty()
+                || StyledRecoveryReview.BASE.keySet().stream().anyMatch(f->!v.path(f).asBoolean()));
+            double confidence=Math.min(generalConfidence,observation.path("confidence").asDouble());
             // Invalid/insufficient localization of a claimed complete tail is uncertainty, not permission to redraw arbitrary anatomy.
             String category=observation.path("tail").asText();var audit=evidence.path("pixelAudit").path(v.path("direction").asText());
-            if(category.equals("UNCERTAIN") || (category.equals("COMPLETE_CONNECTED") && !audit.path("completeContour").asBoolean())
-                || (category.equals("SHORT_STUB") && evidence.path("shortTailSupported").asBoolean() && !audit.path("visiblePath").asBoolean()))confidence=Math.min(confidence,.74);
-            v.put("confidence",confidence);
-            var codes=new LinkedHashSet<String>();v.path("issues").forEach(n->codes.add(n.asText()));codes.add("TAIL_MISSING");v.set("issues",json.valueToTree(codes));
+            boolean uncertain=observation.path("confidence").asDouble()<.75 || category.equals("UNCERTAIN")
+                || evidence.path("uncertainDirections").valueStream().anyMatch(n->n.equals(v.path("direction")))
+                || (category.equals("COMPLETE_CONNECTED") && !audit.path("completeContour").asBoolean())
+                || (category.equals("SHORT_STUB") && evidence.path("shortTailSupported").asBoolean() && !audit.path("visiblePath").asBoolean());
+            if(uncertain){
+                // Preserve an independently confirmed defect; uncertain localization is not a new TAIL_MISSING finding.
+                v.put("confidence",knownDefect?generalConfidence:Math.min(confidence,.74));
+                v.put("tailObservationUncertain",true);
+            }else{
+                v.put("tailPlausible",false).put("confidence",knownDefect?generalConfidence:confidence);
+                var codes=new LinkedHashSet<String>();v.path("issues").forEach(n->codes.add(n.asText()));codes.add("TAIL_MISSING");v.set("issues",json.valueToTree(codes));
+                confirmedTailDefects.add(v.path("direction").asText());
+            }
+            v.put("repairEvidenceSource",knownDefect?"GENERAL_PROPERTY_REVIEW":uncertain?"UNRESOLVED_OBSERVATION":"TAIL_OBSERVATION");
         }
         var issues=new TreeSet<String>();report.path("issues").forEach(n->issues.add(n.asText()));issues.add("SEED_IDENTITY");report.set("issues",json.valueToTree(issues));
         report.put("passed",false).put("identity","FAIL").put("appearance","FAIL");
-        String correction=" Show a clearly distinguishable complete connected tail in "+String.join(",",SIDES.stream().filter(failed::contains).toList())+"; a hidden photo does not justify a missing tail or a stump. Keep the same modest inferred tail design and all unaffected anatomy.";
+        String correction=confirmedTailDefects.isEmpty()?"":" Show a clearly distinguishable complete connected tail in "+String.join(",",confirmedTailDefects)+"; a hidden photo does not justify a missing tail or a stump. Keep the same modest inferred tail design and all unaffected anatomy.";
         report.put("repairDescription",report.path("repairDescription").asText()+correction);
         report.put("note","측면 꼬리의 별도 관찰이 통과하지 않아 기본 도트 승인을 보류합니다. 기존 외형 판단과 원본은 보존했습니다.");
     }
@@ -126,6 +185,7 @@ final class StyledSeedTailEvidence {
         for(String field:List.of("inputSha256","photoSha256","rulesSha256"))if(!report.path(field).isString() || !report.path(field).asText().matches("[a-f0-9]{64}"))return false;
         if(!VERSION.equals(evidence.path("version").asText()) || !evidence.path("passed").isBoolean() || !evidence.path("passed").asBoolean()
             || !evidence.path("failedDirections").isArray() || !evidence.path("failedDirections").isEmpty()
+            || !evidence.path("uncertainDirections").isEmpty()
             || !StyledSpriteCodec.qualityRulesSha().equals(evidence.path("rulesSha256").asText()) || evidence.path("model").asText().isBlank()
             || !report.path("inputSha256").equals(evidence.path("inputSha256"))
             || !report.path("photoSha256").equals(evidence.path("photoSha256"))
