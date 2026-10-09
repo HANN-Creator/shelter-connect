@@ -22,7 +22,7 @@ public class StyledLessonStore {
         if(w.qualityPolicy()==null || !report.path("passed").isBoolean())return;
         // Unknown anatomy is recorded on the job, never mislabeled as a negative training example.
         // Mixed reports are also withheld until observations resolve; confirmed directions can still be repaired.
-        if(w.character() && StyledTailAnatomy.unresolved(report))return;
+        if(w.character() && (StyledTailAnatomy.unresolved(report) || StyledCoatReview.unresolved(report)))return;
         if(StyledMotionReview.unresolved(report))return;
         if(!ownedAsset(w))return;assets.valid(w.id(),true);
         String tail=tail(w),direction=direction(w);

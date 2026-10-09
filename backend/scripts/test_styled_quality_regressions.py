@@ -31,6 +31,18 @@ def decode_recorded_alpha(rows):
 
 
 class QualityRegressionTest(unittest.TestCase):
+    def test_coat_repair_keeps_deployed_source_and_prevention_on_initial_generation(self):
+        root=Path(__file__).parent/'fixtures/material-coat-v25'
+        evidence=read(root/'evidence.json')
+        for file,sha in evidence['sha256'].items():self.assertEqual(digest(root/file),sha)
+        self.assertEqual(evidence['repairCount'],1)
+        self.assertEqual(evidence['pixelLabSubmissions'],2)
+        self.assertFalse(evidence['published'])
+        report=read(root/'deployed-review.json')
+        self.assertTrue(report['tailEvidence']['passed'])
+        self.assertTrue(any('COAT_MISMATCH' in v['issues'] for v in report['propertyReview']['views']))
+        self.assertIn('no dark eye rings',load_quality()['recovery']['coatPrevention'])
+
     def test_motion_reference_and_temporal_conflict_keeps_originals_and_last_frame(self):
         root=Path(__file__).parent/'fixtures/motion-review-v22'
         for case in read(root/'evidence.json')['cases']:

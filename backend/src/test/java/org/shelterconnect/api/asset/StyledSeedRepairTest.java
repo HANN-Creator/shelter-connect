@@ -46,6 +46,25 @@ class StyledSeedRepairTest {
         var before=StyledSpriteCodec.nativeFrame(source.getFirst());var after=StyledSpriteCodec.nativeFrame(result.seeds().getFirst());
         for(int y=0;y<32;y++)for(int x=0;x<32;x++)if(x!=15 || y!=19)assertThat(after.getRGB(x,y)).isEqualTo(before.getRGB(x,y));
     }
+    @Test void facialCoatMaskCannotReplaceRearTailAndKeepsEveryOutsidePixel()throws Exception {
+        var source=new ArrayList<byte[]>();for(String d:StyledSpriteCodec.DIRECTIONS)source.add(Files.readAllBytes(Path.of("scripts/fixtures/material-coat-v25/"+d+".png")));
+        var r=(ObjectNode)json.readTree(Files.readAllBytes(Path.of("scripts/fixtures/material-coat-v25/deployed-review.json")));
+        r.put("rulesSha256",StyledSpriteCodec.qualityRulesSha());
+        for(var n:r.at("/propertyReview/views")){var v=(ObjectNode)n;v.set("issues",json.createArrayNode());
+            if(v.path("direction").asText().equals("south")){v.put("coatRepairScope","FACE");v.set("issues",json.valueToTree(List.of("COAT_MISMATCH")));}}
+        var client=mock(OpenAiResponsesClient.class);
+        when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(json.readTree("{\"confident\":true,\"regions\":[{\"direction\":\"south\",\"x\":14,\"y\":10,\"width\":2,\"height\":2}],\"note\":\"synthetic position test\"}"));
+        r.set("seedRepairPlan",StyledSeedRepair.plan(client,json,source,r));
+        assertThat(r.at("/seedRepairPlan/method").asText()).isEqualTo("REGION");assertThat(r.at("/seedRepairPlan/status").asText()).isEqualTo("READY");
+        var raw=StyledSeedEyeRepair.strip(source);raw.setRGB(14,10,0xffab8877);raw.setRGB(90,20,0xffabcdef);
+        var repaired=StyledSeedRepair.apply(source,r,json.valueToTree(Map.of("eyeSheet",Base64.getEncoder().encodeToString(StyledSeedEyeRepair.png(raw)))));
+        for(int i=1;i<4;i++)assertThat(repaired.seeds().get(i)).isSameAs(source.get(i));
+        var before=StyledSpriteCodec.nativeFrame(source.get(0));var after=StyledSpriteCodec.nativeFrame(repaired.seeds().get(0));
+        for(int y=0;y<32;y++)for(int x=0;x<32;x++)if(!(x>=14 && x<16 && y>=10 && y<12))assertThat(after.getRGB(x,y)).isEqualTo(before.getRGB(x,y));
+        var plan=(ObjectNode)r.path("seedRepairPlan");plan.set("directions",json.valueToTree(List.of("west")));
+        plan.set("regions",json.readTree("[{\"direction\":\"west\",\"x\":24,\"y\":12,\"width\":2,\"height\":2}]"));
+        assertThatThrownBy(()->StyledSeedRepair.mask(source,plan)).isInstanceOf(AssetException.class);
+    }
     @Test void ambiguousGlobalFailureAndUncertainRegionsNeverBecomePaidFullRedraws()throws Exception{
         var source=seeds("final");var r=report("final");var client=mock(OpenAiResponsesClient.class);
         when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(json.readTree("{\"confident\":false,\"regions\":[],\"note\":\"uncertain white fur\"}"));
