@@ -97,7 +97,7 @@ public class StyledAssetWorker {
             JsonNode result=w.providerResult();
             if(result==null) {
                 if(w.submittedAt()==null || w.submittedAt().plusSeconds(7200).isBefore(Instant.now())) { store.fail(w,true,"PROVIDER_WAIT_EXPIRED");return; }
-                try { result=regionalBase?provider.pollSeedEyes(w.providerId()):selectedBase?provider.pollSeeds(w.providerId(),StyledSeedRepair.targets(baseAttempt.path("quality"))):baseEdit?provider.pollSeeds(w.providerId()):eyeEdit?provider.pollSeedEyes(w.providerId()):provider.poll(w.providerId(),w.character()); }
+                try { result=regionalBase?provider.pollSeedEyes(w.providerId()):selectedBase?provider.pollSeeds(w.providerId(),StyledSeedRepair.plannedDirections(baseAttempt.path("quality"))):baseEdit?provider.pollSeeds(w.providerId()):eyeEdit?provider.pollSeedEyes(w.providerId()):provider.poll(w.providerId(),w.character()); }
                 catch(AssetProvider.Failure e) { store.defer(w,20);return; }
                 if(result.path("status").asText().equals("WAITING")) { store.defer(w,5);return; }
                 if(result.path("status").asText().equals("FAILED")) { store.fail(w,false,"PROVIDER_JOB_FAILED");return; }
@@ -112,7 +112,7 @@ public class StyledAssetWorker {
                     var rawKeys=new LinkedHashMap<String,String>();var rawHashes=new LinkedHashMap<String,String>();
                     if(regionalBase){String key=w.prefix()+"raw-seed-regions/"+w.repairCount()+".png";byte[] raw=Base64.getDecoder().decode(result.path("eyeSheet").asText());
                         StyledSeedEyeRepair.rawStrip(raw);storage.put(key,raw);rawKeys.put("strip",key);rawHashes.put("strip",StyledSpriteCodec.sha(raw));}
-                    else for(String d:StyledSeedRepair.targets(prior)){String key=w.prefix()+"raw-selected-seeds/"+w.repairCount()+"/"+d+".png";byte[] raw=StyledPixelLabClient.decode(result.at("/directions/"+d).asText());
+                    else for(String d:StyledSeedRepair.directions(source,prior)){String key=w.prefix()+"raw-selected-seeds/"+w.repairCount()+"/"+d+".png";byte[] raw=StyledPixelLabClient.decode(result.at("/directions/"+d).asText());
                         storage.put(key,raw);rawKeys.put(d,key);rawHashes.put(d,StyledSpriteCodec.sha(raw));}
                     var repaired=StyledSeedRepair.apply(source,prior,result);
                     for(int i=0;i<4;i++)editedSeeds.put(StyledSpriteCodec.DIRECTIONS.get(i),repaired.seeds().get(i));

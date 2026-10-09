@@ -36,11 +36,12 @@ final class StyledSeedRepair {
         return StyledSpriteCodec.DIRECTIONS.stream().filter(failed::contains).toList();
     }
     static JsonNode plan(OpenAiResponsesClient client,JsonMapper json,List<byte[]> seeds,JsonNode report){
-        verifySource(seeds,report);var dirs=targets(report);
+        verifySource(seeds,report);var all=targets(report);var dirs=repairTargets(report);
         var plan=json.createObjectNode().put("version",VERSION).put("status","READY").put("method","VIEW")
             .put("sourceBinding",StyledSeedQualityAgent.binding(seeds)).put("rulesSha256",StyledSpriteCodec.qualityRulesSha());
         plan.set("directions",json.valueToTree(dirs));
-        if(report.at("/propertyReview/views").valueStream().anyMatch(v->v.path("confidence").asDouble()<.75))return plan.put("status","UNCERTAIN_VERDICT");
+        plan.set("deferredDirections",json.valueToTree(all.stream().filter(d->!dirs.contains(d)).toList()));
+        if(dirs.isEmpty() || report.at("/propertyReview/views").valueStream().anyMatch(v->v.path("confidence").asDouble()<.75 && !localizationOnly(v)))return plan.put("status","UNCERTAIN_VERDICT");
         if(!faceOnly(report,dirs))return plan;
         var box=StyledQualityAgent.object(Map.of("direction",Map.of("type","string","enum",dirs),
             "x",Map.of("type","integer","minimum",1,"maximum",30),"y",Map.of("type","integer","minimum",1,"maximum",30),
@@ -58,6 +59,18 @@ final class StyledSeedRepair {
         try{mask(seeds,plan);}catch(AssetException e){plan.put("status","INVALID_REGIONS");}
         return plan;
     }
+    private static boolean localizationOnly(JsonNode view){
+        return view.path("tailObservationUncertain").asBoolean()
+            && view.path("repairEvidenceSource").asText().equals("UNRESOLVED_OBSERVATION")
+            && view.path("issues").isEmpty()
+            && StyledRecoveryReview.BASE.keySet().stream().allMatch(f->view.path(f).asBoolean());
+    }
+    private static List<String> repairTargets(JsonNode report){
+        var deferred=new HashSet<String>();for(var view:report.at("/propertyReview/views"))if(localizationOnly(view))deferred.add(view.path("direction").asText());
+        // Exact pixel clipping is independent evidence even when tail localization is unknown.
+        for(String field:List.of("edgeDirections","marginDirections"))for(var d:report.path(field))deferred.remove(d.asText());
+        return targets(report).stream().filter(d->!deferred.contains(d)).toList();
+    }
     private static boolean faceOnly(JsonNode report,List<String> dirs){
         if(dirs.contains("north") || !report.at("/propertyReview/tailConsistent").asBoolean()
             || !report.path("edgeDirections").isEmpty() || !report.path("marginDirections").isEmpty())return false;
@@ -69,9 +82,16 @@ final class StyledSeedRepair {
         return true;
     }
     static List<String> directions(List<byte[]> seeds,JsonNode report){
-        verifySource(seeds,report);var plan=report.path("seedRepairPlan");var dirs=targets(report);
+        verifySource(seeds,report);return plannedDirections(report);
+    }
+    static List<String> plannedDirections(JsonNode report){
+        var plan=report.path("seedRepairPlan");var dirs=repairTargets(report);
         if(!VERSION.equals(plan.path("version").asText()) || !"READY".equals(plan.path("status").asText())
-            || !StyledSeedQualityAgent.binding(seeds).equals(plan.path("sourceBinding").asText())
+            || dirs.isEmpty()
+            || !StyledRecovery.VERSION.equals(report.path("recoveryVersion").asText())
+            || !StyledSpriteCodec.qualityRulesSha().equals(report.path("rulesSha256").asText())
+            || !report.path("inputSha256").asText().matches("[a-f0-9]{64}")
+            || !report.path("inputSha256").equals(plan.path("sourceBinding"))
             || !StyledSpriteCodec.qualityRulesSha().equals(plan.path("rulesSha256").asText())
             || !plan.path("directions").isArray() || !dirs.equals(plan.path("directions").valueStream().map(JsonNode::asText).toList())
             || !Set.of("VIEW","REGION").contains(plan.path("method").asText()))throw invalid();
