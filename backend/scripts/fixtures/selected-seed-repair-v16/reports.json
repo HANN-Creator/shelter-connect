@@ -1,0 +1,293 @@
+{
+  "source": "B67 hosted quality evidence; no photographs, credentials or storage links",
+  "original": {
+    "note": "남쪽·서쪽·동쪽은 방향과 정체성이 대체로 일치하지만, 북쪽 뒷모습에서 꼬리가 보이지 않습니다.",
+    "model": "gpt-5.6-luna",
+    "views": [
+      {
+        "note": "정면 방향과 얼굴 무늬, 귀 형태가 사진과 잘 맞습니다.",
+        "style": "PASS",
+        "direction": "south",
+        "readability": "PASS"
+      },
+      {
+        "note": "올바른 무안면 뒷모습이지만 꼬리가 시각적으로 빠져 있습니다.",
+        "style": "PASS",
+        "direction": "north",
+        "readability": "NOT_VISIBLE"
+      },
+      {
+        "note": "프로필 방향과 주요 흰색 무늬가 자연스럽게 일치합니다.",
+        "style": "PASS",
+        "direction": "west",
+        "readability": "PASS"
+      },
+      {
+        "note": "오른쪽 프로필과 얼굴·가슴 무늬가 사진과 잘 맞습니다.",
+        "style": "PASS",
+        "direction": "east",
+        "readability": "PASS"
+      }
+    ],
+    "issues": [
+      "SEED_IDENTITY"
+    ],
+    "passed": false,
+    "version": "seed-eyes-v1",
+    "identity": "FAIL",
+    "appearance": "FAIL",
+    "reviewedAt": "2026-10-09T04:12:01.647658975Z",
+    "inputSha256": "fb375bd554c26dc9121b88b7f6db075be414c9e5102b9b79a3f206324e68a7e6",
+    "photoSha256": "64e648c7d8372d2c49e093b25011b3b26798086f43a329394644931f1f4e36bf",
+    "rulesSha256": "3430ce089c11a94500d5bb202511b250334c729fa208081e5d47b8aae78e6c9f",
+    "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "reviewVersion": "photo-observed-features-review-v4",
+    "edgeDirections": [],
+    "learnedLessons": [],
+    "propertyReview": {
+      "note": "남쪽·서쪽·동쪽은 방향과 정체성이 대체로 일치하지만, 북쪽 뒷모습에서 꼬리가 보이지 않습니다.",
+      "views": [
+        {
+          "note": "정면 방향과 얼굴 무늬, 귀 형태가 사진과 잘 맞습니다.",
+          "issues": [],
+          "direction": "south",
+          "confidence": 0.98,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "사진에서는 갈색 머리와 직립 귀, 넓은 흰 이마 줄무늬가 코까지 이어지고, 흰 주둥이·가슴·다리가 보입니다. 등과 꼬리는 이 정면 사진에서 일부 가려져 있습니다.",
+          "observedSpriteMarkings": "갈색 머리와 큰 직립 귀, 이마 중앙의 넓은 흰색 블레이즈, 흰 주둥이와 가슴, 흰 앞다리가 보입니다."
+        },
+        {
+          "note": "올바른 무안면 뒷모습이지만 꼬리가 시각적으로 빠져 있습니다.",
+          "issues": [
+            "TAIL_MISSING"
+          ],
+          "direction": "north",
+          "confidence": 0.91,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": false,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "사진의 측면·정면에서 갈색 등과 흰색 몸통 영역은 확인되지만, 완전한 뒷모습과 꼬리는 보이지 않아 후면 무늬는 일부 미상입니다.",
+          "observedSpriteMarkings": "뒷머리와 양쪽 갈색 귀, 등 위쪽의 작은 흰색 패치, 갈색 몸통과 흰 발이 보이며 얼굴과 눈은 없습니다."
+        },
+        {
+          "note": "프로필 방향과 주요 흰색 무늬가 자연스럽게 일치합니다.",
+          "issues": [],
+          "direction": "west",
+          "confidence": 0.94,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "측면 사진에서 갈색 얼굴과 직립 귀, 코까지 이어지는 흰 이마·주둥이, 흰 목과 몸통 영역이 보입니다. 꼬리는 사진에서 분명히 보이지 않습니다.",
+          "observedSpriteMarkings": "왼쪽을 향한 짧은 털의 갈색 프로필이며, 흰 이마·주둥이, 흰 목과 가슴 띠, 흰 발이 보입니다. 엉덩이 뒤에는 작은 갈색 꼬리 형태가 있습니다."
+        },
+        {
+          "note": "오른쪽 프로필과 얼굴·가슴 무늬가 사진과 잘 맞습니다.",
+          "issues": [],
+          "direction": "east",
+          "confidence": 0.95,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "사진의 오른쪽 프로필에서 갈색 얼굴과 직립 귀, 코까지 이어지는 흰 줄무늬, 흰 주둥이·목·가슴이 보입니다. 꼬리는 사진 구도에서 숨겨져 있습니다.",
+          "observedSpriteMarkings": "오른쪽을 향한 갈색 프로필이며, 흰 이마 줄무늬와 주둥이, 흰 목·가슴, 흰 발이 보입니다. 몸 뒤쪽의 꼬리는 짧고 작게 표현되었습니다."
+        }
+      ],
+      "tailConsistent": false,
+      "repairDescription": "Preserve the approved compact pixel-art style. Add a small, coherent visible tail to the NORTH rear view; keep the existing brown-and-white coat pattern and avoid changing the passing SOUTH, WEST, and EAST views."
+    },
+    "recoveryVersion": "photo-grounded-recovery-v1",
+    "marginDirections": [],
+    "repairDescription": "Preserve the approved compact pixel-art style. Add a small, coherent visible tail to the NORTH rear view; keep the existing brown-and-white coat pattern and avoid changing the passing SOUTH, WEST, and EAST views.",
+    "reviewImageHashes": {
+      "Actual body photo": "64e648c7d8372d2c49e093b25011b3b26798086f43a329394644931f1f4e36bf",
+      "Actual face photo": "074024a348bef2f0f65940308428041994c2e8659ca87c02fbb2ce1174692468",
+      "Unapproved view: east": "c16210fe2f8eed3b59b49407fb60865cccd5911672131c4f714cefc56a764290",
+      "Unapproved view: west": "b18030d7ff40a994c78ccc186976670f867d2e3b78b1b7b8ef819f3ee101bb71",
+      "Unapproved view: north": "b0cabc7549cba7a2d2a785801a41b89c6802d8024df7da58dc8cbe36a49f2796",
+      "Unapproved view: south": "d0b53191794d8c40cc6b835dc262dff9a2040bc196bce688ddd7850cb29968bb",
+      "Approved art style only; not this dog": "bf5e5641f0768a45f7a87f10bbb5bf26e987dee581b1b2cf4d08d2c4c0cd539c"
+    },
+    "minimumClearPixels": 1,
+    "clearPixelsLeftTopRightBottom": {
+      "east": [
+        2,
+        1,
+        2,
+        1
+      ],
+      "west": [
+        2,
+        1,
+        2,
+        1
+      ],
+      "north": [
+        6,
+        2,
+        6,
+        1
+      ],
+      "south": [
+        4,
+        2,
+        4,
+        1
+      ]
+    }
+  },
+  "final": {
+    "note": "네 방향 모두 실제 사진의 갈색·흰색 무늬와 짧은 털, 직립 귀를 대체로 일관되게 반영합니다.",
+    "model": "gpt-5.6-luna",
+    "views": [
+      {
+        "note": "정면 방향과 무늬는 맞지만 입의 큰 흰색 웃음 형태가 사진보다 과장되어 보입니다.",
+        "style": "PASS",
+        "direction": "south",
+        "readability": "PASS"
+      },
+      {
+        "note": "얼굴 없는 후면 표현이 적절하며, 사진에 숨겨진 후면 무늬를 결함으로 판단할 수 없습니다.",
+        "style": "PASS",
+        "direction": "north",
+        "readability": "NOT_VISIBLE"
+      },
+      {
+        "note": "profile 방향, 귀 모양, 흰 얼굴·가슴 무늬가 사진과 잘 맞습니다.",
+        "style": "PASS",
+        "direction": "west",
+        "readability": "PASS"
+      },
+      {
+        "note": "오른쪽 profile과 주요 코트 패치가 실제 개와 일치합니다.",
+        "style": "PASS",
+        "direction": "east",
+        "readability": "PASS"
+      }
+    ],
+    "issues": [
+      "SEED_IDENTITY"
+    ],
+    "passed": false,
+    "version": "seed-eyes-v1",
+    "identity": "FAIL",
+    "appearance": "FAIL",
+    "reviewedAt": "2026-10-09T04:19:31.034844362Z",
+    "inputSha256": "fdc52771d2f86fae220e800e2d7f11c78efb6be4dc551661c23c5ea20286d938",
+    "photoSha256": "64e648c7d8372d2c49e093b25011b3b26798086f43a329394644931f1f4e36bf",
+    "rulesSha256": "3430ce089c11a94500d5bb202511b250334c729fa208081e5d47b8aae78e6c9f",
+    "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "reviewVersion": "photo-observed-features-review-v4",
+    "edgeDirections": [],
+    "learnedLessons": [],
+    "propertyReview": {
+      "note": "네 방향 모두 실제 사진의 갈색·흰색 무늬와 짧은 털, 직립 귀를 대체로 일관되게 반영합니다.",
+      "views": [
+        {
+          "note": "정면 방향과 무늬는 맞지만 입의 큰 흰색 웃음 형태가 사진보다 과장되어 보입니다.",
+          "issues": [
+            "MOUTH_EXPRESSION"
+          ],
+          "direction": "south",
+          "confidence": 0.94,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "사진에서 갈색 이마와 중앙의 흰 blaze, 흰 muzzle, 흰 가슴과 앞다리가 보입니다. 등과 뒷다리 일부는 갈색·흰색이며 꼬리는 이 정면 사진에서 거의 가려져 있습니다.",
+          "observedSpriteMarkings": "이름 SOUTH. 이마 중앙에 좁은 흰색 줄무늬가 있고, 흰 muzzle과 넓은 흰 가슴, 흰 앞발이 보입니다. 머리와 몸통은 갈색입니다."
+        },
+        {
+          "note": "얼굴 없는 후면 표현이 적절하며, 사진에 숨겨진 후면 무늬를 결함으로 판단할 수 없습니다.",
+          "issues": [],
+          "direction": "north",
+          "confidence": 0.88,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "사진의 후면은 직접 보이지 않아 등·꼬리·뒷다리의 정확한 무늬는 알 수 없습니다. 사진에서 확인되는 전면의 흰 blaze와 가슴은 이 뒷면에서는 판단할 수 없습니다.",
+          "observedSpriteMarkings": "이름 NORTH. 뒤통수와 몸통은 갈색이고, 목 뒤에서 등 위쪽으로 작은 흰색 패치가 보입니다. 뒷다리 아래쪽은 어둡고 흰색 표시는 거의 보이지 않습니다."
+        },
+        {
+          "note": "profile 방향, 귀 모양, 흰 얼굴·가슴 무늬가 사진과 잘 맞습니다.",
+          "issues": [],
+          "direction": "west",
+          "confidence": 0.95,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "왼쪽 profile 사진에서 갈색 얼굴, 중앙 흰 blaze, 흰 muzzle과 목·가슴이 보입니다. 몸통은 갈색과 흰색 패치로 나뉘며 짧은 털과 큰 직립 귀가 확인됩니다.",
+          "observedSpriteMarkings": "이름 WEST. 왼쪽을 향한 profile로, 흰 이마 blaze와 흰 muzzle, 흰 목·가슴이 보입니다. 몸통은 갈색이며 배와 발 일부가 흰색입니다."
+        },
+        {
+          "note": "오른쪽 profile과 주요 코트 패치가 실제 개와 일치합니다.",
+          "issues": [],
+          "direction": "east",
+          "confidence": 0.95,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "오른쪽 profile 사진에서 갈색 머리와 몸통, 흰 blaze·muzzle·목과 흰 다리가 보입니다. 꼬리와 후면의 세부 무늬는 사진에서 충분히 드러나지 않습니다.",
+          "observedSpriteMarkings": "이름 EAST. 오른쪽을 향한 profile로, 흰 blaze와 muzzle, 흰 목·가슴 및 흰 발이 보입니다. 등과 옆구리는 갈색이고 뒤쪽에 짧은 꼬리 형태가 보입니다."
+        }
+      ],
+      "tailConsistent": true,
+      "repairDescription": "Reduce the SOUTH sprite's oversized white smiling mouth to a small neutral dark muzzle/mouth while preserving the current compact proportions, dark outline, and stepped shading. Keep the existing coat patches and all other directions unchanged."
+    },
+    "recoveryVersion": "photo-grounded-recovery-v1",
+    "marginDirections": [],
+    "repairDescription": "Reduce the SOUTH sprite's oversized white smiling mouth to a small neutral dark muzzle/mouth while preserving the current compact proportions, dark outline, and stepped shading. Keep the existing coat patches and all other directions unchanged.",
+    "reviewImageHashes": {
+      "Actual body photo": "64e648c7d8372d2c49e093b25011b3b26798086f43a329394644931f1f4e36bf",
+      "Actual face photo": "074024a348bef2f0f65940308428041994c2e8659ca87c02fbb2ce1174692468",
+      "Unapproved view: east": "663cbe57fe482b9b3bdbf58545498907a9661f91f098176f365be4350a42d593",
+      "Unapproved view: west": "033aa7d818594177308225423294f3c9562078be393be8f72a4c367fc734aafa",
+      "Unapproved view: north": "7b027557efa7857c9ffe81c4e4d730a52ffabe906ca06e403dc097e0e518f8b0",
+      "Unapproved view: south": "17d5aa5d3bcca8258bdbcac4bd61306a4a6531b6eb72e9cb0961113568d2fd1e",
+      "Approved art style only; not this dog": "bf5e5641f0768a45f7a87f10bbb5bf26e987dee581b1b2cf4d08d2c4c0cd539c"
+    },
+    "minimumClearPixels": 1,
+    "clearPixelsLeftTopRightBottom": {
+      "east": [
+        2,
+        1,
+        2,
+        1
+      ],
+      "west": [
+        2,
+        1,
+        2,
+        1
+      ],
+      "north": [
+        6,
+        1,
+        6,
+        2
+      ],
+      "south": [
+        6,
+        2,
+        2,
+        1
+      ]
+    }
+  }
+}

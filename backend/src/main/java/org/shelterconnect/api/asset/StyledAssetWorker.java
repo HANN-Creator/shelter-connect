@@ -33,6 +33,9 @@ public class StyledAssetWorker {
             boolean eyeEdit=eyeAttempt!=null && !eyeAttempt.isEmpty();
             boolean recovery=StyledRecovery.enabled(w.qualityPolicy());
             boolean baseEdit=recovery && w.character() && w.repairCount()>0;
+            boolean selectedBase=baseEdit && StyledSeedRepair.enabled(w.qualityPolicy());
+            var baseAttempt=selectedBase?store.previousRecoveryBase(w):json.createObjectNode();
+            boolean regionalBase=selectedBase && StyledSeedRepair.regional(baseAttempt.path("quality"));
             if(!w.character() && w.qualityPolicy()!=null && !w.qualityPolicy().has("contract")) {
                 if(!store.startContract(w))return;
                 var contract=quality.contract(storage.photo(w.dogId(),w.bucket(),w.key()),w.traits());
@@ -89,12 +92,12 @@ public class StyledAssetWorker {
                 }
                 if(!store.reserve(w,payload))return;
                 submitted=true;
-                UUID id=baseEdit?provider.editSeeds(payload):eyeEdit?provider.editSeedEyes(payload):edit?provider.editAnimation(payload):provider.submit(w.character(),payload);store.accepted(w,id);return;
+                UUID id=regionalBase?provider.editSeedEyes(payload):baseEdit?provider.editSeeds(payload):eyeEdit?provider.editSeedEyes(payload):edit?provider.editAnimation(payload):provider.submit(w.character(),payload);store.accepted(w,id);return;
             }
             JsonNode result=w.providerResult();
             if(result==null) {
                 if(w.submittedAt()==null || w.submittedAt().plusSeconds(7200).isBefore(Instant.now())) { store.fail(w,true,"PROVIDER_WAIT_EXPIRED");return; }
-                try { result=baseEdit?provider.pollSeeds(w.providerId()):eyeEdit?provider.pollSeedEyes(w.providerId()):provider.poll(w.providerId(),w.character()); }
+                try { result=regionalBase?provider.pollSeedEyes(w.providerId()):selectedBase?provider.pollSeeds(w.providerId(),StyledSeedRepair.targets(baseAttempt.path("quality"))):baseEdit?provider.pollSeeds(w.providerId()):eyeEdit?provider.pollSeedEyes(w.providerId()):provider.poll(w.providerId(),w.character()); }
                 catch(AssetProvider.Failure e) { store.defer(w,20);return; }
                 if(result.path("status").asText().equals("WAITING")) { store.defer(w,5);return; }
                 if(result.path("status").asText().equals("FAILED")) { store.fail(w,false,"PROVIDER_JOB_FAILED");return; }
@@ -104,7 +107,19 @@ public class StyledAssetWorker {
             if(!store.authorized(w))return;
             if(w.character()) {
                 JsonNode eyeEvidence=null;Map<String,byte[]> editedSeeds=new LinkedHashMap<>();
-                if(eyeEdit) {
+                if(selectedBase) {
+                    var source=recoverySeeds(w,baseAttempt);var prior=baseAttempt.path("quality");
+                    var rawKeys=new LinkedHashMap<String,String>();var rawHashes=new LinkedHashMap<String,String>();
+                    if(regionalBase){String key=w.prefix()+"raw-seed-regions/"+w.repairCount()+".png";byte[] raw=Base64.getDecoder().decode(result.path("eyeSheet").asText());
+                        StyledSeedEyeRepair.rawStrip(raw);storage.put(key,raw);rawKeys.put("strip",key);rawHashes.put("strip",StyledSpriteCodec.sha(raw));}
+                    else for(String d:StyledSeedRepair.targets(prior)){String key=w.prefix()+"raw-selected-seeds/"+w.repairCount()+"/"+d+".png";byte[] raw=StyledPixelLabClient.decode(result.at("/directions/"+d).asText());
+                        storage.put(key,raw);rawKeys.put(d,key);rawHashes.put(d,StyledSpriteCodec.sha(raw));}
+                    var repaired=StyledSeedRepair.apply(source,prior,result);
+                    for(int i=0;i<4;i++)editedSeeds.put(StyledSpriteCodec.DIRECTIONS.get(i),repaired.seeds().get(i));
+                    eyeEvidence=json.valueToTree(Map.of("version",StyledSeedRepair.VERSION,"plan",prior.path("seedRepairPlan"),
+                        "sourceHashes",baseAttempt.at("/result/hashes"),"changedPixels",repaired.changedPixels(),
+                        "rawOutsideMaskDifferences",repaired.outsideMaskDifferences(),"rawKeys",rawKeys,"rawHashes",rawHashes,"resampled",false));
+                } else if(eyeEdit) {
                     byte[] raw=Base64.getDecoder().decode(result.path("eyeSheet").asText());StyledSeedEyeRepair.rawStrip(raw);
                     String rawKey=w.prefix()+"raw-seed-eyes/"+w.repairCount()+".png";storage.put(rawKey,raw);
                     var plan=eyeAttempt.at("/quality/eyeRepairPlan");var source=eyeSeeds(w,eyeAttempt);
@@ -118,7 +133,7 @@ public class StyledAssetWorker {
                 var alignments=new LinkedHashMap<String,Object>();
                 var seeds=new ArrayList<byte[]>();
                 for(String d:StyledSpriteCodec.DIRECTIONS) {
-                    byte[] image=eyeEdit?editedSeeds.get(d):StyledPixelLabClient.decode(result.path("directions").path(d).asText());
+                    byte[] image=eyeEdit || selectedBase?editedSeeds.get(d):StyledPixelLabClient.decode(result.path("directions").path(d).asText());
                     if(w.qualityPolicy()!=null && w.qualityPolicy().path("seedMotionMargin").asInt()==2) {
                         String rawKey=w.prefix()+"raw-directions/"+w.repairCount()+"/"+d+".png";storage.put(rawKey,image);
                         var aligned=StyledSpriteCodec.alignSeed(image,2);
@@ -130,7 +145,7 @@ public class StyledAssetWorker {
                     storage.put(key,image);keys.put(d,key);hashes.put(d,StyledSpriteCodec.sha(image));seeds.add(image);
                 }
                 var metadata=json.valueToTree(Map.of("keys",keys,"hashes",hashes,"seedAlignment",alignments));
-                if(eyeEvidence!=null)((tools.jackson.databind.node.ObjectNode)metadata).set("eyeRepair",eyeEvidence);
+                if(eyeEvidence!=null)((tools.jackson.databind.node.ObjectNode)metadata).set(selectedBase?"selectedRepair":"eyeRepair",eyeEvidence);
                 if(result.has("usage"))((tools.jackson.databind.node.ObjectNode)metadata).set("providerUsage",result.path("usage"));
                 if(w.qualityPolicy()!=null && w.qualityPolicy().has("seedQualityVersion")) {
                     inspectSeeds(w,seeds,metadata,true);return;
@@ -186,6 +201,11 @@ public class StyledAssetWorker {
             if(allowRepair && w.repairCount()<2 && !w.qualityPolicy().path("referenceOnly").asBoolean()
                 && StyledSeedEyeRepair.VERSION.equals(w.qualityPolicy().path("seedEyeRepair").asText())
                 && !StyledSeedEyeRepair.failedViews(checked).isEmpty())details.set("eyeRepairPlan",eyes.locate(seeds,checked));
+            if(allowRepair && !checked.path("passed").asBoolean() && StyledSeedRepair.enabled(w.qualityPolicy())
+                && w.repairCount()<StyledRecovery.limit(w.qualityPolicy(),true)) {
+                JsonNode plan;try{plan=eyes.locateRecovery(seeds,checked);}catch(AssetException e){plan=json.createObjectNode().put("status","UNRESOLVED_SELECTION").put("reason",e.code);}
+                details.set("seedRepairPlan",plan);
+            }
             details.put("photoSha256",StyledSpriteCodec.sha(photo));details.put("lessonsSha256",lessonSha);details.set("learnedLessons",selected);
             report=details;store.quality(w,report);
         }
@@ -337,13 +357,17 @@ public class StyledAssetWorker {
         return codec.marginEdit(w.action(),w.direction(),sheet,seed);
     }
     private JsonNode recoveryBasePayload(StyledAssetStore.Work w) {
-        var previous=store.previousRecoveryBase(w);var seeds=new ArrayList<byte[]>();
+        var previous=store.previousRecoveryBase(w);var seeds=recoverySeeds(w,previous);
+        int seed=(int)Math.floorMod(w.traits().path("seed").asLong()+7919L*w.repairCount(),2147483647L);
+        return StyledSeedRepair.enabled(w.qualityPolicy())?StyledSeedRepair.payload(json,seeds,previous.path("quality"),seed):StyledRecovery.basePayload(json,seeds,previous.path("quality"),seed);
+    }
+    private List<byte[]> recoverySeeds(StyledAssetStore.Work w,JsonNode previous) {
+        var seeds=new ArrayList<byte[]>();
         for(String d:StyledSpriteCodec.DIRECTIONS){String key=previous.at("/result/keys/"+d).asText();
             if(!key.startsWith(w.prefix()+"directions/"))throw new AssetException(409,"RECOVERY_INPUT_CHANGED");
             byte[] image=storage.asset(key);StyledSpriteCodec.nativeFrame(image);
             if(!StyledSpriteCodec.sha(image).equals(previous.at("/result/hashes/"+d).asText()))throw new AssetException(409,"RECOVERY_INPUT_CHANGED");seeds.add(image);}
-        int seed=(int)Math.floorMod(w.traits().path("seed").asLong()+7919L*w.repairCount(),2147483647L);
-        return StyledRecovery.basePayload(json,seeds,previous.path("quality"),seed);
+        return seeds;
     }
     private byte[] seed(StyledAssetStore.Work w) {
         var base=store.seed(w);byte[] seed=storage.asset(base.path("keys").path(w.direction()).asText());

@@ -17,6 +17,7 @@ public class StyledSeedEyeRepair {
     public static final String VERSION="native-seed-eye-inpaint-v1";
     private final OpenAiResponsesClient client;private final JsonMapper json;
     public StyledSeedEyeRepair(OpenAiResponsesClient client,JsonMapper json){this.client=client;this.json=json;}
+    JsonNode locateRecovery(List<byte[]> seeds,JsonNode report){return StyledSeedRepair.plan(client,json,seeds,report);}
     static Set<String> failedViews(JsonNode report) {
         if(report==null || report.path("passed").asBoolean() || !report.path("identity").asText().equals("PASS")
             || report.path("minimumClearPixels").asInt()!=2 || !report.path("marginDirections").isArray()

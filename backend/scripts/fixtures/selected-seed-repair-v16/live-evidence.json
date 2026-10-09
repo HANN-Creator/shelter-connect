@@ -1,0 +1,372 @@
+{
+  "source": "Actual B68 PixelLab selected-view edits and independent gpt-5.6-luna re-reviews; local execution, no production publication",
+  "newPixelLabCalls": 3,
+  "automaticRepairs": 3,
+  "localDbMockValidationSeparate": true,
+  "initialReport": {
+    "version": "seed-eyes-v1",
+    "recoveryVersion": "photo-grounded-recovery-v1",
+    "reviewVersion": "photo-observed-features-review-v4",
+    "passed": false,
+    "inputSha256": "fb375bd554c26dc9121b88b7f6db075be414c9e5102b9b79a3f206324e68a7e6",
+    "photoSha256": "c415eabbd5f425a59c805a494d435175ee4eb569ee7a2032d42fb1c1b4661a16",
+    "rulesSha256": "9c15e399b631c8b7794c725daa52691f8d460bca5b84d234b3d9bb34e0e012c1",
+    "model": "gpt-5.6-luna",
+    "reviewedAt": "2026-10-09T05:41:29.741123Z",
+    "identity": "FAIL",
+    "appearance": "FAIL",
+    "repairDescription": "Preserve the compact outlined pixel style and the tan-and-white identity. Repair the WEST view's rear tail, which is visibly cramped against the right canvas edge and reads as clipped or incomplete; keep its carriage consistent with the complete short tail shown in EAST.",
+    "note": "네 방향 모두 스타일과 주요 정체성 무늬는 일치합니다. WEST만 꼬리 가장자리 처리가 필요합니다.",
+    "issues": [
+      "CANVAS_CLIPPING",
+      "SEED_IDENTITY"
+    ],
+    "edgeDirections": [],
+    "views": [
+      {
+        "style": "PASS",
+        "direction": "south",
+        "readability": "PASS",
+        "note": "정면 방향과 얼굴·코트 무늬가 사진과 잘 맞고, 눈과 중립적인 입도 읽힙니다."
+      },
+      {
+        "style": "PASS",
+        "direction": "north",
+        "readability": "NOT_VISIBLE",
+        "note": "후면에 얼굴이 없는 것은 올바르며, 사진에서 가려진 후면 무늬와 꼬리는 판단하지 않았습니다."
+      },
+      {
+        "style": "PASS",
+        "direction": "west",
+        "readability": "PASS",
+        "note": "방향과 코트 무늬는 맞지만, 오른쪽 꼬리가 캔버스 가장자리에 붙어 끝이 잘린 듯하며 완전한 꼬리로 읽히지 않습니다."
+      },
+      {
+        "style": "PASS",
+        "direction": "east",
+        "readability": "PASS",
+        "note": "옆면 방향과 주요 흰색 무늬가 맞고, 꼬리 끝도 캔버스 안에서 자연스럽게 보입니다."
+      }
+    ],
+    "propertyReview": {
+      "repairDescription": "Preserve the compact outlined pixel style and the tan-and-white identity. Repair the WEST view's rear tail, which is visibly cramped against the right canvas edge and reads as clipped or incomplete; keep its carriage consistent with the complete short tail shown in EAST.",
+      "views": [
+        {
+          "direction": "south",
+          "observedSpriteMarkings": "Tan head and upright tan ears, a broad white forehead blaze continuing down the white muzzle, white chest and white front legs, with tan cheek patches. The dark mouth is a small neutral contour beneath the muzzle, not a grin.",
+          "observedPhotoMarkings": "The visible front photo shows tan upright ears and head, a broad white blaze from forehead to muzzle, white muzzle and throat/chest, and white legs. The body rear and tail are not clearly visible in this front view.",
+          "directionCorrect": true,
+          "eyesReadable": true,
+          "identityMatches": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "confidence": 0.98,
+          "issues": [],
+          "note": "정면 방향과 얼굴·코트 무늬가 사진과 잘 맞고, 눈과 중립적인 입도 읽힙니다."
+        },
+        {
+          "direction": "north",
+          "observedSpriteMarkings": "Rear-facing tan head and body with darker tan ear/back areas, a small white patch at the upper neck, and a broad white lower rear/leg area. No eyes or face are shown; no tail is visibly separated from the rear silhouette.",
+          "observedPhotoMarkings": "The photographs show tan-and-white coloring, but the rear and tail are hidden or not visible, so rear markings and tail shape are unknown.",
+          "directionCorrect": true,
+          "eyesReadable": true,
+          "identityMatches": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "confidence": 0.9,
+          "issues": [],
+          "note": "후면에 얼굴이 없는 것은 올바르며, 사진에서 가려진 후면 무늬와 꼬리는 판단하지 않았습니다."
+        },
+        {
+          "direction": "west",
+          "observedSpriteMarkings": "Left-facing short-coated profile with tan upright ears and tan head, a white forehead/muzzle area, white throat and chest band, white lower legs, and a tan body. A very small dark-edged tail nub is pressed against the right canvas edge.",
+          "observedPhotoMarkings": "The visible side photo shows tan head and ears, a white blaze and muzzle, white throat/chest, and white legs. The tail and most rear-body details are hidden in the available photographs.",
+          "directionCorrect": true,
+          "eyesReadable": true,
+          "identityMatches": true,
+          "styleMatches": true,
+          "tailPlausible": false,
+          "confidence": 0.93,
+          "issues": [
+            "CANVAS_CLIPPING",
+            "TAIL_MISSING"
+          ],
+          "note": "방향과 코트 무늬는 맞지만, 오른쪽 꼬리가 캔버스 가장자리에 붙어 끝이 잘린 듯하며 완전한 꼬리로 읽히지 않습니다."
+        },
+        {
+          "direction": "east",
+          "observedSpriteMarkings": "Right-facing short-coated profile with tan upright ears and head, a visible white forehead/muzzle region, white throat and chest, white lower legs, and a tan body. The short tan tail extends left from the rump with a visible outlined end.",
+          "observedPhotoMarkings": "The visible side photo shows tan head and ears, a white blaze and muzzle, white throat/chest, and white legs. The tail is hidden in the photographs, so its exact shape is unknown.",
+          "directionCorrect": true,
+          "eyesReadable": true,
+          "identityMatches": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "confidence": 0.95,
+          "issues": [],
+          "note": "옆면 방향과 주요 흰색 무늬가 맞고, 꼬리 끝도 캔버스 안에서 자연스럽게 보입니다."
+        }
+      ],
+      "note": "네 방향 모두 스타일과 주요 정체성 무늬는 일치합니다. WEST만 꼬리 가장자리 처리가 필요합니다.",
+      "tailConsistent": false
+    },
+    "learnedLessons": [],
+    "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "reviewImageHashes": {
+      "Actual body photo": "c415eabbd5f425a59c805a494d435175ee4eb569ee7a2032d42fb1c1b4661a16",
+      "Actual face photo": "3774daf7fd63f7894d8487e1b99d8667c1368d1d2c81658d899f6d8fa3708d7e",
+      "Approved art style only; not this dog": "bf5e5641f0768a45f7a87f10bbb5bf26e987dee581b1b2cf4d08d2c4c0cd539c",
+      "Unapproved view: south": "d0b53191794d8c40cc6b835dc262dff9a2040bc196bce688ddd7850cb29968bb",
+      "Unapproved view: north": "b0cabc7549cba7a2d2a785801a41b89c6802d8024df7da58dc8cbe36a49f2796",
+      "Unapproved view: west": "b18030d7ff40a994c78ccc186976670f867d2e3b78b1b7b8ef819f3ee101bb71",
+      "Unapproved view: east": "c16210fe2f8eed3b59b49407fb60865cccd5911672131c4f714cefc56a764290"
+    },
+    "minimumClearPixels": 1,
+    "marginDirections": [],
+    "clearPixelsLeftTopRightBottom": {
+      "south": [
+        4,
+        2,
+        4,
+        1
+      ],
+      "north": [
+        6,
+        2,
+        6,
+        1
+      ],
+      "west": [
+        2,
+        1,
+        2,
+        1
+      ],
+      "east": [
+        2,
+        1,
+        2,
+        1
+      ]
+    }
+  },
+  "attempts": [
+    {
+      "attempt": 1,
+      "preservation": {
+        "outputHashes": [
+          "96beeb6c51efc32e483494882af4f691211fd0fb35204be53687697d30d20b19",
+          "c8fd6c41d2ea793b15eedf58d162849a4b33c72ee0ad3ee95f3667714b9e4bb1",
+          "b85b2b94c296d243277b627bc49356e32daa77f9478a57ea66570c4d05c56132",
+          "f65a48fd18c3861fb33e89ac0560f26c97c999dfd21abfedcd871d8a5621fda7"
+        ],
+        "sourceHashes": [
+          "96beeb6c51efc32e483494882af4f691211fd0fb35204be53687697d30d20b19",
+          "c8fd6c41d2ea793b15eedf58d162849a4b33c72ee0ad3ee95f3667714b9e4bb1",
+          "ed3e236f471f3387805861b5dcdd799cee90ccf78aa10e17f9bb2e46d5921c88",
+          "f65a48fd18c3861fb33e89ac0560f26c97c999dfd21abfedcd871d8a5621fda7"
+        ],
+        "directions": [
+          "west"
+        ],
+        "changedPixels": 454,
+        "rawOutsideMaskDifferences": 0
+      },
+      "issuesAfter": [
+        "SEED_IDENTITY"
+      ]
+    },
+    {
+      "attempt": 2,
+      "preservation": {
+        "outputHashes": [
+          "96beeb6c51efc32e483494882af4f691211fd0fb35204be53687697d30d20b19",
+          "7672d178bc0dda3485b7eec702e7a121e96fb825555c7d5aedaffb9c324d9632",
+          "fb247065fcf7b77b41c1fad8a20809f4904e197f64801c50284d33c4de4dec2f",
+          "06697ea5f7fb0c4ad1c36a6a73c10edf057daf403db1753b69ba05e560d65e64"
+        ],
+        "sourceHashes": [
+          "96beeb6c51efc32e483494882af4f691211fd0fb35204be53687697d30d20b19",
+          "c8fd6c41d2ea793b15eedf58d162849a4b33c72ee0ad3ee95f3667714b9e4bb1",
+          "b85b2b94c296d243277b627bc49356e32daa77f9478a57ea66570c4d05c56132",
+          "f65a48fd18c3861fb33e89ac0560f26c97c999dfd21abfedcd871d8a5621fda7"
+        ],
+        "directions": [
+          "north",
+          "west",
+          "east"
+        ],
+        "changedPixels": 1356,
+        "rawOutsideMaskDifferences": 0
+      },
+      "issuesAfter": [
+        "SEED_IDENTITY"
+      ]
+    },
+    {
+      "attempt": 3,
+      "preservation": {
+        "outputHashes": [
+          "96beeb6c51efc32e483494882af4f691211fd0fb35204be53687697d30d20b19",
+          "7672d178bc0dda3485b7eec702e7a121e96fb825555c7d5aedaffb9c324d9632",
+          "83615345ae637bc9d871675e1cf80accae7b2981fccca743c0051ab98c61c24d",
+          "fdd82e2d1003ebd2f80bbd2ae0a312bc90266ed5dc0f04274844db5636fcd773"
+        ],
+        "sourceHashes": [
+          "96beeb6c51efc32e483494882af4f691211fd0fb35204be53687697d30d20b19",
+          "7672d178bc0dda3485b7eec702e7a121e96fb825555c7d5aedaffb9c324d9632",
+          "fb247065fcf7b77b41c1fad8a20809f4904e197f64801c50284d33c4de4dec2f",
+          "06697ea5f7fb0c4ad1c36a6a73c10edf057daf403db1753b69ba05e560d65e64"
+        ],
+        "directions": [
+          "west",
+          "east"
+        ],
+        "changedPixels": 923,
+        "rawOutsideMaskDifferences": 0
+      },
+      "issuesAfter": []
+    }
+  ],
+  "finalReport": {
+    "version": "seed-eyes-v1",
+    "recoveryVersion": "photo-grounded-recovery-v1",
+    "reviewVersion": "photo-observed-features-review-v4",
+    "passed": true,
+    "inputSha256": "617d4c6b0622cea4582d341772a4dbed673c6c79a0ecf4bbe83af14a3a7ea396",
+    "photoSha256": "c415eabbd5f425a59c805a494d435175ee4eb569ee7a2032d42fb1c1b4661a16",
+    "rulesSha256": "9c15e399b631c8b7794c725daa52691f8d460bca5b84d234b3d9bb34e0e012c1",
+    "model": "gpt-5.6-luna",
+    "reviewedAt": "2026-10-09T05:47:14.280736Z",
+    "identity": "PASS",
+    "appearance": "PASS",
+    "repairDescription": "",
+    "note": "네 방향 모두 의도한 방향과 실제 사진의 주요 무늬, 승인된 픽셀 스타일에 부합합니다.",
+    "issues": [],
+    "edgeDirections": [],
+    "views": [
+      {
+        "style": "PASS",
+        "direction": "south",
+        "readability": "PASS",
+        "note": "정면 방향과 얼굴 무늬, 눈 표현이 사진과 일치합니다."
+      },
+      {
+        "style": "PASS",
+        "direction": "north",
+        "readability": "NOT_VISIBLE",
+        "note": "후면답게 얼굴이 없으며, 사진에 숨겨진 후면 무늬와 충돌하지 않습니다."
+      },
+      {
+        "style": "PASS",
+        "direction": "west",
+        "readability": "PASS",
+        "note": "좌측 프로필의 방향, 짧은 털, 주요 흰색·갈색 배치가 자연스럽습니다."
+      },
+      {
+        "style": "PASS",
+        "direction": "east",
+        "readability": "PASS",
+        "note": "우측 프로필의 방향과 얼굴·가슴 무늬가 실제 사진과 일치합니다."
+      }
+    ],
+    "propertyReview": {
+      "repairDescription": "",
+      "views": [
+        {
+          "direction": "south",
+          "observedSpriteMarkings": "The sprite has a centered white forehead blaze continuing onto a white muzzle, a white chest and white front legs, with tan-brown ears and facial sides. The dark mouth is a small neutral contour, not a grin.",
+          "observedPhotoMarkings": "The front photographs show a broad white blaze, white muzzle, white throat/chest and white legs, with tan-brown ears and cheek/forehead areas. The rear and full tail are not clearly visible in this view.",
+          "directionCorrect": true,
+          "eyesReadable": true,
+          "identityMatches": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "confidence": 0.98,
+          "issues": [],
+          "note": "정면 방향과 얼굴 무늬, 눈 표현이 사진과 일치합니다."
+        },
+        {
+          "direction": "north",
+          "observedSpriteMarkings": "The rear sprite shows a tan-brown back and rump, a small white patch at the upper neck/back, and dark tan ears; no face or eyes are shown.",
+          "observedPhotoMarkings": "The photographs do not clearly expose the dog's rear-facing rump or rear tail markings. Visible body photos do support tan-brown coat over the back with substantial white areas elsewhere, but hidden rear regions are unknown.",
+          "directionCorrect": true,
+          "eyesReadable": true,
+          "identityMatches": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "confidence": 0.9,
+          "issues": [],
+          "note": "후면답게 얼굴이 없으며, 사진에 숨겨진 후면 무늬와 충돌하지 않습니다."
+        },
+        {
+          "direction": "west",
+          "observedSpriteMarkings": "The left-facing profile has a white muzzle and forehead blaze, a white throat/chest and lower belly, white feet, and a tan-brown back and flank patch. It has one readable dark eye and a small curled upright tail.",
+          "observedPhotoMarkings": "The visible side/front photographs show a white muzzle and blaze, white throat/chest and legs, and tan-brown head and body patches. The complete tail is hidden or not clearly shown in the photographs.",
+          "directionCorrect": true,
+          "eyesReadable": true,
+          "identityMatches": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "confidence": 0.96,
+          "issues": [],
+          "note": "좌측 프로필의 방향, 짧은 털, 주요 흰색·갈색 배치가 자연스럽습니다."
+        },
+        {
+          "direction": "east",
+          "observedSpriteMarkings": "The right-facing profile has a white muzzle and forehead blaze, white throat/chest and lower legs, tan-brown head and back, and a small curled upright tail. One dark eye is clearly readable.",
+          "observedPhotoMarkings": "The visible profile photograph shows the white muzzle and blaze, white throat/chest, and tan-brown head and neck; the full tail and far-side body markings are hidden or not clearly visible.",
+          "directionCorrect": true,
+          "eyesReadable": true,
+          "identityMatches": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "confidence": 0.96,
+          "issues": [],
+          "note": "우측 프로필의 방향과 얼굴·가슴 무늬가 실제 사진과 일치합니다."
+        }
+      ],
+      "note": "네 방향 모두 의도한 방향과 실제 사진의 주요 무늬, 승인된 픽셀 스타일에 부합합니다.",
+      "tailConsistent": true
+    },
+    "learnedLessons": [],
+    "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "reviewImageHashes": {
+      "Actual body photo": "c415eabbd5f425a59c805a494d435175ee4eb569ee7a2032d42fb1c1b4661a16",
+      "Actual face photo": "3774daf7fd63f7894d8487e1b99d8667c1368d1d2c81658d899f6d8fa3708d7e",
+      "Approved art style only; not this dog": "bf5e5641f0768a45f7a87f10bbb5bf26e987dee581b1b2cf4d08d2c4c0cd539c",
+      "Unapproved view: south": "d0b53191794d8c40cc6b835dc262dff9a2040bc196bce688ddd7850cb29968bb",
+      "Unapproved view: north": "e16e04d13baf3887a7199459121249b4f822ca1f295093534fdc560dae6e6da0",
+      "Unapproved view: west": "9a53e21b9571eebae8a16167e6fa2fd815a27a562be7566079a663678ad85f03",
+      "Unapproved view: east": "30708987fb0df40cd81437ee2ef39158b55c28b9d6cb73598210be75c63a6b62"
+    },
+    "minimumClearPixels": 1,
+    "marginDirections": [],
+    "clearPixelsLeftTopRightBottom": {
+      "south": [
+        4,
+        2,
+        4,
+        1
+      ],
+      "north": [
+        6,
+        2,
+        6,
+        1
+      ],
+      "west": [
+        2,
+        1,
+        2,
+        1
+      ],
+      "east": [
+        2,
+        1,
+        2,
+        1
+      ]
+    }
+  }
+}
