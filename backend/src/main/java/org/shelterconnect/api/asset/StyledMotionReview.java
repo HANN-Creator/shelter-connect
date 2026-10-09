@@ -98,6 +98,35 @@ final class StyledMotionReview {
             || report.path("rawEditReview").path("motionDecision").asText().equals("UNCERTAIN")
             || report.path("restoredReview").path("motionDecision").asText().equals("UNCERTAIN"));
     }
+    /** A confirmed tail defect can be repaired even if one observer also labels those SAME
+     * frames as identity drift. Preserve UNCERTAIN for approval/learning; never infer missing anatomy.
+     */
+    static boolean confirmedTailRepair(JsonNode report) {
+        if(!unresolved(report))return false;
+        var reports=new ArrayList<JsonNode>();reports.add(report);
+        for(String key:List.of("rawEditReview","restoredReview"))if(report.has(key))reports.add(report.path(key));
+        for(var r:reports) {
+            if(!VERSION.equals(r.path("motionReviewVersion").asText()) || r.path("passed").asBoolean()
+                || r.path("observationCount").asInt()!=2 || !r.path("uncertainProperties").isArray()
+                || r.path("uncertainProperties").valueStream().anyMatch(n->!n.asText().equals("identity"))
+                || !r.path("confirmedProperties").valueStream().anyMatch(n->n.asText().equals("tail")))return false;
+            var a=r.path("initialVision");var b=r.path("consistencyReview");
+            try {
+                var ta=property(a,"tail");var tb=property(b,"tail");
+                if(!ta.path("state").asText().equals("FAIL") || !tb.path("state").asText().equals("FAIL"))return false;
+                var shared=new HashSet<Integer>();ta.path("frames").forEach(f->shared.add(f.asInt()));
+                var other=new HashSet<Integer>();tb.path("frames").forEach(f->other.add(f.asInt()));shared.retainAll(other);
+                if(shared.isEmpty())return false;
+                if(r.path("uncertainProperties").valueStream().anyMatch(n->n.asText().equals("identity"))) {
+                    var ia=property(a,"identity");var ib=property(b,"identity");
+                    if(!Set.of(ia.path("state").asText(),ib.path("state").asText()).equals(Set.of("PASS","FAIL")))return false;
+                    var failure=ia.path("state").asText().equals("FAIL")?ia:ib;
+                    if(failure.path("frames").isEmpty() || failure.path("frames").valueStream().anyMatch(f->!shared.contains(f.asInt())))return false;
+                }
+            } catch(AssetException|IllegalArgumentException missing){return false;}
+        }
+        return true;
+    }
     static void bind(ObjectNode report,byte[] seed,List<byte[]> frames,JsonMapper json) {
         report.put("recoveryVersion",StyledRecovery.VERSION).put("motionSeedSha256",StyledSpriteCodec.sha(seed));
         report.set("frameHashes",json.valueToTree(frames.stream().map(StyledSpriteCodec::sha).toList()));

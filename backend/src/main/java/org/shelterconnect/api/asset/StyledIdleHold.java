@@ -25,7 +25,31 @@ final class StyledIdleHold {
             && (!w.status().equals("CHECKING") || StyledAssetStore.motionResumeAllowed(w))
             && w.repairCount()==StyledRecovery.limit(w.qualityPolicy(),false)
             && !derived(result) && !derived(w.providerResult()) && report!=null && !report.path("passed").asBoolean()
-            && !StyledMotionReview.unresolved(report) && report.path("issues").isArray() && !report.path("issues").isEmpty();
+            && replaceableFailure(report) && report.path("issues").isArray() && !report.path("issues").isEmpty();
+    }
+    /** Replacing a definitively moving IDLE does not resolve its uncertain loop verdict.
+     * The old raw/restored reports remain rejected; the approved seed alternative is reviewed afresh.
+     * Only loop uncertainty is independent of that replacement decision. Identity/tail/action doubt still holds.
+     */
+    static boolean replaceableFailure(JsonNode report) {
+        if(!StyledMotionReview.unresolved(report))return report.path("motionDecision").asText().equals("CONFIRMED_DEFECT");
+        var reports=new ArrayList<JsonNode>();reports.add(report);
+        for(String name:List.of("rawEditReview","restoredReview"))if(report.has(name))reports.add(report.path(name));
+        for(var r:reports) {
+            if(!StyledMotionReview.VERSION.equals(r.path("motionReviewVersion").asText()) || r.path("passed").asBoolean()
+                || !Set.of("CONFIRMED_DEFECT","UNCERTAIN").contains(r.path("motionDecision").asText())
+                || r.path("observationCount").asInt()!=2 || !r.path("uncertainProperties").isArray()
+                || r.path("uncertainProperties").valueStream().anyMatch(n->!n.asText().equals("loop"))
+                || !r.path("issues").valueStream().anyMatch(n->n.asText().equals("IDLE_MOTION")))return false;
+            for(String property:List.of("action","idleStillness")) {
+                if(!r.path("confirmedProperties").valueStream().anyMatch(n->n.asText().equals(property)))return false;
+                for(String view:List.of("initialVision","consistencyReview")) {
+                    var p=r.path(view).path("properties").valueStream().filter(n->n.path("property").asText().equals(property)).toList();
+                    if(p.size()!=1 || !p.getFirst().path("state").asText().equals("FAIL"))return false;
+                }
+            }
+        }
+        return true;
     }
     static JsonNode result(byte[] seed,JsonNode hashes,String direction,JsonNode previous,JsonMapper json) {
         if(!StyledSpriteCodec.DIRECTIONS.contains(direction) || StyledSpriteCodec.motionFrame(seed).getWidth()!=40

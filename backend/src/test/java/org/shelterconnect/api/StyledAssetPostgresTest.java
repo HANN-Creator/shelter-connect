@@ -1808,6 +1808,19 @@ class StyledAssetPostgresTest {
         when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("south"))).thenAnswer(c->b75MotionReport(c.getArgument(1),c.getArgument(2),"south",false,"UNCERTAIN"));
         finish(id);assertThat(read(id).path("status").asText()).isEqualTo("REVIEW");return id;
     }
+    @Test void confirmedTailRepairPreservesUncertainRecordAndRequiresFreshPassingResult()throws Exception {
+        UUID id=recoveryRequest(0,false);var calls=new java.util.concurrent.atomic.AtomicInteger();
+        var actual=json.readTree(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/idle-hold-v26/walk-north-v26-review.json")));
+        when(quality.review(any(),anyList(),anyList(),eq("WALK"),eq("north"))).thenAnswer(c->{outsideTransaction();
+            if(calls.getAndIncrement()>0)return b75MotionReport(c.getArgument(1),c.getArgument(2),"north",true,"PASS");
+            var r=(tools.jackson.databind.node.ObjectNode)actual.deepCopy();r.put("rulesSha256",currentRules());return r;});
+        finish(id);assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
+        assertThat(step(id,"walk-north").path("repairCount").asInt()).isEqualTo(1);
+        var history=json.readTree(jdbc.queryForObject("SELECT attempt_history FROM shelter.styled_asset_steps WHERE job_id=? AND label='walk-north'",String.class,id));
+        assertThat(history.get(0).at("/quality/motionDecision").asText()).isEqualTo("UNCERTAIN");
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=? AND label='walk-north' AND NOT passed",Integer.class,id)).isZero();
+        assertThat(calls.get()).isGreaterThanOrEqualTo(2);verify(provider,times(1)).editAnimation(any());
+    }
     Map<String,Object> b75ResumeBody(UUID id)throws Exception {
         jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=jsonb_set(quality_policy,'{rulesSha256}',to_jsonb(CAST(? AS text))) WHERE id=?","0".repeat(64),id);
         jdbc.update("UPDATE shelter.styled_asset_steps SET quality_report=jsonb_set(quality_report,'{rulesSha256}',to_jsonb(CAST(? AS text))) WHERE job_id=?","0".repeat(64),id);
@@ -1827,6 +1840,26 @@ class StyledAssetPostgresTest {
         verify(provider,times(1)).editAnimation(any());verify(provider,never()).submit(anyBoolean(),any());
         clearInvocations(provider);post(subject,path(id)+"/motion-repair-resume",body,200);tick();verifyNoInteractions(provider);
         body.put("note","A changed request cannot buy additional generation for the same completed job");post(subject,path(id)+"/motion-repair-resume",body,409);
+    }
+    @Test void changedRuleContinuationArchivesPriorGrantAndReplaysEveryOldRequestWithoutSpending()throws Exception {
+        UUID id=b75HeldPack();var first=b75ResumeBody(id);post(subject,path(id)+"/motion-repair-resume",first,200);finish(id);
+        assertThat(read(id).path("status").asText()).isEqualTo("REVIEW");
+        // Synthetic previous-deployment fixture, never used to alter a real job or its repair budget.
+        String old="1".repeat(64);
+        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=jsonb_set(jsonb_set(quality_policy,'{rulesSha256}',to_jsonb(CAST(? AS text))),'{motionRepairResume,rulesSha256}',to_jsonb(CAST(? AS text))) WHERE id=?",old,old,id);
+        jdbc.update("UPDATE shelter.styled_asset_steps SET quality_report=jsonb_set(quality_report,'{rulesSha256}',to_jsonb(CAST(? AS text))) WHERE job_id=?",old,id);
+        jdbc.update("UPDATE shelter.asset_jobs SET seed_review=jsonb_set(seed_review,'{reportSha256}',to_jsonb(CAST(? AS text))) WHERE id=?",sha(json.writeValueAsBytes(step(id,"character").path("qualityReport"))),id);
+        var prior=read(id).at("/qualityPolicy/motionRepairResume");var counts=read(id).path("steps").valueStream().map(s->s.path("repairCount").asInt()).toList();
+        var second=new HashMap<>(first);second.put("requestId",UUID.randomUUID().toString());second.put("expectedRulesSha256",old);
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("south"))).thenAnswer(c->b75MotionReport(c.getArgument(1),c.getArgument(2),"south",true,"PASS"));
+        clearInvocations(provider);post(subject,path(id)+"/motion-repair-resume",second,200);finish(id);
+        assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
+        assertThat(read(id).at("/qualityPolicy/motionRepairResumeHistory").size()).isEqualTo(1);
+        assertThat(read(id).at("/qualityPolicy/motionRepairResumeHistory/0")).isEqualTo(prior);
+        assertThat(read(id).path("steps").valueStream().map(s->s.path("repairCount").asInt()).toList()).isEqualTo(counts);
+        post(subject,path(id)+"/motion-repair-resume",first,200);post(subject,path(id)+"/motion-repair-resume",second,200);tick();verifyNoInteractions(provider);
+        first.put("note","Changing a historical request must remain rejected after a newer continuation");post(subject,path(id)+"/motion-repair-resume",first,409);
+        second.put("requestId",UUID.randomUUID().toString());post(subject,path(id)+"/motion-repair-resume",second,409);
     }
     @org.junit.jupiter.params.ParameterizedTest
     @org.junit.jupiter.params.provider.ValueSource(strings={"unchanged","seed","sheet","rules","passing","incomplete","unauthorized","revoked","duplicate","exhausted-walk"})

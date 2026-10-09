@@ -61,4 +61,34 @@ class StyledIdleHoldTest {
         report.put("motionDecision","UNCERTAIN");assertThat(StyledIdleHold.eligible(work("IDLE",3,"PERSISTING",policy,previous),report,previous)).isFalse();
         report.put("motionDecision","PASS").put("passed",true);assertThat(StyledIdleHold.eligible(work("IDLE",3,"PERSISTING",policy,previous),report,previous)).isFalse();
     }
+    @Test void actualConfirmedMovingIdleCanBeReplacedWithoutRelabelingItsUncertainLoop()throws Exception {
+        var actual=json.readTree(Files.readAllBytes(root.resolve("idle-north-v26-review.json")));var original=actual.deepCopy();
+        assertThat(StyledMotionReview.unresolved(actual)).isTrue();assertThat(StyledIdleHold.replaceableFailure(actual)).isTrue();
+        assertThat(actual).isEqualTo(original);assertThat(StyledMotionReview.unresolved(actual)).isTrue();
+        for(String property:List.of("identity","tail","direction","action","idleStillness","eyes","palette","limbs","referencePose")) {
+            var changed=actual.deepCopy();((tools.jackson.databind.node.ObjectNode)changed.path("rawEditReview")).putArray("uncertainProperties").add(property);
+            assertThat(StyledIdleHold.replaceableFailure(changed)).as(property).isFalse();
+        }
+        var missing=actual.deepCopy();((tools.jackson.databind.node.ObjectNode)missing.path("rawEditReview")).remove("consistencyReview");
+        assertThat(StyledIdleHold.replaceableFailure(missing)).isFalse();
+        var disputed=actual.deepCopy();((tools.jackson.databind.node.ObjectNode)StyledMotionReview.property(disputed.at("/rawEditReview/consistencyReview"),"idleStillness")).put("state","PASS");
+        assertThat(StyledIdleHold.replaceableFailure(disputed)).isFalse();
+        assertThat(StyledIdleHold.replaceableFailure(json.createObjectNode())).isFalse();
+    }
+    @Test void realRearWalkTailDefectCanBeRepairedWhileOverlappingIdentityDisagreementStaysUncertain()throws Exception {
+        var actual=json.readTree(Files.readAllBytes(root.resolve("walk-north-v26-review.json")));var original=actual.deepCopy();
+        assertThat(StyledMotionReview.confirmedTailRepair(actual)).isTrue();assertThat(StyledMotionReview.unresolved(actual)).isTrue();
+        assertThat(actual).isEqualTo(original);assertThat(StyledMotionReview.boundPass(actual)).isFalse();
+        var separate=actual.deepCopy();((tools.jackson.databind.node.ObjectNode)StyledMotionReview.property(separate.path("consistencyReview"),"identity")).putArray("frames").add(0);
+        assertThat(StyledMotionReview.confirmedTailRepair(separate)).isFalse();
+        for(String key:List.of("tail","eyes","loop","direction","action","palette")) {
+            var changed=actual.deepCopy();((tools.jackson.databind.node.ObjectNode)changed).putArray("uncertainProperties").add(key);
+            assertThat(StyledMotionReview.confirmedTailRepair(changed)).as(key).isFalse();
+        }
+        var disputed=actual.deepCopy();((tools.jackson.databind.node.ObjectNode)StyledMotionReview.property(disputed.path("consistencyReview"),"tail")).put("state","PASS");
+        assertThat(StyledMotionReview.confirmedTailRepair(disputed)).isFalse();
+        var missing=actual.deepCopy();((tools.jackson.databind.node.ObjectNode)missing).remove("consistencyReview");assertThat(StyledMotionReview.confirmedTailRepair(missing)).isFalse();
+        var output=StyledRecovery.motionPayload(json,StyledSpriteCodec.frames(Files.readAllBytes(root.resolve("walk-north.png"))),"WALK","north",actual,1);
+        assertThat(output.path("description").asText()).contains("Both observations confirm a tail defect").hasSizeLessThanOrEqualTo(2000);
+    }
 }

@@ -257,13 +257,17 @@ public class StyledAssetStore {
             || sheets.valueStream().anyMatch(n->!n.asText().matches("[a-f0-9]{64}")))throw AssetException.invalid();
         lock(id);var j=job(id);if(!j.dogId().equals(dog))throw missing();legacy.valid(id,true);var policy=j.qualityPolicy();
         if(policy==null)throw new AssetException(409,"MOTION_REPAIR_RESUME_NOT_ALLOWED");
-        var prior=policy.path("motionRepairResume");
-        if(!prior.isMissingNode()) {
-            if(prior.path("requestId").asText().equals(requestId.toString()) && prior.path("seedHashes").equals(seeds)
-                && prior.path("sheetHashes").equals(sheets) && prior.path("previousRulesSha256").asText().equals(expected)
-                && prior.path("note").asText().equals(note))return j;
+        var prior=policy.path("motionRepairResume");var history=json.createArrayNode();
+        if(policy.path("motionRepairResumeHistory").isArray())history.addAll((tools.jackson.databind.node.ArrayNode)policy.path("motionRepairResumeHistory"));
+        if(!prior.isMissingNode())history.add(prior);
+        for(var previous:history)if(previous.path("requestId").asText().equals(requestId.toString())) {
+            if(previous.path("seedHashes").equals(seeds) && previous.path("sheetHashes").equals(sheets)
+                && previous.path("previousRulesSha256").asText().equals(expected) && previous.path("note").asText().equals(note))return j;
             throw new AssetException(409,"MOTION_REPAIR_RESUME_ALREADY_REQUESTED");
         }
+        // One bounded continuation per new rules revision; older requests remain immutable and replayable.
+        if(history.valueStream().anyMatch(p->p.path("rulesSha256").asText().equals(StyledSpriteCodec.qualityRulesSha())))
+            throw new AssetException(409,"MOTION_REPAIR_RESUME_ALREADY_REQUESTED");
         if(!j.status().equals("REVIEW") || !j.complete() || !StyledRecovery.enabled(policy) || !StyledAutoApproval.enabled(policy)
             || j.qualityApproval()!=null || !historicallyApprovedSeed(j))
             throw new AssetException(409,"MOTION_REPAIR_RESUME_NOT_ALLOWED");
@@ -292,10 +296,10 @@ public class StyledAssetStore {
             """).param("id",id).update();
         jdbc.sql("""
             UPDATE shelter.asset_jobs SET quality_policy=quality_policy || jsonb_build_object('rulesSha256',:rules,'rulesRevision',:revision,
-              'motionRepairResume',CAST(:grant AS jsonb),'idleHoldVersion',:hold),seed_review=NULL,status='QUEUED',failure_code=NULL,
+              'motionRepairResume',CAST(:grant AS jsonb),'motionRepairResumeHistory',CAST(:history AS jsonb),'idleHoldVersion',:hold),seed_review=NULL,status='QUEUED',failure_code=NULL,
               next_run_at=now(),lease_token=NULL,lease_until=NULL WHERE id=:id
             """).param("rules",StyledSpriteCodec.qualityRulesSha()).param("revision",StyledSpriteCodec.qualityRules(json).path("revision").asText())
-            .param("grant",json.writeValueAsString(grant)).param("hold",StyledIdleHold.VERSION).param("id",id).update();
+            .param("grant",json.writeValueAsString(grant)).param("history",json.writeValueAsString(history)).param("hold",StyledIdleHold.VERSION).param("id",id).update();
         return job(id);
     }
     private boolean historicallyApprovedSeed(Job j) {
@@ -669,7 +673,7 @@ public class StyledAssetStore {
         // Explicit rechecks judge the stored bytes, even if a new rule finds a defect with budget left.
         if(w.status().equals("CHECKING") && !seedResumeAllowed(w) && !motionResumeAllowed(w))return false;
         if(w.character() && StyledCoatReview.unresolved(report))return false;
-        if(StyledMotionReview.unresolved(report))return false;
+        if(StyledMotionReview.unresolved(report) && !StyledMotionReview.confirmedTailRepair(report))return false;
         if(w.qualityPolicy()!=null && w.qualityPolicy().path("referenceOnly").asBoolean())return false;
         if(report.path("passed").asBoolean() || w.repairCount()>=StyledRecovery.limit(w.qualityPolicy(),w.character()))return false;
         if(w.character() && StyledSeedRepair.enabled(w.qualityPolicy()) && !"READY".equals(report.at("/seedRepairPlan/status").asText()))return false;

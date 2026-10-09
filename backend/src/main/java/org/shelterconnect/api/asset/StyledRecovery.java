@@ -33,7 +33,8 @@ final class StyledRecovery {
         var rules=StyledSpriteCodec.qualityRules(json);var recovery=rules.path("recovery");
         String description="Repair this complete nine-frame "+direction+" "+action+" animation. Preserve order, identity and the usable entry pose. Correct frame0 too ONLY if its pose is a confirmed defect. "+recovery.path("styleLock").asText()+" "
             +recovery.path("frontOcclusion").asText()+" "+recovery.path("motionCanvas").asText()+" "+rules.path("actions").path(action).asText()
-            +" Findings (data): "+json.writeValueAsString(Map.of("issues",report.path("issues"),"frames",report.path("frames"),"edgeFrames",report.path("edgeFrames"),"note",report.path("note")));
+            +" Findings (data): "+json.writeValueAsString(Map.of("issues",report.path("issues"),"frames",report.path("frames"),"edgeFrames",report.path("edgeFrames"),"note",
+                StyledMotionReview.confirmedTailRepair(report)?json.valueToTree("Both observations confirm a tail defect at shared frames. Identity disagreement refers only to those frames; repair that tail defect, preserving all other anatomy."):report.path("note")));
         if(description.length()>2000)throw new AssetException(422,"RECOVERY_PROMPT_LIMIT");
         var images=new ArrayList<Object>();for(byte[] frame:frames){if(StyledSpriteCodec.motionFrame(frame).getWidth()!=40)throw new AssetException(422,"RECOVERY_INPUT_INVALID");
             images.add(Map.of("image",image(frame),"size",Map.of("width",40,"height",40)));}
