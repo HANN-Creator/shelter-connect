@@ -82,10 +82,16 @@ final class StyledSeedRepair {
         return true;
     }
     static List<String> directions(List<byte[]> seeds,JsonNode report){
-        verifySource(seeds,report);var plan=report.path("seedRepairPlan");var dirs=repairTargets(report);
+        verifySource(seeds,report);return plannedDirections(report);
+    }
+    static List<String> plannedDirections(JsonNode report){
+        var plan=report.path("seedRepairPlan");var dirs=repairTargets(report);
         if(!VERSION.equals(plan.path("version").asText()) || !"READY".equals(plan.path("status").asText())
             || dirs.isEmpty()
-            || !StyledSeedQualityAgent.binding(seeds).equals(plan.path("sourceBinding").asText())
+            || !StyledRecovery.VERSION.equals(report.path("recoveryVersion").asText())
+            || !StyledSpriteCodec.qualityRulesSha().equals(report.path("rulesSha256").asText())
+            || !report.path("inputSha256").asText().matches("[a-f0-9]{64}")
+            || !report.path("inputSha256").equals(plan.path("sourceBinding"))
             || !StyledSpriteCodec.qualityRulesSha().equals(plan.path("rulesSha256").asText())
             || !plan.path("directions").isArray() || !dirs.equals(plan.path("directions").valueStream().map(JsonNode::asText).toList())
             || !Set.of("VIEW","REGION").contains(plan.path("method").asText()))throw invalid();

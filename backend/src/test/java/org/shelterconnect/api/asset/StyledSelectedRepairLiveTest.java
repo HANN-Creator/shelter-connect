@@ -39,9 +39,9 @@ class StyledSelectedRepairLiveTest {
             JsonNode result;
             if(Files.exists(saved))result=json.readTree(Files.readAllBytes(saved));
             else{long until=System.nanoTime()+java.time.Duration.ofMinutes(5).toNanos();result=json.createObjectNode();
-                while(System.nanoTime()<until){result=StyledSeedRepair.regional(report)?provider.pollSeedEyes(id):provider.pollSeeds(id,StyledSeedRepair.targets(report));if(!result.path("status").asText().equals("WAITING"))break;Thread.sleep(5000);}
+                while(System.nanoTime()<until){result=StyledSeedRepair.regional(report)?provider.pollSeedEyes(id):provider.pollSeeds(id,StyledSeedRepair.directions(seeds,report));if(!result.path("status").asText().equals("WAITING"))break;Thread.sleep(5000);}
                 assertThat(result.path("status").asText()).isEqualTo("COMPLETED");Files.write(saved,json.writeValueAsBytes(result));}
-            var repaired=StyledSeedRepair.apply(seeds,report,result);var dirs=StyledSeedRepair.targets(report);
+            var repaired=StyledSeedRepair.apply(seeds,report,result);var dirs=StyledSeedRepair.directions(seeds,report);
             for(int i=0;i<4;i++)if(!dirs.contains(StyledSpriteCodec.DIRECTIONS.get(i)))assertThat(repaired.seeds().get(i)).isEqualTo(seeds.get(i));
             Files.write(dir.resolve("preservation.json"),json.writeValueAsBytes(Map.of("directions",dirs,"sourceHashes",seeds.stream().map(StyledSpriteCodec::sha).toList(),"outputHashes",repaired.seeds().stream().map(StyledSpriteCodec::sha).toList(),"changedPixels",repaired.changedPixels(),"rawOutsideMaskDifferences",repaired.outsideMaskDifferences())));
             seeds=new ArrayList<>(repaired.seeds());for(int i=0;i<4;i++)Files.write(dir.resolve(StyledSpriteCodec.DIRECTIONS.get(i)+".png"),seeds.get(i));
