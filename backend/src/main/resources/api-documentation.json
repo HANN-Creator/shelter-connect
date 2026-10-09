@@ -850,6 +850,14 @@
         "worldMotion": {
           "type": "object",
           "description": "방향 단위 벡터. BACK_OFF는 바라보는 방향의 반대. 이동 속도는 기존 behavior 설정 사용."
+        },
+        "motionKind": {
+          "type": "string",
+          "enum": [
+            "ANIMATED",
+            "STATIC_IDLE"
+          ],
+          "description": "native 4방향 팩의 동작 구분. STATIC_IDLE은 보완 소진 후 승인된 같은 방향 기본 자세를 새 검수한 9프레임 정지 쉬기입니다. 기존 팩은 필드가 없을 수 있습니다."
         }
       },
       "required": [
@@ -2483,6 +2491,18 @@
           "type": "string",
           "pattern": "^[a-f0-9]{64}$",
           "description": "현재 작업의 qualityPolicy.rulesSha256. 서버의 새 규칙 해시가 아니라 재검사 전 작업에 고정된 값."
+        },
+        "evidenceOnly": {
+          "type": "boolean",
+          "description": "true이면 모델 재관찰·이미지 생성 없이 저장된 최종 승인 근거만 검사합니다. 현재 규칙·완성 팩·전체 품질 통과·모든 시트 해시가 필요합니다."
+        },
+        "expectedSheetHashes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "description": "evidenceOnly=true일 때 필수. BASE 외 모든 동작 label→현재 SHA-256."
         }
       },
       "required": [
@@ -2796,6 +2816,139 @@
         "expectedSeedHashes",
         "expectedRulesSha256",
         "requestId"
+      ],
+      "additionalProperties": false
+    },
+    "StyledMotionRepairResume": {
+      "type": "object",
+      "properties": {
+        "note": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 2000
+        },
+        "expectedSeedHashes": {
+          "$ref": "#/components/schemas/StyledSeedHashes"
+        },
+        "expectedRulesSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "현재 작업의 qualityPolicy.rulesSha256. 서버의 새 규칙 해시가 아니라 재검사 전 작업에 고정된 값."
+        },
+        "requestId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "작업·새 규칙 버전별 1회 재개 요청 ID. 모든 이전 요청과 동일한 본문 재전송은 추가 과금 없이 재사용합니다."
+        },
+        "expectedSheetHashes": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 32,
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "description": "보완할 실패 동작 label → 현재 시트 SHA. 통과 동작은 포함하지 않습니다."
+        }
+      },
+      "required": [
+        "note",
+        "expectedSeedHashes",
+        "expectedRulesSha256",
+        "requestId",
+        "expectedSheetHashes"
+      ],
+      "additionalProperties": false
+    },
+    "StyledQualityResponseResume": {
+      "type": "object",
+      "properties": {
+        "note": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 2000
+        },
+        "expectedSeedHashes": {
+          "$ref": "#/components/schemas/StyledSeedHashes"
+        },
+        "expectedRulesSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "현재 서버 및 작업에 고정된 품질 규칙 SHA. 규칙 변경을 허용하지 않습니다."
+        },
+        "requestId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "동작·응답 프로토콜 버전별 1회 복구. 동일 본문 재전송은 재사용합니다."
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "expectedSheetSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "note",
+        "expectedSeedHashes",
+        "expectedRulesSha256",
+        "requestId",
+        "label",
+        "expectedSheetSha256"
+      ],
+      "additionalProperties": false
+    },
+    "StyledMotionCandidateRepair": {
+      "type": "object",
+      "properties": {
+        "note": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 2000
+        },
+        "expectedSeedHashes": {
+          "$ref": "#/components/schemas/StyledSeedHashes"
+        },
+        "expectedRulesSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "현재 작업의 qualityPolicy.rulesSha256. 서버의 새 규칙 해시가 아니라 재검사 전 작업에 고정된 값."
+        },
+        "requestId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "작업·새 규칙 버전별 1회 재개 요청 ID. 모든 이전 요청과 동일한 본문 재전송은 추가 과금 없이 재사용합니다."
+        },
+        "expectedSheetHashes": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 32,
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "description": "보완할 실패 동작 label → 현재 시트 SHA. 통과 동작은 포함하지 않습니다."
+        },
+        "expectedReviewHashes": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 32,
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "description": "현재 qualityReport를 객체 순서를 유지한 공백 없는 UTF-8 JSON으로 직렬화한 SHA-256. 선택 시트와 동일한 label 집합."
+        }
+      },
+      "required": [
+        "note",
+        "expectedSeedHashes",
+        "expectedRulesSha256",
+        "requestId",
+        "expectedSheetHashes",
+        "expectedReviewHashes"
       ],
       "additionalProperties": false
     }
@@ -4438,7 +4591,7 @@
     },
     "POST /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/quality-recheck": {
       "summary": "변경된 규칙으로 미승인 스프라이트 재검사",
-      "description": "같은 보호소 담당자 전용. 완료된 미승인 팩의 규칙 해시가 실제로 변경된 경우만 재검수합니다. 기준 이미지·이전 판정·제출 이력을 보존하고 기존 시트별 최대 2회 보완 횟수를 초기화하지 않습니다. 동일 요청 재전송은 작업을 재사용합니다. 승인 팩·진행 중 규칙 교체·같은 규칙 재검수는 허용하지 않습니다. QUALITY_RECHECK_STALE, QUALITY_RULES_UNCHANGED, QUALITY_RECHECK_NOT_ALLOWED는 409입니다.",
+      "description": "같은 보호소 담당자 전용. 완료된 미승인 팩의 규칙 해시가 실제로 변경된 경우만 재검수합니다. 기준 이미지·이전 판정·제출 이력을 보존하고 기존 시트별 최대 2회 보완 횟수를 초기화하지 않습니다. 동일 요청 재전송은 작업을 재사용합니다. 승인 팩·진행 중 규칙 교체·같은 규칙 재검수는 허용하지 않습니다. QUALITY_RECHECK_STALE, QUALITY_RULES_UNCHANGED, QUALITY_RECHECK_NOT_ALLOWED는 409입니다. evidenceOnly=true는 현재 규칙에서 전체 품질이 통과한 완성 팩의 결정적 최종 승인 근거만 검사합니다. BASE·모든 시트 해시·현재 SYSTEM 기본 승인을 검증하며 모델 재관찰·생성·횟수 초기화는 없습니다. 구버전 원본 채택 보고서의 JSONB 키 순서 때문에 해시가 달라진 경우, 원래 채택 이력의 정확한 raw QA·9프레임·시트·BASE와 일치할 때만 정규 해시 메타데이터를 별도로 기록하고 이전 해시/보고서를 보존합니다. 실제 판정이나 이미지 바이트는 바꾸지 않습니다.",
       "tag": "32px 에셋",
       "success": [
         "200"
@@ -4572,6 +4725,60 @@
       ],
       "request": {
         "schema": "StyledSeedRepairResume"
+      }
+    },
+    "POST /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/motion-repair-resume": {
+      "summary": "새 규칙으로 실패 동작의 남은 보완 예산 재개",
+      "description": "같은 보호소 담당자 전용. REVIEW 상태의 완성된 일반 자동 승인 팩만 허용합니다. 규칙 변경·승인 도트·실패 시트 해시를 확인하고 전체 이미지를 새 규칙으로 재검수합니다. 선택된 실패 동작만 원래 남은 유료 보완 예산을 사용합니다. 소진된 IDLE은 승인 도트의 정지 자세를 별도 결과로 저장하고 새 검수합니다. 각 원본/보정 결과의 두 관찰 모두 action·idleStillness 실패에 동의하면 loop만의 불확실성은 새 정지 대체를 막지 않지만, 기존 판정과 학습 보류는 유지합니다. 또한 두 관찰의 확정 tail 프레임 교집합 안에서만 identity PASS/FAIL 분류가 갈리는 경우 확정 꼬리 결함을 원래 예산으로 수정할 수 있습니다. 기존 불확실 판정과 학습 보류는 유지하며 새 결과는 전체 검수를 통과해야 합니다. 그 외 불확실성은 차단합니다. 기존 원본·영수증·예산·실패·재개 이력은 보존합니다. 작업·새 규칙 버전별 1회이며 모든 이전 요청의 동일 본문 재전송은 재사용합니다. v28: 다른 항목은 모두 통과하고 identity 분류만 확인된 palette 결함 프레임에서 갈리면 확정 색상 결함을 원래 예산으로 보완합니다. 정면 SIT 원본의 tail만 PASS/UNCERTAIN이며 보정본이 완전 통과하고 두 영상의 9프레임 윤곽·1..8프레임 픽셀이 정확히 같을 때만 꼬리 형태 근거를 공유합니다. 원래 불확실 관찰과 이미지 해시는 보존하고 해당 관찰은 학습하지 않습니다.",
+      "tag": "32px 에셋",
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "403",
+        "404",
+        "409",
+        "503"
+      ],
+      "request": {
+        "schema": "StyledMotionRepairResume"
+      }
+    },
+    "POST /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/quality-response-resume": {
+      "summary": "저장된 동작의 검수 응답 형식 오류만 복구",
+      "description": "같은 보호소 담당자 전용. 자동 BASE 승인이 유효하고 정확히 한 개의 저장 동작이 QUALITY_MOTION_RESPONSE_INVALID로 FAILED인 경우만 허용합니다. 원본 도트·시트·현재 규칙 해시를 확인하고 해당 동작 검수만 재개합니다. 기존 통과 판정·이미지·영수증·보완 횟수·예산은 유지합니다. 오류 응답은 이력에 보존하며 새 생성 예산을 주지 않습니다. 일반 불합격·불확실 판정·시간초과·규칙 변경은 대상이 아닙니다. 동작·응답 프로토콜 버전별 1회, 동일 요청 재전송은 재사용합니다.",
+      "tag": "32px 에셋",
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "403",
+        "404",
+        "409",
+        "503"
+      ],
+      "request": {
+        "schema": "StyledQualityResponseResume"
+      }
+    },
+    "POST /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/motion-candidate-repair": {
+      "summary": "현재 검수 근거로 보류된 동작만 후보 보완",
+      "description": "같은 보호소 담당자 전용. 현재 규칙과 SYSTEM BASE 승인이 유효한 완성 REVIEW 팩에서 선택한 실패 시트 및 검수 해시를 확인합니다. 다른 통과 동작의 이미지·QA와 BASE 승인은 보존하며 규칙 변경이나 전체 재검수를 요구하지 않습니다. 현재 원본의 독립 전체 PASS가 있으면 원본 채택을 먼저 수행합니다. 관찰이 갈렸더라도 모든 불확실 속성에 구체적인 FAIL 프레임이 있고 진입 자세가 통과한 경우 기존 예산 안에서 미확정 후보를 최대 한 번 시도합니다. UNKNOWN만 있는 근거는 차단합니다. 이전 불확실 판정은 부정 학습하거나 공개하지 않고 새 후보의 전체 검수를 요구합니다. 한도·영수증·이력은 보존하고 같은 요청 재전송은 완료 후에도 추가 생성하지 않습니다.",
+      "tag": "32px 에셋",
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "403",
+        "404",
+        "409",
+        "503"
+      ],
+      "request": {
+        "schema": "StyledMotionCandidateRepair"
       }
     }
   }

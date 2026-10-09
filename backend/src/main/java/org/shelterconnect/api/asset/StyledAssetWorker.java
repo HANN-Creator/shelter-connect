@@ -25,7 +25,7 @@ public class StyledAssetWorker {
             if(!store.authorized(w))return;
             boolean learning=!store.learningRecovery(w).isEmpty();
             boolean learnedEdit=learning && w.action().equals("IDLE");
-            boolean edit=learnedEdit || (!learning && motionEdit(w));
+            boolean edit=!StyledIdleHold.derived(w.providerResult()) && (learnedEdit || (!learning && motionEdit(w)));
             if(w.qualityPolicy()!=null && w.qualityPolicy().has("rulesSha256")
                 && !StyledSpriteCodec.qualityRulesSha().equals(w.qualityPolicy().path("rulesSha256").asText()))
                 throw new AssetException(409,"QUALITY_RULES_CHANGED");
@@ -159,7 +159,8 @@ public class StyledAssetWorker {
                 if(edit || (!learning && mirrorRepair(w))) {
                     byte[] raw=StyledSpriteCodec.rawSheet(frames);String rawKey=w.prefix()+"raw-edits/"+w.label()+"-"+w.repairCount()+".png";
                     storage.put(rawKey,raw);rawEdit=json.valueToTree(Map.of("key",rawKey,"sha256",StyledSpriteCodec.sha(raw)));
-                    frames=recovery?StyledSpriteCodec.anchorEdit(frames,seed(w)):StyledSpriteCodec.restoreEditPalette(frames,seed(w));
+                    // Native40 edits already contain all nine frames: changing only frame0 creates palette flicker.
+                    if(!recovery)frames=StyledSpriteCodec.restoreEditPalette(frames,seed(w));
                 }
                 if(recovery && frames.stream().anyMatch(f->StyledSpriteCodec.motionFrame(f).getWidth()!=40))
                     throw new AssetException(422,"STYLED_FRAME_INVALID");
@@ -167,7 +168,7 @@ public class StyledAssetWorker {
                 // Bind canonical frames extracted from the stored sheet, not provider-specific PNG encoding.
                 // Rechecks must observe the same hashes without altering any RGBA pixel.
                 if(recovery)frames=StyledSpriteCodec.frames(sheet);
-                String key=w.prefix()+"sheets/"+(w.repairCount()==0?"":"repair-"+w.repairCount()+"/")+w.label()+".png";storage.put(key,sheet);
+                String key=w.prefix()+"sheets/"+(StyledIdleHold.derived(result)?"idle-hold/":w.repairCount()==0?"":"repair-"+w.repairCount()+"/")+w.label()+".png";storage.put(key,sheet);
                 var spec=StyledSpriteCodec.rules(json).path("actions").path(w.action());
                 var metadata=json.valueToTree(Map.of("key",key,"sha256",StyledSpriteCodec.sha(sheet),"frameCount",9,
                     "durationMs",spec.path("durationMs").asInt(),"loop",spec.path("loop").asBoolean()));
@@ -180,7 +181,7 @@ public class StyledAssetWorker {
                 inspect(w,frames,metadata);
             }
         } catch(AssetProvider.Failure e) { store.fail(w,e.uncertain,e.code); }
-        catch(AssetException e) { store.fail(w,false,e.code); }
+        catch(AssetException e) { if(e.diagnostics!=null)store.quality(w,e.diagnostics);store.fail(w,false,e.code); }
         catch(RuntimeException e) { store.fail(w,submitted,"STYLED_WORK_INTERRUPTED"); }
     }
     private void inspectSeeds(StyledAssetStore.Work w,List<byte[]> seeds,JsonNode metadata,boolean allowRepair) {
@@ -272,6 +273,7 @@ public class StyledAssetWorker {
                 // Identical bytes share one bounded observation; never ask the model twice for different labels.
                 var rawReview=StyledMotionReview.VERSION.equals(review.path("motionReviewVersion").asText()) && source.path("sha256").asText().equals(sha)?review.deepCopy():selected.isEmpty()?quality.review(w.qualityPolicy().path("contract"),seeds,rawFrames,w.action(),w.direction()):
                     quality.review(w.qualityPolicy().path("contract"),seeds,rawFrames,w.action(),w.direction(),selected);
+                rawReview=StyledMotionEquivalence.reconcile(rawReview,review,rawFrames,frames,w.action(),w.direction(),json);
                 var issues=new TreeSet<String>();review.path("issues").forEach(n->issues.add(n.asText()));rawReview.path("issues").forEach(n->issues.add(n.asText()));
                 var restored=review.deepCopy();
                 var combined=(tools.jackson.databind.node.ObjectNode)review;
@@ -279,6 +281,8 @@ public class StyledAssetWorker {
                 combined.set("issues",json.valueToTree(issues));combined.put("passed",review.path("passed").asBoolean() && rawReview.path("passed").asBoolean());
                 combined.set("rawEditReview",rawReview);combined.put("rawEditSha256",source.path("sha256").asText());
             }
+            // Recheck source authorization after external observations, before reading/binding seed bytes.
+            if(!store.authorized(w))return;
             var details=(tools.jackson.databind.node.ObjectNode)review;details.put("inputSha256",sha);details.put("lessonsSha256",lessonSha);details.set("learnedLessons",selected);
             details.set("seedHashes",base.path("hashes"));details.put("action",w.action());details.put("direction",w.direction());
             if(StyledRecovery.enabled(w.qualityPolicy())){
@@ -297,7 +301,15 @@ public class StyledAssetWorker {
             if(report.has("restoredReview"))lessons.record(w,report.path("restoredReview"),metadata,seeds);
             else if(report.path("rawEditReview").path("passed").asBoolean())lessons.record(w,report,metadata,seeds);
         } else lessons.record(w,report,metadata,seeds);
+        if(StyledRawMotion.eligible(w,report,metadata)) {
+            byte[] raw=storage.asset(metadata.at("/rawEdit/key").asText());
+            var candidate=StyledRawMotion.candidate(w,report,metadata,raw,seed(w),seeds.path("hashes"),json);
+            storage.put(candidate.result().path("key").asText(),raw);
+            if(store.adoptRawMotion(w,report,metadata,candidate))return;
+        }
         if(!store.retryQuality(w,report,metadata)) {
+            if(StyledIdleHold.eligible(w,report,metadata)
+                && store.idleHoldCheckpoint(w,report,metadata,StyledIdleHold.result(seed(w),seeds.path("hashes"),w.direction(),metadata,json)))return;
             recovery.observe(w,report,metadata,seeds);
             store.success(w,metadata);
         }

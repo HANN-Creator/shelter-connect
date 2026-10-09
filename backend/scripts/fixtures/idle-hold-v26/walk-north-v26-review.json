@@ -1,0 +1,627 @@
+{
+  "note": "\ub3c5\ub9bd \uad00\ucc30 \ubd88\uc77c\uce58 \ub610\ub294 \uad00\ucc30 \ubd88\ud655\uc2e4; \uc790\ub3d9 \ubcf4\uc644\uacfc \ud559\uc2b5 \ubcf4\ub958",
+  "model": "gpt-5.6-luna",
+  "action": "WALK",
+  "frames": [
+    4,
+    5,
+    6,
+    7
+  ],
+  "issues": [
+    "TAIL_CARRIAGE"
+  ],
+  "passed": false,
+  "version": "sprite-quality-v1",
+  "direction": "north",
+  "edgeFrames": [],
+  "reviewedAt": "2026-10-09T16:23:28.519797Z",
+  "seedHashes": {
+    "east": "8f6f7f49aa3a73063f55ef59bde0409d4e8c3ab2f01aa5c072e9446a366156f5",
+    "west": "81f256fb4aead87334508fd00f5798e30ab733fe46b18a4917b3532cad0bd9f9",
+    "north": "35f3c2dea252fbb0c840b37c45e972d54dff92d0f92085dc7c2535001e0eb63c",
+    "south": "4d33c8ef0a6f2e6461fa547101805291e003a6a4bc7244d18cad775ba2742e20"
+  },
+  "frameHashes": [
+    "b7cd86e300f2ff40c236845b0c15774aaebaccdf4ea8ac4b38256b2f793d1af4",
+    "15066493aaf7b530389369fc45e44988082e5cfc116d99e0bb6e91c374e4df15",
+    "3712fe1cc4a0acf5fe9fce3947601ebb2fc9d8a10c89e6e5f81804198041dfc7",
+    "b86d632b6966bfc8f6ed33bc5808bdd07be7fe6f6ac27b3f1980581175245fe6",
+    "a1279ee29f9c05089597117d08216f8e1bfe32c9a5742c504fcb7c6356787bd1",
+    "cee154e6d59f2edbaf7994022d9a9cf14a5d7684f1b8964284e48a198c11b3e9",
+    "2cb62925257c36c61214ec143b7246e2d1f6c91c6f0766cdd627dd2c89baeff2",
+    "ed824455836beda3962e64faa9d53b1d0c0b180bbb4303d9b05b56e6ff991e1f",
+    "98115e1d69d4eb28418099eb5c2c9cf6bd68546c46db10e38c12ade9b77ca556"
+  ],
+  "inputSha256": "d769173776dea4d924b199aa3b3603f4311eb63b88e66df6b2dbadb1fa87ddd6",
+  "rulesSha256": "cdd63d12b0eb39ff39518b7188f99196cf8e5795a33810cc70a95b42453a1856",
+  "reviewLayout": "separate-reference-temporal-v1",
+  "colorEvidence": {
+    "pairs": [
+      {
+        "p90": 0,
+        "p95": 0,
+        "frame": 0,
+        "median": 0,
+        "reference": 0
+      },
+      {
+        "p90": 0,
+        "p95": 0,
+        "frame": 0,
+        "median": 0,
+        "reference": 8
+      },
+      {
+        "p90": 205,
+        "p95": 205,
+        "frame": 1,
+        "median": 0,
+        "reference": 0
+      },
+      {
+        "p90": 205,
+        "p95": 205,
+        "frame": 1,
+        "median": 0,
+        "reference": 0
+      },
+      {
+        "p90": 205,
+        "p95": 205,
+        "frame": 2,
+        "median": 38,
+        "reference": 0
+      },
+      {
+        "p90": 205,
+        "p95": 227,
+        "frame": 2,
+        "median": 0,
+        "reference": 1
+      },
+      {
+        "p90": 205,
+        "p95": 205,
+        "frame": 3,
+        "median": 42,
+        "reference": 0
+      },
+      {
+        "p90": 205,
+        "p95": 205,
+        "frame": 3,
+        "median": 0,
+        "reference": 2
+      },
+      {
+        "p90": 205,
+        "p95": 205,
+        "frame": 4,
+        "median": 0,
+        "reference": 0
+      },
+      {
+        "p90": 205,
+        "p95": 205,
+        "frame": 4,
+        "median": 0,
+        "reference": 3
+      },
+      {
+        "p90": 205,
+        "p95": 205,
+        "frame": 5,
+        "median": 0,
+        "reference": 0
+      },
+      {
+        "p90": 205,
+        "p95": 227,
+        "frame": 5,
+        "median": 0,
+        "reference": 4
+      },
+      {
+        "p90": 205,
+        "p95": 205,
+        "frame": 6,
+        "median": 0,
+        "reference": 0
+      },
+      {
+        "p90": 205,
+        "p95": 227,
+        "frame": 6,
+        "median": 0,
+        "reference": 5
+      },
+      {
+        "p90": 205,
+        "p95": 205,
+        "frame": 7,
+        "median": 0,
+        "reference": 0
+      },
+      {
+        "p90": 205,
+        "p95": 227,
+        "frame": 7,
+        "median": 0,
+        "reference": 6
+      },
+      {
+        "p90": 0,
+        "p95": 0,
+        "frame": 8,
+        "median": 0,
+        "reference": 0
+      },
+      {
+        "p90": 205,
+        "p95": 205,
+        "frame": 8,
+        "median": 0,
+        "reference": 7
+      }
+    ],
+    "version": "visible-rgb-distribution-v1"
+  },
+  "initialVision": {
+    "properties": [
+      {
+        "state": "PASS",
+        "frames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "evidence": "\ud504\ub808\uc784 1~7\uc5d0\uc11c \ub124 \ub2e4\ub9ac\uc758 \uc704\uce58\uac00 \ubc88\uac08\uc544 \ubcc0\ud558\uba70 \ubcf4\ud589 \ub3d9\uc791\uc774 \ubcf4\uc774\uace0, \ud504\ub808\uc784 8\uc5d0\uc11c \uc2dc\uc791 \uc790\uc138\ub85c \ub3cc\uc544\uc628\ub2e4.",
+        "property": "action"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "\ubaa8\ub4e0 \ud504\ub808\uc784\uc5d0\uc11c \ub4f1\uc744 \ubcf4\uc774\ub294 \ubd81\ucabd \ubc29\ud5a5\uc758 \ub3d9\uc77c\ud55c \uc790\uc138\ub97c \uc720\uc9c0\ud55c\ub2e4.",
+        "property": "direction"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "\ud6c4\uba74\uc744 \ud5a5\ud55c \uce90\ub9ad\ud130\ub85c\uc11c \ub208\uc774 \ud45c\uc2dc\ub418\uc9c0 \uc54a\uc73c\uba70, \ubd80\uc801\uc808\ud55c \ub208 \ubcc0\ud654\ub3c4 \ubcf4\uc774\uc9c0 \uc54a\ub294\ub2e4.",
+        "property": "eyes"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "\uadc0 \ud615\ud0dc, \ud669\uac08\uc0c9 \uc678\ud53c\uc640 \ub4f1\u00b7\uaf2c\ub9ac\uc758 \uc2b9\uc778\ub41c \uc2e4\ub8e8\uc5e3\uc774 \uc804\uccb4 \ud504\ub808\uc784\uc5d0\uc11c \uc2dd\ubcc4 \uac00\ub2a5\ud558\ub2e4.",
+        "property": "identity"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "\uc694\uccad \ub3d9\uc791\uc774 IDLE\uc774 \uc544\ub2cc WALK\uc774\ubbc0\ub85c \ube44\uc801\uc6a9\uc774\ub2e4.",
+        "property": "idleStillness"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "evidence": "\ubcf4\ud589 \uc911 \ub124 \ub2e4\ub9ac\uac00 \ubab8\ud1b5\uc5d0 \uc5f0\uacb0\ub41c \uc0c1\ud0dc\ub85c \uc11c\ub85c \ub2e4\ub978 \uc704\uce58\uc5d0 \ub098\ud0c0\ub098\uba70, \uc0ac\uc9c0 \uc2e4\ub8e8\uc5e3\uc774 \ub300\uccb4\ub85c \uc77c\uad00\ub41c\ub2e4.",
+        "property": "limbs"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          8
+        ],
+        "evidence": "\ud504\ub808\uc784 8\uc774 \ud504\ub808\uc784 0\uc758 \uc11c \uc788\ub294 \uc9c4\uc785 \uc790\uc138\ub85c \ub3cc\uc544\uac00\uba70 \ub8e8\ud504 \ub05d\uacfc \uc2dc\uc791\uc774 \uc5f0\uacb0\ub41c\ub2e4.",
+        "property": "loop"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "evidence": "\ud504\ub808\uc784 \uac04 \ud070 RGB \ubcc0\ud654\ub294 \uc788\uc73c\ub098 \uc678\ud53c \uc0c9\uacfc \uc8fc\uc694 \ucf54\ud2b8 \uc601\uc5ed\uc740 \uc720\uc9c0\ub418\uace0, \ub208\uc5d0 \ub744\ub294 \uc804\uccb4 \ud314\ub808\ud2b8 \uae5c\ube61\uc784\uc774\ub098 \ud328\uce58 \uc18c\uc2e4\uc740 \ubcf4\uc774\uc9c0 \uc54a\ub294\ub2e4.",
+        "property": "palette"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0
+        ],
+        "evidence": "\uc2e4\uc81c \ud504\ub808\uc784 0\uc740 \uc2b9\uc778 \uc2dc\ub4dc\uc640 \uac19\uc740 \ubd81\ucabd \ud6c4\uba74\uc758 \uc11c \uc788\ub294 \uc9c4\uc785 \uc790\uc138, \ud574\ubd80 \uad6c\uc870\uc640 \ub124\uc774\ud2f0\ube0c \ud06c\uae30\ub97c \uc0ac\uc6a9\ud55c\ub2e4.",
+        "property": "referencePose"
+      },
+      {
+        "state": "FAIL",
+        "frames": [
+          4,
+          5,
+          6,
+          7
+        ],
+        "evidence": "\ud504\ub808\uc784 4~7\uc5d0\uc11c \uc2b9\uc778\ub41c \ud504\ub808\uc784 0\uacfc \uc2dc\ub4dc\uc5d0 \uc5c6\ub294 \uac80\uc740\uc0c9 \uc911\uc559 \uc0c1\ub2e8 \ub3cc\ucd9c\ubb3c\uc774 \uc0c8\ub85c \ub098\ud0c0\ub098\uba70, \uc0ac\uc9c4\uc0c1 \uaf2c\ub9ac \ub192\uc774\uc640 \ubb34\uad00\ud558\uac8c \uba38\ub9ac \ucabd\uc5d0 \ubd99\uc740 \ubcc4\ub3c4 \ubd80\uc18d\ucc98\ub7fc \ubcf4\uc778\ub2e4.",
+        "property": "tail"
+      }
+    ],
+    "observedMotion": "WALK_RUN"
+  },
+  "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "pixelEvidence": {
+    "version": "native-frame-delta-v1",
+    "reference": "frame0",
+    "frameCount": 9,
+    "alphaStable": false,
+    "boundsExclusive": [
+      [
+        12,
+        6,
+        29,
+        34
+      ],
+      [
+        12,
+        5,
+        28,
+        35
+      ],
+      [
+        13,
+        4,
+        29,
+        36
+      ],
+      [
+        12,
+        5,
+        29,
+        36
+      ],
+      [
+        12,
+        5,
+        29,
+        36
+      ],
+      [
+        12,
+        4,
+        28,
+        36
+      ],
+      [
+        12,
+        4,
+        28,
+        36
+      ],
+      [
+        12,
+        5,
+        28,
+        36
+      ],
+      [
+        12,
+        6,
+        29,
+        34
+      ]
+    ],
+    "subtleShadingOnly": false,
+    "maxVisibleRgbDelta": 254,
+    "maxRgbDeltaFromFrame0": [
+      0,
+      252,
+      254,
+      254,
+      254,
+      254,
+      254,
+      254,
+      205
+    ],
+    "alphaChangedFromFrame0": [
+      0,
+      53,
+      101,
+      91,
+      83,
+      90,
+      108,
+      63,
+      1
+    ],
+    "maxRgbDeltaFromPrevious": [
+      0,
+      252,
+      254,
+      254,
+      254,
+      254,
+      254,
+      252,
+      254
+    ],
+    "alphaChangedFromPrevious": [
+      0,
+      53,
+      56,
+      48,
+      40,
+      75,
+      48,
+      53,
+      64
+    ],
+    "rgbChangedPixelsFromFrame0": [
+      0,
+      197,
+      282,
+      272,
+      253,
+      260,
+      280,
+      204,
+      18
+    ]
+  },
+  "rulesRevision": "sprite-regressions-2026-10-10-v26",
+  "detachedFrames": [],
+  "learnedLessons": [],
+  "motionDecision": "UNCERTAIN",
+  "recoveryVersion": "photo-grounded-recovery-v1",
+  "idleMotionFrames": [],
+  "motionSeedSha256": "b7cd86e300f2ff40c236845b0c15774aaebaccdf4ea8ac4b38256b2f793d1af4",
+  "observationCount": 2,
+  "silhouetteFrames": [],
+  "consistencyReview": {
+    "properties": [
+      {
+        "state": "PASS",
+        "frames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "evidence": "\uc2e4\uc81c \ud504\ub808\uc784\uc5d0\uc11c \ub124 \ub2e4\ub9ac\uc758 \uc704\uce58\uac00 \ubc88\uac08\uc544 \ubc14\ub00c\uba70 \ubcf4\ud589 \ub3d9\uc791\uc774 \ub098\ud0c0\ub098\uace0, \ud504\ub808\uc784 8\uc5d0\uc11c \uc9c4\uc785 \uc790\uc138\ub85c \ub3cc\uc544\uc635\ub2c8\ub2e4.",
+        "property": "action"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "\ubaa8\ub4e0 \uc2e4\uc81c \ud504\ub808\uc784\uc5d0\uc11c \uc2b9\uc778\ub41c \uc9c4\uc785 \ud504\ub808\uc784\uacfc \uac19\uc740 \ubd81\ucabd\uc744 \ud5a5\ud55c \ud6c4\uba74 \uc790\uc138\uc785\ub2c8\ub2e4.",
+        "property": "direction"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "\ud6c4\uba74 \uce90\ub9ad\ud130\uc774\ubbc0\ub85c \ub208\uc774 \ubcf4\uc774\uc9c0 \uc54a\uc73c\uba70, \uc0c8\ub85c \ub098\ud0c0\ub09c \ub208\uc774\ub098 \uc5bc\uad74 \uae5c\ube61\uc784\uc740 \uc5c6\uc2b5\ub2c8\ub2e4.",
+        "property": "eyes"
+      },
+      {
+        "state": "FAIL",
+        "frames": [
+          4,
+          5,
+          6
+        ],
+        "evidence": "\ud504\ub808\uc784 4~6\uc5d0\uc11c \uc2b9\uc778\ub41c \ud504\ub808\uc784 0\uc5d0\ub294 \uc5c6\ub294 \uba38\ub9ac \uc911\uc559\uc758 \uac80\uc740 \uc138\ub85c \ub3cc\ucd9c\ubb3c\uc774 \ub098\ud0c0\ub098 \uadc0\uc640 \uba38\ub9ac \uc2e4\ub8e8\uc5e3\uc744 \ud6fc\uc190\ud569\ub2c8\ub2e4.",
+        "property": "identity"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "\uc694\uccad \ub3d9\uc791\uc774 WALK\uc774\ubbc0\ub85c \uc815\uc9c0\uc131 \uac80\uc0ac\ub294 \ud574\ub2f9 \uc5c6\uc74c\uc785\ub2c8\ub2e4. \uc2e4\uc81c \ud504\ub808\uc784\uc5d0\ub294 \ubcf4\ud589\uc774 \ubcf4\uc785\ub2c8\ub2e4.",
+        "property": "idleStillness"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "evidence": "\ud558\uccb4 \uc724\uacfd\uacfc \uc5b4\ub450\uc6b4 \ub2e4\ub9ac\u00b7\ubc1c \uc704\uce58\uac00 \ud504\ub808\uc784\ub9c8\ub2e4 \ud06c\uac8c \ubcc0\ud558\uba70 \ub124 \ub2e4\ub9ac \ubcf4\ud589 \ud615\ud0dc\ub97c \uc774\ub8f9\ub2c8\ub2e4. \uba85\ud655\ud55c \uc808\ub2e8\uc774\ub098 \ube44\ud604\uc2e4\uc801 \ubd84\ub9ac\ub294 \ubcf4\uc774\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.",
+        "property": "limbs"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          7,
+          8,
+          0
+        ],
+        "evidence": "\ud504\ub808\uc784 8\uc740 \ud504\ub808\uc784 0\uacfc \uac19\uc740 \uc815\uc9c0 \uc9c4\uc785 \uc790\uc138\ub85c \ub3cc\uc544\uc624\uba70, \ud504\ub808\uc784 7\uc5d0\uc11c \ud504\ub808\uc784 8\ub85c \ubcf4\ud589\uc774 \ub9c8\ubb34\ub9ac\ub429\ub2c8\ub2e4.",
+        "property": "loop"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "\uac08\uc0c9 \uc678\ud53c\uc640 \ubc1d\uc740 \uaf2c\ub9ac\u00b7\ucf54\ud2b8 \uc601\uc5ed\uc740 \uc720\uc9c0\ub429\ub2c8\ub2e4. \ud070 RGB \ubcc0\ud654\ub294 \uc8fc\ub85c \uc774\ub3d9\ud55c \uc724\uacfd\uacfc \ub0b4\ubd80 \ud53d\uc140\uc5d0\uc11c \ubcf4\uc774\uba70, \uc678\ud53c \uc0c9\uc0c1 \uc790\uccb4\uc758 \uc9c0\uc18d\uc801\uc778 \uae5c\ube61\uc784\uc740 \ud655\uc778\ub418\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.",
+        "property": "palette"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0
+        ],
+        "evidence": "\uc2e4\uc81c \ud504\ub808\uc784 0\uc740 \uc2b9\uc778 seed\uc640 \uac19\uc740 \ub124\uc774\ud2f0\ube0c \ud06c\uae30\uc758 \ud6c4\uba74 \uc9c4\uc785 \uc790\uc138, \uadc0 \ud615\ud0dc, \ubab8\ud1b5 \ubc0f \uaf2c\ub9ac \uad6c\uc870\ub97c \uc0ac\uc6a9\ud569\ub2c8\ub2e4.",
+        "property": "referencePose"
+      },
+      {
+        "state": "FAIL",
+        "frames": [
+          4,
+          5,
+          6
+        ],
+        "evidence": "\ud504\ub808\uc784 4~6\uc5d0\uc11c \uc2b9\uc778\ub41c \ud504\ub808\uc784 0\uc5d0 \uc5c6\ub294 \uba38\ub9ac \uc911\uc559 \ub3cc\ucd9c\ubb3c\uc774 \uc0dd\uaca8 \uaf2c\ub9ac/\ubd80\uc18d\ubb3c\uc758 \uc5f0\uacb0 \uc704\uce58\uac00 \ubd80\uc801\uc808\ud574 \ubcf4\uc785\ub2c8\ub2e4. \ud558\uccb4\uc758 \uc6d0\ub798 \uaf2c\ub9ac\uc640 \ubcc4\uac1c\ub85c \uc0c8 \uc911\uc559 \ub3cc\ucd9c\ubb3c\uc774 \ub098\ud0c0\ub0a9\ub2c8\ub2e4.",
+        "property": "tail"
+      }
+    ],
+    "observedMotion": "WALK_RUN"
+  },
+  "lowerBodyEvidence": {
+    "version": "lower-third-contour-v1",
+    "startRow": 24,
+    "alphaChanged": [
+      0,
+      28,
+      39,
+      44,
+      34,
+      50,
+      46,
+      34,
+      1
+    ],
+    "darkContourChanged": [
+      0,
+      69,
+      74,
+      68,
+      65,
+      73,
+      69,
+      77,
+      11
+    ],
+    "darkChannelCeilingExclusive": 100
+  },
+  "reviewImageHashes": {
+    "TEMPORAL actual frames 0 through 8 only": "cfcf72d17b92ae6107e4ca1341392b17f1f81798ee62731b523ccc22b62eaed3",
+    "REFERENCE only, never part of the timeline": "76acaceb9a989a6a842ee212bbc6774ad34258c90ec5858bd269c9e575ef4ed0"
+  },
+  "confirmedProperties": [
+    "tail"
+  ],
+  "firstFrameUnchanged": true,
+  "motionReviewVersion": "motion-observation-tristate-v4",
+  "referencePoseUsable": true,
+  "reviewedFrameHashes": [
+    "b7cd86e300f2ff40c236845b0c15774aaebaccdf4ea8ac4b38256b2f793d1af4",
+    "15066493aaf7b530389369fc45e44988082e5cfc116d99e0bb6e91c374e4df15",
+    "3712fe1cc4a0acf5fe9fce3947601ebb2fc9d8a10c89e6e5f81804198041dfc7",
+    "b86d632b6966bfc8f6ed33bc5808bdd07be7fe6f6ac27b3f1980581175245fe6",
+    "a1279ee29f9c05089597117d08216f8e1bfe32c9a5742c504fcb7c6356787bd1",
+    "cee154e6d59f2edbaf7994022d9a9cf14a5d7684f1b8964284e48a198c11b3e9",
+    "2cb62925257c36c61214ec143b7246e2d1f6c91c6f0766cdd627dd2c89baeff2",
+    "ed824455836beda3962e64faa9d53b1d0c0b180bbb4303d9b05b56e6ff991e1f",
+    "98115e1d69d4eb28418099eb5c2c9cf6bd68546c46db10e38c12ade9b77ca556"
+  ],
+  "uncertainProperties": [
+    "identity"
+  ],
+  "referenceFrameSha256": "b7cd86e300f2ff40c236845b0c15774aaebaccdf4ea8ac4b38256b2f793d1af4",
+  "subtlePaletteResolved": false,
+  "unsupportedWalkResolved": false,
+  "frontalAppendageConfirmed": false
+}

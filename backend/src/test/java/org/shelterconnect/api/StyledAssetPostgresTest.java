@@ -1670,7 +1670,7 @@ class StyledAssetPostgresTest {
         when(quality.review(any(),anyList(),anyList(),anyString(),anyString())).thenAnswer(c->{outsideTransaction();
             boolean passed=!(failSouthWalk && c.getArgument(3).equals("WALK") && c.getArgument(4).equals("south") && motionCalls.getAndIncrement()==0);
             var report=(tools.jackson.databind.node.ObjectNode)automaticMotionReport(passed);report.put("note",passed?"Synthetic valid verdict":"Frontal tail appears above the head");
-            report.put("motionReviewVersion","motion-observation-tristate-v3").put("motionDecision",passed?"PASS":"CONFIRMED_DEFECT").put("referencePoseUsable",true);
+            report.put("motionReviewVersion","motion-observation-tristate-v4").put("motionDecision",passed?"PASS":"CONFIRMED_DEFECT").put("referencePoseUsable",true);
             report.put("referenceFrameSha256",sha(c.<List<byte[]>>getArgument(1).get(List.of("south","north","west","east").indexOf(c.getArgument(4)))));
             report.set("reviewedFrameHashes",json.valueToTree(c.<List<byte[]>>getArgument(2).stream().map(this::sha).toList()));
             if(!passed)report.set("issues",json.valueToTree(List.of("TAIL_CARRIAGE")));return report;});
@@ -1766,6 +1766,333 @@ class StyledAssetPostgresTest {
             assertThat(current.at("/selectedRepair/plan/deferredDirections").toString()).isEqualTo("[\"east\"]");
         }
     }
+    JsonNode b75MotionReport(List<byte[]> sources,List<byte[]> frames,String direction,boolean passed,String decision) {
+        var r=(tools.jackson.databind.node.ObjectNode)automaticMotionReport(passed);
+        r.put("motionReviewVersion","motion-observation-tristate-v4").put("motionDecision",decision).put("referencePoseUsable",true)
+            .put("note","Synthetic state-transition verdict, not evidence of real image quality.");
+        r.put("referenceFrameSha256",sha(sources.get(List.of("south","north","west","east").indexOf(direction))));
+        r.set("reviewedFrameHashes",json.valueToTree(frames.stream().map(this::sha).toList()));
+        if(!passed)r.set("issues",json.valueToTree(List.of("IDLE_MOTION")));return r;
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans={true,false})
+    void exhaustedIdleUsesOneExplicitStaticAlternativeAndFreshReviewWithoutExtraPaidCalls(boolean fallbackPass)throws Exception {
+        UUID id=recoveryRequest(0,false);var calls=new java.util.concurrent.atomic.AtomicInteger();
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("north"))).thenAnswer(c->{outsideTransaction();
+            calls.incrementAndGet();
+            boolean derived=jdbc.queryForObject("SELECT COALESCE(provider_result->'derivation'->>'strategy','') FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-north'",String.class,id).equals("approved-seed-idle-hold-v1");
+            boolean passed=derived && fallbackPass;
+            return b75MotionReport(c.getArgument(1),c.getArgument(2),"north",passed,passed?"PASS":"CONFIRMED_DEFECT");});
+        finish(id);var s=step(id,"idle-north");
+        assertThat(read(id).path("status").asText()).isEqualTo(fallbackPass?"APPROVED":"REVIEW");
+        assertThat(calls.get()).isGreaterThanOrEqualTo(3);assertThat(s.path("repairCount").asInt()).isEqualTo(3);
+        assertThat(s.at("/result/derivation/strategy").asText()).isEqualTo("approved-seed-idle-hold-v1");
+        assertThat(s.at("/result/frameHashes").size()).isEqualTo(9);
+        assertThat(s.at("/result/frameHashes").valueStream().map(JsonNode::asText).distinct().count()).isEqualTo(1);
+        assertThat(s.at("/result/key").asText()).contains("/sheets/idle-hold/");
+        assertThat(s.at("/result/rawEdit").isMissingNode()).isTrue();
+        var history=json.readTree(jdbc.queryForObject("SELECT attempt_history FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-north'",String.class,id));
+        assertThat(history.size()).isEqualTo(4);var last=history.get(3);
+        assertThat(last.path("idleHoldFallback").asBoolean()).isTrue();assertThat(last.path("repairCount").asInt()).isEqualTo(3);
+        assertThat(last.at("/quality/passed").asBoolean()).isFalse();assertThat(last.path("providerJobId").isNull()).isFalse();
+        assertThat(objects).containsKey(last.at("/result/key").asText()).containsKey(last.at("/result/rawEdit/key").asText());
+        assertThat(sha(objects.get(last.at("/result/key").asText()))).isEqualTo(last.at("/result/sha256").asText());
+        verify(provider,times(3)).editAnimation(any());verify(provider,times(12)).submit(eq(false),any());
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.asset_submissions WHERE job_id=?",Integer.class,id)).isEqualTo(16);
+        clearInvocations(provider);for(int i=0;i<3;i++)tick();verifyNoInteractions(provider);
+        if(fallbackPass){var manifest=get(null,"/v1/dogs/"+dog+"/assets",200).path("data");assertThat(manifest.at("/mapDirections/UP/IDLE/frames").size()).isEqualTo(9);}
+        else publicStatus(404);
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans={true,false})
+    void paletteAmbiguityUsesOneFreshStaticIdleWithoutSpendingRemainingPaidBudget(boolean fallbackPass)throws Exception {
+        UUID id=recoveryRequest(0,false);
+        var actual=json.readTree(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/native-rgba-v29/idle-west-v29-review.json")));
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("west"))).thenAnswer(c->{outsideTransaction();
+            boolean derived=jdbc.queryForObject("SELECT COALESCE(provider_result->'derivation'->>'strategy','') FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-west'",String.class,id).equals("approved-seed-idle-hold-v1");
+            if(derived)return b75MotionReport(c.getArgument(1),c.getArgument(2),"west",fallbackPass,fallbackPass?"PASS":"CONFIRMED_DEFECT");
+            var r=(tools.jackson.databind.node.ObjectNode)actual.deepCopy();r.put("rulesSha256",currentRules());
+            r.put("note","Synthetic state transition using archived ambiguity, not real image verification.");return r;
+        });
+        finish(id);var s=step(id,"idle-west");
+        assertThat(read(id).path("status").asText()).isEqualTo(fallbackPass?"APPROVED":"REVIEW");
+        assertThat(s.path("repairCount").asInt()).isZero();
+        assertThat(s.at("/result/derivation/strategy").asText()).isEqualTo("approved-seed-idle-hold-v1");
+        assertThat(s.at("/result/frameHashes").valueStream().map(JsonNode::asText).distinct().count()).isEqualTo(1);
+        var history=json.readTree(jdbc.queryForObject("SELECT attempt_history->-1 FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-west'",String.class,id));
+        assertThat(history.path("idleHoldFallback").asBoolean()).isTrue();assertThat(history.at("/quality/passed").asBoolean()).isFalse();
+        assertThat(history.at("/quality/rawEditReview/motionDecision").asText()).isEqualTo("UNCERTAIN");
+        verify(provider,never()).editAnimation(any());verify(provider,times(12)).submit(eq(false),any());
+        clearInvocations(provider);for(int i=0;i<3;i++)tick();verifyNoInteractions(provider);
+        if(!fallbackPass)publicStatus(404);
+    }
+
+    UUID b75HeldPack()throws Exception {
+        UUID id=recoveryRequest(0,false);
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("south"))).thenAnswer(c->b75MotionReport(c.getArgument(1),c.getArgument(2),"south",false,"UNCERTAIN"));
+        finish(id);assertThat(read(id).path("status").asText()).isEqualTo("REVIEW");return id;
+    }
+    @Test void confirmedTailRepairPreservesUncertainRecordAndRequiresFreshPassingResult()throws Exception {
+        UUID id=recoveryRequest(0,false);var calls=new java.util.concurrent.atomic.AtomicInteger();
+        var actual=json.readTree(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/idle-hold-v26/walk-north-v26-review.json")));
+        when(quality.review(any(),anyList(),anyList(),eq("WALK"),eq("north"))).thenAnswer(c->{outsideTransaction();
+            if(calls.getAndIncrement()>0)return b75MotionReport(c.getArgument(1),c.getArgument(2),"north",true,"PASS");
+            var r=(tools.jackson.databind.node.ObjectNode)actual.deepCopy();r.put("rulesSha256",currentRules());return r;});
+        finish(id);assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
+        assertThat(step(id,"walk-north").path("repairCount").asInt()).isEqualTo(1);
+        var history=json.readTree(jdbc.queryForObject("SELECT attempt_history FROM shelter.styled_asset_steps WHERE job_id=? AND label='walk-north'",String.class,id));
+        assertThat(history.get(0).at("/quality/motionDecision").asText()).isEqualTo("UNCERTAIN");
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=? AND label='walk-north' AND NOT passed",Integer.class,id)).isZero();
+        assertThat(calls.get()).isGreaterThanOrEqualTo(2);verify(provider,times(1)).editAnimation(any());
+    }
+    @Test void confirmedPaletteRepairKeepsUncertaintyUnlearnedAndRequiresFreshQuality()throws Exception {
+        UUID id=recoveryRequest(0,false);var calls=new java.util.concurrent.atomic.AtomicInteger();
+        var actual=json.readTree(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/sit-conflicts-v28/sit-north-review.json")));
+        when(quality.review(any(),anyList(),anyList(),eq("SIT"),eq("north"))).thenAnswer(c->{outsideTransaction();
+            if(calls.getAndIncrement()>0)return b75MotionReport(c.getArgument(1),c.getArgument(2),"north",true,"PASS");
+            var r=(tools.jackson.databind.node.ObjectNode)actual.deepCopy();r.put("rulesSha256",currentRules());return r;});
+        finish(id);assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
+        assertThat(step(id,"sit-north").path("repairCount").asInt()).isEqualTo(1);
+        var history=json.readTree(jdbc.queryForObject("SELECT attempt_history FROM shelter.styled_asset_steps WHERE job_id=? AND label='sit-north'",String.class,id));
+        assertThat(history.get(0).at("/quality/motionDecision").asText()).isEqualTo("UNCERTAIN");
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=? AND label='sit-north' AND NOT passed",Integer.class,id)).isZero();
+        verify(provider,times(1)).editAnimation(any());
+    }
+    @Test void nativeProviderEntryShadingSurvivesTheActualEditPersistencePath()throws Exception {
+        UUID id=recoveryRequest(0,true);
+        for(int i=0;i<10 && !step(id,"character").path("status").asText().equals("SUCCEEDED");i++)tick();
+        var base=ImageIO.read(new ByteArrayInputStream(objects.get(step(id,"character").at("/result/keys/south").asText())));
+        var frame=new BufferedImage(40,40,BufferedImage.TYPE_INT_ARGB);
+        for(int y=0;y<32;y++)for(int x=0;x<32;x++){int pixel=base.getRGB(x,y);frame.setRGB(x+4,y+4,(pixel>>>24)==0?pixel:(pixel&0xff000000)|0x997744);}
+        var bytes=new ByteArrayOutputStream();ImageIO.write(frame,"png",bytes);byte[] providerFrame=bytes.toByteArray();
+        doAnswer(c->json.valueToTree(Map.of("status","COMPLETED","frames",Collections.nCopies(9,Base64.getEncoder().encodeToString(providerFrame))))).when(provider).poll(any(),eq(false));
+        finish(id);assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
+        var motion=step(id,"walk-south");assertThat(motion.path("repairCount").asInt()).isEqualTo(1);
+        var stored=ImageIO.read(new ByteArrayInputStream(objects.get(motion.at("/result/key").asText())));
+        for(int i=0;i<9;i++)for(int y=0;y<40;y++)for(int x=0;x<40;x++)assertThat(stored.getRGB(i*40+x,y)).isEqualTo(frame.getRGB(x,y));
+        assertThat(motion.at("/result/sha256")).isEqualTo(motion.at("/result/rawEdit/sha256"));
+        assertThat(motion.at("/qualityReport/firstFrameUnchanged").asBoolean()).isFalse();
+        verify(provider,times(1)).editAnimation(any());
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"adopt","audit-only","uncertain","revoked"})
+    void passedRawCandidateIsAdoptedAtomicallyWithNoPaidCallsAndRejectedEvidenceRetained(String mode)throws Exception {
+        UUID id=recoveryRequest(0,false);finish(id);
+        var prior=(tools.jackson.databind.node.ObjectNode)step(id,"idle-west").path("result").deepCopy();
+        var source=ImageIO.read(new ByteArrayInputStream(objects.get(prior.path("key").asText())));
+        // Recreate legacy first-frame replacement in a synthetic DB fixture, not in any real job.
+        for(int i=0;i<9;i++)source.setRGB(i*40+16,13,0xff997744);
+        var rawBytes=new ByteArrayOutputStream();ImageIO.write(source,"png",rawBytes);byte[] raw=rawBytes.toByteArray();
+        source.setRGB(16,13,0xff224477);
+        var oldBytes=new ByteArrayOutputStream();ImageIO.write(source,"png",oldBytes);byte[] old=oldBytes.toByteArray();
+        String prefix=dog+"/"+id+"/native-32/",rawKey=prefix+"raw-edits/idle-west-legacy.png",oldKey=prefix+"sheets/legacy-fixture/idle-west.png";
+        objects.put(rawKey,raw);objects.put(oldKey,old);prior.put("key",oldKey).put("sha256",sha(old));
+        prior.putObject("rawEdit").put("key",rawKey).put("sha256",sha(raw));
+        var held=(tools.jackson.databind.node.ObjectNode)step(id,"idle-west").path("qualityReport").deepCopy();
+        held.put("passed",false).put("inputSha256",sha(old));held.putArray("issues").add("IDENTITY_DRIFT");
+        jdbc.update("UPDATE shelter.asset_jobs SET status='REVIEW',quality_approval=NULL,reviewed_at=NULL WHERE id=?",id);
+        jdbc.update("UPDATE shelter.styled_asset_steps SET result=?::jsonb,quality_report=?::jsonb WHERE job_id=? AND label='idle-west'",prior.toString(),held.toString(),id);
+        var template=json.readTree(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/native-rgba-v29/idle-west-review.json"))).path("rawEditReview");
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("west"))).thenAnswer(c->{outsideTransaction();
+            var frames=c.<List<byte[]>>getArgument(2);boolean isRaw=ImageIO.read(new ByteArrayInputStream(frames.getFirst())).getRGB(16,13)==0xff997744;
+            var report=(tools.jackson.databind.node.ObjectNode)template.deepCopy();
+            report.put("rulesSha256",currentRules()).put("referenceFrameSha256",sha(c.<List<byte[]>>getArgument(1).get(2)));
+            report.set("reviewedFrameHashes",json.valueToTree(frames.stream().map(this::sha).toList()));
+            report.put("passed",isRaw && !mode.equals("uncertain")).put("motionDecision",isRaw?(mode.equals("uncertain")?"UNCERTAIN":"PASS"):"CONFIRMED_DEFECT");
+            report.put("note","Synthetic transaction test verdict; original image quality is tested separately.");
+            if(!isRaw)report.putArray("issues").add("IDENTITY_DRIFT");
+            if(mode.equals("uncertain"))report.putArray("uncertainProperties").add("tail");
+            if(isRaw && mode.equals("revoked"))jdbc.update("UPDATE shelter.asset_source_permissions SET revoked_at=now() WHERE id=?",permission);
+            var reversed=json.createObjectNode();var keys=new ArrayList<>(report.propertyNames());Collections.reverse(keys);keys.forEach(k->reversed.set(k,report.path(k)));return reversed;
+        });
+        int submissions=jdbc.queryForObject("SELECT count(*) FROM shelter.asset_submissions WHERE job_id=?",Integer.class,id);
+        if(mode.equals("audit-only"))post(subject,path(id)+"/quality-recheck",seedRecheckBody(id),200);
+        else {var body=b75ResumeBody(id);body.put("expectedSheetHashes",Map.of("idle-west",sha(old)));post(subject,path(id)+"/motion-repair-resume",body,200);}
+        clearInvocations(provider);finish(id);verifyNoInteractions(provider);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.asset_submissions WHERE job_id=?",Integer.class,id)).isEqualTo(submissions);
+        var after=step(id,"idle-west");assertThat(after.path("repairCount").asInt()).isZero();
+        if(mode.equals("adopt")) {
+            assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
+            assertThat(after.at("/result/sha256").asText()).isEqualTo(sha(raw));
+            assertThat(objects.get(after.at("/result/key").asText())).isEqualTo(raw);
+            assertThat(after.at("/result/derivation/strategy").asText()).isEqualTo("native-provider-rgba-v1");
+            var history=json.readTree(jdbc.queryForObject("SELECT attempt_history->-1 FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-west'",String.class,id));
+            assertThat(history.path("rawMotionAdoption").asBoolean()).isTrue();
+            assertThat(history.at("/quality/passed").asBoolean()).isFalse();
+            assertThat(history.at("/quality/rawEditReview/passed").asBoolean()).isTrue();
+            assertThat(history.at("/result/sha256").asText()).isEqualTo(sha(old));
+            assertThat(objects.get(oldKey)).isEqualTo(old);assertThat(objects.get(rawKey)).isEqualTo(raw);
+            // Reproduce a legacy insertion-order digest after JSONB has reordered the same report.
+            var legacy=(tools.jackson.databind.node.ObjectNode)after.path("result").deepCopy();var proof=(tools.jackson.databind.node.ObjectNode)legacy.path("derivation");
+            var reordered=json.createObjectNode();var keys=new ArrayList<>(proof.path("rawProviderReview").propertyNames());Collections.reverse(keys);
+            keys.forEach(k->reordered.set(k,proof.path("rawProviderReview").path(k)));String legacyDigest=sha(json.writeValueAsBytes(reordered));
+            proof.remove("rawReviewHashVersion");proof.put("rawReviewSha256",legacyDigest);
+            String savedHistory=jdbc.queryForObject("SELECT attempt_history::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-west'",String.class,id);
+            jdbc.update("UPDATE shelter.styled_asset_steps SET result=?::jsonb,attempt_history='[]'::jsonb WHERE job_id=? AND label='idle-west'",legacy.toString(),id);
+            jdbc.update("UPDATE shelter.asset_jobs SET status='REVIEW',quality_approval=NULL,reviewed_at=NULL,failure_code='AUTO_APPROVAL_EVIDENCE_REQUIRED' WHERE id=?",id);
+            var hashes=new HashMap<String,String>();read(id).path("steps").forEach(st->{if(!st.path("action").asText().equals("BASE"))hashes.put(st.path("label").asText(),st.at("/result/sha256").asText());});
+            var evidence=Map.of("note","Recheck only final evidence without changing images or quality observations","evidenceOnly",true,"expectedRulesSha256",currentRules(),"expectedSeedHashes",read(id).at("/steps/0/result/hashes"),"expectedSheetHashes",hashes);
+            clearInvocations(provider,quality,seedQuality);
+            post(subject,path(id)+"/quality-recheck",evidence,200);assertThat(read(id).path("status").asText()).isEqualTo("REVIEW");publicStatus(404);
+            jdbc.update("UPDATE shelter.styled_asset_steps SET attempt_history=?::jsonb WHERE job_id=? AND label='idle-west'",savedHistory,id);
+            post(subject,path(id)+"/quality-recheck",evidence,200);assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
+            var fixed=step(id,"idle-west");assertThat(fixed.path("qualityReport")).isEqualTo(after.path("qualityReport"));
+            assertThat(fixed.at("/result/sha256")).isEqualTo(after.at("/result/sha256"));assertThat(fixed.at("/result/frameHashes")).isEqualTo(after.at("/result/frameHashes"));
+            assertThat(fixed.at("/result/derivation/legacyRawReviewSha256").asText()).isEqualTo(legacyDigest);
+            post(subject,path(id)+"/quality-recheck",evidence,200);verifyNoInteractions(provider,quality,seedQuality);after=fixed;
+            var original=after.deepCopy();for(int i=0;i<3;i++)tick();assertThat(step(id,"idle-west")).isEqualTo(original);verifyNoInteractions(provider);
+            // Simulate another held clip in a private pack; approved/public packs are immutable.
+            jdbc.update("UPDATE shelter.asset_jobs SET status='REVIEW',quality_approval=NULL,reviewed_at=NULL WHERE id=?",id);
+            jdbc.update("UPDATE shelter.styled_asset_steps SET quality_report=jsonb_set(quality_report,'{passed}','false') WHERE job_id=? AND label='sit-south'",id);
+            post(subject,path(id)+"/quality-recheck",seedRecheckBody(id),200);finish(id);
+            assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
+            assertThat(step(id,"idle-west").path("result")).isEqualTo(after.path("result"));verifyNoInteractions(provider);
+            // Final publication also checks the retained raw QA and provenance.
+            jdbc.update("UPDATE shelter.asset_jobs SET status='RUNNING',quality_approval=NULL,reviewed_at=NULL WHERE id=?",id);
+            jdbc.update("UPDATE shelter.styled_asset_steps SET result=jsonb_set(result,'{derivation,sourceRawSha256}',to_jsonb(CAST(? AS text))) WHERE job_id=? AND label='idle-west'","0".repeat(64),id);
+            tick();assertThat(read(id).path("status").asText()).isEqualTo("REVIEW");publicStatus(404);
+        } else {
+            assertThat(read(id).path("status").asText()).isEqualTo(mode.equals("revoked")?"CANCELLED":"REVIEW");
+            assertThat(after.at("/result/sha256").asText()).isEqualTo(sha(old));publicStatus(404);
+        }
+    }
+
+    JsonNode candidateConflict()throws Exception {
+        return json.readTree(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/native-rgba-v29/sit-north-v30-review.json")));
+    }
+    UUID candidateHeldPack()throws Exception {
+        UUID id=recoveryRequest(0,false);finish(id);
+        // Synthetic held fixture; runtime jobs are never changed this way.
+        var r=(tools.jackson.databind.node.ObjectNode)step(id,"sit-north").path("qualityReport").deepCopy();var observed=candidateConflict();
+        for(String f:List.of("initialVision","consistencyReview","observationCount","uncertainProperties","confirmedProperties","motionDecision","motionReviewVersion"))r.set(f,observed.path(f));
+        r.put("passed",false);r.putArray("issues");
+        jdbc.update("UPDATE shelter.asset_jobs SET status='REVIEW',quality_approval=NULL,reviewed_at=NULL WHERE id=?",id);
+        jdbc.update("UPDATE shelter.styled_asset_steps SET quality_report=?::jsonb WHERE job_id=? AND label='sit-north'",r.toString(),id);
+        return id;
+    }
+    Map<String,Object> candidateBody(UUID id)throws Exception {
+        var s=step(id,"sit-north");
+        return new HashMap<>(Map.of("requestId",UUID.randomUUID().toString(),"note","Use the exact current evidence for a bounded candidate and preserve every passing clip",
+            "expectedSeedHashes",step(id,"character").at("/result/hashes"),"expectedRulesSha256",currentRules(),
+            "expectedSheetHashes",Map.of("sit-north",s.at("/result/sha256").asText()),
+            "expectedReviewHashes",Map.of("sit-north",sha(json.writeValueAsBytes(s.path("qualityReport"))))));
+    }
+    @Test void savedEvidenceContinuationNeverRejudgesPassingClipsOrResetsBudget()throws Exception {
+        UUID id=candidateHeldPack();var before=read(id);var body=candidateBody(id);var originalSeed=before.path("seedReview");
+        clearInvocations(provider,quality,seedQuality);
+        post(subject,path(id)+"/motion-candidate-repair",body,200);post(subject,path(id)+"/motion-candidate-repair",body,200);
+        tick();verifyNoInteractions(provider,quality,seedQuality);assertThat(step(id,"sit-north").path("repairCount").asInt()).isEqualTo(1);
+        finish(id);assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
+        assertThat(read(id).path("seedReview")).isEqualTo(originalSeed);
+        for(var old:before.path("steps"))if(!old.path("label").asText().equals("sit-north"))assertThat(step(id,old.path("label").asText())).isEqualTo(old);
+        verify(provider,times(1)).editAnimation(any());verify(quality,times(1)).review(any(),anyList(),anyList(),eq("SIT"),eq("north"));verifyNoInteractions(seedQuality);
+        var h=json.readTree(jdbc.queryForObject("SELECT attempt_history->-1 FROM shelter.styled_asset_steps WHERE job_id=? AND label='sit-north'",String.class,id));
+        assertThat(h.path("unconfirmedMotionCandidate").asBoolean()).isTrue();assertThat(h.at("/quality/motionDecision").asText()).isEqualTo("UNCERTAIN");
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=? AND label='sit-north' AND NOT passed",Integer.class,id)).isZero();
+        clearInvocations(provider,quality,seedQuality);post(subject,path(id)+"/motion-candidate-repair",body,200);tick();verifyNoInteractions(provider,quality,seedQuality);
+        body.put("note","Changed note cannot reuse a completed candidate request identifier");post(subject,path(id)+"/motion-candidate-repair",body,409);
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans={true,false})
+    void newGenerationTriesOnlyOneUnconfirmedCandidateAndRequiresFreshPass(boolean pass)throws Exception {
+        UUID id=recoveryRequest(0,false);var calls=new java.util.concurrent.atomic.AtomicInteger();var conflict=candidateConflict();
+        when(quality.review(any(),anyList(),anyList(),eq("SIT"),eq("north"))).thenAnswer(c->{outsideTransaction();
+            if(calls.getAndIncrement()>0 && pass)return b75MotionReport(c.getArgument(1),c.getArgument(2),"north",true,"PASS");
+            return conflict.deepCopy();});
+        finish(id);assertThat(read(id).path("status").asText()).isEqualTo(pass?"APPROVED":"REVIEW");
+        assertThat(step(id,"sit-north").path("repairCount").asInt()).isEqualTo(1);verify(provider,times(1)).editAnimation(any());
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=? AND label='sit-north' AND NOT passed",Integer.class,id)).isZero();
+        if(!pass){publicStatus(404);post(subject,path(id)+"/motion-candidate-repair",candidateBody(id),409);}
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"seed","sheet","review","rules","passing","incomplete","unauthorized","revoked","budget","unknown","duplicate","revoked-after"})
+    void currentEvidenceCandidateRejectsChangedInputsMissingRightsAndRepeatedSpending(String defect)throws Exception {
+        UUID id=candidateHeldPack();var body=candidateBody(id);UUID actor=subject;int expected=409;
+        switch(defect) {
+            case "seed" -> body.put("expectedSeedHashes",Map.of("south","0".repeat(64),"north","0".repeat(64),"west","0".repeat(64),"east","0".repeat(64)));
+            case "sheet" -> body.put("expectedSheetHashes",Map.of("sit-north","0".repeat(64)));
+            case "review" -> body.put("expectedReviewHashes",Map.of("sit-north","0".repeat(64)));
+            case "rules" -> body.put("expectedRulesSha256","0".repeat(64));
+            case "passing" -> {body.put("expectedSheetHashes",Map.of("walk-south",step(id,"walk-south").at("/result/sha256").asText()));body.put("expectedReviewHashes",Map.of("walk-south",sha(json.writeValueAsBytes(step(id,"walk-south").path("qualityReport")))));}
+            case "incomplete" -> jdbc.update("UPDATE shelter.styled_asset_steps SET status='PENDING' WHERE job_id=? AND label='walk-south'",id);
+            case "unauthorized" -> {actor=UUID.randomUUID();expected=403;}
+            case "revoked" -> jdbc.update("UPDATE shelter.asset_source_permissions SET revoked_at=now() WHERE id=?",permission);
+            case "budget" -> jdbc.update("UPDATE shelter.styled_asset_steps SET repair_count=3 WHERE job_id=? AND label='sit-north'",id);
+            case "unknown" -> {var q=(tools.jackson.databind.node.ObjectNode)step(id,"sit-north").path("qualityReport").deepCopy();q.remove("initialVision");jdbc.update("UPDATE shelter.styled_asset_steps SET quality_report=?::jsonb WHERE job_id=? AND label='sit-north'",q.toString(),id);body=candidateBody(id);}
+            case "duplicate" -> {post(subject,path(id)+"/motion-candidate-repair",body,200);body.put("requestId",UUID.randomUUID().toString());}
+            case "revoked-after" -> {post(subject,path(id)+"/motion-candidate-repair",body,200);jdbc.update("UPDATE shelter.asset_source_permissions SET revoked_at=now() WHERE id=?",permission);}
+        }
+        clearInvocations(provider,quality,seedQuality);
+        if(defect.equals("revoked-after")){tick();assertThat(read(id).path("status").asText()).isEqualTo("CANCELLED");}
+        else post(actor,path(id)+"/motion-candidate-repair",body,expected);
+        verifyNoInteractions(provider,quality,seedQuality);
+    }
+
+    Map<String,Object> b75ResumeBody(UUID id)throws Exception {
+        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=jsonb_set(quality_policy,'{rulesSha256}',to_jsonb(CAST(? AS text))) WHERE id=?","0".repeat(64),id);
+        jdbc.update("UPDATE shelter.styled_asset_steps SET quality_report=jsonb_set(quality_report,'{rulesSha256}',to_jsonb(CAST(? AS text))) WHERE job_id=?","0".repeat(64),id);
+        jdbc.update("UPDATE shelter.asset_jobs SET seed_review=jsonb_set(seed_review,'{reportSha256}',to_jsonb(CAST(? AS text))) WHERE id=?",sha(json.writeValueAsBytes(step(id,"character").path("qualityReport"))),id);
+        return new HashMap<>(Map.of("requestId",UUID.randomUUID().toString(),"note","Recheck the existing pack under new rules and use only the original remaining budgets",
+            "expectedSeedHashes",read(id).at("/steps/0/result/hashes"),"expectedSheetHashes",Map.of("idle-south",step(id,"idle-south").at("/result/sha256").asText()),"expectedRulesSha256","0".repeat(64)));
+    }
+    @Test void motionResumeKeepsUnselectedBytesAndBudgetAndReplaysAfterCompletion()throws Exception {
+        UUID id=b75HeldPack();var body=b75ResumeBody(id);var original=read(id);var objectsBefore=new HashMap<>(objects);var calls=new java.util.concurrent.atomic.AtomicInteger();
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("south"))).thenAnswer(c->{boolean pass=calls.getAndIncrement()>0;return b75MotionReport(c.getArgument(1),c.getArgument(2),"south",pass,pass?"PASS":"CONFIRMED_DEFECT");});
+        clearInvocations(provider);post(subject,path(id)+"/motion-repair-resume",body,200);post(subject,path(id)+"/motion-repair-resume",body,200);
+        finish(id);assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
+        assertThat(step(id,"idle-south").path("repairCount").asInt()).isEqualTo(1);
+        assertThat(read(id).at("/qualityPolicy/maxRepairsPerClip")).isEqualTo(original.at("/qualityPolicy/maxRepairsPerClip"));
+        for(var e:objectsBefore.entrySet())assertThat(objects.get(e.getKey())).isEqualTo(e.getValue());
+        for(var before:original.path("steps"))if(!before.path("label").asText().equals("idle-south"))assertThat(step(id,before.path("label").asText()).path("result")).isEqualTo(before.path("result"));
+        verify(provider,times(1)).editAnimation(any());verify(provider,never()).submit(anyBoolean(),any());
+        clearInvocations(provider);post(subject,path(id)+"/motion-repair-resume",body,200);tick();verifyNoInteractions(provider);
+        body.put("note","A changed request cannot buy additional generation for the same completed job");post(subject,path(id)+"/motion-repair-resume",body,409);
+    }
+    @Test void changedRuleContinuationArchivesPriorGrantAndReplaysEveryOldRequestWithoutSpending()throws Exception {
+        UUID id=b75HeldPack();var first=b75ResumeBody(id);post(subject,path(id)+"/motion-repair-resume",first,200);finish(id);
+        assertThat(read(id).path("status").asText()).isEqualTo("REVIEW");
+        // Synthetic previous-deployment fixture, never used to alter a real job or its repair budget.
+        String old="1".repeat(64);
+        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=jsonb_set(jsonb_set(quality_policy,'{rulesSha256}',to_jsonb(CAST(? AS text))),'{motionRepairResume,rulesSha256}',to_jsonb(CAST(? AS text))) WHERE id=?",old,old,id);
+        jdbc.update("UPDATE shelter.styled_asset_steps SET quality_report=jsonb_set(quality_report,'{rulesSha256}',to_jsonb(CAST(? AS text))) WHERE job_id=?",old,id);
+        jdbc.update("UPDATE shelter.asset_jobs SET seed_review=jsonb_set(seed_review,'{reportSha256}',to_jsonb(CAST(? AS text))) WHERE id=?",sha(json.writeValueAsBytes(step(id,"character").path("qualityReport"))),id);
+        var prior=read(id).at("/qualityPolicy/motionRepairResume");var counts=read(id).path("steps").valueStream().map(s->s.path("repairCount").asInt()).toList();
+        var second=new HashMap<>(first);second.put("requestId",UUID.randomUUID().toString());second.put("expectedRulesSha256",old);
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("south"))).thenAnswer(c->b75MotionReport(c.getArgument(1),c.getArgument(2),"south",true,"PASS"));
+        clearInvocations(provider);post(subject,path(id)+"/motion-repair-resume",second,200);finish(id);
+        assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
+        assertThat(read(id).at("/qualityPolicy/motionRepairResumeHistory").size()).isEqualTo(1);
+        assertThat(read(id).at("/qualityPolicy/motionRepairResumeHistory/0")).isEqualTo(prior);
+        assertThat(read(id).path("steps").valueStream().map(s->s.path("repairCount").asInt()).toList()).isEqualTo(counts);
+        post(subject,path(id)+"/motion-repair-resume",first,200);post(subject,path(id)+"/motion-repair-resume",second,200);tick();verifyNoInteractions(provider);
+        first.put("note","Changing a historical request must remain rejected after a newer continuation");post(subject,path(id)+"/motion-repair-resume",first,409);
+        second.put("requestId",UUID.randomUUID().toString());post(subject,path(id)+"/motion-repair-resume",second,409);
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"unchanged","seed","sheet","rules","passing","incomplete","unauthorized","revoked","duplicate","exhausted-walk"})
+    void motionResumeRejectsUnsafeStaleOrDuplicateRequests(String defect)throws Exception {
+        UUID id=b75HeldPack();var body=b75ResumeBody(id);UUID actor=subject;int expected=409;
+        switch(defect) {
+            case "unchanged" -> {String current=java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("asset-styles/cozy32-v1/quality-rules.json"))));
+                jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=jsonb_set(quality_policy,'{rulesSha256}',to_jsonb(CAST(? AS text))) WHERE id=?",current,id);
+                jdbc.update("UPDATE shelter.styled_asset_steps SET quality_report=jsonb_set(quality_report,'{rulesSha256}',to_jsonb(CAST(? AS text))) WHERE job_id=?",current,id);body.put("expectedRulesSha256",current);
+                jdbc.update("UPDATE shelter.asset_jobs SET seed_review=jsonb_set(seed_review,'{reportSha256}',to_jsonb(CAST(? AS text))) WHERE id=?",sha(json.writeValueAsBytes(step(id,"character").path("qualityReport"))),id);}
+            case "seed" -> body.put("expectedSeedHashes",Map.of("south","1".repeat(64),"north","1".repeat(64),"west","1".repeat(64),"east","1".repeat(64)));
+            case "sheet" -> body.put("expectedSheetHashes",Map.of("idle-south","1".repeat(64)));
+            case "rules" -> body.put("expectedRulesSha256","1".repeat(64));
+            case "passing" -> body.put("expectedSheetHashes",Map.of("walk-south",step(id,"walk-south").at("/result/sha256").asText()));
+            case "incomplete" -> jdbc.update("UPDATE shelter.styled_asset_steps SET status='PENDING' WHERE job_id=? AND label='walk-south'",id);
+            case "exhausted-walk" -> {
+                jdbc.update("UPDATE shelter.styled_asset_steps SET repair_count=3,quality_report=jsonb_set(quality_report,'{passed}','false'::jsonb) WHERE job_id=? AND label='walk-south'",id);
+                body.put("expectedSheetHashes",Map.of("walk-south",step(id,"walk-south").at("/result/sha256").asText()));}
+            case "unauthorized" -> {actor=UUID.randomUUID();expected=403;}
+            case "revoked" -> jdbc.update("UPDATE shelter.asset_source_permissions SET revoked_at=now() WHERE id=?",permission);
+            case "duplicate" -> {post(subject,path(id)+"/motion-repair-resume",body,200);body.put("requestId",UUID.randomUUID().toString());}
+        }
+        clearInvocations(provider);post(actor,path(id)+"/motion-repair-resume",body,expected);verifyNoInteractions(provider);
+    }
+
     UUID repairedSeedHold(int repairs)throws Exception {
         UUID id=recoveryRequest(99,false);for(int i=0;i<repairs*2;i++)tick();
         when(seedQuality.reviewRecovery(any(),anyList(),any(),any())).thenAnswer(c->{outsideTransaction();
@@ -1979,4 +2306,54 @@ class StyledAssetPostgresTest {
     JsonNode post(UUID subject,String path,Object body,int status) throws Exception {var req=org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(path).contentType("application/json").content(json.writeValueAsBytes(body));if(subject!=null)req.header("Authorization",bearer(subject));var result=mvc.perform(req).andExpect(status().is(status)).andReturn();return json.readTree(result.getResponse().getContentAsString());}
     JsonNode get(UUID subject,String path,int status) throws Exception {var req=org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(path);if(subject!=null)req.header("Authorization",bearer(subject));var result=mvc.perform(req).andExpect(status().is(status)).andReturn();return json.readTree(result.getResponse().getContentAsString());}
     void outsideTransaction() {assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isFalse();}
+    Map<String,Object> responseResumeFixture(UUID id)throws Exception {
+        // Synthetic legacy format-failure fixture; never rewrites any live job.
+        jdbc.update("UPDATE shelter.asset_jobs SET status='FAILED',failure_code='QUALITY_MOTION_RESPONSE_INVALID',quality_approval=NULL WHERE id=?",id);
+        jdbc.update("UPDATE shelter.styled_asset_steps SET status='FAILED',quality_report='{\"status\":\"STARTED\"}'::jsonb WHERE job_id=? AND label='idle-south'",id);
+        return new HashMap<>(Map.of("requestId",UUID.randomUUID().toString(),"note","Resume only the stored malformed review without changing passed clips or buying a generation",
+            "expectedSeedHashes",read(id).at("/steps/0/result/hashes"),"expectedSheetSha256",step(id,"idle-south").at("/result/sha256").asText(),
+            "expectedRulesSha256",currentRules(),"label","idle-south"));
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"lower","upper","legacy-upper"})
+    void responseResumePreservesEveryOtherReportBudgetAndStoredImage(String spelling)throws Exception {
+        UUID id=b75HeldPack();var body=responseResumeFixture(id);var before=read(id);var saved=new HashMap<>(objects);
+        if(!spelling.equals("lower"))body.put("requestId",body.get("requestId").toString().toUpperCase(Locale.ROOT));
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("south"))).thenAnswer(c->b75MotionReport(c.getArgument(1),c.getArgument(2),"south",true,"PASS"));
+        clearInvocations(provider,quality);post(subject,path(id)+"/quality-response-resume",body,200);
+        if(spelling.equals("legacy-upper"))jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=jsonb_set(quality_policy,'{qualityResponseResumes,0,request,requestId}',to_jsonb(CAST(? AS text))) WHERE id=?",body.get("requestId"),id);
+        post(subject,path(id)+"/quality-response-resume",body,200);
+        body.put("requestId",body.get("requestId").toString().toLowerCase(Locale.ROOT));
+        post(subject,path(id)+"/quality-response-resume",body,200);finish(id);
+        assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
+        for(var s:before.path("steps")) {
+            var after=step(id,s.path("label").asText());assertThat(after.path("repairCount")).isEqualTo(s.path("repairCount"));assertThat(after.path("result")).isEqualTo(s.path("result"));
+            if(!s.path("label").asText().equals("idle-south"))assertThat(after.path("qualityReport")).isEqualTo(s.path("qualityReport"));
+        }
+        for(var e:saved.entrySet())assertThat(objects.get(e.getKey())).isEqualTo(e.getValue());
+        verifyNoInteractions(provider);verify(quality,times(1)).review(any(),anyList(),anyList(),eq("IDLE"),eq("south"));
+        var history=json.readTree(jdbc.queryForObject("SELECT attempt_history FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-south'",String.class,id));
+        assertThat(history.toString()).contains("qualityResponseResume","STARTED");
+        post(subject,path(id)+"/quality-response-resume",body,200);tick();verifyNoInteractions(provider);
+        body.put("note","A changed replay cannot authorize another review of the same source");post(subject,path(id)+"/quality-response-resume",body,409);
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"seed","sheet","rules","label","failure","status","verdict","unauthorized","anonymous","revoked","duplicate"})
+    void responseResumeRejectsUnsafeOrRepeatedRecovery(String defect)throws Exception {
+        UUID id=b75HeldPack();var body=responseResumeFixture(id);UUID actor=subject;int expected=409;
+        switch(defect) {
+            case "seed" -> body.put("expectedSeedHashes",Map.of("south","1".repeat(64),"north","1".repeat(64),"west","1".repeat(64),"east","1".repeat(64)));
+            case "sheet" -> body.put("expectedSheetSha256","1".repeat(64));
+            case "rules" -> body.put("expectedRulesSha256","1".repeat(64));
+            case "label" -> body.put("label","walk-south");
+            case "failure" -> jdbc.update("UPDATE shelter.asset_jobs SET failure_code='QUALITY_AI_TIMEOUT' WHERE id=?",id);
+            case "status" -> jdbc.update("UPDATE shelter.asset_jobs SET status='REVIEW' WHERE id=?",id);
+            case "verdict" -> jdbc.update("UPDATE shelter.styled_asset_steps SET quality_report='{\"passed\":false}'::jsonb WHERE job_id=? AND label='idle-south'",id);
+            case "unauthorized" -> {actor=UUID.randomUUID();expected=403;}
+            case "anonymous" -> {actor=null;expected=401;}
+            case "revoked" -> jdbc.update("UPDATE shelter.asset_source_permissions SET revoked_at=now() WHERE id=?",permission);
+            case "duplicate" -> {post(subject,path(id)+"/quality-response-resume",body,200);body.put("requestId",UUID.randomUUID().toString());}
+        }
+        clearInvocations(provider);post(actor,path(id)+"/quality-response-resume",body,expected);verifyNoInteractions(provider);
+    }
 }

@@ -1,0 +1,1703 @@
+{
+  "note": "독립 관찰 불일치 또는 관찰 불확실; 자동 보완과 학습 보류",
+  "model": "gpt-5.6-luna",
+  "action": "WALK",
+  "frames": [],
+  "issues": [],
+  "passed": false,
+  "version": "sprite-quality-v1",
+  "direction": "south",
+  "edgeFrames": [],
+  "reviewedAt": "2026-10-09T18:07:14.041580Z",
+  "seedHashes": {
+    "east": "8f6f7f49aa3a73063f55ef59bde0409d4e8c3ab2f01aa5c072e9446a366156f5",
+    "west": "81f256fb4aead87334508fd00f5798e30ab733fe46b18a4917b3532cad0bd9f9",
+    "north": "35f3c2dea252fbb0c840b37c45e972d54dff92d0f92085dc7c2535001e0eb63c",
+    "south": "4d33c8ef0a6f2e6461fa547101805291e003a6a4bc7244d18cad775ba2742e20"
+  },
+  "frameHashes": [
+    "7aa766a768fdc0b9e73a0e5e65ee22583c10d2022414823fdaecefbfe8a71507",
+    "86cb242dbc01a3fb079d39919b4ec73eb0d85de8326dbd5775708b6e7df1d1b6",
+    "998a9cca94b40733893578c3473dc24625edf409a93534941f754a55fab5dde9",
+    "7f325ff62ddcedc206befcbd7d3ca71aaaa31b3fb4e4e310590b7315f856167e",
+    "d260103573af4d9cda3494b2a790adec54d7c4c49d26c28b9efee056c6a6a884",
+    "a7d5b16b2a94b3b2812eb54a849d2d8c3b136ad13c6e28806faf3cad819c124f",
+    "7a871dfbfc578363810bd561427db176a6df3a2e54a958526acad95d8694c126",
+    "19b9829c0a686121c21f04e307088e19d145763669494bc3a2297ae2e2342eb3",
+    "0c2d4a126a67002e1f4fe7725783205c034e7a1eceecd730f357c5f5755b128e"
+  ],
+  "inputSha256": "058fc8d0bf76856101a08d5916003804dbd2cb24a0b34f94e5014a49bcbf2aec",
+  "rulesSha256": "8d4b55dbddd28153a42202853b578529bd9c489c09e8c08094869ee97c66eda3",
+  "reviewLayout": "separate-reference-temporal-v1",
+  "colorEvidence": {
+    "pairs": [
+      {
+        "p90": 0,
+        "p95": 0,
+        "frame": 0,
+        "median": 0,
+        "reference": 0
+      },
+      {
+        "p90": 7,
+        "p95": 11,
+        "frame": 0,
+        "median": 2,
+        "reference": 8
+      },
+      {
+        "p90": 7,
+        "p95": 29,
+        "frame": 1,
+        "median": 2,
+        "reference": 0
+      },
+      {
+        "p90": 7,
+        "p95": 29,
+        "frame": 1,
+        "median": 2,
+        "reference": 0
+      },
+      {
+        "p90": 212,
+        "p95": 251,
+        "frame": 2,
+        "median": 7,
+        "reference": 0
+      },
+      {
+        "p90": 213,
+        "p95": 251,
+        "frame": 2,
+        "median": 0,
+        "reference": 1
+      },
+      {
+        "p90": 212,
+        "p95": 251,
+        "frame": 3,
+        "median": 7,
+        "reference": 0
+      },
+      {
+        "p90": 0,
+        "p95": 76,
+        "frame": 3,
+        "median": 0,
+        "reference": 2
+      },
+      {
+        "p90": 212,
+        "p95": 251,
+        "frame": 4,
+        "median": 7,
+        "reference": 0
+      },
+      {
+        "p90": 0,
+        "p95": 118,
+        "frame": 4,
+        "median": 0,
+        "reference": 3
+      },
+      {
+        "p90": 212,
+        "p95": 251,
+        "frame": 5,
+        "median": 7,
+        "reference": 0
+      },
+      {
+        "p90": 0,
+        "p95": 99,
+        "frame": 5,
+        "median": 0,
+        "reference": 4
+      },
+      {
+        "p90": 212,
+        "p95": 251,
+        "frame": 6,
+        "median": 7,
+        "reference": 0
+      },
+      {
+        "p90": 0,
+        "p95": 0,
+        "frame": 6,
+        "median": 0,
+        "reference": 5
+      },
+      {
+        "p90": 7,
+        "p95": 29,
+        "frame": 7,
+        "median": 2,
+        "reference": 0
+      },
+      {
+        "p90": 213,
+        "p95": 251,
+        "frame": 7,
+        "median": 0,
+        "reference": 6
+      },
+      {
+        "p90": 7,
+        "p95": 11,
+        "frame": 8,
+        "median": 2,
+        "reference": 0
+      },
+      {
+        "p90": 0,
+        "p95": 34,
+        "frame": 8,
+        "median": 0,
+        "reference": 7
+      }
+    ],
+    "version": "visible-rgb-distribution-v1"
+  },
+  "initialVision": {
+    "properties": [
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "실제 프레임에서 앞·뒤 발 위치가 연속적으로 교대하며 네 발 보행 동작이 보인다.",
+        "property": "action"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "모든 실제 프레임에서 개가 정면, 즉 south 방향을 향한다.",
+        "property": "direction"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "모든 프레임에서 양쪽 눈이 식별 가능하며 눈이 사라지거나 위치가 크게 변하지 않는다.",
+        "property": "eyes"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "귀 형태, 얼굴의 흰색 중앙 무늬와 갈색 코트 패치가 전체 프레임에서 유지된다.",
+        "property": "identity"
+      },
+      {
+        "state": "PASS",
+        "frames": [],
+        "evidence": "WALK 동작이므로 비적용; 정지 상태를 요구하지 않는다.",
+        "property": "idleStillness"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "네 다리가 몸통에 연결되어 있고 보행 중에도 팔다리 형태가 plausibly 유지된다.",
+        "property": "limbs"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          8,
+          0
+        ],
+        "evidence": "프레임 8은 프레임 0으로 자연스럽게 이어지는 거의 동일한 진입 자세이며, 하체 윤곽 변화도 없다.",
+        "property": "loop"
+      },
+      {
+        "state": "FAIL",
+        "frames": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "evidence": "프레임 1→2와 6→7에서 내부 색상이 크게 바뀌고, 프레임 2~6은 프레임 0/1과 다른 광범위한 코트 색 상태를 유지한다. 측정상 해당 구간의 p90 RGB 변화가 약 212~213, p95가 251이다.",
+        "property": "palette"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0
+        ],
+        "evidence": "실제 프레임 0이 승인 seed와 같은 정면 입장 자세, 해부 구조 및 native 크기를 보인다.",
+        "property": "referencePose"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "승인 seed와 마찬가지로 정면에서 꼬리가 보이지 않으며, 연결되지 않은 꼬리나 새 꼬리 구조가 나타나지 않는다.",
+        "property": "tail"
+      }
+    ],
+    "observedMotion": "WALK_RUN"
+  },
+  "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "pixelEvidence": {
+    "version": "native-frame-delta-v1",
+    "reference": "frame0",
+    "frameCount": 9,
+    "alphaStable": false,
+    "boundsExclusive": [
+      [
+        12,
+        7,
+        28,
+        35
+      ],
+      [
+        12,
+        7,
+        28,
+        35
+      ],
+      [
+        12,
+        8,
+        28,
+        35
+      ],
+      [
+        12,
+        8,
+        28,
+        34
+      ],
+      [
+        12,
+        8,
+        28,
+        34
+      ],
+      [
+        12,
+        8,
+        28,
+        35
+      ],
+      [
+        12,
+        8,
+        28,
+        35
+      ],
+      [
+        12,
+        7,
+        28,
+        35
+      ],
+      [
+        12,
+        7,
+        28,
+        35
+      ]
+    ],
+    "subtleShadingOnly": false,
+    "maxVisibleRgbDelta": 254,
+    "maxRgbDeltaFromFrame0": [
+      0,
+      252,
+      254,
+      254,
+      254,
+      254,
+      254,
+      254,
+      43
+    ],
+    "alphaChangedFromFrame0": [
+      0,
+      10,
+      45,
+      49,
+      49,
+      44,
+      45,
+      17,
+      2
+    ],
+    "maxRgbDeltaFromPrevious": [
+      0,
+      252,
+      255,
+      251,
+      251,
+      251,
+      251,
+      251,
+      255
+    ],
+    "alphaChangedFromPrevious": [
+      0,
+      10,
+      37,
+      14,
+      20,
+      17,
+      5,
+      32,
+      15
+    ],
+    "rgbChangedPixelsFromFrame0": [
+      0,
+      351,
+      355,
+      357,
+      358,
+      355,
+      355,
+      353,
+      350
+    ]
+  },
+  "rawEditReview": {
+    "note": "기준 외형과 실제 프레임 간 움직임 검수 통과",
+    "model": "gpt-5.6-luna",
+    "frames": [],
+    "issues": [],
+    "passed": true,
+    "version": "sprite-quality-v1",
+    "edgeFrames": [],
+    "reviewedAt": "2026-10-09T18:07:29.193839Z",
+    "rulesSha256": "8d4b55dbddd28153a42202853b578529bd9c489c09e8c08094869ee97c66eda3",
+    "reviewLayout": "separate-reference-temporal-v1",
+    "colorEvidence": {
+      "pairs": [
+        {
+          "p90": 0,
+          "p95": 0,
+          "frame": 0,
+          "median": 0,
+          "reference": 0
+        },
+        {
+          "p90": 0,
+          "p95": 0,
+          "frame": 0,
+          "median": 0,
+          "reference": 8
+        },
+        {
+          "p90": 0,
+          "p95": 21,
+          "frame": 1,
+          "median": 0,
+          "reference": 0
+        },
+        {
+          "p90": 0,
+          "p95": 21,
+          "frame": 1,
+          "median": 0,
+          "reference": 0
+        },
+        {
+          "p90": 213,
+          "p95": 251,
+          "frame": 2,
+          "median": 0,
+          "reference": 0
+        },
+        {
+          "p90": 213,
+          "p95": 251,
+          "frame": 2,
+          "median": 0,
+          "reference": 1
+        },
+        {
+          "p90": 213,
+          "p95": 251,
+          "frame": 3,
+          "median": 0,
+          "reference": 0
+        },
+        {
+          "p90": 0,
+          "p95": 76,
+          "frame": 3,
+          "median": 0,
+          "reference": 2
+        },
+        {
+          "p90": 217,
+          "p95": 251,
+          "frame": 4,
+          "median": 0,
+          "reference": 0
+        },
+        {
+          "p90": 0,
+          "p95": 118,
+          "frame": 4,
+          "median": 0,
+          "reference": 3
+        },
+        {
+          "p90": 213,
+          "p95": 251,
+          "frame": 5,
+          "median": 0,
+          "reference": 0
+        },
+        {
+          "p90": 0,
+          "p95": 99,
+          "frame": 5,
+          "median": 0,
+          "reference": 4
+        },
+        {
+          "p90": 213,
+          "p95": 251,
+          "frame": 6,
+          "median": 0,
+          "reference": 0
+        },
+        {
+          "p90": 0,
+          "p95": 0,
+          "frame": 6,
+          "median": 0,
+          "reference": 5
+        },
+        {
+          "p90": 0,
+          "p95": 27,
+          "frame": 7,
+          "median": 0,
+          "reference": 0
+        },
+        {
+          "p90": 213,
+          "p95": 251,
+          "frame": 7,
+          "median": 0,
+          "reference": 6
+        },
+        {
+          "p90": 0,
+          "p95": 0,
+          "frame": 8,
+          "median": 0,
+          "reference": 0
+        },
+        {
+          "p90": 0,
+          "p95": 34,
+          "frame": 8,
+          "median": 0,
+          "reference": 7
+        }
+      ],
+      "version": "visible-rgb-distribution-v1"
+    },
+    "initialVision": {
+      "properties": [
+        {
+          "state": "PASS",
+          "frames": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "evidence": "실제 프레임들에서 앞뒤 발 위치가 번갈아 바뀌며 네 발 보행 동작이 보인다.",
+          "property": "action"
+        },
+        {
+          "state": "PASS",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "evidence": "모든 실제 프레임에서 개가 정면, 즉 south 방향을 향한다.",
+          "property": "direction"
+        },
+        {
+          "state": "PASS",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "evidence": "모든 프레임에서 얼굴 양쪽의 눈이 식별 가능하고 눈의 위치와 형태가 유지된다.",
+          "property": "eyes"
+        },
+        {
+          "state": "PASS",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "evidence": "귀 모양, tan/흰색 코트 패치, 흰 주둥이와 가슴이 전체 프레임에서 유지된다.",
+          "property": "identity"
+        },
+        {
+          "state": "PASS",
+          "frames": [],
+          "evidence": "WALK 동작이므로 비적용이다.",
+          "property": "idleStillness"
+        },
+        {
+          "state": "PASS",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "evidence": "네 다리가 몸체에 연결된 채 프레임별 보행 자세에 맞게 자연스럽게 부분 가려진다.",
+          "property": "limbs"
+        },
+        {
+          "state": "PASS",
+          "frames": [
+            8,
+            0
+          ],
+          "evidence": "프레임 8은 프레임 0과 같은 안정된 입장 자세로 돌아가며, 두 프레임의 실루엣과 색 변화가 없다.",
+          "property": "loop"
+        },
+        {
+          "state": "PASS",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "evidence": "프레임별 움직임에 따른 변화는 있으나 귀, 얼굴, 가슴의 코트 패치가 유지되고 전체 팔레트가 conspicuous하게 깜빡이지 않는다.",
+          "property": "palette"
+        },
+        {
+          "state": "PASS",
+          "frames": [
+            0
+          ],
+          "evidence": "실제 프레임 0은 승인된 seed와 같은 정면 자세, 해부 구조 및 native 40 크기의 진입 포즈다.",
+          "property": "referencePose"
+        },
+        {
+          "state": "PASS",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "evidence": "정면 자세에서 tail은 seed와 마찬가지로 보이지 않으며, 새로 생긴 분리되거나 움직이는 꼬리 형태가 없다.",
+          "property": "tail"
+        }
+      ],
+      "observedMotion": "WALK_RUN"
+    },
+    "pixelEvidence": {
+      "version": "native-frame-delta-v1",
+      "reference": "frame0",
+      "frameCount": 9,
+      "alphaStable": false,
+      "boundsExclusive": [
+        [
+          12,
+          7,
+          28,
+          35
+        ],
+        [
+          12,
+          7,
+          28,
+          35
+        ],
+        [
+          12,
+          8,
+          28,
+          35
+        ],
+        [
+          12,
+          8,
+          28,
+          34
+        ],
+        [
+          12,
+          8,
+          28,
+          34
+        ],
+        [
+          12,
+          8,
+          28,
+          35
+        ],
+        [
+          12,
+          8,
+          28,
+          35
+        ],
+        [
+          12,
+          7,
+          28,
+          35
+        ],
+        [
+          12,
+          7,
+          28,
+          35
+        ]
+      ],
+      "subtleShadingOnly": false,
+      "maxVisibleRgbDelta": 255,
+      "maxRgbDeltaFromFrame0": [
+        0,
+        251,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+        35
+      ],
+      "alphaChangedFromFrame0": [
+        0,
+        10,
+        45,
+        49,
+        49,
+        44,
+        45,
+        17,
+        2
+      ],
+      "maxRgbDeltaFromPrevious": [
+        0,
+        251,
+        255,
+        251,
+        251,
+        251,
+        251,
+        251,
+        255
+      ],
+      "alphaChangedFromPrevious": [
+        0,
+        10,
+        37,
+        14,
+        20,
+        17,
+        5,
+        32,
+        15
+      ],
+      "rgbChangedPixelsFromFrame0": [
+        0,
+        28,
+        166,
+        182,
+        178,
+        166,
+        166,
+        37,
+        7
+      ]
+    },
+    "rulesRevision": "sprite-regressions-2026-10-10-v30",
+    "detachedFrames": [],
+    "motionDecision": "PASS",
+    "idleMotionFrames": [],
+    "invalidResponses": [],
+    "observationCount": 1,
+    "silhouetteFrames": [],
+    "lowerBodyEvidence": {
+      "version": "lower-third-contour-v1",
+      "startRow": 25,
+      "alphaChanged": [
+        0,
+        8,
+        20,
+        24,
+        25,
+        19,
+        20,
+        15,
+        0
+      ],
+      "darkContourChanged": [
+        0,
+        14,
+        23,
+        35,
+        36,
+        20,
+        23,
+        18,
+        0
+      ],
+      "darkChannelCeilingExclusive": 100
+    },
+    "reviewImageHashes": {
+      "TEMPORAL actual frames 0 through 8 only": "35fae5098010a7992f2291c4e3f84116a4b690051a072d0d1a071255b7f52292",
+      "REFERENCE only, never part of the timeline": "aa6aade39cbb3c23565902e702cccb2ef56db023abc4e764e06263a3c96e1ab7"
+    },
+    "confirmedProperties": [],
+    "motionReviewVersion": "motion-observation-tristate-v4",
+    "referencePoseUsable": true,
+    "reviewedFrameHashes": [
+      "f94e58a2c1c03f704a9917913b473eca1d57e65858f5cd500183385143a097a5",
+      "86cb242dbc01a3fb079d39919b4ec73eb0d85de8326dbd5775708b6e7df1d1b6",
+      "998a9cca94b40733893578c3473dc24625edf409a93534941f754a55fab5dde9",
+      "7f325ff62ddcedc206befcbd7d3ca71aaaa31b3fb4e4e310590b7315f856167e",
+      "d260103573af4d9cda3494b2a790adec54d7c4c49d26c28b9efee056c6a6a884",
+      "a7d5b16b2a94b3b2812eb54a849d2d8c3b136ad13c6e28806faf3cad819c124f",
+      "7a871dfbfc578363810bd561427db176a6df3a2e54a958526acad95d8694c126",
+      "19b9829c0a686121c21f04e307088e19d145763669494bc3a2297ae2e2342eb3",
+      "0c2d4a126a67002e1f4fe7725783205c034e7a1eceecd730f357c5f5755b128e"
+    ],
+    "uncertainProperties": [],
+    "referenceFrameSha256": "7aa766a768fdc0b9e73a0e5e65ee22583c10d2022414823fdaecefbfe8a71507",
+    "subtlePaletteResolved": false,
+    "responseProtocolVersion": "named-motion-response-v1",
+    "unsupportedWalkResolved": false,
+    "frontalAppendageConfirmed": false
+  },
+  "rawEditSha256": "982deb30d346c1a13f279cad7e4fc63ac777a211fef40bb3cac2181977bde1f7",
+  "rulesRevision": "sprite-regressions-2026-10-10-v30",
+  "detachedFrames": [],
+  "learnedLessons": [],
+  "motionDecision": "UNCERTAIN",
+  "restoredReview": {
+    "note": "독립 관찰 불일치 또는 관찰 불확실; 자동 보완과 학습 보류",
+    "model": "gpt-5.6-luna",
+    "frames": [],
+    "issues": [],
+    "passed": false,
+    "version": "sprite-quality-v1",
+    "edgeFrames": [],
+    "reviewedAt": "2026-10-09T18:07:14.041580Z",
+    "rulesSha256": "8d4b55dbddd28153a42202853b578529bd9c489c09e8c08094869ee97c66eda3",
+    "reviewLayout": "separate-reference-temporal-v1",
+    "colorEvidence": {
+      "pairs": [
+        {
+          "p90": 0,
+          "p95": 0,
+          "frame": 0,
+          "median": 0,
+          "reference": 0
+        },
+        {
+          "p90": 7,
+          "p95": 11,
+          "frame": 0,
+          "median": 2,
+          "reference": 8
+        },
+        {
+          "p90": 7,
+          "p95": 29,
+          "frame": 1,
+          "median": 2,
+          "reference": 0
+        },
+        {
+          "p90": 7,
+          "p95": 29,
+          "frame": 1,
+          "median": 2,
+          "reference": 0
+        },
+        {
+          "p90": 212,
+          "p95": 251,
+          "frame": 2,
+          "median": 7,
+          "reference": 0
+        },
+        {
+          "p90": 213,
+          "p95": 251,
+          "frame": 2,
+          "median": 0,
+          "reference": 1
+        },
+        {
+          "p90": 212,
+          "p95": 251,
+          "frame": 3,
+          "median": 7,
+          "reference": 0
+        },
+        {
+          "p90": 0,
+          "p95": 76,
+          "frame": 3,
+          "median": 0,
+          "reference": 2
+        },
+        {
+          "p90": 212,
+          "p95": 251,
+          "frame": 4,
+          "median": 7,
+          "reference": 0
+        },
+        {
+          "p90": 0,
+          "p95": 118,
+          "frame": 4,
+          "median": 0,
+          "reference": 3
+        },
+        {
+          "p90": 212,
+          "p95": 251,
+          "frame": 5,
+          "median": 7,
+          "reference": 0
+        },
+        {
+          "p90": 0,
+          "p95": 99,
+          "frame": 5,
+          "median": 0,
+          "reference": 4
+        },
+        {
+          "p90": 212,
+          "p95": 251,
+          "frame": 6,
+          "median": 7,
+          "reference": 0
+        },
+        {
+          "p90": 0,
+          "p95": 0,
+          "frame": 6,
+          "median": 0,
+          "reference": 5
+        },
+        {
+          "p90": 7,
+          "p95": 29,
+          "frame": 7,
+          "median": 2,
+          "reference": 0
+        },
+        {
+          "p90": 213,
+          "p95": 251,
+          "frame": 7,
+          "median": 0,
+          "reference": 6
+        },
+        {
+          "p90": 7,
+          "p95": 11,
+          "frame": 8,
+          "median": 2,
+          "reference": 0
+        },
+        {
+          "p90": 0,
+          "p95": 34,
+          "frame": 8,
+          "median": 0,
+          "reference": 7
+        }
+      ],
+      "version": "visible-rgb-distribution-v1"
+    },
+    "initialVision": {
+      "properties": [
+        {
+          "state": "PASS",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "evidence": "실제 프레임에서 앞·뒤 발 위치가 연속적으로 교대하며 네 발 보행 동작이 보인다.",
+          "property": "action"
+        },
+        {
+          "state": "PASS",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "evidence": "모든 실제 프레임에서 개가 정면, 즉 south 방향을 향한다.",
+          "property": "direction"
+        },
+        {
+          "state": "PASS",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "evidence": "모든 프레임에서 양쪽 눈이 식별 가능하며 눈이 사라지거나 위치가 크게 변하지 않는다.",
+          "property": "eyes"
+        },
+        {
+          "state": "PASS",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "evidence": "귀 형태, 얼굴의 흰색 중앙 무늬와 갈색 코트 패치가 전체 프레임에서 유지된다.",
+          "property": "identity"
+        },
+        {
+          "state": "PASS",
+          "frames": [],
+          "evidence": "WALK 동작이므로 비적용; 정지 상태를 요구하지 않는다.",
+          "property": "idleStillness"
+        },
+        {
+          "state": "PASS",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "evidence": "네 다리가 몸통에 연결되어 있고 보행 중에도 팔다리 형태가 plausibly 유지된다.",
+          "property": "limbs"
+        },
+        {
+          "state": "PASS",
+          "frames": [
+            8,
+            0
+          ],
+          "evidence": "프레임 8은 프레임 0으로 자연스럽게 이어지는 거의 동일한 진입 자세이며, 하체 윤곽 변화도 없다.",
+          "property": "loop"
+        },
+        {
+          "state": "FAIL",
+          "frames": [
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "evidence": "프레임 1→2와 6→7에서 내부 색상이 크게 바뀌고, 프레임 2~6은 프레임 0/1과 다른 광범위한 코트 색 상태를 유지한다. 측정상 해당 구간의 p90 RGB 변화가 약 212~213, p95가 251이다.",
+          "property": "palette"
+        },
+        {
+          "state": "PASS",
+          "frames": [
+            0
+          ],
+          "evidence": "실제 프레임 0이 승인 seed와 같은 정면 입장 자세, 해부 구조 및 native 크기를 보인다.",
+          "property": "referencePose"
+        },
+        {
+          "state": "PASS",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "evidence": "승인 seed와 마찬가지로 정면에서 꼬리가 보이지 않으며, 연결되지 않은 꼬리나 새 꼬리 구조가 나타나지 않는다.",
+          "property": "tail"
+        }
+      ],
+      "observedMotion": "WALK_RUN"
+    },
+    "pixelEvidence": {
+      "version": "native-frame-delta-v1",
+      "reference": "frame0",
+      "frameCount": 9,
+      "alphaStable": false,
+      "boundsExclusive": [
+        [
+          12,
+          7,
+          28,
+          35
+        ],
+        [
+          12,
+          7,
+          28,
+          35
+        ],
+        [
+          12,
+          8,
+          28,
+          35
+        ],
+        [
+          12,
+          8,
+          28,
+          34
+        ],
+        [
+          12,
+          8,
+          28,
+          34
+        ],
+        [
+          12,
+          8,
+          28,
+          35
+        ],
+        [
+          12,
+          8,
+          28,
+          35
+        ],
+        [
+          12,
+          7,
+          28,
+          35
+        ],
+        [
+          12,
+          7,
+          28,
+          35
+        ]
+      ],
+      "subtleShadingOnly": false,
+      "maxVisibleRgbDelta": 254,
+      "maxRgbDeltaFromFrame0": [
+        0,
+        252,
+        254,
+        254,
+        254,
+        254,
+        254,
+        254,
+        43
+      ],
+      "alphaChangedFromFrame0": [
+        0,
+        10,
+        45,
+        49,
+        49,
+        44,
+        45,
+        17,
+        2
+      ],
+      "maxRgbDeltaFromPrevious": [
+        0,
+        252,
+        255,
+        251,
+        251,
+        251,
+        251,
+        251,
+        255
+      ],
+      "alphaChangedFromPrevious": [
+        0,
+        10,
+        37,
+        14,
+        20,
+        17,
+        5,
+        32,
+        15
+      ],
+      "rgbChangedPixelsFromFrame0": [
+        0,
+        351,
+        355,
+        357,
+        358,
+        355,
+        355,
+        353,
+        350
+      ]
+    },
+    "rulesRevision": "sprite-regressions-2026-10-10-v30",
+    "detachedFrames": [],
+    "motionDecision": "UNCERTAIN",
+    "idleMotionFrames": [],
+    "invalidResponses": [],
+    "observationCount": 2,
+    "silhouetteFrames": [],
+    "consistencyReview": {
+      "properties": [
+        {
+          "state": "PASS",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "evidence": "네 다리의 발 위치와 들린 발이 프레임마다 교대로 변하며, 프레임 0의 양발 정렬에서 프레임 2~7의 보행 스텝을 거쳐 프레임 8로 이어진다.",
+          "property": "action"
+        },
+        {
+          "state": "PASS",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "evidence": "모든 실제 프레임에서 개가 정면의 남쪽 방향을 향하고 있다.",
+          "property": "direction"
+        },
+        {
+          "state": "PASS",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "evidence": "모든 프레임에서 얼굴 양쪽의 눈이 읽히며, 눈의 소실이나 비정상적인 추가 눈이 보이지 않는다.",
+          "property": "eyes"
+        },
+        {
+          "state": "PASS",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "evidence": "귀 형태, 주황색과 흰색 얼굴·몸통 무늬, 승인된 픽셀 스타일이 전체 프레임에서 유지된다.",
+          "property": "identity"
+        },
+        {
+          "state": "PASS",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "evidence": "IDLE 검사가 아닌 WALK 애니메이션이므로 비적용이다.",
+          "property": "idleStillness"
+        },
+        {
+          "state": "PASS",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "evidence": "네 다리가 몸통에 연결된 채 프레임별로 부분 가림을 허용하는 자연스러운 보행 자세를 보인다.",
+          "property": "limbs"
+        },
+        {
+          "state": "PASS",
+          "frames": [
+            0,
+            8
+          ],
+          "evidence": "프레임 8은 프레임 0과 유사한 정면 입식 자세로 돌아오며, 하체 윤곽 변화도 마지막에서 기준 자세로 수렴한다.",
+          "property": "loop"
+        },
+        {
+          "state": "PASS",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "evidence": "프레임 간 큰 픽셀 변화는 주로 보행에 따른 위치·실루엣 변화로 보이며, 얼굴과 몸의 주황·흰색 코트 패치가 지속적으로 유지된다.",
+          "property": "palette"
+        },
+        {
+          "state": "PASS",
+          "frames": [
+            0
+          ],
+          "evidence": "실제 프레임 0은 승인된 seed와 같은 정면 입식 진입 자세, 해부 구조 및 네이티브 크기를 유지한다.",
+          "property": "referencePose"
+        },
+        {
+          "state": "PASS",
+          "frames": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "evidence": "남쪽을 향한 정면 자세에서 seed와 마찬가지로 꼬리가 뒤에 가려져 있으며, 새로 튀어나온 꼬리나 분리된 꼬리 형태가 보이지 않는다.",
+          "property": "tail"
+        }
+      ],
+      "observedMotion": "WALK_RUN"
+    },
+    "lowerBodyEvidence": {
+      "version": "lower-third-contour-v1",
+      "startRow": 25,
+      "alphaChanged": [
+        0,
+        8,
+        20,
+        24,
+        25,
+        19,
+        20,
+        15,
+        0
+      ],
+      "darkContourChanged": [
+        0,
+        14,
+        23,
+        35,
+        36,
+        20,
+        23,
+        18,
+        0
+      ],
+      "darkChannelCeilingExclusive": 100
+    },
+    "reviewImageHashes": {
+      "TEMPORAL actual frames 0 through 8 only": "ba1332fb6b162d31040774e12b7ec8b5dcdd59ac98ce2e3e7073403672c881cd",
+      "REFERENCE only, never part of the timeline": "e6807c1a9f841f76016b0427fb10cd35165dba6f8a4b4d4385120029e9097d2d"
+    },
+    "confirmedProperties": [],
+    "motionReviewVersion": "motion-observation-tristate-v4",
+    "referencePoseUsable": true,
+    "reviewedFrameHashes": [
+      "7aa766a768fdc0b9e73a0e5e65ee22583c10d2022414823fdaecefbfe8a71507",
+      "86cb242dbc01a3fb079d39919b4ec73eb0d85de8326dbd5775708b6e7df1d1b6",
+      "998a9cca94b40733893578c3473dc24625edf409a93534941f754a55fab5dde9",
+      "7f325ff62ddcedc206befcbd7d3ca71aaaa31b3fb4e4e310590b7315f856167e",
+      "d260103573af4d9cda3494b2a790adec54d7c4c49d26c28b9efee056c6a6a884",
+      "a7d5b16b2a94b3b2812eb54a849d2d8c3b136ad13c6e28806faf3cad819c124f",
+      "7a871dfbfc578363810bd561427db176a6df3a2e54a958526acad95d8694c126",
+      "19b9829c0a686121c21f04e307088e19d145763669494bc3a2297ae2e2342eb3",
+      "0c2d4a126a67002e1f4fe7725783205c034e7a1eceecd730f357c5f5755b128e"
+    ],
+    "uncertainProperties": [
+      "palette"
+    ],
+    "referenceFrameSha256": "7aa766a768fdc0b9e73a0e5e65ee22583c10d2022414823fdaecefbfe8a71507",
+    "subtlePaletteResolved": false,
+    "responseProtocolVersion": "named-motion-response-v1",
+    "unsupportedWalkResolved": false,
+    "frontalAppendageConfirmed": false
+  },
+  "recoveryVersion": "photo-grounded-recovery-v1",
+  "idleMotionFrames": [],
+  "invalidResponses": [],
+  "motionSeedSha256": "7aa766a768fdc0b9e73a0e5e65ee22583c10d2022414823fdaecefbfe8a71507",
+  "observationCount": 2,
+  "silhouetteFrames": [],
+  "consistencyReview": {
+    "properties": [
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "네 다리의 발 위치와 들린 발이 프레임마다 교대로 변하며, 프레임 0의 양발 정렬에서 프레임 2~7의 보행 스텝을 거쳐 프레임 8로 이어진다.",
+        "property": "action"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "모든 실제 프레임에서 개가 정면의 남쪽 방향을 향하고 있다.",
+        "property": "direction"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "모든 프레임에서 얼굴 양쪽의 눈이 읽히며, 눈의 소실이나 비정상적인 추가 눈이 보이지 않는다.",
+        "property": "eyes"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "귀 형태, 주황색과 흰색 얼굴·몸통 무늬, 승인된 픽셀 스타일이 전체 프레임에서 유지된다.",
+        "property": "identity"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "IDLE 검사가 아닌 WALK 애니메이션이므로 비적용이다.",
+        "property": "idleStillness"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "네 다리가 몸통에 연결된 채 프레임별로 부분 가림을 허용하는 자연스러운 보행 자세를 보인다.",
+        "property": "limbs"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          8
+        ],
+        "evidence": "프레임 8은 프레임 0과 유사한 정면 입식 자세로 돌아오며, 하체 윤곽 변화도 마지막에서 기준 자세로 수렴한다.",
+        "property": "loop"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "프레임 간 큰 픽셀 변화는 주로 보행에 따른 위치·실루엣 변화로 보이며, 얼굴과 몸의 주황·흰색 코트 패치가 지속적으로 유지된다.",
+        "property": "palette"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0
+        ],
+        "evidence": "실제 프레임 0은 승인된 seed와 같은 정면 입식 진입 자세, 해부 구조 및 네이티브 크기를 유지한다.",
+        "property": "referencePose"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "남쪽을 향한 정면 자세에서 seed와 마찬가지로 꼬리가 뒤에 가려져 있으며, 새로 튀어나온 꼬리나 분리된 꼬리 형태가 보이지 않는다.",
+        "property": "tail"
+      }
+    ],
+    "observedMotion": "WALK_RUN"
+  },
+  "lowerBodyEvidence": {
+    "version": "lower-third-contour-v1",
+    "startRow": 25,
+    "alphaChanged": [
+      0,
+      8,
+      20,
+      24,
+      25,
+      19,
+      20,
+      15,
+      0
+    ],
+    "darkContourChanged": [
+      0,
+      14,
+      23,
+      35,
+      36,
+      20,
+      23,
+      18,
+      0
+    ],
+    "darkChannelCeilingExclusive": 100
+  },
+  "reviewImageHashes": {
+    "TEMPORAL actual frames 0 through 8 only": "ba1332fb6b162d31040774e12b7ec8b5dcdd59ac98ce2e3e7073403672c881cd",
+    "REFERENCE only, never part of the timeline": "e6807c1a9f841f76016b0427fb10cd35165dba6f8a4b4d4385120029e9097d2d"
+  },
+  "confirmedProperties": [],
+  "firstFrameUnchanged": true,
+  "motionReviewVersion": "motion-observation-tristate-v4",
+  "referencePoseUsable": true,
+  "reviewedFrameHashes": [
+    "7aa766a768fdc0b9e73a0e5e65ee22583c10d2022414823fdaecefbfe8a71507",
+    "86cb242dbc01a3fb079d39919b4ec73eb0d85de8326dbd5775708b6e7df1d1b6",
+    "998a9cca94b40733893578c3473dc24625edf409a93534941f754a55fab5dde9",
+    "7f325ff62ddcedc206befcbd7d3ca71aaaa31b3fb4e4e310590b7315f856167e",
+    "d260103573af4d9cda3494b2a790adec54d7c4c49d26c28b9efee056c6a6a884",
+    "a7d5b16b2a94b3b2812eb54a849d2d8c3b136ad13c6e28806faf3cad819c124f",
+    "7a871dfbfc578363810bd561427db176a6df3a2e54a958526acad95d8694c126",
+    "19b9829c0a686121c21f04e307088e19d145763669494bc3a2297ae2e2342eb3",
+    "0c2d4a126a67002e1f4fe7725783205c034e7a1eceecd730f357c5f5755b128e"
+  ],
+  "uncertainProperties": [
+    "palette"
+  ],
+  "referenceFrameSha256": "7aa766a768fdc0b9e73a0e5e65ee22583c10d2022414823fdaecefbfe8a71507",
+  "subtlePaletteResolved": false,
+  "responseProtocolVersion": "named-motion-response-v1",
+  "unsupportedWalkResolved": false,
+  "frontalAppendageConfirmed": false
+}

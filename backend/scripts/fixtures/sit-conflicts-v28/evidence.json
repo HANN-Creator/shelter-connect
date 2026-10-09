@@ -1,0 +1,18 @@
+{
+  "actualProviderObservations": true,
+  "rulesRevision": "sprite-regressions-2026-10-10-v27",
+  "cases": [
+    {
+      "label": "sit-south",
+      "reviewSha256": "546515e9108779f2da92e8d465fcb405109677f57001bdfa350ba60d1274bbaa",
+      "decision": "PASS",
+      "passed": false
+    },
+    {
+      "label": "sit-north",
+      "reviewSha256": "d06a38a43ecabdcd315d4ffce6060db4b90c20c507d684a3484fe1f9f6d852ff",
+      "decision": "UNCERTAIN",
+      "passed": false
+    }
+  ]
+}

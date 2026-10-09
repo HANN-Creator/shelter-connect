@@ -39,7 +39,7 @@ class ApiDocumentationTest {
             for(String path:mapping.getPatternValues()) if(path.startsWith("/v1/"))
                 for(var method:mapping.getMethodsCondition().getMethods()) actual.add(method+" "+path);
         });
-        assertThat(documented).containsExactlyElementsOf(actual).hasSize(97);
+        assertThat(documented).containsExactlyElementsOf(actual).hasSize(100);
         assertThat(root.at("/servers/0/url").asText()).isEqualTo("/");
         assertThat(root.at("/components/securitySchemes/supabaseBearer/scheme").asText()).isEqualTo("bearer");
         assertThat(root.path("paths").path("/v1/dogs/{dogId}/assets").path("get").path("security").size()).isZero();

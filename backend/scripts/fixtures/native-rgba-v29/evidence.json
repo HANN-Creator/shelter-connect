@@ -1,0 +1,10 @@
+{
+  "run": "isolated production JAR 449306e",
+  "rulesSha256": "46faaca97aa2c2343da3e3057b534e38398916125bea4b9cea6decac511ac666",
+  "rawSha256": "fcac81a97d61c9c48fe272491f39d6fb5ec74de577305fd8ce2f715bfee04731",
+  "restoredSha256": "6e8855ad74961e42d4fe81f635f7f6b494d9fff2fcf619bcbcdbeebe76523a3d",
+  "repairCount": 2,
+  "rawPassed": true,
+  "restoredPassed": false,
+  "cause": "Server replaced the native40 first frame with the BASE pose; raw nine-frame motion passed, restored motion failed palette review."
+}

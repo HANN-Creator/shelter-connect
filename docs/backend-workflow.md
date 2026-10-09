@@ -199,3 +199,5 @@ B-71: [보완된 기본 도트 재검수 상태 분리](repaired-seed-recheck.md
 - B-73 꼬리 관찰 불확실성과 이미지 결함 분리: [노션](https://app.notion.com/p/3f45b2d1a55f80b1a59ceaf47465f365), [처리·비교·실제 검증](tail-anatomy-tristate.md). 브랜치 `backend/b-73-tail-review-tristate`. 코드의 픽셀 검사와 사진/도트 관찰 분리, 충돌 1회 재관찰, 미확정 유료 보완·부정 학습 차단. 공통 규칙 v21, DB 마이그레이션 없음.
 
 - B-74 [기준 도트의 남은 예산으로 보완 재개](seed-repair-resume.md): 별도 요청의 중복·권한·해시·횟수 보존, 얼굴 무늬의 실질 결함 구분과 국소 편집, 실서버 실행 파일 검증. DB V23 유지, 공통 규칙 v25.
+
+- B-75 [확정된 정면 부속물 보완과 IDLE 정지 대체](idle-motion-recovery.md): [노션](https://app.notion.com/p/3f45b2d1a55f80bdb396fd29378ecdc3). 브랜치 `backend/b-75-idle-motion-recovery`. 실제 원본·남은 예산 보존, 새 규칙으로 실패 모션 재개, 소진된 IDLE만 별도 정지 결과 생성·독립 검수. v26, DB V23 유지.

@@ -166,14 +166,6 @@ public class StyledSpriteCodec {
         var source=nativeFrame(seed);var out=new BufferedImage(40,40,BufferedImage.TYPE_INT_ARGB);
         for(int y=0;y<32;y++)for(int x=0;x<32;x++)out.setRGB(x+4,y+4,source.getRGB(x,y));return png(out);
     }
-    /** Only frame0 RGB may be restored, and only with the exact seed alpha mask. Never recolor other frames. */
-    static List<byte[]> anchorEdit(List<byte[]> frames,byte[] seed) {
-        if(frames.size()!=9)throw new AssetException(422,"STYLED_FRAME_COUNT_INVALID");
-        var first=motionFrame(frames.getFirst());var reference=motionFrame(seed);int n=reference.getWidth();
-        if(first.getWidth()!=n)return frames;
-        for(int y=0;y<n;y++)for(int x=0;x<n;x++)if((first.getRGB(x,y)>>>24)!=(reference.getRGB(x,y)>>>24))return frames;
-        var out=new ArrayList<>(frames);out.set(0,seed);return out;
-    }
     static byte[] rawSheet(List<byte[]> frames) { return sheet(frames,frames.getFirst()); }
     static List<byte[]> restoreEditPalette(List<byte[]> frames,byte[] seed) {
         if(frames.size()!=9)throw new AssetException(422,"STYLED_FRAME_COUNT_INVALID");

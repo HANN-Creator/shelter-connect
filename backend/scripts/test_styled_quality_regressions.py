@@ -31,6 +31,16 @@ def decode_recorded_alpha(rows):
 
 
 class QualityRegressionTest(unittest.TestCase):
+    def test_actual_idle_failure_retains_all_nine_frames_and_shared_prevention(self):
+        root=Path(__file__).parent/'fixtures/idle-hold-v26'
+        for case in read(root/'evidence.json')['cases']:
+            self.assertEqual(digest(root/case['file']),case['sha256'])
+            with Image.open(root/case['file']) as image:self.assertEqual(image.size,(360,40))
+            self.assertFalse(read(root/(case['id']+'-review.json'))['passed'])
+        self.assertIn('never create a crown',load_quality()['recovery']['frontOcclusion'])
+        self.assertEqual(load_quality()['recovery']['idleHoldVersion'],'approved-seed-idle-hold-v1')
+
+
     def test_coat_repair_keeps_deployed_source_and_prevention_on_initial_generation(self):
         root=Path(__file__).parent/'fixtures/material-coat-v25'
         evidence=read(root/'evidence.json')
@@ -326,7 +336,7 @@ class QualityRegressionTest(unittest.TestCase):
         traits={'seed':0,'motionDescription':'dog','rearDescription':'rear'}
         p=motion_payload(traits,load_rules(),'SIT','west',{},q)
         self.assertIn(lesson['prevention'],p['description'])
-        self.assertIn('complete tip INSIDE frame',p['description'])
+        self.assertIn('complete tail tucked by haunch INSIDE every frame',p['description'])
         self.assertNotIn('last_frame',p)
         self.assertLessEqual(len(p['description']),1000)
         for changes in [{'direction':'east'},{'action':'WALK'},{'tail':'HIGH'},{'rulesSha256':'old'},
@@ -365,7 +375,7 @@ class QualityRegressionTest(unittest.TestCase):
             payload=motion_payload({'seed':0,'motionDescription':'dog','rearDescription':'rear'},load_rules(),
                 'SIT',direction,{}, {'contract':{'tailCarriage':tail},'attempt':attempt,
                                      'issues':['CANVAS_CLIPPING'] if attempt else []})
-            self.assertIn('Tuck tail beside haunch, complete tip INSIDE frame through final hold',payload['description'])
+            self.assertIn('Keep complete tail tucked by haunch INSIDE every frame',payload['description'])
             self.assertNotIn('last_frame',payload)
             if attempt:self.assertIn(load_quality()['corrections']['CANVAS_CLIPPING'],payload['description'])
 

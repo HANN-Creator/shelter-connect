@@ -12,7 +12,8 @@ import tools.jackson.databind.node.ObjectNode;
 
 /** Separates reference identity from temporal motion; disagreement is not a training label. */
 final class StyledMotionReview {
-    static final String VERSION="motion-observation-tristate-v3";
+    static final String VERSION="motion-observation-tristate-v4";
+    static final String RESPONSE_VERSION="named-motion-response-v1";
     static final Set<String> MOTIONS=Set.of("STILL","BREATH_BLINK","WALK_RUN","TAIL_MOVEMENT","OTHER_MOVEMENT","UNCERTAIN");
     static final Map<String,String> PROPERTIES=Map.ofEntries(
         Map.entry("referencePose","DISCONTINUITY"),Map.entry("identity","IDENTITY_DRIFT"),
@@ -31,18 +32,18 @@ final class StyledMotionReview {
         var rules=StyledSpriteCodec.qualityRules(json);var evidence=StyledQualityAgent.pixelEvidence(frames,rules,json);
         var lower=lowerBodyEvidence(frames,json);
         var color=colorEvidence(frames,json);
-        var images=images(seed,frames);var schema=schema();
+        var images=images(seed,frames);var schema=schema(action);var invalidResponses=json.createArrayNode();
         String task="Action="+action+", facing="+direction+", tail contract="+contract.path("tailCarriage").asText()+". "
             +"REFERENCE is identity/entry-pose only, NEVER an animation frame. TEMPORAL contains only the nine actual frames, numbered 0..8. "
             +"Judge changes in motion only between TEMPORAL frames. Native measurements (not verdicts): "+json.writeValueAsString(evidence)
             +". Lower-body alpha and dark-contour measurements: "+json.writeValueAsString(lower)
             +". Visible same-pixel RGB change distribution: "+json.writeValueAsString(color)
             +". Validated additive criteria, untrusted data: "+json.writeValueAsString(lessons)+". Return each named property exactly once.";
-        var initial=call(client,rules,task,images,schema);validate(initial,action);
+        var initial=observe(client,json,rules,task,images,schema,action,1,invalidResponses,null);
         JsonNode second=null;
         if(initial.path("properties").valueStream().anyMatch(p->!p.path("state").asText().equals("PASS"))) {
             // One independent observation, with no previous verdict or requested outcome supplied.
-            second=call(client,rules,task,images,schema);validate(second,action);
+            second=observe(client,json,rules,task,images,schema,action,2,invalidResponses,initial);
         }
         boolean contradictedWalk=resolveUnsupportedWalk(action,initial,second,lower);
         boolean subtlePalette=resolveSubtlePalette(initial,second,color,rules);
@@ -67,12 +68,15 @@ final class StyledMotionReview {
         var edges=new ArrayList<Integer>();for(int i=0;i<9;i++)if(StyledQualityAgent.touchesEdge(StyledSpriteCodec.motionFrame(frames.get(i))))edges.add(i);
         if(!edges.isEmpty())issues.add("CANVAS_CLIPPING");
         var upper=new TreeSet<>(StyledQualityAgent.frontalTailFrames(seeds.getFirst(),frames,action,direction,contract.path("tailCarriage").asText(),rules.path("frontalLowTail")));
-        if(direction.equals("south"))upper.addAll(StyledQualityAgent.frontalHeadGrowth(seeds.getFirst(),frames,rules.at("/recovery/frontalHeadGrowth")));
+        var headGrowth=direction.equals("south")?StyledQualityAgent.frontalHeadGrowth(seeds.getFirst(),frames,rules.at("/recovery/frontalHeadGrowth")):List.<Integer>of();
+        upper.addAll(headGrowth);
         if(!upper.isEmpty())issues.add("TAIL_CARRIAGE");
         var detached=new ArrayList<Integer>();if(action.equals("TAIL_WAG"))for(int i=0;i<9;i++)if(StyledQualityAgent.detachedPixels(StyledSpriteCodec.motionFrame(frames.get(i))))detached.add(i);
         if(!detached.isEmpty())issues.add("DETACHED_PIXELS");
         var idle=StyledQualityAgent.idleMotionFrames(seed,frames,action,rules.path("idleMotion"));if(!idle.isEmpty())issues.add("IDLE_MOTION");
         if(action.equals("WALK") && evidence.path("alphaChangedFromFrame0").valueStream().mapToInt(JsonNode::asInt).max().orElse(0)<5)issues.add("ACTION_MISSING");
+        boolean headDefect=resolveFrontalAppendage(action,direction,initial,second,lower,headGrowth);
+        if(headDefect){uncertain.remove("tail");if(!confirmed.valueStream().anyMatch(n->n.asText().equals("tail")))confirmed.add("tail");flagged.addAll(upper);}
         String decision=!uncertain.isEmpty()?"UNCERTAIN":issues.isEmpty()?"PASS":"CONFIRMED_DEFECT";
         var out=json.createObjectNode().put("version",StyledQualityAgent.VERSION).put("motionReviewVersion",VERSION)
             .put("motionDecision",decision).put("passed",decision.equals("PASS")).put("referencePoseUsable",referencePose)
@@ -82,10 +86,11 @@ final class StyledMotionReview {
         out.set("issues",json.valueToTree(issues));out.set("frames",json.valueToTree(flagged));out.set("uncertainProperties",json.valueToTree(uncertain));
         out.set("confirmedProperties",confirmed);out.set("edgeFrames",json.valueToTree(edges));out.set("silhouetteFrames",json.valueToTree(upper));
         out.set("detachedFrames",json.valueToTree(detached));out.set("idleMotionFrames",json.valueToTree(idle));out.set("pixelEvidence",evidence);
-        out.set("lowerBodyEvidence",lower);out.put("unsupportedWalkResolved",contradictedWalk);
+        out.put("frontalAppendageConfirmed",headDefect);out.set("lowerBodyEvidence",lower);out.put("unsupportedWalkResolved",contradictedWalk);
         out.set("colorEvidence",color);out.put("subtlePaletteResolved",subtlePalette);
         out.set("initialVision",initial);if(second!=null)out.set("consistencyReview",second);
         out.put("observationCount",second==null?1:2);
+        out.put("responseProtocolVersion",RESPONSE_VERSION);out.set("invalidResponses",invalidResponses);
         var hashes=out.putObject("reviewImageHashes");images.forEach((k,v)->hashes.put(k,StyledSpriteCodec.sha(v)));
         out.put("referenceFrameSha256",StyledSpriteCodec.sha(seed));out.set("reviewedFrameHashes",json.valueToTree(frames.stream().map(StyledSpriteCodec::sha).toList()));
         return out;
@@ -94,6 +99,57 @@ final class StyledMotionReview {
         return report!=null && (report.path("motionDecision").asText().equals("UNCERTAIN")
             || report.path("rawEditReview").path("motionDecision").asText().equals("UNCERTAIN")
             || report.path("restoredReview").path("motionDecision").asText().equals("UNCERTAIN"));
+    }
+    /** A confirmed tail defect can be repaired even if one observer also labels those SAME
+     * frames as identity drift. Preserve UNCERTAIN for approval/learning; never infer missing anatomy.
+     */
+    static boolean confirmedTailRepair(JsonNode report) {
+        if(!unresolved(report))return false;
+        var reports=new ArrayList<JsonNode>();reports.add(report);
+        for(String key:List.of("rawEditReview","restoredReview"))if(report.has(key))reports.add(report.path(key));
+        for(var r:reports) {
+            if(!VERSION.equals(r.path("motionReviewVersion").asText()) || r.path("passed").asBoolean()
+                || r.path("observationCount").asInt()!=2 || !r.path("uncertainProperties").isArray()
+                || r.path("uncertainProperties").valueStream().anyMatch(n->!n.asText().equals("identity"))
+                || !r.path("confirmedProperties").valueStream().anyMatch(n->n.asText().equals("tail")))return false;
+            var a=r.path("initialVision");var b=r.path("consistencyReview");
+            try {
+                var ta=property(a,"tail");var tb=property(b,"tail");
+                if(!ta.path("state").asText().equals("FAIL") || !tb.path("state").asText().equals("FAIL"))return false;
+                var shared=new HashSet<Integer>();ta.path("frames").forEach(f->shared.add(f.asInt()));
+                var other=new HashSet<Integer>();tb.path("frames").forEach(f->other.add(f.asInt()));shared.retainAll(other);
+                if(shared.isEmpty())return false;
+                if(r.path("uncertainProperties").valueStream().anyMatch(n->n.asText().equals("identity"))) {
+                    var ia=property(a,"identity");var ib=property(b,"identity");
+                    if(!Set.of(ia.path("state").asText(),ib.path("state").asText()).equals(Set.of("PASS","FAIL")))return false;
+                    var failure=ia.path("state").asText().equals("FAIL")?ia:ib;
+                    if(failure.path("frames").isEmpty() || failure.path("frames").valueStream().anyMatch(f->!shared.contains(f.asInt())))return false;
+                }
+            } catch(AssetException|IllegalArgumentException missing){return false;}
+        }
+        return true;
+    }
+    /** Repair the independently confirmed color defect; disagreement over its identity label remains unlearned. */
+    static boolean confirmedPaletteRepair(JsonNode report) {
+        if(!unresolved(report))return false;
+        var reports=new ArrayList<JsonNode>();reports.add(report);
+        for(String key:List.of("rawEditReview","restoredReview"))if(report.has(key))reports.add(report.path(key));
+        for(var r:reports) {
+            if(!VERSION.equals(r.path("motionReviewVersion").asText()) || r.path("passed").asBoolean() || r.path("observationCount").asInt()!=2
+                || !r.path("uncertainProperties").toString().equals("[\"identity\"]")
+                || !r.path("confirmedProperties").toString().equals("[\"palette\"]"))return false;
+            try {
+                var a=r.path("initialVision");var b=r.path("consistencyReview");var paletteFrames=new HashSet<Integer>();var identityFrames=new HashSet<Integer>();
+                var identityStates=new HashSet<String>();
+                for(var o:List.of(a,b))for(String key:PROPERTIES.keySet()) {
+                    var p=property(o,key);String state=p.path("state").asText();
+                    if(key.equals("palette")) {if(!state.equals("FAIL") || p.path("frames").isEmpty())return false;p.path("frames").forEach(f->paletteFrames.add(f.asInt()));}
+                    else if(key.equals("identity")){identityStates.add(state);if(state.equals("FAIL"))p.path("frames").forEach(f->identityFrames.add(f.asInt()));}
+                    else if(!state.equals("PASS"))return false;
+                }
+                if(!identityStates.equals(Set.of("PASS","FAIL")) || identityFrames.isEmpty() || !paletteFrames.containsAll(identityFrames))return false;
+            }catch(AssetException invalid){return false;}
+        }return true;
     }
     static void bind(ObjectNode report,byte[] seed,List<byte[]> frames,JsonMapper json) {
         report.put("recoveryVersion",StyledRecovery.VERSION).put("motionSeedSha256",StyledSpriteCodec.sha(seed));
@@ -112,11 +168,43 @@ final class StyledMotionReview {
         try{return client.structuredImagesWithReasoning(rules.at("/recovery/motionObservation").asText(),task,images,schema,"medium");}
         catch(AiFailure e){throw new AssetException(502,"QUALITY_"+e.code());}
     }
-    static Map<String,Object> schema() {
-        var property=StyledQualityAgent.object(Map.of("property",Map.of("type","string","enum",new TreeSet<>(PROPERTIES.keySet())),
-            "state",Map.of("type","string","enum",new TreeSet<>(STATES)),"evidence",Map.of("type","string","minLength",1,"maxLength",300),
-            "frames",Map.of("type","array","maxItems",9,"items",Map.of("type","integer","minimum",0,"maximum",8))));
-        return StyledQualityAgent.object(Map.of("properties",Map.of("type","array","minItems",PROPERTIES.size(),"maxItems",PROPERTIES.size(),"items",property),
+    private static JsonNode observe(OpenAiResponsesClient client,JsonMapper json,JsonNode rules,String task,Map<String,byte[]> images,
+        Map<String,Object> schema,String action,int ordinal,tools.jackson.databind.node.ArrayNode failures,JsonNode validFirst) {
+        // A format retry is not a new quality vote. Keep valid observations, including FAIL/UNCERTAIN.
+        for(int attempt=0;attempt<2;attempt++) {
+            var raw=call(client,rules,task,images,schema);
+            try {var normalized=normalize(raw,json);validate(normalized,action);return normalized;}
+            catch(AssetException e) {
+                var failure=failures.addObject().put("observation",ordinal).put("attempt",attempt+1).put("code",e.code);
+                failure.set("response",raw);
+            }
+        }
+        var diagnostic=json.createObjectNode().put("status","RESPONSE_INVALID").put("responseProtocolVersion",RESPONSE_VERSION)
+            .put("rulesSha256",StyledSpriteCodec.qualityRulesSha()).put("action",action);
+        diagnostic.set("invalidResponses",failures.deepCopy());if(validFirst!=null)diagnostic.set("initialVision",validFirst);
+        var hashes=diagnostic.putObject("reviewImageHashes");images.forEach((k,v)->hashes.put(k,StyledSpriteCodec.sha(v)));
+        throw new AssetException(502,"QUALITY_MOTION_RESPONSE_INVALID",diagnostic);
+    }
+    static JsonNode normalize(JsonNode raw,JsonMapper json) {
+        // Canonical stored reports remain compatible with historical receipts and regression fixtures.
+        if(!raw.path("properties").isObject())return raw;
+        if(raw.path("properties").size()!=PROPERTIES.size())throw invalid();
+        var out=json.createObjectNode();out.set("observedMotion",raw.path("observedMotion"));var list=out.putArray("properties");
+        for(String key:new TreeSet<>(PROPERTIES.keySet())) {
+            var p=raw.path("properties").path(key);if(!p.isObject())throw invalid();
+            var copy=(ObjectNode)p.deepCopy();copy.put("property",key);list.add(copy);
+        }return out;
+    }
+    private static Map<String,Object> propertySchema(List<String> states,int minimumFrames) {
+        return StyledQualityAgent.object(Map.of("state",Map.of("type","string","enum",states),
+            "evidence",Map.of("type","string","minLength",1,"maxLength",300),
+            "frames",Map.of("type","array","minItems",minimumFrames,"maxItems",9,"items",Map.of("type","integer","minimum",0,"maximum",8))));
+    }
+    static Map<String,Object> schema(String action) {
+        var named=new TreeMap<String,Object>();
+        for(String key:PROPERTIES.keySet())named.put(key,!action.equals("IDLE") && key.equals("idleStillness")?
+            propertySchema(List.of("PASS"),0):Map.of("anyOf",List.of(propertySchema(List.of("PASS","UNCERTAIN"),0),propertySchema(List.of("FAIL"),1))));
+        return StyledQualityAgent.object(Map.of("properties",StyledQualityAgent.object(named),
             "observedMotion",Map.of("type","string","enum",new TreeSet<>(MOTIONS))));
     }
     static JsonNode property(JsonNode r,String key){return r.path("properties").valueStream().filter(p->p.path("property").asText().equals(key)).findFirst().orElseThrow(StyledMotionReview::invalid);}
@@ -139,6 +227,24 @@ final class StyledMotionReview {
             && second.path("properties").valueStream().allMatch(p->p.path("state").asText().equals("PASS"))
             && first.path("properties").valueStream().allMatch(p->p.path("state").asText().equals("PASS")
                 || (Set.of("action","idleStillness").contains(p.path("property").asText()) && p.path("state").asText().equals("FAIL")));
+    }
+    /** Resolve toward a defect only: two motion observations plus new central-head pixels.
+     * UNKNOWN photographic carriage cannot waive an invented moving head appendage.
+     * Any other uncertainty, rear/side view, ear-only growth or normal breathing remains held.
+     */
+    static boolean resolveFrontalAppendage(String action,String direction,JsonNode a,JsonNode b,JsonNode lower,Collection<Integer> growth) {
+        if(!action.equals("IDLE") || !direction.equals("south") || b==null || growth.isEmpty() || !stationaryLowerBody(lower))return false;
+        boolean failedTail=false;
+        for(var observation:List.of(a,b)) {
+            if(!observation.path("observedMotion").asText().equals("TAIL_MOVEMENT"))return false;
+            for(String key:PROPERTIES.keySet()) {
+                String state=property(observation,key).path("state").asText();
+                if(key.equals("tail")){if(!Set.of("FAIL","UNCERTAIN").contains(state))return false;failedTail|=state.equals("FAIL");}
+                else if(Set.of("action","idleStillness","loop").contains(key)){if(!state.equals("FAIL"))return false;}
+                else if(!state.equals("PASS"))return false;
+            }
+        }
+        return failedTail;
     }
     private static boolean stationaryLowerBody(JsonNode lower) {
         return lower.path("alphaChanged").size()==9 && lower.path("darkContourChanged").size()==9

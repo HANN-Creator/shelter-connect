@@ -63,7 +63,7 @@ public class StyledAssetManifest {
             var unit=switch(step.direction()) { case "south"->new int[]{0,1};case "north"->new int[]{0,-1};case "west"->new int[]{-1,0};default->new int[]{1,0}; };
             boolean moving=Set.of("WALK","RUN","BACK_OFF").contains(step.action());int sign=step.action().equals("BACK_OFF")?-1:1;
             clips.get(names.get(step.direction())).put(step.action(),Map.of("spritesheetUrl",url(urls,m.path("key").asText()),"frameCount",9,"frames",frames,
-                "loop",loop,"holdLastFrame",!loop,"returnToIdle",loop?"DIRECT":"REVERSE_FRAMES","sha256",m.path("sha256").asText(),
+                "motionKind",StyledIdleHold.derived(m)?"STATIC_IDLE":"ANIMATED","loop",loop,"holdLastFrame",!loop,"returnToIdle",loop?"DIRECT":"REVERSE_FRAMES","sha256",m.path("sha256").asText(),
                 "worldMotion",Map.of("unitVector",Map.of("x",moving?sign*unit[0]:0,"y",moving?sign*unit[1]:0),"speedControlledByFrontend",true)));
         }
         result.put("mapDirections",clips);result.put("animations",clips.get("RIGHT"));
