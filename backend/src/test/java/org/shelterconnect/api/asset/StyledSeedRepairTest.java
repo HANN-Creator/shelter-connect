@@ -55,6 +55,22 @@ class StyledSeedRepairTest {
         ((ObjectNode)r.path("propertyReview")).put("tailConsistent",false);
         assertThatThrownBy(()->StyledSeedRepair.targets(r)).hasMessage("SEED_REPAIR_SELECTION_INVALID");
     }
+    @Test void realThreeEditCanaryRetainsAllPassingHashesAndFinalNativeFrames()throws Exception{
+        var evidence=json.readTree(Files.readAllBytes(root.resolve("live-evidence.json")));
+        assertThat(evidence.path("newPixelLabCalls").asInt()).isEqualTo(3);
+        var source=seeds("original");var finalSeeds=seeds("selected");var previous=source.stream().map(StyledSpriteCodec::sha).toList();
+        for(var attempt:evidence.path("attempts")){
+            var p=attempt.path("preservation");var dirs=p.path("directions").valueStream().map(JsonNode::asText).toList();
+            assertThat(p.path("sourceHashes").valueStream().map(JsonNode::asText).toList()).isEqualTo(previous);
+            for(int i=0;i<4;i++)if(!dirs.contains(StyledSpriteCodec.DIRECTIONS.get(i)))assertThat(p.path("outputHashes").get(i)).isEqualTo(p.path("sourceHashes").get(i));
+            previous=p.path("outputHashes").valueStream().map(JsonNode::asText).toList();
+        }
+        assertThat(finalSeeds.stream().map(StyledSpriteCodec::sha).toList()).isEqualTo(previous);
+        assertThat(finalSeeds.getFirst()).isEqualTo(source.getFirst());
+        assertThat(evidence.path("finalReport").path("passed").asBoolean()).isTrue();
+        assertThat(evidence.path("finalReport").path("inputSha256").asText()).isEqualTo(StyledSeedQualityAgent.binding(finalSeeds));
+        for(byte[] frame:finalSeeds)assertThat(StyledQualityAgent.touchesEdge(StyledSpriteCodec.nativeFrame(frame))).isFalse();
+    }
     @Test void lowConfidenceDoesNotPurchaseAnArbitraryReplacement()throws Exception{
         var source=seeds("original");var report=report("original");var client=mock(OpenAiResponsesClient.class);
         ((ObjectNode)report.at("/propertyReview/views").get(1)).put("confidence",.6);
