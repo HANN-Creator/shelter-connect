@@ -1959,7 +1959,11 @@ class StyledAssetPostgresTest {
     }
 
     JsonNode candidateConflict()throws Exception {
-        return json.readTree(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/native-rgba-v29/sit-north-v30-review.json")));
+        var r=(tools.jackson.databind.node.ObjectNode)json.readTree(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/native-rgba-v29/sit-north-v30-review.json")));
+        // Synthetic current-policy observations for the mocked worker; the stored real receipt is unchanged.
+        r.put("rulesSha256",currentRules());
+        for(String key:List.of("rawEditReview","restoredReview"))if(r.has(key))((tools.jackson.databind.node.ObjectNode)r.path(key)).put("rulesSha256",currentRules());
+        return r;
     }
     UUID candidateHeldPack()throws Exception {
         UUID id=recoveryRequest(0,false);finish(id);
