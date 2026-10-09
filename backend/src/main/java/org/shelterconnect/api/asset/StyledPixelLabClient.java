@@ -24,13 +24,15 @@ public class StyledPixelLabClient implements StyledAssetProvider {
     }
     public UUID editAnimation(JsonNode payload) { return submitEndpoint("edit-animation-v2",payload); }
     public UUID editSeeds(JsonNode payload){return submitEndpoint("edit-images-v2",payload);}
-    public JsonNode pollSeeds(UUID id){
+    public JsonNode pollSeeds(UUID id){return pollSeeds(id,StyledSpriteCodec.DIRECTIONS);}
+    public JsonNode pollSeeds(UUID id,List<String> directions){
+        if(directions==null || directions.isEmpty() || !directions.equals(StyledSpriteCodec.DIRECTIONS.stream().filter(directions::contains).toList()))throw StyledSeedRepair.invalid();
         var response=json.readTree(send("background-jobs/"+id,null,4_000_000));String state=response.path("status").asText();
         if(Set.of("processing","queued","pending").contains(state))return json.valueToTree(Map.of("status","WAITING"));
         if(state.equals("failed"))return json.valueToTree(Map.of("status","FAILED"));
-        var images=response.at("/last_response/images");if(!state.equals("completed") || !images.isArray() || images.size()!=4)throw new AssetException(422,"STYLED_FRAME_COUNT_INVALID");
-        var rotations=new LinkedHashMap<String,String>();for(int i=0;i<4;i++){byte[] image=decode(images.get(i).path("base64").asText());StyledSpriteCodec.nativeFrame(image);
-            rotations.put(StyledSpriteCodec.DIRECTIONS.get(i),Base64.getEncoder().encodeToString(image));}
+        var images=response.at("/last_response/images");if(!state.equals("completed") || !images.isArray() || images.size()!=directions.size())throw new AssetException(422,"STYLED_FRAME_COUNT_INVALID");
+        var rotations=new LinkedHashMap<String,String>();for(int i=0;i<directions.size();i++){byte[] image=decode(images.get(i).path("base64").asText());StyledSpriteCodec.nativeFrame(image);
+            rotations.put(directions.get(i),Base64.getEncoder().encodeToString(image));}
         var out=json.createObjectNode().put("status","COMPLETED");out.set("directions",json.valueToTree(rotations));
         var usage=response.path("usage");if(usage.isMissingNode() || usage.isNull())usage=response.at("/last_response/billing_usage");
         if(!usage.isMissingNode() && !usage.isNull())out.set("usage",usage);return out;

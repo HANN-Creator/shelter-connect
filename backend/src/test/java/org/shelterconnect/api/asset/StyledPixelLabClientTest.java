@@ -54,6 +54,12 @@ class StyledPixelLabClientTest {
         assertThat(client.poll(UUID.randomUUID(),false).path("frames").size()).isEqualTo(9);
         assertThatThrownBy(()->client.pollSeeds(UUID.randomUUID())).isInstanceOf(AssetException.class);
     }
+    @Test void selectedViewsUseExactRequestedOrderAndRejectExtraMissingOrAmbiguousFrames(){
+        String b=Base64.getEncoder().encodeToString(png);body=json.writeValueAsString(Map.of("status","completed","last_response",Map.of("images",List.of(Map.of("base64",b)))));
+        assertThat(client.pollSeeds(UUID.randomUUID(),List.of("north")).path("directions").propertyNames()).containsExactly("north");
+        assertThatThrownBy(()->client.pollSeeds(UUID.randomUUID(),List.of("north","east"))).hasMessage("STYLED_FRAME_COUNT_INVALID");
+        for(var dirs:List.of(List.<String>of(),List.of("north","north"),List.of("east","south"),List.of("unknown")))assertThatThrownBy(()->client.pollSeeds(UUID.randomUUID(),dirs)).hasMessage("SEED_REPAIR_SELECTION_INVALID");
+    }
     @Test void eyeEditRequiresAnExactNativeFourViewStripAndNeverFollowsUrls() {
         byte[] raw=StyledSeedEyeRepair.png(StyledSeedEyeRepair.strip(Collections.nCopies(4,png)));
         body=json.writeValueAsString(Map.of("status","completed","last_response",Map.of("image",StyledSeedEyeRepair.encoded(raw))));

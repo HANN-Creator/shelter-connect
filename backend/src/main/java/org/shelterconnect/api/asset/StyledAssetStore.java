@@ -276,7 +276,7 @@ public class StyledAssetStore {
         p.put("lessonRevision",StyledLessonStore.REVISION_VERSION);p.put("seedMotionMargin",2);p.put("seedEyeRepair",StyledSeedEyeRepair.VERSION);
         p.put("automaticApproval",StyledAutoApproval.VERSION);
         var recovery=StyledSpriteCodec.qualityRules(json).path("recovery");
-        p.put("recoveryVersion",StyledRecovery.VERSION);p.put("motionFrameSize",40);p.put("seedMotionMargin",1);
+        p.put("recoveryVersion",StyledRecovery.VERSION);p.put("seedRepairVersion",StyledSeedRepair.VERSION);p.put("motionFrameSize",40);p.put("seedMotionMargin",1);
         p.put("maxSeedRepairs",recovery.path("maxSeedRepairs").asInt());p.put("maxRepairsPerClip",recovery.path("maxMotionRepairs").asInt());
         p.remove("seedEyeRepair");p.remove("learningRecovery");return p;}
     private boolean seedQualityPassed(Job j) {
@@ -506,6 +506,7 @@ public class StyledAssetStore {
         if(w.status().equals("CHECKING"))return false;
         if(w.qualityPolicy()!=null && w.qualityPolicy().path("referenceOnly").asBoolean())return false;
         if(report.path("passed").asBoolean() || w.repairCount()>=StyledRecovery.limit(w.qualityPolicy(),w.character()))return false;
+        if(w.character() && StyledSeedRepair.enabled(w.qualityPolicy()) && !"READY".equals(report.at("/seedRepairPlan/status").asText()))return false;
         // The provider finished definitively. Archive the receipt and image before buying a corrective attempt.
         jdbc.sql("""
             UPDATE shelter.styled_asset_steps SET attempt_history=attempt_history || jsonb_build_array(jsonb_build_object(

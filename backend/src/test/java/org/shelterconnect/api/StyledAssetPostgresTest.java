@@ -1639,11 +1639,19 @@ class StyledAssetPostgresTest {
         var motionCalls=new java.util.concurrent.atomic.AtomicInteger();var requests=new HashMap<UUID,JsonNode>();
         when(seedQuality.reviewRecovery(any(),anyList(),any(),any())).thenAnswer(c->{outsideTransaction();
             boolean passed=seedCalls.getAndIncrement()>=failedBaseReviews;var report=(tools.jackson.databind.node.ObjectNode)automaticSeedReport(c.getArgument(1),passed);
-            report.put("recoveryVersion","photo-grounded-recovery-v1");report.put("appearance",passed?"PASS":"FAIL");report.put("repairDescription","Restore the photo white blaze while keeping the current shaded puppy style.");return report;});
+            report.put("recoveryVersion","photo-grounded-recovery-v1");report.put("appearance",passed?"PASS":"FAIL");report.put("repairDescription","Restore the photo white blaze while keeping the current shaded puppy style.");
+            var views=json.createArrayNode();for(String d:List.of("south","north","west","east"))views.add(json.valueToTree(Map.of("direction",d,"confidence",.9,
+                "identityMatches",passed || !d.equals("south"),"eyesReadable",true,"styleMatches",true,"directionCorrect",true,"tailPlausible",true,
+                "issues",!passed && d.equals("south")?List.of("COAT_MISMATCH"):List.of())));
+            report.set("propertyReview",json.valueToTree(Map.of("views",views,"tailConsistent",true)));return report;});
         when(provider.editSeeds(any())).thenAnswer(c->{outsideTransaction();return UUID.randomUUID();});
         when(provider.pollSeeds(any())).thenAnswer(c->{outsideTransaction();var im=ImageIO.read(new ByteArrayInputStream(png));im.setRGB(12,9,0xffaab000+edits.incrementAndGet());
             var out=new ByteArrayOutputStream();ImageIO.write(im,"png",out);String b=Base64.getEncoder().encodeToString(out.toByteArray());
             return json.valueToTree(Map.of("status","COMPLETED","directions",Map.of("south",b,"north",b,"west",b,"east",b)));});
+        when(provider.pollSeeds(any(),anyList())).thenAnswer(c->{outsideTransaction();var im=ImageIO.read(new ByteArrayInputStream(png));im.setRGB(12,9,0xffaab000+edits.incrementAndGet());
+            var out=new ByteArrayOutputStream();ImageIO.write(im,"png",out);String b=Base64.getEncoder().encodeToString(out.toByteArray());
+            var dirs=new LinkedHashMap<String,String>();for(String d:c.<List<String>>getArgument(1))dirs.put(d,b);
+            return json.valueToTree(Map.of("status","COMPLETED","directions",dirs));});
         doAnswer(c->{outsideTransaction();return json.valueToTree(Map.of("first",Base64.getEncoder().encodeToString(c.getArgument(3)),"action",c.getArgument(1),"direction",c.getArgument(2)));}).when(codec).motion(any(),anyString(),anyString(),any(),any());
         when(provider.submit(eq(false),any())).thenAnswer(c->{outsideTransaction();UUID id=UUID.randomUUID();requests.put(id,c.getArgument(1));return id;});
         when(provider.editAnimation(any())).thenAnswer(c->{outsideTransaction();UUID id=UUID.randomUUID();requests.put(id,c.getArgument(0));return id;});
@@ -1684,6 +1692,56 @@ class StyledAssetPostgresTest {
         verify(provider,times(3)).editSeeds(any());verify(provider,never()).submit(eq(false),any());publicStatus(404);
         review(id,true,"APPROVE",409);clearInvocations(provider);for(int i=0;i<3;i++)tick();verifyNoInteractions(provider);
         assertThat(jdbc.queryForObject("SELECT jsonb_array_length(attempt_history) FROM shelter.styled_asset_steps WHERE job_id=? AND label='character'",Integer.class,id)).isEqualTo(3);
+    }
+    @Test void selectedRepairArchivesOnlyFailedDirectionAndPreservesPassingStorageHashes()throws Exception {
+        UUID id=recoveryRequest(1,false);finish(id);assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
+        assertThat(read(id).at("/qualityPolicy/seedRepairVersion").asText()).isEqualTo("selected-seed-repair-v1");
+        var previous=json.readTree(jdbc.queryForObject("SELECT attempt_history->0 FROM shelter.styled_asset_steps WHERE job_id=? AND label='character'",String.class,id));
+        var current=step(id,"character").path("result");
+        for(String d:List.of("north","west","east")) {
+            assertThat(current.at("/hashes/"+d)).isEqualTo(previous.at("/result/hashes/"+d));
+            assertThat(objects.get(current.at("/keys/"+d).asText())).isEqualTo(objects.get(previous.at("/result/keys/"+d).asText()));
+        }
+        assertThat(current.at("/selectedRepair/plan/directions")).isEqualTo(json.valueToTree(List.of("south")));
+        var captured=org.mockito.ArgumentCaptor.forClass(JsonNode.class);verify(provider).editSeeds(captured.capture());
+        assertThat(captured.getValue().path("edit_images").size()).isEqualTo(1);
+        verify(provider).pollSeeds(any(),eq(List.of("south")));
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans={true,false})
+    void boundedFaceRepairIsArchivedAndUncertainLocalizationHoldsWithoutPurchase(boolean confident)throws Exception {
+        UUID id=recoveryRequest(0,false);var reviews=new java.util.concurrent.atomic.AtomicInteger();
+        when(seedQuality.reviewRecovery(any(),anyList(),any(),any())).thenAnswer(c->{outsideTransaction();boolean passed=reviews.getAndIncrement()>0;
+            var r=(tools.jackson.databind.node.ObjectNode)automaticSeedReport(c.getArgument(1),passed);r.put("recoveryVersion","photo-grounded-recovery-v1");
+            r.put("appearance",passed?"PASS":"FAIL");r.put("repairDescription","Use a short neutral mouth line, retaining the white fur.");
+            var views=json.createArrayNode();for(String d:List.of("south","north","west","east"))views.add(json.valueToTree(Map.of("direction",d,"confidence",.95,
+                "identityMatches",true,"eyesReadable",true,"styleMatches",true,"directionCorrect",true,"tailPlausible",true,
+                "issues",!passed && d.equals("south")?List.of("MOUTH_EXPRESSION"):List.of())));
+            r.set("propertyReview",json.valueToTree(Map.of("views",views,"tailConsistent",true)));return r;});
+        when(eyeAi.structuredImage(anyString(),anyString(),any(),anyMap())).thenAnswer(c->{outsideTransaction();return json.valueToTree(Map.of("confident",confident,"regions",List.of(Map.of("direction","south","x",14,"y",14,"width",3,"height",2)),"note","fixture"));});
+        when(provider.editSeedEyes(any())).thenAnswer(c->{outsideTransaction();return UUID.randomUUID();});
+        when(provider.pollSeedEyes(any())).thenAnswer(c->{outsideTransaction();var raw=new BufferedImage(128,32,BufferedImage.TYPE_INT_ARGB);var g=raw.createGraphics();for(int i=0;i<4;i++)g.drawImage(ImageIO.read(new ByteArrayInputStream(png)),i*32,0,null);g.dispose();raw.setRGB(15,14,0xff332211);raw.setRGB(80,25,0xff221133);
+            var bytes=new ByteArrayOutputStream();ImageIO.write(raw,"png",bytes);return json.valueToTree(Map.of("status","COMPLETED","eyeSheet",Base64.getEncoder().encodeToString(bytes.toByteArray())));});
+        finish(id);var j=read(id);verify(provider,never()).editSeeds(any());
+        if(confident){assertThat(j.path("status").asText()).isEqualTo("APPROVED");verify(provider).editSeedEyes(any());
+            var metadata=step(id,"character").path("result");assertThat(metadata.at("/selectedRepair/rawOutsideMaskDifferences").asInt()).isEqualTo(1);
+            String key=metadata.at("/selectedRepair/rawKeys/strip").asText();assertThat(objects).containsKey(key);
+            assertThat(metadata.at("/selectedRepair/rawHashes/strip").asText()).hasSize(64);
+            assertThat(step(id,"character").path("repairCount").asInt()).isEqualTo(1);
+        }else{assertThat(j.path("status").asText()).isEqualTo("SEED_REVIEW");verify(provider,never()).editSeedEyes(any());verify(provider,never()).submit(eq(false),any());
+            assertThat(step(id,"character").at("/qualityReport/seedRepairPlan/status").asText()).isEqualTo("UNCERTAIN");}
+    }
+    @Test void oldRecoveryJobsKeepTheOriginalFourViewProtocol()throws Exception {
+        UUID id=recoveryRequest(1,false);jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=quality_policy-'seedRepairVersion' WHERE id=?",id);
+        finish(id);assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
+        verify(provider).pollSeeds(any());verify(provider,never()).pollSeeds(any(),anyList());
+    }
+    @Test void unresolvedSeedSelectionHoldsWithoutSpendingOrResettingHistory()throws Exception {
+        UUID id=recoveryRequest(99,false);
+        when(seedQuality.reviewRecovery(any(),anyList(),any(),any())).thenAnswer(c->{var r=(tools.jackson.databind.node.ObjectNode)automaticSeedReport(c.getArgument(1),false);r.put("recoveryVersion","photo-grounded-recovery-v1");return r;});
+        finish(id);assertThat(read(id).path("status").asText()).isEqualTo("SEED_REVIEW");
+        assertThat(step(id,"character").at("/qualityReport/seedRepairPlan/status").asText()).isEqualTo("UNRESOLVED_SELECTION");
+        assertThat(step(id,"character").path("repairCount").asInt()).isZero();verify(provider,never()).editSeeds(any());verify(provider,never()).submit(eq(false),any());
     }
     @Test void uncertainPaidBaseEditIsHeldWithoutDuplicateSubmission()throws Exception {
         UUID id=recoveryRequest(1,false);when(provider.editSeeds(any())).thenThrow(new AssetProvider.Failure("PIXELLAB_CONNECTION",true));
