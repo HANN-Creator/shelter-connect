@@ -31,6 +31,20 @@ def decode_recorded_alpha(rows):
 
 
 class QualityRegressionTest(unittest.TestCase):
+    def test_deployed_tail_coordinate_failure_is_preserved_without_snapping(self):
+        root=Path(__file__).parent/'fixtures/tail-coordinate-focus-v20'
+        evidence=read(root/'evidence.json')
+        for file,sha in evidence['sha256'].items():self.assertEqual(digest(root/file),sha)
+        self.assertFalse(evidence['published']);self.assertFalse(evidence['imageBytesChangedForLocalization'])
+        review=read(root/'deployed-review.json')
+        self.assertFalse(review['passed']);self.assertTrue(review['generalPropertyReview']['tailConsistent'])
+        self.assertEqual(review['tailEvidence']['uncertainDirections'],['east'])
+        im=Image.open(root/'east.png').convert('RGBA')
+        v=next(v for v in review['tailEvidence']['observation']['views'] if v['direction']=='east')
+        invalid=[(p['x'],p['y']) for p in v['tailPixelPath'] if not im.getpixel((p['x'],p['y']))[3]]
+        self.assertEqual(invalid,[(2,11),(2,10),(2,9)])
+        self.assertTrue(any(c.get('fixture')=='tail-coordinate-focus-v20/evidence.json' for c in load_quality()['regressions']))
+
     def test_deployed_repaired_seed_recheck_keeps_exact_original_evidence(self):
         root=Path(__file__).parent/'fixtures/repaired-seed-recheck-v19'
         evidence=read(root/'evidence.json')

@@ -16,17 +16,20 @@ final class StyledSeedTailEvidence {
     static final Set<String> SPRITE=Set.of("COMPLETE_CONNECTED","SHORT_STUB","NOT_DISCERNIBLE","DETACHED_OR_CROPPED","UNCERTAIN");
     private StyledSeedTailEvidence(){}
     static Map<String,Object> schema(){
+        var fields=new LinkedHashMap<String,Object>();
+        fields.put("photoEvidence",Map.of("type","string","minLength",1,"maxLength",350));
+        fields.put("photoTail",Map.of("type","string","enum",PHOTO));fields.put("photoConfidence",StyledRecoveryReview.confidence());
+        fields.put("views",Map.of("type","array","minItems",2,"maxItems",2,"items",viewSchema(SIDES)));
+        return StyledQualityAgent.object(fields);
+    }
+    static Map<String,Object> viewSchema(List<String> directions){
         var view=new LinkedHashMap<String,Object>();
-        view.put("direction",Map.of("type","string","enum",SIDES));
+        view.put("direction",Map.of("type","string","enum",directions));
         view.put("visibleEvidence",Map.of("type","string","minLength",1,"maxLength",350));
         view.put("tailPixelPath",Map.of("type","array","maxItems",32,"items",StyledQualityAgent.object(Map.of(
             "x",Map.of("type","integer","minimum",0,"maximum",31),"y",Map.of("type","integer","minimum",0,"maximum",31)))));
         view.put("tail",Map.of("type","string","enum",SPRITE));view.put("confidence",StyledRecoveryReview.confidence());
-        var fields=new LinkedHashMap<String,Object>();
-        fields.put("photoEvidence",Map.of("type","string","minLength",1,"maxLength",350));
-        fields.put("photoTail",Map.of("type","string","enum",PHOTO));fields.put("photoConfidence",StyledRecoveryReview.confidence());
-        fields.put("views",Map.of("type","array","minItems",2,"maxItems",2,"items",StyledQualityAgent.object(view)));
-        return StyledQualityAgent.object(fields);
+        return StyledQualityAgent.object(view);
     }
     static JsonNode review(OpenAiResponsesClient client,AiProperties ai,JsonMapper json,byte[] photo,List<byte[]> seeds){
         var rules=StyledSpriteCodec.qualityRules(json).path("recovery");
@@ -38,17 +41,23 @@ final class StyledSeedTailEvidence {
         }catch(AiFailure e){throw new AssetException(502,"QUALITY_"+e.code());}
         var out=grounded(json,raw,seeds);
         var history=json.createArrayNode().add(out.deepCopy());
-        if(!out.path("uncertainDirections").isEmpty()){
-            // One bounded re-observation of the SAME bytes. Never buy an image redraw just to fix invented coordinates.
+        var refinements=json.createArrayNode();
+        // Snapshot the initial targets: at most one call per uncertain side, never a retry loop or redraw.
+        var targets=out.path("uncertainDirections").valueStream().map(JsonNode::asText).toList();
+        for(String direction:targets){
+            var focus=StyledTailCoordinateFocus.prepare(json,photo,seeds,direction,out);
+            var attempt=focus.metadata().deepCopy();refinements.add(attempt);
             try{
                 raw=client.structuredImages(rules.path("tailObservation").asText()+"\n"+rules.path("tailRefinement").asText(),
-                    "Re-observe these unchanged images. Previous observation/audit (fallible data): "+json.writeValueAsString(out)
-                    +". Exact native alpha geometry, # opaque / . transparent, rows y=0..31 and columns x=0..31: "
-                    +json.writeValueAsString(geometry(json,seeds,true)),images,schema());
-                out=grounded(json,raw,seeds);history.add(out.deepCopy());
-            }catch(AiFailure e){out.put("refinementFailureCode","QUALITY_"+e.code());}
-            catch(AssetException e){out.put("refinementFailureCode",e.code);out.set("invalidRefinementObservation",raw);}
+                    focus.task(),focus.images(),viewSchema(List.of(direction)));
+                attempt.set("response",raw);
+                out=grounded(json,StyledTailCoordinateFocus.replace(json,out.path("observation"),direction,raw),seeds);
+                history.add(out.deepCopy());
+            }catch(AiFailure e){attempt.put("failureCode","QUALITY_"+e.code());}
+            catch(AssetException e){attempt.put("failureCode",e.code);}
         }
+        for(var attempt:refinements)if(attempt.has("failureCode"))out.set("refinementFailureCode",attempt.path("failureCode"));
+        out.set("refinements",refinements);
         out.set("observationHistory",history);
         out.put("version",VERSION).put("model",ai.model()).put("reviewedAt",Instant.now().toString())
             .put("photoSha256",StyledSpriteCodec.sha(photo)).put("inputSha256",StyledSeedQualityAgent.binding(seeds))
