@@ -1724,6 +1724,35 @@ class StyledAssetPostgresTest {
         assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=?",Integer.class,id)).isZero();
         assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_lessons WHERE source_job_id=?",Integer.class,id)).isZero();
     }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"PRESERVED","UNCERTAIN"})
+    void deployedCoatWarningReplaysThroughProductionReviewerAndAutomaticApproval(String identity)throws Exception {
+        UUID id=recoveryRequest(0,false);
+        var seeds=org.shelterconnect.api.asset.CoatIdentityReplay.seeds();
+        var observation=org.shelterconnect.api.asset.CoatIdentityReplay.syntheticObservation(json,identity);
+        doAnswer(c->{outsideTransaction();var dirs=new LinkedHashMap<String,String>();
+            for(int i=0;i<4;i++)dirs.put(List.of("south","north","west","east").get(i),Base64.getEncoder().encodeToString(seeds.get(i)));
+            return json.valueToTree(Map.of("status","COMPLETED","directions",dirs));}).when(provider).poll(any(),eq(true));
+        doAnswer(c->{outsideTransaction();return org.shelterconnect.api.asset.CoatIdentityReplay.review(json,c.getArgument(0),c.getArgument(1),c.getArgument(3),observation);
+        }).when(seedQuality).reviewRecovery(any(),anyList(),any(),any());
+        finish(id);var job=read(id);var base=step(id,"character");
+        assertThat(base.at("/qualityReport/qualityWarnings/0/code").asText()).isEqualTo("COAT_APPEARANCE_UNCERTAIN");
+        assertThat(base.at("/qualityReport/coatEvidence/originalPropertyReview/views/0/identityMatches").asBoolean()).isFalse();
+        assertThat(base.path("repairCount").asInt()).isZero();
+        if(identity.equals("PRESERVED")) {
+            assertThat(job.path("status").asText()).as("failure %s",job.path("failureCode")).isEqualTo("APPROVED");
+            assertThat(job.at("/qualityApproval/actor").asText()).isEqualTo("SYSTEM");
+            assertThat(job.at("/seedReview/actor").asText()).isEqualTo("SYSTEM");publicStatus(200);
+            assertThat(job.path("steps").size()).isEqualTo(13);
+        } else {
+            assertThat(job.path("status").asText()).isEqualTo("SEED_REVIEW");
+            assertThat(job.path("qualityApproval").isNull()).isTrue();publicStatus(404);
+            verify(provider,never()).submit(eq(false),any());
+        }
+        verify(provider,never()).editSeeds(any());verify(provider,never()).editSeedEyes(any());verify(provider,never()).editAnimation(any());
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=? AND label='character'",Integer.class,id)).isZero();
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_lessons WHERE source_job_id=? AND source_label='character'",Integer.class,id)).isZero();
+    }
     @Test void recoveryEditsBaseThenOnlyFailedMotionAndPublishesBoundFortyPixelBundle()throws Exception {
         UUID id=recoveryRequest(3,true);finish(id);var j=read(id);
         assertThat(j.path("status").asText()).as("failure %s",j.path("failureCode")).isEqualTo("APPROVED");

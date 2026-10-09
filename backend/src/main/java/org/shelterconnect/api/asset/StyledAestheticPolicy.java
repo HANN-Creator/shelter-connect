@@ -22,8 +22,8 @@ final class StyledAestheticPolicy {
             if(!v.path("issues").isArray())throw StyledRecoveryReview.invalid();
             for(var code:v.path("issues"))if(!code.isString() || !StyledRecoveryReview.BASE_CODES.contains(code.asText()))throw StyledRecoveryReview.invalid();
             var codes=new TreeSet<String>();v.path("issues").forEach(n->codes.add(n.asText()));
-            if(!v.path("styleMatches").asBoolean() || codes.remove("STYLE_DRIFT")) {
-                codes.remove("STYLE_DRIFT");v.put("styleMatches",true);
+            if(!v.path("styleMatches").asBoolean() || codes.contains("STYLE_DRIFT") || codes.contains("EYE_STYLE")) {
+                codes.remove("STYLE_DRIFT");codes.remove("EYE_STYLE");v.put("styleMatches",true);
                 warning(json,warnings,v.path("direction").asText(),"STYLE_VARIATION",v.path("note").asText());
             }
             if(v.path("coatObservationUncertain").asBoolean())
@@ -49,7 +49,9 @@ final class StyledAestheticPolicy {
             StyledRecoveryReview.BASE.forEach((field,code)->{if(!v.path(field).asBoolean())codes.add(code);});
             for(String field:List.of("edgeDirections","marginDirections"))if(report.path(field).valueStream().anyMatch(d->d.asText().equals(v.path("direction").asText())))codes.add("CANVAS_CLIPPING");
             String detail=codes.contains("COAT_MISMATCH")?" Missing "+v.path("coatRepairScope").asText()+" fur patch. Photo pattern: "+v.at("/coatObservation/photoPattern").asText():
-                codes.contains("SEED_IDENTITY")?" Photo features: "+v.path("observedPhotoMarkings").asText():"";
+                !v.path("identityMatches").asBoolean() && v.at("/identityObservation/decision").asText().equals("MISMATCH")
+                    ?" Non-coat identity evidence: "+v.at("/identityObservation/evidence").asText():
+                codes.contains("SEED_IDENTITY")?" Observed defect: "+v.path("note").asText():"";
             String findings=v.path("direction").asText()+": "+String.join(",",codes)+".";
             // Keep every typed defect; budget only the descriptive quotation, whose full source stays in history.
             int remaining=Math.max(0,850/Math.max(1,directions.size())-findings.length());
