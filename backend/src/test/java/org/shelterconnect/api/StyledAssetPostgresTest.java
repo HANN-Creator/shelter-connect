@@ -2201,10 +2201,17 @@ class StyledAssetPostgresTest {
             "expectedSeedHashes",read(id).at("/steps/0/result/hashes"),"expectedSheetSha256",step(id,"idle-south").at("/result/sha256").asText(),
             "expectedRulesSha256",currentRules(),"label","idle-south"));
     }
-    @Test void responseResumePreservesEveryOtherReportBudgetAndStoredImage()throws Exception {
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"lower","upper","legacy-upper"})
+    void responseResumePreservesEveryOtherReportBudgetAndStoredImage(String spelling)throws Exception {
         UUID id=b75HeldPack();var body=responseResumeFixture(id);var before=read(id);var saved=new HashMap<>(objects);
+        if(!spelling.equals("lower"))body.put("requestId",body.get("requestId").toString().toUpperCase(Locale.ROOT));
         when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("south"))).thenAnswer(c->b75MotionReport(c.getArgument(1),c.getArgument(2),"south",true,"PASS"));
-        clearInvocations(provider,quality);post(subject,path(id)+"/quality-response-resume",body,200);post(subject,path(id)+"/quality-response-resume",body,200);finish(id);
+        clearInvocations(provider,quality);post(subject,path(id)+"/quality-response-resume",body,200);
+        if(spelling.equals("legacy-upper"))jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=jsonb_set(quality_policy,'{qualityResponseResumes,0,request,requestId}',to_jsonb(CAST(? AS text))) WHERE id=?",body.get("requestId"),id);
+        post(subject,path(id)+"/quality-response-resume",body,200);
+        body.put("requestId",body.get("requestId").toString().toLowerCase(Locale.ROOT));
+        post(subject,path(id)+"/quality-response-resume",body,200);finish(id);
         assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
         for(var s:before.path("steps")) {
             var after=step(id,s.path("label").asText());assertThat(after.path("repairCount")).isEqualTo(s.path("repairCount"));assertThat(after.path("result")).isEqualTo(s.path("result"));

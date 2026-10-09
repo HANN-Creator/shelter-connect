@@ -313,8 +313,10 @@ public class StyledAssetStore {
         lock(id);var j=job(id);if(!j.dogId().equals(dog))throw missing();legacy.valid(id,true);var policy=j.qualityPolicy();
         if(policy==null)throw new AssetException(409,"QUALITY_RESPONSE_RESUME_NOT_ALLOWED");
         var grants=json.createArrayNode();if(policy.path("qualityResponseResumes").isArray())grants.addAll((tools.jackson.databind.node.ArrayNode)policy.path("qualityResponseResumes"));
-        for(var grant:grants)if(grant.path("request").path("requestId").asText().equals(requestId.toString())) {
-            if(grant.path("request").equals(body))return j;throw new AssetException(409,"QUALITY_RESPONSE_RESUME_ALREADY_REQUESTED");
+        var canonical=(tools.jackson.databind.node.ObjectNode)body.deepCopy();canonical.put("requestId",requestId.toString());
+        for(var grant:grants)if(grant.path("request").path("requestId").asText().equalsIgnoreCase(requestId.toString())) {
+            var recorded=(tools.jackson.databind.node.ObjectNode)grant.path("request").deepCopy();recorded.put("requestId",requestId.toString());
+            if(recorded.equals(canonical))return j;throw new AssetException(409,"QUALITY_RESPONSE_RESUME_ALREADY_REQUESTED");
         }
         if(grants.valueStream().anyMatch(g->g.path("request").path("label").asText().equals(label)
             && g.path("responseProtocolVersion").asText().equals(StyledMotionReview.RESPONSE_VERSION)))
@@ -330,7 +332,7 @@ public class StyledAssetStore {
         if(step.result()==null || !sheet.equals(step.result().path("sha256").asText()) || step.qualityReport()==null
             || !Set.of("STARTED","RESPONSE_INVALID").contains(step.qualityReport().path("status").asText()))throw new AssetException(409,"QUALITY_RECHECK_STALE");
         var grant=grants.addObject().put("requestedBy",actor.userId().toString()).put("requestedAt",Instant.now().toString())
-            .put("responseProtocolVersion",StyledMotionReview.RESPONSE_VERSION).put("startingRepairCount",step.repairCount());grant.set("request",body);
+            .put("responseProtocolVersion",StyledMotionReview.RESPONSE_VERSION).put("startingRepairCount",step.repairCount());grant.set("request",canonical);
         jdbc.sql("""
             UPDATE shelter.styled_asset_steps SET attempt_history=attempt_history || jsonb_build_array(jsonb_build_object(
               'qualityResponseResume',true,'result',result,'quality',quality_report,'repairCount',repair_count)),quality_report=NULL,status='CHECKING'
