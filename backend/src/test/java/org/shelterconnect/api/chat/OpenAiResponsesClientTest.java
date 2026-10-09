@@ -118,6 +118,14 @@ class OpenAiResponsesClientTest {
         assertThatThrownBy(()->client.structuredImages("a","b",Map.of("invalid",new byte[0]),Map.of())).hasMessage("AI_INVALID_IMAGE");
         assertThat(calls.get()).isEqualTo(1);
     }
+    @Test void carefulAnatomyReviewUsesBoundedReasoningAndNoProviderStorage() {
+        serve(200,response("completed","{\"ok\":true}"),0);
+        assertThat(client.structuredImagesWithReasoning("Review anatomy","Observe",Map.of("Whole sprite",new byte[]{1}),Map.of("type","object"),"medium").path("ok").asBoolean()).isTrue();
+        var payload=json.readTree(request.get());assertThat(payload.at("/reasoning/effort").asText()).isEqualTo("medium");
+        assertThat(payload.path("store").asBoolean()).isFalse();assertThat(payload.path("max_output_tokens").asInt()).isEqualTo(4000);
+        assertThatThrownBy(()->client.structuredImagesWithReasoning("a","b",Map.of("x",new byte[]{1}),Map.of(),"unbounded")).hasMessage("AI_INVALID_REASONING");
+        assertThat(calls.get()).isEqualTo(1);
+    }
 	@Test void imageAnalysisSendsTheActualPhotoToLunaAsAnImageWithStrictOutputAndNoStorage() {
 		serve(200,response("completed","{\"headVisible\":true}"),0);
 		byte[] photo=new byte[]{1,2,3,4};

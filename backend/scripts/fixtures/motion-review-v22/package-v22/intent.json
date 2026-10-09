@@ -1,0 +1,9 @@
+{
+  "jarSha256": "c90770e463b2b97cc6c166956f86bf76e84233e81f8ea872ae62356dbefb4266",
+  "rulesSha256": "bec868726df7bda43eb1d92840773ffae90995725ae7a97aa8d0a5b0e5a8103a",
+  "cases": [
+    "idle-west expects bound PASS despite RGB difference",
+    "idle-north expects blocked actual internal tail motion"
+  ],
+  "scope": "Exact packaged production classes and actual Luna; no PixelLab generation, HTTP/DB approval or publication in this check."
+}

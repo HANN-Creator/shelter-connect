@@ -18,8 +18,7 @@ final class StyledAutoApproval {
         if(!enabled(job.qualityPolicy()) || job.steps().isEmpty()
             || !StyledSpriteCodec.qualityRulesSha().equals(job.qualityPolicy().path("rulesSha256").asText()))return false;
         var step=job.steps().getFirst();var report=step.qualityReport();
-        if(job.qualityPolicy().has("seedTailEvidenceVersion") && (!StyledSeedTailEvidence.VERSION.equals(job.qualityPolicy().path("seedTailEvidenceVersion").asText())
-            || report==null || !StyledSeedTailEvidence.boundPass(report)))return false;
+        // Versioned tail bindings are checked centrally by StyledSeedQualityAgent.passed below.
         if(!step.label().equals("character") || !step.action().equals("BASE") || !step.status().equals("SUCCEEDED")
             || step.result()==null || !hashes(step.result().path("hashes"))
             || !StyledSeedQualityAgent.passed(report,step.result().path("hashes"),job.qualityPolicy())
@@ -52,7 +51,7 @@ final class StyledAutoApproval {
             for(String field:List.of("edgeFrames","silhouetteFrames","detachedFrames","idleMotionFrames"))
                 if(!r.path(field).isArray() || !r.path(field).isEmpty())return false;
             if(StyledRecovery.enabled(job.qualityPolicy()) && (!StyledRecovery.VERSION.equals(r.path("recoveryVersion").asText())
-                || !r.path("firstFrameUnchanged").asBoolean() || result.path("frameSize").asInt()!=40
+                || !StyledMotionReview.boundPass(r) || result.path("frameSize").asInt()!=40
                 || !sha(result.path("motionSeedSha256")) || !result.path("motionSeedSha256").equals(r.path("motionSeedSha256"))
                 || !result.path("frameHashes").isArray() || result.path("frameHashes").size()!=9
                 || !result.path("frameHashes").equals(r.path("frameHashes"))))return false;

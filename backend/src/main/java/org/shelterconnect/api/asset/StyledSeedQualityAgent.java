@@ -131,8 +131,13 @@ public class StyledSeedQualityAgent {
     }
     static boolean passed(JsonNode report,JsonNode hashes,JsonNode policy) {
         if(policy==null || !policy.has("seedQualityVersion"))return true; // Previously approved packs retain their policy.
-        if(policy.has("seedTailEvidenceVersion") && (!StyledSeedTailEvidence.VERSION.equals(policy.path("seedTailEvidenceVersion").asText())
-            || report==null || !StyledSeedTailEvidence.boundPass(report)))return false;
+        if(policy.has("seedTailEvidenceVersion")) {
+            if(report==null)return false;
+            String version=policy.path("seedTailEvidenceVersion").asText();
+            boolean tailPassed=StyledTailAnatomy.VERSION.equals(version)?StyledTailAnatomy.boundPass(report):
+                StyledSeedTailEvidence.VERSION.equals(version) && StyledSeedTailEvidence.boundPass(report);
+            if(!tailPassed)return false;
+        }
         String expected=StyledSpriteCodec.sha(String.join("|",StyledSpriteCodec.DIRECTIONS.stream()
             .map(d->hashes.path(d).asText()).toList()).getBytes(StandardCharsets.UTF_8));
         if(StyledRecovery.enabled(policy) && (report==null || !StyledRecovery.VERSION.equals(report.path("recoveryVersion").asText())

@@ -22,7 +22,7 @@ final class StyledSeedRepair {
             if(!StyledSpriteCodec.DIRECTIONS.contains(d) || !seen.add(d) || !v.path("issues").isArray()
                 || !v.path("confidence").isNumber() || !Double.isFinite(v.path("confidence").asDouble())
                 || v.path("confidence").asDouble()<0 || v.path("confidence").asDouble()>1)throw invalid();
-            if(!v.path("issues").isEmpty() || v.path("confidence").asDouble()<.75)failed.add(d);
+            if(!v.path("issues").isEmpty() || v.path("confidence").asDouble()<.75 || v.path("tailObservationUncertain").asBoolean())failed.add(d);
             for(String field:StyledRecoveryReview.BASE.keySet()){
                 if(!v.path(field).isBoolean())throw invalid();
                 if(!v.path(field).asBoolean())failed.add(d);

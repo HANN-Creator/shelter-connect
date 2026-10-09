@@ -291,7 +291,7 @@ public class StyledAssetStore {
         p.put("lessonRevision",StyledLessonStore.REVISION_VERSION);p.put("seedMotionMargin",2);p.put("seedEyeRepair",StyledSeedEyeRepair.VERSION);
         p.put("automaticApproval",StyledAutoApproval.VERSION);
         var recovery=StyledSpriteCodec.qualityRules(json).path("recovery");
-        p.put("recoveryVersion",StyledRecovery.VERSION);p.put("seedRepairVersion",StyledSeedRepair.VERSION);p.put("seedTailEvidenceVersion",StyledSeedTailEvidence.VERSION);p.put("motionFrameSize",40);p.put("seedMotionMargin",1);
+        p.put("recoveryVersion",StyledRecovery.VERSION);p.put("seedRepairVersion",StyledSeedRepair.VERSION);p.put("seedTailEvidenceVersion",StyledTailAnatomy.VERSION);p.put("motionFrameSize",40);p.put("seedMotionMargin",1);
         p.put("maxSeedRepairs",recovery.path("maxSeedRepairs").asInt());p.put("maxRepairsPerClip",recovery.path("maxMotionRepairs").asInt());
         p.remove("seedEyeRepair");p.remove("learningRecovery");return p;}
     private boolean seedQualityPassed(Job j) {
@@ -324,7 +324,8 @@ public class StyledAssetStore {
                   reviewed_by=NULL,reviewed_at=now(),failure_code=NULL,lease_token=NULL,lease_until=NULL WHERE id=:id
                 """).param("a",json.writeValueAsString(StyledAutoApproval.packEvidence(j,json))).param("id",j.id()).update();
         } else status(j.id(),"REVIEW",qualityPassed(j)?
-            (StyledAutoApproval.enabled(j.qualityPolicy())?"AUTO_APPROVAL_EVIDENCE_REQUIRED":null):"QUALITY_REPAIR_EXHAUSTED");
+            (StyledAutoApproval.enabled(j.qualityPolicy())?"AUTO_APPROVAL_EVIDENCE_REQUIRED":null):
+                j.steps().stream().skip(1).anyMatch(s->StyledMotionReview.unresolved(s.qualityReport()))?"MOTION_OBSERVATION_UNCERTAIN":"QUALITY_REPAIR_EXHAUSTED");
     }
     @Transactional public Job recover(UUID subject,UUID id,JsonNode body) {
         operator(subject);properties.requireEnabled();lock(id);legacy.valid(id,true);var j=job(id);
@@ -519,6 +520,7 @@ public class StyledAssetStore {
         if(!authorized(w))return true;
         // Explicit rechecks judge the stored bytes, even if a new rule finds a defect with budget left.
         if(w.status().equals("CHECKING"))return false;
+        if(StyledMotionReview.unresolved(report))return false;
         if(w.qualityPolicy()!=null && w.qualityPolicy().path("referenceOnly").asBoolean())return false;
         if(report.path("passed").asBoolean() || w.repairCount()>=StyledRecovery.limit(w.qualityPolicy(),w.character()))return false;
         if(w.character() && StyledSeedRepair.enabled(w.qualityPolicy()) && !"READY".equals(report.at("/seedRepairPlan/status").asText()))return false;
@@ -544,7 +546,7 @@ public class StyledAssetStore {
                 approveSeeds(j);status(w.id(),"QUEUED",null);
                 jdbc.sql("UPDATE shelter.asset_jobs SET next_run_at=now() WHERE id=:id").param("id",w.id()).update();
             } else status(w.id(),"SEED_REVIEW",seedQualityPassed(j)?
-                (StyledAutoApproval.enabled(j.qualityPolicy())?"AUTO_APPROVAL_EVIDENCE_REQUIRED":null):"SEED_QUALITY_REVIEW_REQUIRED");
+                (StyledAutoApproval.enabled(j.qualityPolicy())?"AUTO_APPROVAL_EVIDENCE_REQUIRED":null):(StyledTailAnatomy.unresolved(j.steps().get(0).qualityReport())?"SEED_OBSERVATION_UNCERTAIN":"SEED_QUALITY_REVIEW_REQUIRED"));
         }
         else if(j.complete())finishPack(j);
         else defer(w,0);

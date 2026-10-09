@@ -1,0 +1,9 @@
+{
+  "case": "idle-north",
+  "originalExpected": "PASS",
+  "observedDecision": "CONFIRMED_DEFECT",
+  "finalExpected": "BLOCK",
+  "basis": "The initial PASS label came from the implementing agent, not independent human gold. The initial live run failed its positive-label assertion (2/3 positives passed). Both unprimed observations identified changes inside the curled tail plus palette flicker. Full unchanged frames enlarged6x confirm that tail tip/internal contour changes across 0,1,4,6,8 despite fixed outer bounds. The quiet-idle requirement rejects this motion. No thresholds or images were changed to force a pass. The failing first run is preserved; this adjudication is not independent proof of overall accuracy.",
+  "reviewSha256": "1f67ef0e9890a232633b51a1b3f9a181ed789f8d26fbb53ca8be08a006daccc4",
+  "imageSha256": "75999b4289bdb227f3c982f8d9104f43e34ef4922e600061534dd7ee78c57f81"
+}

@@ -1,0 +1,16 @@
+{
+  "use": "QA visual criteria only; never used as generation style, breed, identity or tail-carriage reference",
+  "examples": [
+    {
+      "label": "COMPLETE_CONNECTED",
+      "source": "backend/scripts/fixtures/selected-seed-repair-v16/selected/west.png",
+      "sha256": "83615345ae637bc9d871675e1cf80accae7b2981fccca743c0051ab98c61c24d"
+    },
+    {
+      "label": "NOT_DISCERNIBLE",
+      "source": "backend/scripts/fixtures/tail-evidence-v17/west.png",
+      "sha256": "c5558e9c49b2ceaa39abea969c3c488145cf41dc9d0367d1922b5aa7c13b605c"
+    }
+  ],
+  "sha256": "4bde98b45af88df2815165aa453b19b763c9dde5b43223f2a5c088928d3d3f1e"
+}

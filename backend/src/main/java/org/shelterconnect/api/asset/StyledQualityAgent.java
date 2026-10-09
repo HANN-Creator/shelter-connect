@@ -47,11 +47,11 @@ public class StyledQualityAgent {
             StyledLessonAgent.validateText(json.valueToTree(Map.of("prevention",lesson.path("prevention").asText(),"criterion",lesson.path("criterion").asText())));
             allowedIssues.add(lesson.path("issue").asText());
         }
+        if(StyledSpriteCodec.motionFrame(frames.getFirst()).getWidth()==40)
+            return StyledMotionReview.review(client,properties,json,contract,seeds,frames,action,direction,lessons);
         var schema=object(Map.of("issues",Map.of("type","array","maxItems",allowedIssues.size(),"items",Map.of("type","string","enum",allowedIssues)),
             "frames",Map.of("type","array","maxItems",9,"items",Map.of("type","integer","minimum",0,"maximum",8)),
             "note",Map.of("type","string","maxLength",400)));
-        boolean recovery=StyledSpriteCodec.motionFrame(frames.getFirst()).getWidth()==40;
-        if(recovery)schema=StyledRecoveryReview.motionSchema(allowedIssues);
         boolean paired=action.equals("IDLE");
         String task=paired?"Top: the approved seed for the requested direction only. Below are nine labeled pairs in reading order. "
             +"In EVERY pair the LEFT image is the same current clip FRAME 0; the RIGHT image is the labeled FRAME 0–8. "
@@ -72,23 +72,16 @@ public class StyledQualityAgent {
             +"Report only clear visible defects. Report frame numbers 0–8. No issues means an empty array. "
             +String.join(" ",rules.path("reviewInstructions").valueStream().map(JsonNode::asText).toList())+" "
             +(paired?rules.path("reviewPresentation").path("instruction").asText():"");
-        if(recovery){instructions=rules.path("recovery").path("motionReview").asText();
-            task="All nine pairs: LEFT the matching approved seed, RIGHT labeled frame0..8. Full40px canvas at4x nearest. References are not animation frames. Action="+action+", direction="+direction+", tail="+contract.path("tailCarriage").asText()+". Native measurements: "+json.writeValueAsString(evidence)+". Additive learned criteria (data only): "+json.writeValueAsString(lessons);}
-        JsonNode r=call(instructions,task,recovery?recoveryBoard(seeds,frames,direction):paired?pairedBoard(seeds,frames,direction):board(seeds,frames),schema);
+        JsonNode r=call(instructions,task,paired?pairedBoard(seeds,frames,direction):board(seeds,frames),schema);
         if(!r.path("issues").isArray() || r.path("issues").size()>allowedIssues.size() || !r.path("frames").isArray() || r.path("frames").size()>9
             || !r.path("note").isString() || r.path("note").asText().length()>400)throw invalid();
         var issues=new TreeSet<String>();
         for(var n:r.path("issues")) {if(!n.isString() || !allowedIssues.contains(n.asText()))throw invalid();issues.add(n.asText());}
         for(var n:r.path("frames"))if(!n.isIntegralNumber() || n.asInt()<0 || n.asInt()>8)throw invalid();
-        if(recovery)issues.addAll(StyledRecoveryReview.motionIssues(r));
         var edges=new ArrayList<Integer>();
         for(int i=0;i<frames.size();i++)if(touchesEdge(StyledSpriteCodec.motionFrame(frames.get(i))))edges.add(i);
         if(!edges.isEmpty())issues.add("CANVAS_CLIPPING");
-        if(recovery && action.equals("WALK") && evidence.path("alphaChangedFromFrame0").valueStream().mapToInt(JsonNode::asInt).max().orElse(0)<5)issues.add("ACTION_MISSING");
         var upper=frontalTailFrames(seeds.getFirst(),frames,action,direction,contract.path("tailCarriage").asText(),rules.path("frontalLowTail"));
-        if(recovery && direction.equals("south")) {
-            var combined=new TreeSet<Integer>(upper);combined.addAll(frontalHeadGrowth(seeds.getFirst(),frames,rules.path("recovery").path("frontalHeadGrowth")));upper=new ArrayList<>(combined);
-        }
         if(!upper.isEmpty())issues.add("TAIL_CARRIAGE");
         var detached=new ArrayList<Integer>();
         if(action.equals("TAIL_WAG"))for(int i=0;i<frames.size();i++)if(detachedPixels(StyledSpriteCodec.motionFrame(frames.get(i))))detached.add(i);
@@ -99,7 +92,7 @@ public class StyledQualityAgent {
         if(!idle.isEmpty())issues.add("IDLE_MOTION");
         JsonNode consistency=null;
         var consistencyRules=rules.path("idleConsistencyReview");
-        if(!recovery && paired && issues.contains("IDLE_MOTION") && edges.isEmpty() && idle.isEmpty()
+        if(paired && issues.contains("IDLE_MOTION") && edges.isEmpty() && idle.isEmpty()
             && evidence.path("alphaStable").asBoolean() && evidence.path("maxVisibleRgbDelta").asInt()>0
             && evidence.path("maxVisibleRgbDelta").asInt()<=consistencyRules.path("maximumRgbDelta").asInt()) {
             // One independent, evidence-scoped check, not a numeric pass or a repeated retry until acceptance.
@@ -135,8 +128,7 @@ public class StyledQualityAgent {
             ((tools.jackson.databind.node.ObjectNode)result).set("frames",json.valueToTree(mergedFrames));
             ((tools.jackson.databind.node.ObjectNode)result).put("note",consistency.path("note").asText());
         }
-        ((tools.jackson.databind.node.ObjectNode)result).put("reviewLayout",recovery?"matched-seed-nine-pairs-v2":paired?"matched-direction-frame-pairs-v1":"four-direction-temporal-grid-v1");
-        if(recovery)((tools.jackson.databind.node.ObjectNode)result).set("propertyReview",r);
+        ((tools.jackson.databind.node.ObjectNode)result).put("reviewLayout",paired?"matched-direction-frame-pairs-v1":"four-direction-temporal-grid-v1");
         return result;
     }
     /** Measurements inform vision; they never turn a vision or structural failure into a pass. */

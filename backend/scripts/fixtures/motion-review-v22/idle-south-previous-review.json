@@ -1,0 +1,546 @@
+{
+  "note": "IDLE인데 여러 프레임에서 앞발·다리 위치가 번갈아 크게 변해 걷기 동작처럼 보입니다. 눈 깜박임과 방향·색상·꼬리 상태는 유지됩니다.",
+  "model": "gpt-5.6-luna",
+  "action": "IDLE",
+  "frames": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "issues": [
+    "DISCONTINUITY",
+    "IDLE_MOTION",
+    "TAIL_CARRIAGE"
+  ],
+  "passed": false,
+  "version": "sprite-quality-v1",
+  "direction": "south",
+  "edgeFrames": [],
+  "reviewedAt": "2026-10-09T12:37:17.345505Z",
+  "seedHashes": {
+    "east": "8f6f7f49aa3a73063f55ef59bde0409d4e8c3ab2f01aa5c072e9446a366156f5",
+    "west": "81f256fb4aead87334508fd00f5798e30ab733fe46b18a4917b3532cad0bd9f9",
+    "north": "35f3c2dea252fbb0c840b37c45e972d54dff92d0f92085dc7c2535001e0eb63c",
+    "south": "4d33c8ef0a6f2e6461fa547101805291e003a6a4bc7244d18cad775ba2742e20"
+  },
+  "frameHashes": [
+    "e4283a9d442d6d83615a1ad48987d76ddafed0da593ed1a2620fc71301283efc",
+    "844de5d5a6008bfcde34af794a690a02b9a2488bad4636a73d576797a212c20b",
+    "217a5fe50cb103c1d3b3b2f3f3a266f99387d009541e97a5483688173e6da243",
+    "e683118d47dd390aa702bf4e0c79386f253a616a5f6a62fb708de8a150f8d35c",
+    "3cfd8eb969080e32cf92a6c78d643258d106151b97462a5ee5d04ba7499216ba",
+    "e19d0ebfdd81cb679e68ae8dd52782c6084784c46c8320bb75cd0fac39b89aed",
+    "87fa6736a56e1b6ac4ccf1f4fa6d002e8740df43998317ee15baa07cb7df1370",
+    "b17def966f3c2a2b6c6c57bfb6894b4c4f4460dc14201555393c147dc4ff295e",
+    "d3a5e944b916ec507ad68627f6a41284d4588ee6268512392e5ce6ac2ad2559d"
+  ],
+  "inputSha256": "fe96d0cabe70fa7a32ead14625d73ad6cc9c3b407d5cecf5863a0bd75be25189",
+  "rulesSha256": "85df6bc0e10250f32ea66a6c07064250a64b9632deafcc956db27368ea58071f",
+  "reviewLayout": "matched-seed-nine-pairs-v2",
+  "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "pixelEvidence": {
+    "version": "native-frame-delta-v1",
+    "reference": "frame0",
+    "frameCount": 9,
+    "alphaStable": false,
+    "boundsExclusive": [
+      [
+        12,
+        7,
+        28,
+        35
+      ],
+      [
+        12,
+        7,
+        28,
+        35
+      ],
+      [
+        12,
+        7,
+        28,
+        35
+      ],
+      [
+        12,
+        7,
+        28,
+        35
+      ],
+      [
+        12,
+        7,
+        28,
+        35
+      ],
+      [
+        12,
+        7,
+        28,
+        35
+      ],
+      [
+        12,
+        7,
+        28,
+        35
+      ],
+      [
+        12,
+        7,
+        28,
+        35
+      ],
+      [
+        12,
+        7,
+        28,
+        35
+      ]
+    ],
+    "subtleShadingOnly": false,
+    "maxVisibleRgbDelta": 255,
+    "maxRgbDeltaFromFrame0": [
+      0,
+      255,
+      255,
+      255,
+      255,
+      255,
+      255,
+      255,
+      255
+    ],
+    "alphaChangedFromFrame0": [
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "maxRgbDeltaFromPrevious": [
+      0,
+      255,
+      252,
+      95,
+      79,
+      252,
+      128,
+      252,
+      79
+    ],
+    "alphaChangedFromPrevious": [
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "rgbChangedPixelsFromFrame0": [
+      0,
+      109,
+      136,
+      140,
+      122,
+      122,
+      117,
+      144,
+      131
+    ]
+  },
+  "rawEditReview": {
+    "note": "정지 동작인데 프레임 1~8에서 다리 자세가 반복적으로 변합니다. 꼬리도 프레임 2~5, 8에서 낮게 고정되지 않고 옆으로 돌출되는 변화가 보입니다.",
+    "model": "gpt-5.6-luna",
+    "frames": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "issues": [
+      "IDLE_MOTION",
+      "TAIL_CARRIAGE"
+    ],
+    "passed": false,
+    "version": "sprite-quality-v1",
+    "edgeFrames": [],
+    "reviewedAt": "2026-10-09T12:37:30.458480Z",
+    "rulesSha256": "85df6bc0e10250f32ea66a6c07064250a64b9632deafcc956db27368ea58071f",
+    "reviewLayout": "matched-seed-nine-pairs-v2",
+    "pixelEvidence": {
+      "version": "native-frame-delta-v1",
+      "reference": "frame0",
+      "frameCount": 9,
+      "alphaStable": false,
+      "boundsExclusive": [
+        [
+          12,
+          7,
+          28,
+          35
+        ],
+        [
+          12,
+          7,
+          28,
+          35
+        ],
+        [
+          12,
+          7,
+          28,
+          35
+        ],
+        [
+          12,
+          7,
+          28,
+          35
+        ],
+        [
+          12,
+          7,
+          28,
+          35
+        ],
+        [
+          12,
+          7,
+          28,
+          35
+        ],
+        [
+          12,
+          7,
+          28,
+          35
+        ],
+        [
+          12,
+          7,
+          28,
+          35
+        ],
+        [
+          12,
+          7,
+          28,
+          35
+        ]
+      ],
+      "subtleShadingOnly": false,
+      "maxVisibleRgbDelta": 255,
+      "maxRgbDeltaFromFrame0": [
+        0,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255
+      ],
+      "alphaChangedFromFrame0": [
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "maxRgbDeltaFromPrevious": [
+        0,
+        255,
+        252,
+        95,
+        79,
+        252,
+        128,
+        252,
+        79
+      ],
+      "alphaChangedFromPrevious": [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "rgbChangedPixelsFromFrame0": [
+        0,
+        109,
+        136,
+        140,
+        122,
+        122,
+        117,
+        144,
+        131
+      ]
+    },
+    "rulesRevision": "sprite-regressions-2026-10-09-v21",
+    "detachedFrames": [],
+    "propertyReview": {
+      "note": "정지 동작인데 프레임 1~8에서 다리 자세가 반복적으로 변합니다. 꼬리도 프레임 2~5, 8에서 낮게 고정되지 않고 옆으로 돌출되는 변화가 보입니다.",
+      "frames": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "issues": [
+        "IDLE_MOTION",
+        "TAIL_CARRIAGE"
+      ],
+      "passed": false,
+      "confidence": 0.96,
+      "actionVisible": true,
+      "eyesPreserved": true,
+      "paletteStable": true,
+      "limbsPlausible": true,
+      "tailConsistent": false,
+      "continuityUsable": true,
+      "identityPreserved": true,
+      "directionPreserved": true
+    },
+    "idleMotionFrames": [],
+    "silhouetteFrames": []
+  },
+  "rawEditSha256": "fe96d0cabe70fa7a32ead14625d73ad6cc9c3b407d5cecf5863a0bd75be25189",
+  "rulesRevision": "sprite-regressions-2026-10-09-v21",
+  "detachedFrames": [],
+  "learnedLessons": [],
+  "propertyReview": {
+    "note": "IDLE인데 여러 프레임에서 앞발·다리 위치가 번갈아 크게 변해 걷기 동작처럼 보입니다. 눈 깜박임과 방향·색상·꼬리 상태는 유지됩니다.",
+    "frames": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "issues": [
+      "IDLE_MOTION"
+    ],
+    "passed": false,
+    "confidence": 0.97,
+    "actionVisible": true,
+    "eyesPreserved": true,
+    "paletteStable": true,
+    "limbsPlausible": true,
+    "tailConsistent": true,
+    "continuityUsable": true,
+    "identityPreserved": true,
+    "directionPreserved": true
+  },
+  "restoredReview": {
+    "note": "IDLE인데 여러 프레임에서 앞발·다리 위치가 번갈아 크게 변해 걷기 동작처럼 보입니다. 눈 깜박임과 방향·색상·꼬리 상태는 유지됩니다.",
+    "model": "gpt-5.6-luna",
+    "frames": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "issues": [
+      "IDLE_MOTION"
+    ],
+    "passed": false,
+    "version": "sprite-quality-v1",
+    "edgeFrames": [],
+    "reviewedAt": "2026-10-09T12:37:17.345505Z",
+    "rulesSha256": "85df6bc0e10250f32ea66a6c07064250a64b9632deafcc956db27368ea58071f",
+    "reviewLayout": "matched-seed-nine-pairs-v2",
+    "pixelEvidence": {
+      "version": "native-frame-delta-v1",
+      "reference": "frame0",
+      "frameCount": 9,
+      "alphaStable": false,
+      "boundsExclusive": [
+        [
+          12,
+          7,
+          28,
+          35
+        ],
+        [
+          12,
+          7,
+          28,
+          35
+        ],
+        [
+          12,
+          7,
+          28,
+          35
+        ],
+        [
+          12,
+          7,
+          28,
+          35
+        ],
+        [
+          12,
+          7,
+          28,
+          35
+        ],
+        [
+          12,
+          7,
+          28,
+          35
+        ],
+        [
+          12,
+          7,
+          28,
+          35
+        ],
+        [
+          12,
+          7,
+          28,
+          35
+        ],
+        [
+          12,
+          7,
+          28,
+          35
+        ]
+      ],
+      "subtleShadingOnly": false,
+      "maxVisibleRgbDelta": 255,
+      "maxRgbDeltaFromFrame0": [
+        0,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255,
+        255
+      ],
+      "alphaChangedFromFrame0": [
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "maxRgbDeltaFromPrevious": [
+        0,
+        255,
+        252,
+        95,
+        79,
+        252,
+        128,
+        252,
+        79
+      ],
+      "alphaChangedFromPrevious": [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "rgbChangedPixelsFromFrame0": [
+        0,
+        109,
+        136,
+        140,
+        122,
+        122,
+        117,
+        144,
+        131
+      ]
+    },
+    "rulesRevision": "sprite-regressions-2026-10-09-v21",
+    "detachedFrames": [],
+    "propertyReview": {
+      "note": "IDLE인데 여러 프레임에서 앞발·다리 위치가 번갈아 크게 변해 걷기 동작처럼 보입니다. 눈 깜박임과 방향·색상·꼬리 상태는 유지됩니다.",
+      "frames": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "issues": [
+        "IDLE_MOTION"
+      ],
+      "passed": false,
+      "confidence": 0.97,
+      "actionVisible": true,
+      "eyesPreserved": true,
+      "paletteStable": true,
+      "limbsPlausible": true,
+      "tailConsistent": true,
+      "continuityUsable": true,
+      "identityPreserved": true,
+      "directionPreserved": true
+    },
+    "idleMotionFrames": [],
+    "silhouetteFrames": []
+  },
+  "recoveryVersion": "photo-grounded-recovery-v1",
+  "idleMotionFrames": [],
+  "motionSeedSha256": "7aa766a768fdc0b9e73a0e5e65ee22583c10d2022414823fdaecefbfe8a71507",
+  "silhouetteFrames": [],
+  "firstFrameUnchanged": false
+}

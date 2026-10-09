@@ -196,8 +196,11 @@ def frontal_head_growth(frames,seed):
 
 
 def frame_audit(frames, seed, action=None, direction=None, tail=None):
-    if len(frames) != 9 or frames[0].tobytes() != seed.tobytes():
-        raise ValueError('Expected nine frames and an unchanged approved first frame')
+    if len(frames) != 9:
+        raise ValueError('Expected nine frames')
+    unchanged = frames[0].tobytes() == seed.tobytes()
+    if seed.size == (32,32) and not unchanged:
+        raise ValueError('Legacy32 requires an unchanged approved first frame')
     edges = []
     for i, frame in enumerate(frames):
         if frame.size not in ((32,32),(40,40)) or frame.size != seed.size or frame.mode != 'RGBA':
@@ -213,7 +216,7 @@ def frame_audit(frames, seed, action=None, direction=None, tail=None):
     detached=[i for i,frame in enumerate(frames) if len(components(frame))!=1] if action=='TAIL_WAG' else []
     issues=(['CANVAS_CLIPPING'] if edges else [])+(['TAIL_CARRIAGE'] if upper else [])+(['DETACHED_PIXELS'] if detached else [])+(['IDLE_MOTION'] if idle else [])
     if seed.size==(40,40) and action=='WALK' and max(pixel_evidence(frames)['alphaChangedFromFrame0'])<5: issues.append('ACTION_MISSING')
-    return {'structuralPassed':not issues, 'issues':issues, 'silhouetteFrames':upper,
+    return {'structuralPassed':not issues, 'issues':issues, 'silhouetteFrames':upper, 'firstFrameUnchanged':unchanged,
             'idleMotionFrames':idle, 'edgeFrames':edges, 'detachedFrames':detached, 'visualReviewRequired':True, 'qualityRules':quality_binding(),
             'pixelEvidence':pixel_evidence(frames)}
 

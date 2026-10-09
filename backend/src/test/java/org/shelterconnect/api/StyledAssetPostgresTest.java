@@ -1468,13 +1468,13 @@ class StyledAssetPostgresTest {
         r.put("identity",passed?"PASS":"UNCERTAIN");r.put("model","fixture-vision");r.put("reviewedAt",java.time.Instant.now().toString());r.put("photoSha256",sha(png));
         r.putArray("edgeDirections");var views=r.putArray("views");
         for(String d:List.of("south","north","west","east"))views.add(json.valueToTree(Map.of("direction",d,"readability",d.equals("north")?"NOT_VISIBLE":"PASS","style","PASS")));
-        var tail=json.createObjectNode().put("version","photo-tail-evidence-v1").put("passed",true).put("shortTailSupported",false)
-            .put("model","fixture-vision").put("reviewedAt",java.time.Instant.now().toString());tail.putArray("failedDirections");
+        var tail=json.createObjectNode().put("version","tail-anatomy-tristate-v2").put("passed",true).put("decision","PASS").put("shortTailSupported",false)
+            .put("model","fixture-vision").put("reviewedAt",java.time.Instant.now().toString());tail.putArray("failedDirections");tail.putArray("uncertainDirections");
         for(String field:List.of("inputSha256","photoSha256","rulesSha256"))tail.set(field,r.path(field));
-        tail.set("pixelAudit",json.valueToTree(Map.of("west",Map.of("completeContour",true),"east",Map.of("completeContour",true))));
-        tail.set("observation",json.valueToTree(Map.of("photoTail","OBSCURED","photoEvidence","Synthetic hidden photo tail","photoConfidence",.95,
-            "views",List.of(Map.of("direction","west","tail","COMPLETE_CONNECTED","visibleEvidence","Synthetic complete tail","confidence",.95),
-                Map.of("direction","east","tail","COMPLETE_CONNECTED","visibleEvidence","Synthetic complete tail","confidence",.95)))));
+        tail.set("geometry",json.valueToTree(Map.of("west",Map.of("edgeContact",false,"opaqueComponents",1,"branchVersion","rear-silhouette-branches-v1","rearBranchSupport",true),"east",Map.of("edgeContact",false,"opaqueComponents",1,"branchVersion","rear-silhouette-branches-v1","rearBranchSupport",true))));
+        tail.set("observation",json.valueToTree(Map.of("photoTail","OBSCURED","photoEvidence","Synthetic hidden photo tail",
+            "views",List.of(Map.of("direction","west","tail","COMPLETE_CONNECTED","visibleEvidence","Synthetic complete tail","attachment","CONNECTED","contour","DISTINCT","tip","VISIBLE"),
+                Map.of("direction","east","tail","COMPLETE_CONNECTED","visibleEvidence","Synthetic complete tail","attachment","CONNECTED","contour","DISTINCT","tip","VISIBLE")))));
         r.set("tailEvidence",tail);
         return r;
     }
@@ -1670,6 +1670,9 @@ class StyledAssetPostgresTest {
         when(quality.review(any(),anyList(),anyList(),anyString(),anyString())).thenAnswer(c->{outsideTransaction();
             boolean passed=!(failSouthWalk && c.getArgument(3).equals("WALK") && c.getArgument(4).equals("south") && motionCalls.getAndIncrement()==0);
             var report=(tools.jackson.databind.node.ObjectNode)automaticMotionReport(passed);report.put("note",passed?"Synthetic valid verdict":"Frontal tail appears above the head");
+            report.put("motionReviewVersion","motion-observation-tristate-v3").put("motionDecision",passed?"PASS":"CONFIRMED_DEFECT").put("referencePoseUsable",true);
+            report.put("referenceFrameSha256",sha(c.<List<byte[]>>getArgument(1).get(List.of("south","north","west","east").indexOf(c.getArgument(4)))));
+            report.set("reviewedFrameHashes",json.valueToTree(c.<List<byte[]>>getArgument(2).stream().map(this::sha).toList()));
             if(!passed)report.set("issues",json.valueToTree(List.of("TAIL_CARRIAGE")));return report;});
         return UUID.fromString(post(subject,"/v1/shelter-admin/dogs/"+dog+"/styled-assets",automaticInput(),202).at("/data/id").asText());
     }
@@ -1686,8 +1689,21 @@ class StyledAssetPostgresTest {
             return r;});
         finish(id);var j=read(id);
         assertThat(j.path("status").asText()).isEqualTo("SEED_REVIEW");assertThat(j.path("seedReview").isNull()).isTrue();
-        assertThat(j.at("/qualityPolicy/seedTailEvidenceVersion").asText()).isEqualTo("photo-tail-evidence-v1");
+        assertThat(j.at("/qualityPolicy/seedTailEvidenceVersion").asText()).isEqualTo("tail-anatomy-tristate-v2");
         verify(provider,never()).submit(eq(false),any());verify(provider,never()).editSeeds(any());
+    }
+    @Test void uncertainMotionStopsPaidRepairsLearningAndFinalApproval()throws Exception {
+        UUID id=recoveryRequest(0,false);
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("west"))).thenAnswer(c->{
+            var r=(tools.jackson.databind.node.ObjectNode)automaticMotionReport(false);r.put("motionDecision","UNCERTAIN");
+            r.set("issues",json.valueToTree(List.of("IDLE_MOTION")));return r;});
+        finish(id);assertThat(read(id).path("status").asText()).isEqualTo("REVIEW");
+        assertThat(read(id).path("failureCode").asText()).isEqualTo("MOTION_OBSERVATION_UNCERTAIN");
+        assertThat(step(id,"idle-west").path("repairCount").asInt()).isZero();
+        verify(provider,never()).editAnimation(any());
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=? AND label='idle-west'",Integer.class,id)).isZero();
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_lessons WHERE source_job_id=? AND source_label='idle-west'",Integer.class,id)).isZero();
+        publicStatus(404);
     }
     @Test void recoveryEditsBaseThenOnlyFailedMotionAndPublishesBoundFortyPixelBundle()throws Exception {
         UUID id=recoveryRequest(3,true);finish(id);var j=read(id);
@@ -1734,6 +1750,10 @@ class StyledAssetPostgresTest {
             return r;
         });
         finish(id);var j=read(id);assertThat(j.path("status").asText()).isEqualTo("SEED_REVIEW");
+        assertThat(j.path("failureCode").asText()).isEqualTo("SEED_OBSERVATION_UNCERTAIN");
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=?",Integer.class,id)).isZero();
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_lessons WHERE source_job_id=?",Integer.class,id)).isZero();
+        assertThat(step(id,"character").path("qualityReport").path("tailEvidence").has("uncertainDirections")).isTrue();
         assertThat(j.path("seedReview").isNull()).isTrue();assertThat(j.path("qualityApproval").isNull()).isTrue();
         verify(provider,times(confirmed?1:0)).editSeeds(any());verify(provider,never()).submit(eq(false),any());publicStatus(404);
         assertThat(step(id,"character").path("repairCount").asInt()).isEqualTo(confirmed?1:0);

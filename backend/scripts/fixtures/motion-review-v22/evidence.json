@@ -1,0 +1,83 @@
+{
+  "version": "motion-review-v22",
+  "purpose": "Predeclared unchanged-image comparison. No PixelLab edits or publication. At most two independent Luna observations per clip. No reroll after verdict.",
+  "cases": [
+    {
+      "id": "idle-south",
+      "action": "IDLE",
+      "direction": "south",
+      "file": "idle-south.png",
+      "seed": "seeds/south.png",
+      "expected": "PASS",
+      "labelSource": "Agent visual inspection, not independent human gold",
+      "fileSha256": "fe96d0cabe70fa7a32ead14625d73ad6cc9c3b407d5cecf5863a0bd75be25189",
+      "seedSha256": "4d33c8ef0a6f2e6461fa547101805291e003a6a4bc7244d18cad775ba2742e20"
+    },
+    {
+      "id": "idle-north",
+      "action": "IDLE",
+      "direction": "north",
+      "file": "idle-north.png",
+      "seed": "seeds/north.png",
+      "expected": "PASS",
+      "labelSource": "Agent visual inspection, not independent human gold",
+      "fileSha256": "75999b4289bdb227f3c982f8d9104f43e34ef4922e600061534dd7ee78c57f81",
+      "seedSha256": "35f3c2dea252fbb0c840b37c45e972d54dff92d0f92085dc7c2535001e0eb63c"
+    },
+    {
+      "id": "idle-west",
+      "action": "IDLE",
+      "direction": "west",
+      "file": "idle-west.png",
+      "seed": "seeds/west.png",
+      "expected": "PASS",
+      "labelSource": "Agent visual inspection, not independent human gold",
+      "fileSha256": "b40d2051a8e95faa76893effd5e69c78832cd2793bf78fec9ff0d958531c194e",
+      "seedSha256": "81f256fb4aead87334508fd00f5798e30ab733fe46b18a4917b3532cad0bd9f9"
+    },
+    {
+      "id": "clipped-last",
+      "action": "IDLE",
+      "direction": "west",
+      "file": "clipped-last.png",
+      "seed": "seeds/west.png",
+      "expected": "BLOCK",
+      "labelSource": "Synthetic exact edge pixel in frame8; original retained",
+      "fileSha256": "e26199e11abcc4f9e154d2f1063769813e946b55d964a3958f45f1cfb4e8aed9",
+      "seedSha256": "81f256fb4aead87334508fd00f5798e30ab733fe46b18a4917b3532cad0bd9f9"
+    },
+    {
+      "id": "still-is-not-walk",
+      "action": "WALK",
+      "direction": "west",
+      "file": "idle-west.png",
+      "seed": "seeds/west.png",
+      "expected": "BLOCK",
+      "labelSource": "Same stationary sequence must not be called actual walking",
+      "fileSha256": "b40d2051a8e95faa76893effd5e69c78832cd2793bf78fec9ff0d958531c194e",
+      "seedSha256": "81f256fb4aead87334508fd00f5798e30ab733fe46b18a4917b3532cad0bd9f9"
+    },
+    {
+      "id": "face-flicker",
+      "action": "IDLE",
+      "direction": "south",
+      "file": "face-flicker.png",
+      "seed": "seeds/south.png",
+      "expected": "BLOCK",
+      "labelSource": "Synthetic magenta head only in frame8, alpha unchanged",
+      "fileSha256": "93f266d00b0aba1c58c89a68764e152eb758053f74be786d92395ef0336475aa",
+      "seedSha256": "4d33c8ef0a6f2e6461fa547101805291e003a6a4bc7244d18cad775ba2742e20"
+    },
+    {
+      "id": "genuine-walk",
+      "action": "WALK",
+      "direction": "south",
+      "file": "walk.png",
+      "seed": "walk-seed.png",
+      "expected": "OBSERVE",
+      "labelSource": "Prior real pilot output; guard against forcing a false positive/negative",
+      "fileSha256": "66d2c83668607ef58dc13c6afdbbd425b3702985a7395a83d51fe8e3ee094647",
+      "seedSha256": "29fc78e6fa14f5813822ee9d9e6d388e6c3035b27ecf77d5a411924815444b45"
+    }
+  ]
+}

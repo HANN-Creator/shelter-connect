@@ -1,0 +1,984 @@
+{
+  "note": "측면 꼬리의 별도 관찰이 통과하지 않아 기본 도트 승인을 보류합니다. 기존 외형 판단과 원본은 보존했습니다.",
+  "model": "gpt-5.6-luna",
+  "views": [
+    {
+      "note": "정면 방향과 흰 얼굴 중앙 무늬, 흰 주둥이·가슴이 사진과 일치합니다.",
+      "style": "PASS",
+      "direction": "south",
+      "readability": "PASS"
+    },
+    {
+      "note": "올바른 후면 표현이며 얼굴 요소가 없는 것이 적절합니다.",
+      "style": "PASS",
+      "direction": "north",
+      "readability": "NOT_VISIBLE"
+    },
+    {
+      "note": "왼쪽 프로필의 눈, 주둥이, 가슴과 꼬리 배치가 자연스럽습니다.",
+      "style": "PASS",
+      "direction": "west",
+      "readability": "PASS"
+    },
+    {
+      "note": "오른쪽 프로필 방향이 맞고 주요 얼굴·가슴 색 배치가 유지됩니다.",
+      "style": "PASS",
+      "direction": "east",
+      "readability": "PASS"
+    }
+  ],
+  "issues": [
+    "SEED_IDENTITY"
+  ],
+  "passed": false,
+  "version": "seed-eyes-v1",
+  "identity": "FAIL",
+  "appearance": "FAIL",
+  "reviewedAt": "2026-10-09T10:45:01.624933172Z",
+  "inputSha256": "376455ea0e1bc2bfd1c0d277f0e5b53b7c781aebd118e998046c969fa6249446",
+  "photoSha256": "e9c4cd227b1c4976423b323c32e70f73839bcbb05fc025b3e48294a4d19cde7a",
+  "rulesSha256": "c4ca9267dfa9b734debb459a9a0ce76950994702bd0922a0fadf41e696911721",
+  "tailEvidence": {
+    "model": "gpt-5.6-luna",
+    "passed": false,
+    "version": "photo-tail-evidence-v1",
+    "geometry": {
+      "east": {
+        "edgeContact": false,
+        "opaqueComponents": 1,
+        "clearPixelsLeftTopRightBottom": [
+          2,
+          3,
+          1,
+          1
+        ]
+      },
+      "west": {
+        "edgeContact": false,
+        "opaqueComponents": 1,
+        "clearPixelsLeftTopRightBottom": [
+          1,
+          3,
+          2,
+          1
+        ]
+      }
+    },
+    "pixelAudit": {
+      "east": {
+        "span": 9,
+        "opaque": true,
+        "points": 13,
+        "connected": true,
+        "visiblePath": true,
+        "completeContour": true
+      },
+      "west": {
+        "span": 6,
+        "opaque": true,
+        "points": 7,
+        "connected": true,
+        "visiblePath": true,
+        "completeContour": true
+      }
+    },
+    "reviewedAt": "2026-10-09T10:45:47.526844581Z",
+    "inputSha256": "376455ea0e1bc2bfd1c0d277f0e5b53b7c781aebd118e998046c969fa6249446",
+    "observation": {
+      "views": [
+        {
+          "tail": "COMPLETE_CONNECTED",
+          "direction": "west",
+          "confidence": 0.72,
+          "tailPixelPath": [
+            {
+              "x": 27,
+              "y": 15
+            },
+            {
+              "x": 28,
+              "y": 14
+            },
+            {
+              "x": 27,
+              "y": 13
+            },
+            {
+              "x": 26,
+              "y": 12
+            },
+            {
+              "x": 25,
+              "y": 11
+            },
+            {
+              "x": 24,
+              "y": 10
+            },
+            {
+              "x": 23,
+              "y": 9
+            }
+          ],
+          "visibleEvidence": "The photographed tail is not visibly identifiable; the rump and back are visible, but no distinct attachment, contour, or natural tip can be localized, so the photo tail is obscured. In the west sprite, a distinct tail is connected at the rear rump around (27,15), curves upward and left through the rear appendage, and ends at a discernible tip near"
+        },
+        {
+          "tail": "COMPLETE_CONNECTED",
+          "direction": "east",
+          "confidence": 0.78,
+          "tailPixelPath": [
+            {
+              "x": 11,
+              "y": 16
+            },
+            {
+              "x": 10,
+              "y": 16
+            },
+            {
+              "x": 9,
+              "y": 15
+            },
+            {
+              "x": 8,
+              "y": 15
+            },
+            {
+              "x": 7,
+              "y": 15
+            },
+            {
+              "x": 6,
+              "y": 14
+            },
+            {
+              "x": 5,
+              "y": 14
+            },
+            {
+              "x": 4,
+              "y": 13
+            },
+            {
+              "x": 3,
+              "y": 12
+            },
+            {
+              "x": 2,
+              "y": 12
+            },
+            {
+              "x": 3,
+              "y": 11
+            },
+            {
+              "x": 4,
+              "y": 10
+            },
+            {
+              "x": 5,
+              "y": 9
+            }
+          ],
+          "visibleEvidence": "The photographed tail is obscured behind the dog and no attachment or natural tip is visible. In the east sprite, a distinct tail is connected at the rear-left rump around (11,16), curves leftward and upward with a recognizable contour, and ends at a visible tip near (5,9)."
+        }
+      ],
+      "photoTail": "OBSCURED",
+      "photoEvidence": "The photographed dog’s rump and back are visible, but no distinct tail attachment, contour, or tip can be seen; the tail appears hidden behind the body or otherwise obscured.",
+      "photoConfidence": 0.98
+    },
+    "photoSha256": "e9c4cd227b1c4976423b323c32e70f73839bcbb05fc025b3e48294a4d19cde7a",
+    "refinements": [
+      {
+        "version": "tail-coordinate-focus-v1",
+        "response": {
+          "tail": "COMPLETE_CONNECTED",
+          "direction": "west",
+          "confidence": 0.72,
+          "tailPixelPath": [
+            {
+              "x": 27,
+              "y": 15
+            },
+            {
+              "x": 28,
+              "y": 14
+            },
+            {
+              "x": 27,
+              "y": 13
+            },
+            {
+              "x": 26,
+              "y": 12
+            },
+            {
+              "x": 25,
+              "y": 11
+            },
+            {
+              "x": 24,
+              "y": 10
+            },
+            {
+              "x": 23,
+              "y": 9
+            }
+          ],
+          "visibleEvidence": "The photographed tail is not visibly identifiable; the rump and back are visible, but no distinct attachment, contour, or natural tip can be localized, so the photo tail is obscured. In the west sprite, a distinct tail is connected at the rear rump around (27,15), curves upward and left through the rear appendage, and ends at a discernible tip near"
+        },
+        "direction": "west",
+        "taskSha256": "a67ca01c5a536727824e87e9db08afdff72d5ca2f833ea50ce79ad16a7c2cb4c",
+        "imageHashes": {
+          "Actual photo; tail may be hidden": "e9c4cd227b1c4976423b323c32e70f73839bcbb05fc025b3e48294a4d19cde7a",
+          "Complete exact west sprite, integer enlargement": "5f5b92851de8f7cf88b1557b5407053bbbc4826d9879352bb9c533b0907a2455",
+          "Native coordinate cells; west crop x[21,32), y[9,21)": "90994e85cc50d2b0a2da0848a3462975598d5dad51ae0e8480060977682fa68f"
+        },
+        "sourceSha256": "81f256fb4aead87334508fd00f5798e30ab733fe46b18a4917b3532cad0bd9f9",
+        "transparentCoordinates": [
+          {
+            "x": 30,
+            "y": 14
+          }
+        ],
+        "cropBoundsOriginalXYExclusive": [
+          21,
+          9,
+          32,
+          21
+        ]
+      },
+      {
+        "version": "tail-coordinate-focus-v1",
+        "response": {
+          "tail": "COMPLETE_CONNECTED",
+          "direction": "east",
+          "confidence": 0.78,
+          "tailPixelPath": [
+            {
+              "x": 11,
+              "y": 16
+            },
+            {
+              "x": 10,
+              "y": 16
+            },
+            {
+              "x": 9,
+              "y": 15
+            },
+            {
+              "x": 8,
+              "y": 15
+            },
+            {
+              "x": 7,
+              "y": 15
+            },
+            {
+              "x": 6,
+              "y": 14
+            },
+            {
+              "x": 5,
+              "y": 14
+            },
+            {
+              "x": 4,
+              "y": 13
+            },
+            {
+              "x": 3,
+              "y": 12
+            },
+            {
+              "x": 2,
+              "y": 12
+            },
+            {
+              "x": 3,
+              "y": 11
+            },
+            {
+              "x": 4,
+              "y": 10
+            },
+            {
+              "x": 5,
+              "y": 9
+            }
+          ],
+          "visibleEvidence": "The photographed tail is obscured behind the dog and no attachment or natural tip is visible. In the east sprite, a distinct tail is connected at the rear-left rump around (11,16), curves leftward and upward with a recognizable contour, and ends at a visible tip near (5,9)."
+        },
+        "direction": "east",
+        "taskSha256": "53682b48a4c288058f721fa6c557d84ca5912161739b3d94d673ce3546033d30",
+        "imageHashes": {
+          "Actual photo; tail may be hidden": "e9c4cd227b1c4976423b323c32e70f73839bcbb05fc025b3e48294a4d19cde7a",
+          "Complete exact east sprite, integer enlargement": "3bc9f70149b56dfa149edd9b0abb576f66781b6333127088a020d92a141e57b0",
+          "Native coordinate cells; east crop x[0,15), y[7,20)": "7f4c752dd16a40d0720df1fd7d415dfc026f313925886b800927f09929a29093"
+        },
+        "sourceSha256": "8f6f7f49aa3a73063f55ef59bde0409d4e8c3ab2f01aa5c072e9446a366156f5",
+        "transparentCoordinates": [
+          {
+            "x": 3,
+            "y": 10
+          },
+          {
+            "x": 2,
+            "y": 10
+          },
+          {
+            "x": 2,
+            "y": 11
+          }
+        ],
+        "cropBoundsOriginalXYExclusive": [
+          0,
+          7,
+          15,
+          20
+        ]
+      }
+    ],
+    "rulesSha256": "c4ca9267dfa9b734debb459a9a0ce76950994702bd0922a0fadf41e696911721",
+    "failedDirections": [
+      "west"
+    ],
+    "observationHistory": [
+      {
+        "passed": false,
+        "geometry": {
+          "east": {
+            "edgeContact": false,
+            "opaqueComponents": 1,
+            "clearPixelsLeftTopRightBottom": [
+              2,
+              3,
+              1,
+              1
+            ]
+          },
+          "west": {
+            "edgeContact": false,
+            "opaqueComponents": 1,
+            "clearPixelsLeftTopRightBottom": [
+              1,
+              3,
+              2,
+              1
+            ]
+          }
+        },
+        "pixelAudit": {
+          "east": {
+            "span": 9,
+            "opaque": false,
+            "points": 13,
+            "connected": true,
+            "visiblePath": false,
+            "completeContour": false
+          },
+          "west": {
+            "span": 6,
+            "opaque": false,
+            "points": 10,
+            "connected": true,
+            "visiblePath": false,
+            "completeContour": false
+          }
+        },
+        "observation": {
+          "views": [
+            {
+              "tail": "COMPLETE_CONNECTED",
+              "direction": "west",
+              "confidence": 0.78,
+              "tailPixelPath": [
+                {
+                  "x": 25,
+                  "y": 17
+                },
+                {
+                  "x": 25,
+                  "y": 16
+                },
+                {
+                  "x": 24,
+                  "y": 15
+                },
+                {
+                  "x": 25,
+                  "y": 14
+                },
+                {
+                  "x": 26,
+                  "y": 14
+                },
+                {
+                  "x": 27,
+                  "y": 13
+                },
+                {
+                  "x": 27,
+                  "y": 12
+                },
+                {
+                  "x": 28,
+                  "y": 12
+                },
+                {
+                  "x": 29,
+                  "y": 13
+                },
+                {
+                  "x": 30,
+                  "y": 14
+                }
+              ],
+              "visibleEvidence": "A distinct tail is visibly attached at the rear-right rump, rising and curling upward with a separate contour and a discernible tip near the upper-right of the sprite."
+            },
+            {
+              "tail": "COMPLETE_CONNECTED",
+              "direction": "east",
+              "confidence": 0.9,
+              "tailPixelPath": [
+                {
+                  "x": 11,
+                  "y": 16
+                },
+                {
+                  "x": 10,
+                  "y": 16
+                },
+                {
+                  "x": 9,
+                  "y": 15
+                },
+                {
+                  "x": 8,
+                  "y": 15
+                },
+                {
+                  "x": 7,
+                  "y": 15
+                },
+                {
+                  "x": 6,
+                  "y": 14
+                },
+                {
+                  "x": 5,
+                  "y": 14
+                },
+                {
+                  "x": 4,
+                  "y": 13
+                },
+                {
+                  "x": 3,
+                  "y": 12
+                },
+                {
+                  "x": 3,
+                  "y": 10
+                },
+                {
+                  "x": 2,
+                  "y": 10
+                },
+                {
+                  "x": 2,
+                  "y": 11
+                }
+              ],
+              "visibleEvidence": "A distinct tail is attached at the rear-left rump and forms a visible curled contour extending leftward and upward, with the curl and tip discernible away from the body."
+            }
+          ],
+          "photoTail": "OBSCURED",
+          "photoEvidence": "The photographed dog’s rump and back are visible, but no distinct tail attachment, contour, or tip can be seen; the tail appears hidden behind the body or otherwise obscured.",
+          "photoConfidence": 0.98
+        },
+        "failedDirections": [
+          "west",
+          "east"
+        ],
+        "shortTailSupported": false,
+        "uncertainDirections": [
+          "west",
+          "east"
+        ]
+      },
+      {
+        "passed": false,
+        "geometry": {
+          "east": {
+            "edgeContact": false,
+            "opaqueComponents": 1,
+            "clearPixelsLeftTopRightBottom": [
+              2,
+              3,
+              1,
+              1
+            ]
+          },
+          "west": {
+            "edgeContact": false,
+            "opaqueComponents": 1,
+            "clearPixelsLeftTopRightBottom": [
+              1,
+              3,
+              2,
+              1
+            ]
+          }
+        },
+        "pixelAudit": {
+          "east": {
+            "span": 9,
+            "opaque": false,
+            "points": 13,
+            "connected": true,
+            "visiblePath": false,
+            "completeContour": false
+          },
+          "west": {
+            "span": 6,
+            "opaque": true,
+            "points": 7,
+            "connected": true,
+            "visiblePath": true,
+            "completeContour": true
+          }
+        },
+        "observation": {
+          "views": [
+            {
+              "tail": "COMPLETE_CONNECTED",
+              "direction": "west",
+              "confidence": 0.72,
+              "tailPixelPath": [
+                {
+                  "x": 27,
+                  "y": 15
+                },
+                {
+                  "x": 28,
+                  "y": 14
+                },
+                {
+                  "x": 27,
+                  "y": 13
+                },
+                {
+                  "x": 26,
+                  "y": 12
+                },
+                {
+                  "x": 25,
+                  "y": 11
+                },
+                {
+                  "x": 24,
+                  "y": 10
+                },
+                {
+                  "x": 23,
+                  "y": 9
+                }
+              ],
+              "visibleEvidence": "The photographed tail is not visibly identifiable; the rump and back are visible, but no distinct attachment, contour, or natural tip can be localized, so the photo tail is obscured. In the west sprite, a distinct tail is connected at the rear rump around (27,15), curves upward and left through the rear appendage, and ends at a discernible tip near"
+            },
+            {
+              "tail": "COMPLETE_CONNECTED",
+              "direction": "east",
+              "confidence": 0.9,
+              "tailPixelPath": [
+                {
+                  "x": 11,
+                  "y": 16
+                },
+                {
+                  "x": 10,
+                  "y": 16
+                },
+                {
+                  "x": 9,
+                  "y": 15
+                },
+                {
+                  "x": 8,
+                  "y": 15
+                },
+                {
+                  "x": 7,
+                  "y": 15
+                },
+                {
+                  "x": 6,
+                  "y": 14
+                },
+                {
+                  "x": 5,
+                  "y": 14
+                },
+                {
+                  "x": 4,
+                  "y": 13
+                },
+                {
+                  "x": 3,
+                  "y": 12
+                },
+                {
+                  "x": 3,
+                  "y": 10
+                },
+                {
+                  "x": 2,
+                  "y": 10
+                },
+                {
+                  "x": 2,
+                  "y": 11
+                }
+              ],
+              "visibleEvidence": "A distinct tail is attached at the rear-left rump and forms a visible curled contour extending leftward and upward, with the curl and tip discernible away from the body."
+            }
+          ],
+          "photoTail": "OBSCURED",
+          "photoEvidence": "The photographed dog’s rump and back are visible, but no distinct tail attachment, contour, or tip can be seen; the tail appears hidden behind the body or otherwise obscured.",
+          "photoConfidence": 0.98
+        },
+        "failedDirections": [
+          "west",
+          "east"
+        ],
+        "shortTailSupported": false,
+        "uncertainDirections": [
+          "west",
+          "east"
+        ]
+      },
+      {
+        "passed": false,
+        "geometry": {
+          "east": {
+            "edgeContact": false,
+            "opaqueComponents": 1,
+            "clearPixelsLeftTopRightBottom": [
+              2,
+              3,
+              1,
+              1
+            ]
+          },
+          "west": {
+            "edgeContact": false,
+            "opaqueComponents": 1,
+            "clearPixelsLeftTopRightBottom": [
+              1,
+              3,
+              2,
+              1
+            ]
+          }
+        },
+        "pixelAudit": {
+          "east": {
+            "span": 9,
+            "opaque": true,
+            "points": 13,
+            "connected": true,
+            "visiblePath": true,
+            "completeContour": true
+          },
+          "west": {
+            "span": 6,
+            "opaque": true,
+            "points": 7,
+            "connected": true,
+            "visiblePath": true,
+            "completeContour": true
+          }
+        },
+        "observation": {
+          "views": [
+            {
+              "tail": "COMPLETE_CONNECTED",
+              "direction": "west",
+              "confidence": 0.72,
+              "tailPixelPath": [
+                {
+                  "x": 27,
+                  "y": 15
+                },
+                {
+                  "x": 28,
+                  "y": 14
+                },
+                {
+                  "x": 27,
+                  "y": 13
+                },
+                {
+                  "x": 26,
+                  "y": 12
+                },
+                {
+                  "x": 25,
+                  "y": 11
+                },
+                {
+                  "x": 24,
+                  "y": 10
+                },
+                {
+                  "x": 23,
+                  "y": 9
+                }
+              ],
+              "visibleEvidence": "The photographed tail is not visibly identifiable; the rump and back are visible, but no distinct attachment, contour, or natural tip can be localized, so the photo tail is obscured. In the west sprite, a distinct tail is connected at the rear rump around (27,15), curves upward and left through the rear appendage, and ends at a discernible tip near"
+            },
+            {
+              "tail": "COMPLETE_CONNECTED",
+              "direction": "east",
+              "confidence": 0.78,
+              "tailPixelPath": [
+                {
+                  "x": 11,
+                  "y": 16
+                },
+                {
+                  "x": 10,
+                  "y": 16
+                },
+                {
+                  "x": 9,
+                  "y": 15
+                },
+                {
+                  "x": 8,
+                  "y": 15
+                },
+                {
+                  "x": 7,
+                  "y": 15
+                },
+                {
+                  "x": 6,
+                  "y": 14
+                },
+                {
+                  "x": 5,
+                  "y": 14
+                },
+                {
+                  "x": 4,
+                  "y": 13
+                },
+                {
+                  "x": 3,
+                  "y": 12
+                },
+                {
+                  "x": 2,
+                  "y": 12
+                },
+                {
+                  "x": 3,
+                  "y": 11
+                },
+                {
+                  "x": 4,
+                  "y": 10
+                },
+                {
+                  "x": 5,
+                  "y": 9
+                }
+              ],
+              "visibleEvidence": "The photographed tail is obscured behind the dog and no attachment or natural tip is visible. In the east sprite, a distinct tail is connected at the rear-left rump around (11,16), curves leftward and upward with a recognizable contour, and ends at a visible tip near (5,9)."
+            }
+          ],
+          "photoTail": "OBSCURED",
+          "photoEvidence": "The photographed dog’s rump and back are visible, but no distinct tail attachment, contour, or tip can be seen; the tail appears hidden behind the body or otherwise obscured.",
+          "photoConfidence": 0.98
+        },
+        "failedDirections": [
+          "west"
+        ],
+        "shortTailSupported": false,
+        "uncertainDirections": [
+          "west"
+        ]
+      }
+    ],
+    "shortTailSupported": false,
+    "uncertainDirections": [
+      "west"
+    ]
+  },
+  "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "reviewVersion": "photo-observed-features-review-v4",
+  "edgeDirections": [],
+  "learnedLessons": [],
+  "propertyReview": {
+    "note": "네 방향 모두 사진의 주요 털색과 둥근 픽셀 스타일을 대체로 잘 반영합니다.",
+    "views": [
+      {
+        "note": "정면 방향과 흰 얼굴 중앙 무늬, 흰 주둥이·가슴이 사진과 일치합니다.",
+        "issues": [],
+        "direction": "south",
+        "confidence": 0.94,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "observedPhotoMarkings": "사진에서는 이마 중앙과 얼굴·주둥이·가슴이 흰색이고, 눈 주변과 머리 양옆은 적갈색입니다. 몸통은 황갈색이며 앞다리는 흰색입니다.",
+        "observedSpriteMarkings": "이마 중앙에 흰 세로 무늬가 있고, 양쪽 얼굴과 귀는 황갈색이며 흰 주둥이와 가슴, 밝은 앞다리가 보입니다. 작은 검은 눈 두 개와 중립적인 어두운 입선이 있습니다."
+      },
+      {
+        "note": "올바른 후면 표현이며 얼굴 요소가 없는 것이 적절합니다.",
+        "issues": [],
+        "direction": "north",
+        "confidence": 0.88,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "observedPhotoMarkings": "사진의 뒷면은 보이지 않아 등·꼬리의 정확한 무늬와 꼬리 길이는 알 수 없습니다. 사진에서 확인되는 황갈색 몸통 색상과는 부합합니다.",
+        "observedSpriteMarkings": "등과 뒷머리는 황갈색이며 귀 안쪽과 몸 아래쪽에 어두운 음영이 있습니다. 뒤쪽 중앙에 작게 말린 꼬리가 보이고 얼굴이나 눈은 없습니다."
+      },
+      {
+        "note": "왼쪽 프로필의 눈, 주둥이, 가슴과 꼬리 배치가 자연스럽습니다.",
+        "issues": [],
+        "direction": "west",
+        "confidence": 0.72,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "repairEvidenceSource": "UNRESOLVED_OBSERVATION",
+        "observedPhotoMarkings": "사진에서는 흰 주둥이와 목·가슴, 적갈색 머리 측면, 황갈색 등과 흰 다리가 보입니다. 사진의 반대쪽 옆면과 꼬리 모양은 가려져 알 수 없습니다.",
+        "observedSpriteMarkings": "왼쪽을 향한 옆얼굴에 흰 주둥이와 목·가슴이 있고, 머리와 등은 황갈색입니다. 다리 끝에는 흰색 패치가 있으며 등 뒤 오른쪽에 완전히 보이는 위로 말린 꼬리가 있습니다.",
+        "tailObservationUncertain": true
+      },
+      {
+        "note": "오른쪽 프로필 방향이 맞고 주요 얼굴·가슴 색 배치가 유지됩니다.",
+        "issues": [],
+        "direction": "east",
+        "confidence": 0.91,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "observedPhotoMarkings": "사진에서는 흰 주둥이·가슴과 적갈색 얼굴 측면, 황갈색 몸통, 흰 앞다리가 보입니다. 이 반대쪽 옆면과 꼬리는 사진에서 명확히 보이지 않습니다.",
+        "observedSpriteMarkings": "오른쪽을 향한 옆얼굴에 흰 주둥이와 목·가슴이 있고, 머리와 몸통은 황갈색입니다. 네 다리 중 보이는 발에 흰색 패치가 있으며 뒤쪽 왼쪽에 위로 말린 완전한 꼬리가 있습니다."
+      }
+    ],
+    "tailConsistent": true,
+    "repairDescription": ""
+  },
+  "recoveryVersion": "photo-grounded-recovery-v1",
+  "marginDirections": [],
+  "repairDescription": "",
+  "reviewImageHashes": {
+    "Actual body photo": "e9c4cd227b1c4976423b323c32e70f73839bcbb05fc025b3e48294a4d19cde7a",
+    "Actual face photo": "bb16c92b604a3ad697c38f759205451649dfe8eb13d25f8dcedd0fe108ebd537",
+    "Unapproved view: east": "5e27eb6298b1867ffed5e0ccab19d8e1d830d8183549e39b7bbc5c1c5050496a",
+    "Unapproved view: west": "7e78c0243ebd9c7ca41ceea7967f7361bb8a5fdf6dc2275ec4391c06367919e1",
+    "Unapproved view: north": "1dde8da3199fd023b02a77ec577a86fcb6a0d32ed6b7e9d3c30d86ac128b3a16",
+    "Unapproved view: south": "2278cace10789933ebae4b9903e086030c2bcc54012e21c12f3b7a90e2a6ffd7",
+    "Approved art style only; not this dog": "bf5e5641f0768a45f7a87f10bbb5bf26e987dee581b1b2cf4d08d2c4c0cd539c"
+  },
+  "minimumClearPixels": 1,
+  "generalPropertyReview": {
+    "note": "네 방향 모두 사진의 주요 털색과 둥근 픽셀 스타일을 대체로 잘 반영합니다.",
+    "views": [
+      {
+        "note": "정면 방향과 흰 얼굴 중앙 무늬, 흰 주둥이·가슴이 사진과 일치합니다.",
+        "issues": [],
+        "direction": "south",
+        "confidence": 0.94,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "observedPhotoMarkings": "사진에서는 이마 중앙과 얼굴·주둥이·가슴이 흰색이고, 눈 주변과 머리 양옆은 적갈색입니다. 몸통은 황갈색이며 앞다리는 흰색입니다.",
+        "observedSpriteMarkings": "이마 중앙에 흰 세로 무늬가 있고, 양쪽 얼굴과 귀는 황갈색이며 흰 주둥이와 가슴, 밝은 앞다리가 보입니다. 작은 검은 눈 두 개와 중립적인 어두운 입선이 있습니다."
+      },
+      {
+        "note": "올바른 후면 표현이며 얼굴 요소가 없는 것이 적절합니다.",
+        "issues": [],
+        "direction": "north",
+        "confidence": 0.88,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "observedPhotoMarkings": "사진의 뒷면은 보이지 않아 등·꼬리의 정확한 무늬와 꼬리 길이는 알 수 없습니다. 사진에서 확인되는 황갈색 몸통 색상과는 부합합니다.",
+        "observedSpriteMarkings": "등과 뒷머리는 황갈색이며 귀 안쪽과 몸 아래쪽에 어두운 음영이 있습니다. 뒤쪽 중앙에 작게 말린 꼬리가 보이고 얼굴이나 눈은 없습니다."
+      },
+      {
+        "note": "왼쪽 프로필의 눈, 주둥이, 가슴과 꼬리 배치가 자연스럽습니다.",
+        "issues": [],
+        "direction": "west",
+        "confidence": 0.91,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "observedPhotoMarkings": "사진에서는 흰 주둥이와 목·가슴, 적갈색 머리 측면, 황갈색 등과 흰 다리가 보입니다. 사진의 반대쪽 옆면과 꼬리 모양은 가려져 알 수 없습니다.",
+        "observedSpriteMarkings": "왼쪽을 향한 옆얼굴에 흰 주둥이와 목·가슴이 있고, 머리와 등은 황갈색입니다. 다리 끝에는 흰색 패치가 있으며 등 뒤 오른쪽에 완전히 보이는 위로 말린 꼬리가 있습니다."
+      },
+      {
+        "note": "오른쪽 프로필 방향이 맞고 주요 얼굴·가슴 색 배치가 유지됩니다.",
+        "issues": [],
+        "direction": "east",
+        "confidence": 0.91,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "observedPhotoMarkings": "사진에서는 흰 주둥이·가슴과 적갈색 얼굴 측면, 황갈색 몸통, 흰 앞다리가 보입니다. 이 반대쪽 옆면과 꼬리는 사진에서 명확히 보이지 않습니다.",
+        "observedSpriteMarkings": "오른쪽을 향한 옆얼굴에 흰 주둥이와 목·가슴이 있고, 머리와 몸통은 황갈색입니다. 네 다리 중 보이는 발에 흰색 패치가 있으며 뒤쪽 왼쪽에 위로 말린 완전한 꼬리가 있습니다."
+      }
+    ],
+    "tailConsistent": true,
+    "repairDescription": ""
+  },
+  "clearPixelsLeftTopRightBottom": {
+    "east": [
+      2,
+      3,
+      1,
+      1
+    ],
+    "west": [
+      1,
+      3,
+      2,
+      1
+    ],
+    "north": [
+      8,
+      2,
+      7,
+      2
+    ],
+    "south": [
+      8,
+      3,
+      8,
+      1
+    ]
+  }
+}

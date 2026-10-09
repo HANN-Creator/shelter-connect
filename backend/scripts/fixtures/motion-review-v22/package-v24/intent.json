@@ -1,0 +1,18 @@
+{
+  "jarSha256": "333aadc1d4e91c1be055577ce3e3a3e084f8f305cea455c8e4bad7aa75dc5b8a",
+  "rulesSha256": "c7402961098211887af131ea5c26e6f4f07d28490299a58bf9d6b5c1d2f9c365",
+  "cases": {
+    "expectBoundPass": [
+      "idle-south",
+      "idle-west",
+      "genuine-walk"
+    ],
+    "expectBlocked": [
+      "idle-north",
+      "clipped-last",
+      "face-flicker",
+      "still-is-not-walk"
+    ]
+  },
+  "scope": "Exact packaged production classes and actual Luna; no PixelLab generation, HTTP/DB approval or publication in this check."
+}

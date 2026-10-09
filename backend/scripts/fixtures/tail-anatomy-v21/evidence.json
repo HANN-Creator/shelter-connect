@@ -1,0 +1,17 @@
+{
+  "imageBytesChanged": false,
+  "published": false,
+  "findings": [
+    "deployed WEST complete tail and valid path rejected solely at confidence 0.72",
+    "packaged same pixels: guessed WEST path includes transparent coordinate 29,10",
+    "unknown observation must never be a negative training example"
+  ],
+  "sha256": {
+    "west.png": "81f256fb4aead87334508fd00f5798e30ab733fe46b18a4917b3532cad0bd9f9",
+    "north.png": "35f3c2dea252fbb0c840b37c45e972d54dff92d0f92085dc7c2535001e0eb63c",
+    "east.png": "8f6f7f49aa3a73063f55ef59bde0409d4e8c3ab2f01aa5c072e9446a366156f5",
+    "south.png": "4d33c8ef0a6f2e6461fa547101805291e003a6a4bc7244d18cad775ba2742e20",
+    "packaged-review.json": "629815ce66b758c37a27b9c9a0424d15eaa514e7445829f544923aee9559abd6",
+    "deployed-review.json": "e7fe55bac92a3230a847d35b3122efe032545f35bd0229e5b16cdd9451a6aaba"
+  }
+}
