@@ -174,7 +174,11 @@ final class StyledTailAnatomy {
             for(var v:report.at("/propertyReview/views")){
                 var codes=new TreeSet<String>();v.path("issues").forEach(n->{if(!n.asText().startsWith("TAIL_"))codes.add(n.asText());});
                 StyledRecoveryReview.BASE.forEach((field,code)->{if(!field.equals("tailPlausible") && !v.path(field).asBoolean())codes.add(code);});
-                if(!codes.isEmpty())targets.add(v.path("direction").asText()+": "+String.join(",",codes));
+                String d=v.path("direction").asText();
+                if(report.path("edgeDirections").valueStream().anyMatch(n->n.asText().equals(d)))codes.add("CANVAS_CLIPPING");
+                if(report.path("marginDirections").valueStream().anyMatch(n->n.asText().equals(d)))codes.add("SEED_MOTION_MARGIN");
+                if(!codes.isEmpty())targets.add(d+": "+String.join(",",codes)
+                    +(v.path("observedPhotoMarkings").asText().isBlank()?"":". Observed photo markings (data): "+v.path("observedPhotoMarkings").asText()));
             }
             report.put("repairDescription",targets.isEmpty()?"":"Correct only these independently confirmed non-tail properties: "+String.join("; ",targets)
                 +". Preserve the original tail pixels in "+String.join(",",uncertain)+"; uncertain tail anatomy is NOT permission to reconstruct it. Preserve the same dog and every unaffected property.");

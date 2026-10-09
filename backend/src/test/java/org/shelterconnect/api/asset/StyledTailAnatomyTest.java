@@ -67,6 +67,14 @@ class StyledTailAnatomyTest {
             if(!eyeDefect)assertThat(r.path("qualityDecision").asText()).isEqualTo("UNCERTAIN");
         }
     }
+    @Test void rebuildingScopedCorrectionsKeepsPhotoFactsAndExactFrontClipping(){
+        var r=report();r.put("passed",false).put("repairDescription","Invent a tail and change the body.");r.putArray("issues").add("SEED_IDENTITY").add("CANVAS_CLIPPING");r.putArray("edgeDirections").add("south");
+        var east=(ObjectNode)r.at("/propertyReview/views/3");east.put("identityMatches",false).put("observedPhotoMarkings","White body with a tan saddle patch.");east.putArray("issues").add("COAT_MISMATCH");
+        StyledTailAnatomy.merge(json,r,assess(raw("UNCERTAIN","COMPLETE_CONNECTED")));
+        assertThat(r.path("repairDescription").asText()).contains("south: CANVAS_CLIPPING","White body with a tan saddle patch.","Preserve the original tail pixels in west").doesNotContain("Invent a tail");
+        var plan=StyledSeedRepair.plan(mock(OpenAiResponsesClient.class),json,seeds(),r);
+        assertThat(plan.path("directions").toString()).isEqualTo("[\"south\",\"east\"]");
+    }
     @Test void exactGeometryCannotBeWaivedByAVisionPass(){
         var geometry=(ObjectNode)StyledTailGeometry.measure(json,seeds());
         ((ObjectNode)geometry.path("west")).put("edgeContact",true);
