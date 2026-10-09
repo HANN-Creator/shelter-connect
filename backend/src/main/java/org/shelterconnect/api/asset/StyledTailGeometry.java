@@ -7,7 +7,7 @@ import tools.jackson.databind.node.ObjectNode;
 
 /** Conservative silhouette support, NOT tail segmentation. Missing support means uncertain, not defective anatomy. */
 final class StyledTailGeometry {
-    static final String VERSION="rear-silhouette-branches-v1";
+    static final String VERSION="rear-silhouette-branches-v2";
     private static final int[] DX={0,1,1,1,0,-1,-1,-1}, DY={-1,-1,0,1,1,1,0,-1};
     static JsonNode measure(JsonMapper json,List<byte[]> seeds){
         var result=(ObjectNode)StyledSeedTailEvidence.geometry(json,seeds,false);
@@ -34,10 +34,18 @@ final class StyledTailGeometry {
                 while(true){var next=neighbors(pixels,current);next.remove(Integer.valueOf(previous));if(next.size()!=1)break;
                     previous=current;current=next.getFirst();if(path.contains(current))break;path.add(current);
                 }
-                // A raised tail can join the spine without a rump junction. A descending paw-to-torso trace is not support.
-                boolean raisedToSpine=p/32+2<=current/32 && Math.abs(current%32-middle)<=(right-left)/6.0;
-                if(path.size()>=4 && (rear(current%32,middle,d) || raisedToSpine)){
-                    var points=json.createArrayNode();for(int point:path)points.addObject().put("x",point%32).put("y",point/32);paths.add(points);
+                // Thinning can leave a single tail -> spine -> head path with no rump junction.
+                // Measure the first qualifying spine connection, not only the far end at the head.
+                // Keep the same >=4 points, >=2px rise, central-third and rear-tip constraints;
+                // a descending paw-to-torso trace does not gain support from this allowance.
+                int supportEnd=-1;
+                for(int i=3;i<path.size();i++){
+                    int point=path.get(i);
+                    if(p/32+2<=point/32 && Math.abs(point%32-middle)<=(right-left)/6.0){supportEnd=i;break;}
+                }
+                if(supportEnd<0 && path.size()>=4 && rear(current%32,middle,d))supportEnd=path.size()-1;
+                if(supportEnd>=0){
+                    var points=json.createArrayNode();for(int i=0;i<=supportEnd;i++){int point=path.get(i);points.addObject().put("x",point%32).put("y",point/32);}paths.add(points);
                 }
             }
             var g=(ObjectNode)result.path(d);g.put("branchVersion",VERSION).put("rearBranchSupport",!paths.isEmpty());g.set("rearBranchCandidates",paths);

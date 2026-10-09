@@ -201,3 +201,5 @@ B-71: [보완된 기본 도트 재검수 상태 분리](repaired-seed-recheck.md
 - B-74 [기준 도트의 남은 예산으로 보완 재개](seed-repair-resume.md): 별도 요청의 중복·권한·해시·횟수 보존, 얼굴 무늬의 실질 결함 구분과 국소 편집, 실서버 실행 파일 검증. DB V23 유지, 공통 규칙 v25.
 
 - B-75 [확정된 정면 부속물 보완과 IDLE 정지 대체](idle-motion-recovery.md): [노션](https://app.notion.com/p/3f45b2d1a55f80bdb396fd29378ecdc3). 브랜치 `backend/b-75-idle-motion-recovery`. 실제 원본·남은 예산 보존, 새 규칙으로 실패 모션 재개, 소진된 IDLE만 별도 정지 결과 생성·독립 검수. v26, DB V23 유지.
+
+- B-76 [정상 꼬리의 몸통 연결 판별](tail-spine-support.md): [노션](https://app.notion.com/p/3f45b2d1a55f8015a97fd46624c2589a). 브랜치 `backend/b-76-tail-spine-support`. 실제 배포 원본에서 머리까지 이어진 경로의 중간 몸통 연결점 측정, 원본·이전 관찰·좌우 대칭·결함 차단 회귀 검사. v31, DB/API 변경 없음. 실제 꼬리 검수는 통과했으나 전체 검수의 별도 털무늬 충돌은 남아 있으며 병합·배포·자동 승인 완료로 보고하지 않는다.

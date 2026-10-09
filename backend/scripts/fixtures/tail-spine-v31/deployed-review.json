@@ -1,0 +1,758 @@
+{
+  "note": "꼬리 관찰이 불확실한 방향은 원본을 보존하고 승인을 보류합니다. 불확실성 자체는 이미지 결함이나 학습 예시가 아닙니다.",
+  "model": "gpt-5.6-luna",
+  "views": [
+    {
+      "note": "정면의 흰색 얼굴 중앙선과 주둥이, 가슴 무늬가 잘 보입니다.",
+      "style": "PASS",
+      "direction": "south",
+      "readability": "PASS"
+    },
+    {
+      "note": "후면답게 눈과 얼굴을 넣지 않았고, 보이는 등·다리 색이 일치합니다.",
+      "style": "PASS",
+      "direction": "north",
+      "readability": "NOT_VISIBLE"
+    },
+    {
+      "note": "좌측 프로필의 흰 주둥이·목과 등 색 배치가 자연스럽습니다.",
+      "style": "PASS",
+      "direction": "west",
+      "readability": "PASS"
+    },
+    {
+      "note": "우측 프로필도 흰 얼굴·가슴과 황갈색 몸통 무늬를 유지합니다.",
+      "style": "PASS",
+      "direction": "east",
+      "readability": "PASS"
+    }
+  ],
+  "issues": [],
+  "passed": false,
+  "version": "seed-eyes-v1",
+  "identity": "UNCERTAIN",
+  "appearance": "UNCERTAIN",
+  "reviewedAt": "2026-10-09T19:34:19.059618404Z",
+  "inputSha256": "ff55caf0fd4aa728ec7927adde6c3864f59a43caeeab331c76da5f1bc218df05",
+  "photoSha256": "e9c4cd227b1c4976423b323c32e70f73839bcbb05fc025b3e48294a4d19cde7a",
+  "rulesSha256": "8d4b55dbddd28153a42202853b578529bd9c489c09e8c08094869ee97c66eda3",
+  "coatEvidence": {
+    "version": "material-coat-review-v1",
+    "reviewCalls": 0,
+    "propertyReview": {
+      "note": "네 방향 모두 사진의 주요 흰색·황갈색 무늬와 귀, 주둥이, 컴팩트한 픽셀 스타일에 부합합니다.",
+      "views": [
+        {
+          "note": "정면의 흰색 얼굴 중앙선과 주둥이, 가슴 무늬가 잘 보입니다.",
+          "issues": [],
+          "direction": "south",
+          "confidence": 0.94,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "The visible front photo shows tan ears and crown with darker side facial patches, a broad white blaze and white muzzle, a large white chest, and white legs. The tail is photo-hidden.",
+          "observedSpriteMarkings": "The front sprite has a tan head and ears, a narrow white forehead blaze, white muzzle and cheeks, a white chest, and mostly white lower legs over a tan body."
+        },
+        {
+          "note": "후면답게 눈과 얼굴을 넣지 않았고, 보이는 등·다리 색이 일치합니다.",
+          "issues": [],
+          "direction": "north",
+          "confidence": 0.86,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "The photo visibly supports a tan-to-brown back and white lower body and legs, while the rear head and rear-specific markings are not directly visible. The tail is hidden in the photo.",
+          "observedSpriteMarkings": "The rear sprite shows tan outer head and back areas, darker brown shading along the central upper back and head, a lighter cream central face/back area, and light lower legs; no facial features are shown."
+        },
+        {
+          "note": "좌측 프로필의 흰 주둥이·목과 등 색 배치가 자연스럽습니다.",
+          "issues": [],
+          "direction": "west",
+          "confidence": 0.91,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "repairEvidenceSource": "UNRESOLVED_OBSERVATION",
+          "observedPhotoMarkings": "The visible photo shows a tan head and back with darker facial-side shading, a white muzzle and throat/chest, and white legs. The tail is photo-hidden, so its exact form is unknown.",
+          "observedSpriteMarkings": "The left-facing profile has a tan head and body, a white muzzle and throat/chest patch, darker tan-brown ear and back shading, pale lower legs, and a raised tan tail with darker shading.",
+          "tailObservationUncertain": true
+        },
+        {
+          "note": "우측 프로필도 흰 얼굴·가슴과 황갈색 몸통 무늬를 유지합니다.",
+          "issues": [],
+          "direction": "east",
+          "confidence": 0.91,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "The visible photo supports the tan head and back, darker facial-side areas, white muzzle and chest, and white legs. The tail is photo-hidden, so exact tail carriage cannot be confirmed.",
+          "observedSpriteMarkings": "The right-facing profile has a tan head and body, a white muzzle and neck/chest patch, darker ear and back shading, pale lower legs, and a curled tan tail with darker shading."
+        }
+      ],
+      "photoTail": "OBSCURED",
+      "photoEvidence": "실제 사진에서는 몸통 뒤쪽 꼬리가 자세와 프레임에 가려져 보이지 않습니다.",
+      "tailConsistent": true,
+      "repairDescription": ""
+    },
+    "originalPropertyReview": {
+      "note": "네 방향 모두 사진의 주요 흰색·황갈색 무늬와 귀, 주둥이, 컴팩트한 픽셀 스타일에 부합합니다.",
+      "views": [
+        {
+          "note": "정면의 흰색 얼굴 중앙선과 주둥이, 가슴 무늬가 잘 보입니다.",
+          "issues": [],
+          "direction": "south",
+          "confidence": 0.94,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "The visible front photo shows tan ears and crown with darker side facial patches, a broad white blaze and white muzzle, a large white chest, and white legs. The tail is photo-hidden.",
+          "observedSpriteMarkings": "The front sprite has a tan head and ears, a narrow white forehead blaze, white muzzle and cheeks, a white chest, and mostly white lower legs over a tan body."
+        },
+        {
+          "note": "후면답게 눈과 얼굴을 넣지 않았고, 보이는 등·다리 색이 일치합니다.",
+          "issues": [],
+          "direction": "north",
+          "confidence": 0.86,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "The photo visibly supports a tan-to-brown back and white lower body and legs, while the rear head and rear-specific markings are not directly visible. The tail is hidden in the photo.",
+          "observedSpriteMarkings": "The rear sprite shows tan outer head and back areas, darker brown shading along the central upper back and head, a lighter cream central face/back area, and light lower legs; no facial features are shown."
+        },
+        {
+          "note": "좌측 프로필의 흰 주둥이·목과 등 색 배치가 자연스럽습니다.",
+          "issues": [],
+          "direction": "west",
+          "confidence": 0.91,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "The visible photo shows a tan head and back with darker facial-side shading, a white muzzle and throat/chest, and white legs. The tail is photo-hidden, so its exact form is unknown.",
+          "observedSpriteMarkings": "The left-facing profile has a tan head and body, a white muzzle and throat/chest patch, darker tan-brown ear and back shading, pale lower legs, and a raised tan tail with darker shading."
+        },
+        {
+          "note": "우측 프로필도 흰 얼굴·가슴과 황갈색 몸통 무늬를 유지합니다.",
+          "issues": [],
+          "direction": "east",
+          "confidence": 0.91,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "The visible photo supports the tan head and back, darker facial-side areas, white muzzle and chest, and white legs. The tail is photo-hidden, so exact tail carriage cannot be confirmed.",
+          "observedSpriteMarkings": "The right-facing profile has a tan head and body, a white muzzle and neck/chest patch, darker ear and back shading, pale lower legs, and a curled tan tail with darker shading."
+        }
+      ],
+      "photoTail": "OBSCURED",
+      "photoEvidence": "실제 사진에서는 몸통 뒤쪽 꼬리가 자세와 프레임에 가려져 보이지 않습니다.",
+      "tailConsistent": true,
+      "repairDescription": ""
+    }
+  },
+  "tailEvidence": {
+    "model": "gpt-5.6-luna",
+    "passed": false,
+    "version": "tail-anatomy-tristate-v2",
+    "decision": "UNCERTAIN",
+    "geometry": {
+      "east": {
+        "edgeContact": false,
+        "branchVersion": "rear-silhouette-branches-v1",
+        "opaqueComponents": 1,
+        "rearBranchSupport": true,
+        "rearBranchCandidates": [
+          [
+            {
+              "x": 7,
+              "y": 14
+            },
+            {
+              "x": 7,
+              "y": 15
+            },
+            {
+              "x": 7,
+              "y": 16
+            },
+            {
+              "x": 7,
+              "y": 17
+            },
+            {
+              "x": 8,
+              "y": 18
+            },
+            {
+              "x": 9,
+              "y": 18
+            },
+            {
+              "x": 10,
+              "y": 19
+            },
+            {
+              "x": 11,
+              "y": 20
+            },
+            {
+              "x": 12,
+              "y": 20
+            },
+            {
+              "x": 13,
+              "y": 20
+            },
+            {
+              "x": 14,
+              "y": 20
+            },
+            {
+              "x": 15,
+              "y": 20
+            },
+            {
+              "x": 16,
+              "y": 20
+            }
+          ]
+        ],
+        "clearPixelsLeftTopRightBottom": [
+          2,
+          2,
+          2,
+          2
+        ]
+      },
+      "west": {
+        "edgeContact": false,
+        "branchVersion": "rear-silhouette-branches-v1",
+        "opaqueComponents": 1,
+        "rearBranchSupport": false,
+        "rearBranchCandidates": [],
+        "clearPixelsLeftTopRightBottom": [
+          2,
+          2,
+          2,
+          2
+        ]
+      }
+    },
+    "verdicts": {
+      "east": {
+        "issue": "",
+        "decision": "PASS"
+      },
+      "west": {
+        "issue": "",
+        "decision": "UNCERTAIN"
+      }
+    },
+    "reviewedAt": "2026-10-09T19:34:37.971925306Z",
+    "inputSha256": "ff55caf0fd4aa728ec7927adde6c3864f59a43caeeab331c76da5f1bc218df05",
+    "observation": {
+      "views": [
+        {
+          "tip": "VISIBLE",
+          "tail": "COMPLETE_CONNECTED",
+          "contour": "DISTINCT",
+          "direction": "west",
+          "attachment": "CONNECTED",
+          "visibleEvidence": "The rump has a connected appendage rising and projecting to the right, with a distinct outlined contour and a visible squared terminal end."
+        },
+        {
+          "tip": "VISIBLE",
+          "tail": "COMPLETE_CONNECTED",
+          "contour": "DISTINCT",
+          "direction": "east",
+          "attachment": "CONNECTED",
+          "visibleEvidence": "A broad, curled-looking appendage is visibly connected to the left rump, with a clearly separate outer contour and visible end."
+        }
+      ],
+      "photoTail": "OBSCURED",
+      "photoEvidence": "실제 사진에서는 몸통 뒤쪽 꼬리가 자세와 프레임에 가려져 보이지 않습니다."
+    },
+    "photoSha256": "e9c4cd227b1c4976423b323c32e70f73839bcbb05fc025b3e48294a4d19cde7a",
+    "reviewCalls": 2,
+    "rulesSha256": "8d4b55dbddd28153a42202853b578529bd9c489c09e8c08094869ee97c66eda3",
+    "failedDirections": [],
+    "observationHistory": [
+      {
+        "passed": false,
+        "decision": "UNCERTAIN",
+        "geometry": {
+          "east": {
+            "edgeContact": false,
+            "branchVersion": "rear-silhouette-branches-v1",
+            "opaqueComponents": 1,
+            "rearBranchSupport": true,
+            "rearBranchCandidates": [
+              [
+                {
+                  "x": 7,
+                  "y": 14
+                },
+                {
+                  "x": 7,
+                  "y": 15
+                },
+                {
+                  "x": 7,
+                  "y": 16
+                },
+                {
+                  "x": 7,
+                  "y": 17
+                },
+                {
+                  "x": 8,
+                  "y": 18
+                },
+                {
+                  "x": 9,
+                  "y": 18
+                },
+                {
+                  "x": 10,
+                  "y": 19
+                },
+                {
+                  "x": 11,
+                  "y": 20
+                },
+                {
+                  "x": 12,
+                  "y": 20
+                },
+                {
+                  "x": 13,
+                  "y": 20
+                },
+                {
+                  "x": 14,
+                  "y": 20
+                },
+                {
+                  "x": 15,
+                  "y": 20
+                },
+                {
+                  "x": 16,
+                  "y": 20
+                }
+              ]
+            ],
+            "clearPixelsLeftTopRightBottom": [
+              2,
+              2,
+              2,
+              2
+            ]
+          },
+          "west": {
+            "edgeContact": false,
+            "branchVersion": "rear-silhouette-branches-v1",
+            "opaqueComponents": 1,
+            "rearBranchSupport": false,
+            "rearBranchCandidates": [],
+            "clearPixelsLeftTopRightBottom": [
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        },
+        "verdicts": {
+          "east": {
+            "issue": "",
+            "decision": "PASS"
+          },
+          "west": {
+            "issue": "",
+            "decision": "UNCERTAIN"
+          }
+        },
+        "observation": {
+          "views": [
+            {
+              "tip": "VISIBLE",
+              "tail": "COMPLETE_CONNECTED",
+              "contour": "DISTINCT",
+              "direction": "west",
+              "attachment": "CONNECTED",
+              "visibleEvidence": "A compact appendage is visibly attached at the right rump, projecting outward with a distinct blocky contour and a visible terminal end."
+            },
+            {
+              "tip": "VISIBLE",
+              "tail": "COMPLETE_CONNECTED",
+              "contour": "DISTINCT",
+              "direction": "east",
+              "attachment": "CONNECTED",
+              "visibleEvidence": "A broad, curled-looking appendage is visibly connected to the left rump, with a clearly separate outer contour and visible end."
+            }
+          ],
+          "photoTail": "OBSCURED",
+          "photoEvidence": "실제 사진에서는 몸통 뒤쪽 꼬리가 자세와 프레임에 가려져 보이지 않습니다."
+        },
+        "failedDirections": [],
+        "shortTailSupported": false,
+        "uncertainDirections": [
+          "west"
+        ],
+        "conflictingDirections": []
+      },
+      {
+        "passed": false,
+        "decision": "UNCERTAIN",
+        "geometry": {
+          "east": {
+            "edgeContact": false,
+            "branchVersion": "rear-silhouette-branches-v1",
+            "opaqueComponents": 1,
+            "rearBranchSupport": true,
+            "rearBranchCandidates": [
+              [
+                {
+                  "x": 7,
+                  "y": 14
+                },
+                {
+                  "x": 7,
+                  "y": 15
+                },
+                {
+                  "x": 7,
+                  "y": 16
+                },
+                {
+                  "x": 7,
+                  "y": 17
+                },
+                {
+                  "x": 8,
+                  "y": 18
+                },
+                {
+                  "x": 9,
+                  "y": 18
+                },
+                {
+                  "x": 10,
+                  "y": 19
+                },
+                {
+                  "x": 11,
+                  "y": 20
+                },
+                {
+                  "x": 12,
+                  "y": 20
+                },
+                {
+                  "x": 13,
+                  "y": 20
+                },
+                {
+                  "x": 14,
+                  "y": 20
+                },
+                {
+                  "x": 15,
+                  "y": 20
+                },
+                {
+                  "x": 16,
+                  "y": 20
+                }
+              ]
+            ],
+            "clearPixelsLeftTopRightBottom": [
+              2,
+              2,
+              2,
+              2
+            ]
+          },
+          "west": {
+            "edgeContact": false,
+            "branchVersion": "rear-silhouette-branches-v1",
+            "opaqueComponents": 1,
+            "rearBranchSupport": false,
+            "rearBranchCandidates": [],
+            "clearPixelsLeftTopRightBottom": [
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        },
+        "verdicts": {
+          "east": {
+            "issue": "",
+            "decision": "PASS"
+          },
+          "west": {
+            "issue": "",
+            "decision": "UNCERTAIN"
+          }
+        },
+        "observation": {
+          "views": [
+            {
+              "tip": "VISIBLE",
+              "tail": "COMPLETE_CONNECTED",
+              "contour": "DISTINCT",
+              "direction": "west",
+              "attachment": "CONNECTED",
+              "visibleEvidence": "The rump has a connected appendage rising and projecting to the right, with a distinct outlined contour and a visible squared terminal end."
+            },
+            {
+              "tip": "VISIBLE",
+              "tail": "COMPLETE_CONNECTED",
+              "contour": "DISTINCT",
+              "direction": "east",
+              "attachment": "CONNECTED",
+              "visibleEvidence": "A broad, curled-looking appendage is visibly connected to the left rump, with a clearly separate outer contour and visible end."
+            }
+          ],
+          "photoTail": "OBSCURED",
+          "photoEvidence": "실제 사진에서는 몸통 뒤쪽 꼬리가 자세와 프레임에 가려져 보이지 않습니다."
+        },
+        "failedDirections": [],
+        "shortTailSupported": false,
+        "uncertainDirections": [
+          "west"
+        ],
+        "conflictingDirections": [],
+        "independentObservation": {
+          "views": [
+            {
+              "tip": "VISIBLE",
+              "tail": "COMPLETE_CONNECTED",
+              "contour": "DISTINCT",
+              "direction": "west",
+              "attachment": "CONNECTED",
+              "visibleEvidence": "The rump has a connected appendage rising and projecting to the right, with a distinct outlined contour and a visible squared terminal end."
+            }
+          ],
+          "photoTail": "OBSCURED",
+          "photoEvidence": "실제 사진에서는 몸통 뒤쪽 꼬리가 자세와 프레임에 가려져 보이지 않습니다."
+        }
+      }
+    ],
+    "shortTailSupported": false,
+    "uncertainDirections": [
+      "west"
+    ],
+    "conflictingDirections": [],
+    "independentObservation": {
+      "views": [
+        {
+          "tip": "VISIBLE",
+          "tail": "COMPLETE_CONNECTED",
+          "contour": "DISTINCT",
+          "direction": "west",
+          "attachment": "CONNECTED",
+          "visibleEvidence": "The rump has a connected appendage rising and projecting to the right, with a distinct outlined contour and a visible squared terminal end."
+        }
+      ],
+      "photoTail": "OBSCURED",
+      "photoEvidence": "실제 사진에서는 몸통 뒤쪽 꼬리가 자세와 프레임에 가려져 보이지 않습니다."
+    }
+  },
+  "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "reviewVersion": "photo-observed-features-review-v4",
+  "edgeDirections": [],
+  "learnedLessons": [],
+  "propertyReview": {
+    "note": "네 방향 모두 사진의 주요 흰색·황갈색 무늬와 귀, 주둥이, 컴팩트한 픽셀 스타일에 부합합니다.",
+    "views": [
+      {
+        "note": "정면의 흰색 얼굴 중앙선과 주둥이, 가슴 무늬가 잘 보입니다.",
+        "issues": [],
+        "direction": "south",
+        "confidence": 0.94,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "observedPhotoMarkings": "The visible front photo shows tan ears and crown with darker side facial patches, a broad white blaze and white muzzle, a large white chest, and white legs. The tail is photo-hidden.",
+        "observedSpriteMarkings": "The front sprite has a tan head and ears, a narrow white forehead blaze, white muzzle and cheeks, a white chest, and mostly white lower legs over a tan body."
+      },
+      {
+        "note": "후면답게 눈과 얼굴을 넣지 않았고, 보이는 등·다리 색이 일치합니다.",
+        "issues": [],
+        "direction": "north",
+        "confidence": 0.86,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "observedPhotoMarkings": "The photo visibly supports a tan-to-brown back and white lower body and legs, while the rear head and rear-specific markings are not directly visible. The tail is hidden in the photo.",
+        "observedSpriteMarkings": "The rear sprite shows tan outer head and back areas, darker brown shading along the central upper back and head, a lighter cream central face/back area, and light lower legs; no facial features are shown."
+      },
+      {
+        "note": "좌측 프로필의 흰 주둥이·목과 등 색 배치가 자연스럽습니다.",
+        "issues": [],
+        "direction": "west",
+        "confidence": 0.91,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "repairEvidenceSource": "UNRESOLVED_OBSERVATION",
+        "observedPhotoMarkings": "The visible photo shows a tan head and back with darker facial-side shading, a white muzzle and throat/chest, and white legs. The tail is photo-hidden, so its exact form is unknown.",
+        "observedSpriteMarkings": "The left-facing profile has a tan head and body, a white muzzle and throat/chest patch, darker tan-brown ear and back shading, pale lower legs, and a raised tan tail with darker shading.",
+        "tailObservationUncertain": true
+      },
+      {
+        "note": "우측 프로필도 흰 얼굴·가슴과 황갈색 몸통 무늬를 유지합니다.",
+        "issues": [],
+        "direction": "east",
+        "confidence": 0.91,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "observedPhotoMarkings": "The visible photo supports the tan head and back, darker facial-side areas, white muzzle and chest, and white legs. The tail is photo-hidden, so exact tail carriage cannot be confirmed.",
+        "observedSpriteMarkings": "The right-facing profile has a tan head and body, a white muzzle and neck/chest patch, darker ear and back shading, pale lower legs, and a curled tan tail with darker shading."
+      }
+    ],
+    "photoTail": "OBSCURED",
+    "photoEvidence": "실제 사진에서는 몸통 뒤쪽 꼬리가 자세와 프레임에 가려져 보이지 않습니다.",
+    "tailConsistent": true,
+    "repairDescription": ""
+  },
+  "seedRepairPlan": {
+    "method": "VIEW",
+    "status": "UNCERTAIN_VERDICT",
+    "version": "selected-seed-repair-v1",
+    "directions": [],
+    "rulesSha256": "8d4b55dbddd28153a42202853b578529bd9c489c09e8c08094869ee97c66eda3",
+    "sourceBinding": "ff55caf0fd4aa728ec7927adde6c3864f59a43caeeab331c76da5f1bc218df05",
+    "deferredDirections": [
+      "west"
+    ]
+  },
+  "qualityDecision": "UNCERTAIN",
+  "recoveryVersion": "photo-grounded-recovery-v1",
+  "marginDirections": [],
+  "repairDescription": "",
+  "reviewImageHashes": {
+    "Actual body photo": "e9c4cd227b1c4976423b323c32e70f73839bcbb05fc025b3e48294a4d19cde7a",
+    "Actual face photo": "bb16c92b604a3ad697c38f759205451649dfe8eb13d25f8dcedd0fe108ebd537",
+    "Unapproved view: east": "413b6adb90a39d5bf5cbf20dd6504ae82003fd8485cbe5c86fdefacdc46044ce",
+    "Unapproved view: west": "b755a3c4bdd379acd3c258d26a29e5d788185ee60772a33552c1cfbc72e2e1ac",
+    "Unapproved view: north": "8fcb43dd44fa940b2159bd27796e1ec4b0739aadef8a76cda9265a8963cd4992",
+    "Unapproved view: south": "13c9cd3372a9b3935a18bb0f3bf988f29f6a8fcc29877dc32531ca7421525e8c",
+    "Approved art style only; not this dog": "bf5e5641f0768a45f7a87f10bbb5bf26e987dee581b1b2cf4d08d2c4c0cd539c"
+  },
+  "minimumClearPixels": 1,
+  "generalPropertyReview": {
+    "note": "네 방향 모두 사진의 주요 흰색·황갈색 무늬와 귀, 주둥이, 컴팩트한 픽셀 스타일에 부합합니다.",
+    "views": [
+      {
+        "note": "정면의 흰색 얼굴 중앙선과 주둥이, 가슴 무늬가 잘 보입니다.",
+        "issues": [],
+        "direction": "south",
+        "confidence": 0.94,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "observedPhotoMarkings": "The visible front photo shows tan ears and crown with darker side facial patches, a broad white blaze and white muzzle, a large white chest, and white legs. The tail is photo-hidden.",
+        "observedSpriteMarkings": "The front sprite has a tan head and ears, a narrow white forehead blaze, white muzzle and cheeks, a white chest, and mostly white lower legs over a tan body."
+      },
+      {
+        "note": "후면답게 눈과 얼굴을 넣지 않았고, 보이는 등·다리 색이 일치합니다.",
+        "issues": [],
+        "direction": "north",
+        "confidence": 0.86,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "observedPhotoMarkings": "The photo visibly supports a tan-to-brown back and white lower body and legs, while the rear head and rear-specific markings are not directly visible. The tail is hidden in the photo.",
+        "observedSpriteMarkings": "The rear sprite shows tan outer head and back areas, darker brown shading along the central upper back and head, a lighter cream central face/back area, and light lower legs; no facial features are shown."
+      },
+      {
+        "note": "좌측 프로필의 흰 주둥이·목과 등 색 배치가 자연스럽습니다.",
+        "issues": [],
+        "direction": "west",
+        "confidence": 0.91,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "observedPhotoMarkings": "The visible photo shows a tan head and back with darker facial-side shading, a white muzzle and throat/chest, and white legs. The tail is photo-hidden, so its exact form is unknown.",
+        "observedSpriteMarkings": "The left-facing profile has a tan head and body, a white muzzle and throat/chest patch, darker tan-brown ear and back shading, pale lower legs, and a raised tan tail with darker shading."
+      },
+      {
+        "note": "우측 프로필도 흰 얼굴·가슴과 황갈색 몸통 무늬를 유지합니다.",
+        "issues": [],
+        "direction": "east",
+        "confidence": 0.91,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "observedPhotoMarkings": "The visible photo supports the tan head and back, darker facial-side areas, white muzzle and chest, and white legs. The tail is photo-hidden, so exact tail carriage cannot be confirmed.",
+        "observedSpriteMarkings": "The right-facing profile has a tan head and body, a white muzzle and neck/chest patch, darker ear and back shading, pale lower legs, and a curled tan tail with darker shading."
+      }
+    ],
+    "photoTail": "OBSCURED",
+    "photoEvidence": "실제 사진에서는 몸통 뒤쪽 꼬리가 자세와 프레임에 가려져 보이지 않습니다.",
+    "tailConsistent": true,
+    "repairDescription": ""
+  },
+  "clearPixelsLeftTopRightBottom": {
+    "east": [
+      2,
+      2,
+      2,
+      2
+    ],
+    "west": [
+      2,
+      2,
+      2,
+      2
+    ],
+    "north": [
+      7,
+      2,
+      7,
+      1
+    ],
+    "south": [
+      6,
+      4,
+      6,
+      1
+    ]
+  }
+}

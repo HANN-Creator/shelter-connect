@@ -1,0 +1,40 @@
+{
+  "jobId": "2896c6d7-4809-4275-9e09-43ec4c8ace9c",
+  "source": "B75 deployed one-dog canary; unchanged native BASE PNGs and actual paid observations",
+  "rulesRevision": "sprite-regressions-2026-10-10-v30",
+  "rulesSha256": "8d4b55dbddd28153a42202853b578529bd9c489c09e8c08094869ee97c66eda3",
+  "failureCode": "SEED_OBSERVATION_UNCERTAIN",
+  "imageBytesChanged": false,
+  "published": false,
+  "pixelLabSubmissions": 1,
+  "repairCount": 0,
+  "expectedSideTailSupport": {
+    "west": true,
+    "east": true
+  },
+  "rootCause": "Endpoint traversal crosses torso and reaches head; endpoint-only test misses intermediate spine connection. Geometry is corroborating evidence, not an anatomy verdict.",
+  "sha256": {
+    "geometry-before.json": "a9ed28065ce4e509a4c2df08ef528c1ebad5281d55cf988cc27b7964d72a5508",
+    "west.png": "aef64959300b13b278832d8faef6108d4eea830264dd8edc4ae825333849b87c",
+    "north.png": "88397489a71e7a2bd24bf0f683c72e527b57f6bb6f501d32e84f77ead2e73c70",
+    "east.png": "26a23b6b58a24bb71a2908837b98644919af8f9046aa80a5275d32d288e260eb",
+    "south.png": "24a0b6f5db96ec73bef1b6dec3006b1dd958714962d19688b6a38e8acee16644",
+    "deployed-review.json": "ef32ff453f6ed369799d88f85cb0b7f28268191a9f0afe988139e639a3d8e10a",
+    "v31-actual-tail-review.json": "3f8bc8a8529eb956bd08d7b80495cdda4368f96c93d1e3ea2d4b6f522205bcd9",
+    "v31-actual-full-review.json": "7209bf84b39da32a952ea81c67f43e61b53438729cdacb4e79195a2821ffd465"
+  },
+  "sourcePhotoSha256": "e9c4cd227b1c4976423b323c32e70f73839bcbb05fc025b3e48294a4d19cde7a",
+  "liveVerification": {
+    "rulesRevision": "sprite-regressions-2026-10-10-v31",
+    "rulesSha256": "a53a2a919a6d00337af71edf7e3f52cf0073f2a2b831507bc4b8144d0b6f918e",
+    "newPixelLabSubmissions": 0,
+    "unchangedImageBytes": true,
+    "tailOnlyDecision": "PASS",
+    "fullReviewTailDecision": "PASS",
+    "fullReviewPassed": false,
+    "fullReviewIssues": [
+      "SEED_IDENTITY"
+    ],
+    "fullReviewRemaining": "SOUTH coat disagreement; WEST/EAST body-pattern findings. These findings are retained observations, not automatically accepted training labels. No new overall approval or remote job change."
+  }
+}

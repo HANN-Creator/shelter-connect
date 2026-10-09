@@ -31,6 +31,26 @@ def decode_recorded_alpha(rows):
 
 
 class QualityRegressionTest(unittest.TestCase):
+    def test_deployed_spine_connection_keeps_pixels_and_both_normal_observations(self):
+        root=Path(__file__).parent/'fixtures/tail-spine-v31'
+        evidence=read(root/'evidence.json')
+        for file,sha in evidence['sha256'].items():self.assertEqual(digest(root/file),sha)
+        self.assertFalse(evidence['imageBytesChanged']);self.assertFalse(evidence['published'])
+        self.assertEqual(evidence['pixelLabSubmissions'],1);self.assertEqual(evidence['repairCount'],0)
+        report=read(root/'deployed-review.json')['tailEvidence']
+        self.assertFalse(report['geometry']['west']['rearBranchSupport'])
+        self.assertTrue(report['geometry']['east']['rearBranchSupport'])
+        self.assertEqual(len(report['observationHistory']),2)
+        for previous in report['observationHistory']:
+            for view in previous['observation']['views']:
+                self.assertEqual(view['tail'],'COMPLETE_CONNECTED')
+                self.assertEqual(view['attachment'],'CONNECTED')
+                self.assertEqual(view['contour'],'DISTINCT')
+                self.assertEqual(view['tip'],'VISIBLE')
+        rules=load_quality()
+        self.assertEqual(rules['recovery']['tailSilhouetteSupport']['version'],'rear-silhouette-branches-v2')
+        self.assertTrue(any(c.get('fixture')=='tail-spine-v31/evidence.json' for c in rules['regressions']))
+
     def test_actual_idle_failure_retains_all_nine_frames_and_shared_prevention(self):
         root=Path(__file__).parent/'fixtures/idle-hold-v26'
         for case in read(root/'evidence.json')['cases']:
