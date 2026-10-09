@@ -302,6 +302,61 @@ public class StyledAssetStore {
             .param("grant",json.writeValueAsString(grant)).param("history",json.writeValueAsString(history)).param("hold",StyledIdleHold.VERSION).param("id",id).update();
         return job(id);
     }
+    /** Same-rule continuation uses the exact saved report and only selected failed clips. */
+    @Transactional public Job repairMotionCandidate(UUID subject,UUID dog,UUID id,JsonNode body) {
+        var actor=access.requireDogForWrite(subject,dog);properties.requireEnabled();
+        AssetInput.fields(body,"requestId","note","expectedSeedHashes","expectedSheetHashes","expectedReviewHashes","expectedRulesSha256");
+        UUID request=AssetInput.id(body,"requestId");String note=AssetInput.text(body,"note",2000),rules=AssetInput.text(body,"expectedRulesSha256",64);
+        var seeds=body.path("expectedSeedHashes");var sheets=body.path("expectedSheetHashes");var reviews=body.path("expectedReviewHashes");
+        if(note.length()<20 || !rules.matches("[a-f0-9]{64}") || !seeds.isObject() || seeds.size()!=4
+            || StyledSpriteCodec.DIRECTIONS.stream().anyMatch(d->!seeds.path(d).asText().matches("[a-f0-9]{64}"))
+            || !sheets.isObject() || sheets.isEmpty() || sheets.size()>32 || !reviews.isObject() || !reviews.propertyNames().equals(sheets.propertyNames())
+            || sheets.valueStream().anyMatch(v->!v.asText().matches("[a-f0-9]{64}")) || reviews.valueStream().anyMatch(v->!v.asText().matches("[a-f0-9]{64}")))throw AssetException.invalid();
+        lock(id);var j=job(id);if(!j.dogId().equals(dog))throw missing();legacy.valid(id,true);
+        var policy=j.qualityPolicy();if(policy==null)throw new AssetException(409,"MOTION_CANDIDATE_NOT_ALLOWED");
+        var grants=json.createArrayNode();if(policy.path("motionCandidateResumes").isArray())grants.addAll((tools.jackson.databind.node.ArrayNode)policy.path("motionCandidateResumes"));
+        var canonical=(tools.jackson.databind.node.ObjectNode)body.deepCopy();canonical.put("requestId",request.toString());
+        for(var g:grants)if(g.at("/request/requestId").asText().equals(request.toString())) {
+            if(g.path("request").equals(canonical))return j;throw new AssetException(409,"MOTION_CANDIDATE_ALREADY_REQUESTED");
+        }
+        if(!j.status().equals("REVIEW") || !j.complete() || j.qualityApproval()!=null || !StyledRecovery.enabled(policy)
+            || !automaticSeedPassed(j) || !historicallyApprovedSeed(j))throw new AssetException(409,"MOTION_CANDIDATE_NOT_ALLOWED");
+        if(!rules.equals(StyledSpriteCodec.qualityRulesSha()) || !rules.equals(policy.path("rulesSha256").asText())
+            || !seeds.equals(j.steps().getFirst().result().path("hashes")))throw new AssetException(409,"QUALITY_RECHECK_STALE");
+        var plans=json.createObjectNode();
+        for(var e:sheets.properties()) {
+            var step=j.steps().stream().filter(x->x.label().equals(e.getKey()) && !x.action().equals("BASE")).findFirst().orElseThrow(AssetException::invalid);
+            var q=step.qualityReport();
+            if(!boundQuality(step,policy) || !e.getValue().equals(step.result().path("sha256")) || q.path("passed").asBoolean()
+                || !reviews.path(step.label()).asText().equals(StyledAutoApproval.digest(q,json)) || !q.path("seedHashes").equals(seeds)
+                || !step.action().equals(q.path("action").asText()) || !step.direction().equals(q.path("direction").asText()))throw new AssetException(409,"MOTION_CANDIDATE_STALE");
+            if(grants.valueStream().anyMatch(g->g.at("/request/expectedSheetHashes/"+step.label()).equals(e.getValue())
+                && g.at("/request/expectedReviewHashes/"+step.label()).equals(reviews.path(step.label()))))throw new AssetException(409,"MOTION_CANDIDATE_ALREADY_REQUESTED");
+            int limit=StyledRecovery.limit(policy,false);
+            boolean raw=step.result().has("rawEdit") && !q.at("/restoredReview/passed").asBoolean() && StyledRawMotion.genuinePass(q.path("rawEditReview"),step.action());
+            if(!raw && (step.repairCount()>=limit || StyledIdleHold.derived(step.result())))throw new AssetException(409,"MOTION_REPAIR_BUDGET_EXHAUSTED");
+            if(!raw && StyledMotionReview.unresolved(q) && (StyledMotionCandidate.plan(q,step.action(),json)==null || candidateUsed(id,step.label())))
+                throw new AssetException(409,"MOTION_CANDIDATE_NO_EDIT_TARGET");
+            plans.putObject(step.label()).put("sha256",e.getValue().asText()).put("reviewSha256",reviews.path(step.label()).asText())
+                .put("startingRepairCount",step.repairCount()).put("repairLimit",limit);
+        }
+        var grant=grants.addObject().put("requestedBy",actor.userId().toString()).put("requestedAt",Instant.now().toString()).put("rulesSha256",rules);
+        grant.set("request",canonical);grant.set("plans",plans);
+        for(String label:sheets.propertyNames())jdbc.sql("""
+            UPDATE shelter.styled_asset_steps SET attempt_history=attempt_history || jsonb_build_array(jsonb_build_object(
+              'motionCandidateResume',true,'result',result,'quality',quality_report,'repairCount',repair_count)),status='CHECKING'
+            WHERE job_id=:id AND label=:label AND status='SUCCEEDED'
+            """).param("id",id).param("label",label).update();
+        jdbc.sql("""
+            UPDATE shelter.asset_jobs SET quality_policy=quality_policy || jsonb_build_object('motionCandidateVersion',:version,'motionCandidateResumes',CAST(:grants AS jsonb)),
+              status='QUEUED',failure_code=NULL,next_run_at=now(),lease_token=NULL,lease_until=NULL WHERE id=:id
+            """).param("version",StyledMotionCandidate.VERSION).param("grants",json.writeValueAsString(grants)).param("id",id).update();
+        return job(id);
+    }
+    private boolean candidateUsed(UUID job,String label) {
+        return jdbc.sql("SELECT EXISTS(SELECT 1 FROM shelter.styled_asset_steps s,jsonb_array_elements(s.attempt_history) a WHERE s.job_id=:id AND s.label=:label AND a->>'unconfirmedMotionCandidate'='true')")
+            .param("id",job).param("label",label).query(Boolean.class).single();
+    }
     /** Resume only a stored motion's malformed response, without granting a generation or resetting quality. */
     @Transactional public Job resumeQualityResponse(UUID subject,UUID dog,UUID id,JsonNode body) {
         var actor=access.requireDogForWrite(subject,dog);properties.requireEnabled();
@@ -357,6 +412,13 @@ public class StyledAssetStore {
     }
     static boolean motionResumeAllowed(Work w) {
         if(w.character() || !w.status().equals("CHECKING") || w.qualityPolicy()==null || w.result()==null)return false;
+        for(var g:w.qualityPolicy().path("motionCandidateResumes")) {
+            var p=g.path("plans").path(w.label());
+            if(StyledMotionCandidate.enabled(w.qualityPolicy()) && g.path("rulesSha256").asText().equals(StyledSpriteCodec.qualityRulesSha())
+                && p.path("sha256").equals(w.result().path("sha256")) && p.path("startingRepairCount").asInt(-1)==w.repairCount()
+                && p.path("repairLimit").asInt(-1)==StyledRecovery.limit(w.qualityPolicy(),false) && w.qualityReport()!=null
+                && p.path("reviewSha256").asText().equals(StyledAutoApproval.digest(w.qualityReport(),JsonMapper.builder().build())))return true;
+        }
         var grant=w.qualityPolicy().path("motionRepairResume");var plan=grant.path("plans").path(w.label());
         return grant.path("requestId").asText().matches("[a-f0-9-]{36}")
             && grant.path("rulesSha256").asText().equals(StyledSpriteCodec.qualityRulesSha())
@@ -511,7 +573,7 @@ public class StyledAssetStore {
         var recovery=StyledSpriteCodec.qualityRules(json).path("recovery");
         p.put("recoveryVersion",StyledRecovery.VERSION);p.put("seedRepairVersion",StyledSeedRepair.VERSION);p.put("seedTailEvidenceVersion",StyledTailAnatomy.VERSION);p.put("motionFrameSize",40);p.put("seedMotionMargin",1);
         p.put("maxSeedRepairs",recovery.path("maxSeedRepairs").asInt());p.put("maxRepairsPerClip",recovery.path("maxMotionRepairs").asInt());
-        p.put("idleHoldVersion",StyledIdleHold.VERSION);p.remove("seedEyeRepair");p.remove("learningRecovery");return p;}
+        p.put("motionCandidateVersion",StyledMotionCandidate.VERSION);p.put("idleHoldVersion",StyledIdleHold.VERSION);p.remove("seedEyeRepair");p.remove("learningRecovery");return p;}
     private boolean seedQualityPassed(Job j) {
         var step=j.steps().getFirst();return StyledSeedQualityAgent.passed(step.qualityReport(),step.result()==null?json.createObjectNode():step.result().path("hashes"),j.qualityPolicy());
     }
@@ -739,7 +801,10 @@ public class StyledAssetStore {
         // Explicit rechecks judge the stored bytes, even if a new rule finds a defect with budget left.
         if(w.status().equals("CHECKING") && !seedResumeAllowed(w) && !motionResumeAllowed(w))return false;
         if(w.character() && StyledCoatReview.unresolved(report))return false;
-        if(StyledMotionReview.unresolved(report) && !StyledMotionReview.confirmedTailRepair(report) && !StyledMotionReview.confirmedPaletteRepair(report))return false;
+        boolean candidate=!w.character() && StyledMotionReview.unresolved(report)
+            && !StyledMotionReview.confirmedTailRepair(report) && !StyledMotionReview.confirmedPaletteRepair(report);
+        var candidatePlan=candidate?StyledMotionCandidate.plan(report,w.action(),json):null;
+        if(candidate && (!StyledMotionCandidate.enabled(w.qualityPolicy()) || candidatePlan==null || candidateUsed(w.id(),w.label())))return false;
         if(w.qualityPolicy()!=null && w.qualityPolicy().path("referenceOnly").asBoolean())return false;
         if(StyledIdleHold.derived(result))return false; // Static fallback is reviewed once, never converted into another paid edit.
         if(report.path("passed").asBoolean() || w.repairCount()>=StyledRecovery.limit(w.qualityPolicy(),w.character()))return false;
@@ -748,10 +813,12 @@ public class StyledAssetStore {
         jdbc.sql("""
             UPDATE shelter.styled_asset_steps SET attempt_history=attempt_history || jsonb_build_array(jsonb_build_object(
               'providerJobId',provider_job_id,'submittedAt',submitted_at,'requestSha256',request_sha256,
-              'result',CAST(:r AS jsonb),'quality',CAST(:q AS jsonb),'repairCount',repair_count)),
+              'result',CAST(:r AS jsonb),'quality',CAST(:q AS jsonb),'repairCount',repair_count,
+              'unconfirmedMotionCandidate',:candidate,'candidatePlan',CAST(:plan AS jsonb))),
               repair_count=repair_count+1,status='PENDING',provider_job_id=NULL,submitted_at=NULL,provider_result=NULL,
               result=NULL,quality_report=CAST(:q AS jsonb) WHERE job_id=:id AND label=:l
-            """).param("r",json.writeValueAsString(result)).param("q",json.writeValueAsString(report)).param("id",w.id()).param("l",w.label()).update();
+            """).param("r",json.writeValueAsString(result)).param("q",json.writeValueAsString(report)).param("candidate",candidate)
+            .param("plan",json.writeValueAsString(candidatePlan)).param("id",w.id()).param("l",w.label()).update();
         defer(w,0);return true;
     }
     @Transactional public void success(Work w,JsonNode result) {

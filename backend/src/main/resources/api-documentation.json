@@ -2887,6 +2887,58 @@
         "expectedSheetSha256"
       ],
       "additionalProperties": false
+    },
+    "StyledMotionCandidateRepair": {
+      "type": "object",
+      "properties": {
+        "note": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 2000
+        },
+        "expectedSeedHashes": {
+          "$ref": "#/components/schemas/StyledSeedHashes"
+        },
+        "expectedRulesSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "현재 작업의 qualityPolicy.rulesSha256. 서버의 새 규칙 해시가 아니라 재검사 전 작업에 고정된 값."
+        },
+        "requestId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "작업·새 규칙 버전별 1회 재개 요청 ID. 모든 이전 요청과 동일한 본문 재전송은 추가 과금 없이 재사용합니다."
+        },
+        "expectedSheetHashes": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 32,
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "description": "보완할 실패 동작 label → 현재 시트 SHA. 통과 동작은 포함하지 않습니다."
+        },
+        "expectedReviewHashes": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 32,
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "description": "현재 qualityReport를 객체 순서를 유지한 공백 없는 UTF-8 JSON으로 직렬화한 SHA-256. 선택 시트와 동일한 label 집합."
+        }
+      },
+      "required": [
+        "note",
+        "expectedSeedHashes",
+        "expectedRulesSha256",
+        "requestId",
+        "expectedSheetHashes",
+        "expectedReviewHashes"
+      ],
+      "additionalProperties": false
     }
   },
   "operations": {
@@ -4697,6 +4749,24 @@
       ],
       "request": {
         "schema": "StyledQualityResponseResume"
+      }
+    },
+    "POST /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/motion-candidate-repair": {
+      "summary": "현재 검수 근거로 보류된 동작만 후보 보완",
+      "description": "같은 보호소 담당자 전용. 현재 규칙과 SYSTEM BASE 승인이 유효한 완성 REVIEW 팩에서 선택한 실패 시트 및 검수 해시를 확인합니다. 다른 통과 동작의 이미지·QA와 BASE 승인은 보존하며 규칙 변경이나 전체 재검수를 요구하지 않습니다. 현재 원본의 독립 전체 PASS가 있으면 원본 채택을 먼저 수행합니다. 관찰이 갈렸더라도 모든 불확실 속성에 구체적인 FAIL 프레임이 있고 진입 자세가 통과한 경우 기존 예산 안에서 미확정 후보를 최대 한 번 시도합니다. UNKNOWN만 있는 근거는 차단합니다. 이전 불확실 판정은 부정 학습하거나 공개하지 않고 새 후보의 전체 검수를 요구합니다. 한도·영수증·이력은 보존하고 같은 요청 재전송은 완료 후에도 추가 생성하지 않습니다.",
+      "tag": "32px 에셋",
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "403",
+        "404",
+        "409",
+        "503"
+      ],
+      "request": {
+        "schema": "StyledMotionCandidateRepair"
       }
     }
   }
