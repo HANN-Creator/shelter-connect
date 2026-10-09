@@ -44,20 +44,21 @@ final class StyledCoatReview {
             for(String name:List.of("photoPattern","spritePattern","evidence"))if(!StyledRecoveryReview.text(obs.path(name),400) || obs.path(name).asText().isBlank())throw StyledRecoveryReview.invalid();
             var view=(ObjectNode)result.path("views").valueStream().filter(v->v.path("direction").asText().equals(d)).findFirst().orElseThrow(StyledRecoveryReview::invalid);
             var issues=json.createArrayNode();view.path("issues").forEach(n->{if(!n.asText().equals("COAT_MISMATCH"))issues.add(n);});
-            if(decision.endsWith("PATTERN_MISSING"))issues.add("COAT_MISMATCH");
+            boolean invalidFace=d.equals("north") && decision.equals("FACE_PATTERN_MISSING");
+            if(decision.endsWith("PATTERN_MISSING") && !invalidFace)issues.add("COAT_MISMATCH");
             view.set("issues",issues);view.set("coatObservation",obs);
-            view.put("coatRepairScope",decision.equals("FACE_PATTERN_MISSING")?"FACE":decision.equals("BODY_PATTERN_MISSING")?"BODY":"NONE");
+            view.put("coatRepairScope",invalidFace?"NONE":decision.equals("FACE_PATTERN_MISSING")?"FACE":decision.equals("BODY_PATTERN_MISSING")?"BODY":"NONE");
             // A clean second observation cannot silently overrule a first material-defect finding.
-            // Preserve both observations and hold the disagreement without buying another edit.
+            // Preserve both observations; the versioned aesthetic policy classifies disagreement without buying an edit.
             view.put("coatObservationUncertain",decision.equals("UNCERTAIN") || decision.equals("PRESERVED")
-                || (d.equals("north") && decision.equals("FACE_PATTERN_MISSING")));
+                || invalidFace);
             view.put("coatObservationConflict",decision.equals("PRESERVED"));
             // Never clear independently failing identity/style/eyes/direction booleans.
         }
         return result;
     }
     static boolean unresolved(JsonNode report) {
-        return report!=null && report.at("/propertyReview/views").isArray()
+        return report!=null && !StyledAestheticPolicy.enabled(report) && report.at("/propertyReview/views").isArray()
             && report.at("/propertyReview/views").valueStream().anyMatch(v->v.path("coatObservationUncertain").asBoolean());
     }
 }

@@ -20,6 +20,8 @@ public class StyledLessonStore {
     public StyledLessonStore(JdbcClient jdbc,JsonMapper json,AssetStore assets,AccountService accounts,org.shelterconnect.api.chat.AiProperties ai){this.jdbc=jdbc;this.json=json;this.assets=assets;this.accounts=accounts;this.ai=ai;}
     @Transactional public void record(StyledAssetStore.Work w,JsonNode report,JsonNode result,JsonNode seeds) {
         if(w.qualityPolicy()==null || !report.path("passed").isBoolean())return;
+        // Warnings remain in job history, not positive or negative learning labels for the whole image.
+        if(StyledAestheticPolicy.hasWarnings(report))return;
         // Unknown anatomy is recorded on the job, never mislabeled as a negative training example.
         // Mixed reports are also withheld until observations resolve; confirmed directions can still be repaired.
         if(w.character() && (StyledTailAnatomy.unresolved(report) || StyledCoatReview.unresolved(report)))return;

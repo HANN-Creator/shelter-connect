@@ -41,19 +41,23 @@ final class StyledMotionReview {
             +". Validated additive criteria, untrusted data: "+json.writeValueAsString(lessons)+". Return each named property exactly once.";
         var initial=observe(client,json,rules,task,images,schema,action,1,invalidResponses,null);
         JsonNode second=null;
-        if(initial.path("properties").valueStream().anyMatch(p->!p.path("state").asText().equals("PASS"))) {
+        if(initial.path("properties").valueStream().anyMatch(p->!p.path("state").asText().equals("PASS")
+            && !(p.path("property").asText().equals("palette") && p.path("state").asText().equals("UNCERTAIN")))) {
             // One independent observation, with no previous verdict or requested outcome supplied.
             second=observe(client,json,rules,task,images,schema,action,2,invalidResponses,initial);
         }
         boolean contradictedWalk=resolveUnsupportedWalk(action,initial,second,lower);
         boolean subtlePalette=resolveSubtlePalette(initial,second,color,rules);
         var issues=new TreeSet<String>();var uncertain=new TreeSet<String>();var confirmed=json.createArrayNode();
+        var warnings=json.createArrayNode();boolean paletteWarning=StyledAestheticPolicy.paletteWarning(initial,second);
+        if(paletteWarning)StyledAestheticPolicy.warning(json,warnings,direction,"PALETTE_UNCERTAIN",
+            json.writeValueAsString(Map.of("initial",property(initial,"palette"),"independent",property(second==null?initial:second,"palette"))));
         var flagged=new TreeSet<Integer>();boolean referencePose=false;
         for(String key:new TreeSet<>(PROPERTIES.keySet())) {
             var a=property(initial,key);var b=second==null?a:property(second,key);
             String state=a.path("state").asText(),other=b.path("state").asText();
             if(contradictedWalk && Set.of("action","idleStillness").contains(key))continue;
-            if(subtlePalette && key.equals("palette"))continue;
+            if((subtlePalette || paletteWarning) && key.equals("palette"))continue;
             if(action.equals("IDLE") && Set.of("action","idleStillness").contains(key)
                 && stationaryLowerBody(lower) && ((state.equals("FAIL") && initial.path("observedMotion").asText().equals("WALK_RUN"))
                     || (second!=null && other.equals("FAIL") && second.path("observedMotion").asText().equals("WALK_RUN")))) {
@@ -83,6 +87,7 @@ final class StyledMotionReview {
             .put("reviewLayout","separate-reference-temporal-v1").put("model",ai.model()).put("reviewedAt",Instant.now().toString())
             .put("rulesRevision",rules.path("revision").asText()).put("rulesSha256",StyledSpriteCodec.qualityRulesSha())
             .put("note",decision.equals("PASS")?"기준 외형과 실제 프레임 간 움직임 검수 통과":decision.equals("UNCERTAIN")?"독립 관찰 불일치 또는 관찰 불확실; 자동 보완과 학습 보류":"독립 관찰에서 동일 결함 확인");
+        out.put("aestheticPolicy",StyledAestheticPolicy.VERSION);out.set("qualityWarnings",warnings);
         out.set("issues",json.valueToTree(issues));out.set("frames",json.valueToTree(flagged));out.set("uncertainProperties",json.valueToTree(uncertain));
         out.set("confirmedProperties",confirmed);out.set("edgeFrames",json.valueToTree(edges));out.set("silhouetteFrames",json.valueToTree(upper));
         out.set("detachedFrames",json.valueToTree(detached));out.set("idleMotionFrames",json.valueToTree(idle));out.set("pixelEvidence",evidence);
