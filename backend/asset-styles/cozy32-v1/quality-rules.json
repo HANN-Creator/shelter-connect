@@ -1,5 +1,5 @@
 {
-  "revision": "sprite-regressions-2026-10-09-v18",
+  "revision": "sprite-regressions-2026-10-09-v19",
   "pixelEvidence": {
     "version": "native-frame-delta-v1",
     "subtleRgbChannelDelta": 24
@@ -53,6 +53,14 @@
     "EYES: compare open-eye frames with the approved seed: keep pupil shape, position and local contrast. A brief natural blink is allowed. Eyes that stay erased, become hollow rings, or merge into fur in open-eye frames are IDENTITY_DRIFT. North has no face; do not invent eyes."
   ],
   "regressions": [
+    {
+      "id": "repaired-seed-recheck-must-not-load-previous-edit",
+      "stage": "BASE",
+      "issue": "RECOVERY_INPUT_CHANGED",
+      "check": "immutable-recheck-state",
+      "fixture": "repaired-seed-recheck-v19/evidence.json",
+      "expected": "CHECKING audits current stored seeds and hashes without loading repairCount-1 edit input. Preserve raw PNGs, repair count and history; no PixelLab call. An exact archived pre-vision failure may re-enter only after a new rules deployment with matching hashes and permissions. First generation and paid repair keep all existing quality gates."
+    },
     {
       "id": "tail-coordinate-uncertainty-must-not-suppress-confirmed-defect",
       "stage": "BASE",
