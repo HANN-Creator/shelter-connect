@@ -2491,6 +2491,18 @@
           "type": "string",
           "pattern": "^[a-f0-9]{64}$",
           "description": "현재 작업의 qualityPolicy.rulesSha256. 서버의 새 규칙 해시가 아니라 재검사 전 작업에 고정된 값."
+        },
+        "evidenceOnly": {
+          "type": "boolean",
+          "description": "true이면 모델 재관찰·이미지 생성 없이 저장된 최종 승인 근거만 검사합니다. 현재 규칙·완성 팩·전체 품질 통과·모든 시트 해시가 필요합니다."
+        },
+        "expectedSheetHashes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "description": "evidenceOnly=true일 때 필수. BASE 외 모든 동작 label→현재 SHA-256."
         }
       },
       "required": [
@@ -4579,7 +4591,7 @@
     },
     "POST /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/quality-recheck": {
       "summary": "변경된 규칙으로 미승인 스프라이트 재검사",
-      "description": "같은 보호소 담당자 전용. 완료된 미승인 팩의 규칙 해시가 실제로 변경된 경우만 재검수합니다. 기준 이미지·이전 판정·제출 이력을 보존하고 기존 시트별 최대 2회 보완 횟수를 초기화하지 않습니다. 동일 요청 재전송은 작업을 재사용합니다. 승인 팩·진행 중 규칙 교체·같은 규칙 재검수는 허용하지 않습니다. QUALITY_RECHECK_STALE, QUALITY_RULES_UNCHANGED, QUALITY_RECHECK_NOT_ALLOWED는 409입니다.",
+      "description": "같은 보호소 담당자 전용. 완료된 미승인 팩의 규칙 해시가 실제로 변경된 경우만 재검수합니다. 기준 이미지·이전 판정·제출 이력을 보존하고 기존 시트별 최대 2회 보완 횟수를 초기화하지 않습니다. 동일 요청 재전송은 작업을 재사용합니다. 승인 팩·진행 중 규칙 교체·같은 규칙 재검수는 허용하지 않습니다. QUALITY_RECHECK_STALE, QUALITY_RULES_UNCHANGED, QUALITY_RECHECK_NOT_ALLOWED는 409입니다. evidenceOnly=true는 현재 규칙에서 전체 품질이 통과한 완성 팩의 결정적 최종 승인 근거만 검사합니다. BASE·모든 시트 해시·현재 SYSTEM 기본 승인을 검증하며 모델 재관찰·생성·횟수 초기화는 없습니다. 구버전 원본 채택 보고서의 JSONB 키 순서 때문에 해시가 달라진 경우, 원래 채택 이력의 정확한 raw QA·9프레임·시트·BASE와 일치할 때만 정규 해시 메타데이터를 별도로 기록하고 이전 해시/보고서를 보존합니다. 실제 판정이나 이미지 바이트는 바꾸지 않습니다.",
       "tag": "32px 에셋",
       "success": [
         "200"

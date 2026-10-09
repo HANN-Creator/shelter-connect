@@ -9,6 +9,7 @@ import tools.jackson.databind.node.ObjectNode;
 /** Select a genuinely passing raw candidate; the rejected postprocessing report remains rejected. */
 final class StyledRawMotion {
     static final String VERSION="native-provider-rgba-v1";
+    static final String HASH_VERSION="canonical-json-v1";
     record Candidate(JsonNode result,JsonNode report) {}
     private StyledRawMotion() {}
     static boolean derived(JsonNode r){return r!=null && VERSION.equals(r.at("/derivation/strategy").asText());}
@@ -59,7 +60,7 @@ final class StyledRawMotion {
         result.set("frameHashes",r.path("reviewedFrameHashes"));result.put("motionSeedSha256",StyledSpriteCodec.sha(seed));
         var d=result.putObject("derivation").put("strategy",VERSION).put("motionKind","ANIMATED").put("direction",w.direction())
             .put("sourceMotionSha256",previous.path("sha256").asText()).put("sourceRawSha256",sha)
-            .put("rawReviewSha256",StyledAutoApproval.digest(r,json));
+            .put("rawReviewHashVersion",HASH_VERSION).put("rawReviewSha256",canonicalDigest(r,json));
         d.set("seedHashes",seeds);d.set("rawFrameHashes",r.path("reviewedFrameHashes"));d.set("rawProviderReview",report.path("rawEditReview"));
         r.put("inputSha256",sha).put("action",w.action()).put("direction",w.direction());
         r.set("seedHashes",seeds);r.set("learnedLessons",report.path("learnedLessons"));r.set("lessonsSha256",report.path("lessonsSha256"));
@@ -76,9 +77,33 @@ final class StyledRawMotion {
             && d.path("sourceRawSha256").equals(result.path("sha256")) && result.path("sha256").equals(report.path("inputSha256"))
             && d.path("rawFrameHashes").equals(result.path("frameHashes")) && result.path("frameHashes").size()==9
             && result.path("frameHashes").equals(raw.path("reviewedFrameHashes"))
-            && d.path("rawReviewSha256").asText().equals(StyledAutoApproval.digest(raw,json))
+            && (d.has("rawReviewHashVersion")?HASH_VERSION.equals(d.path("rawReviewHashVersion").asText())
+                && d.path("rawReviewSha256").asText().equals(canonicalDigest(raw,json)):
+                d.path("rawReviewSha256").asText().equals(StyledAutoApproval.digest(raw,json)))
             && genuinePass(raw,report.path("action").asText(),false) && StyledMotionReview.boundPass(report)
             && report.path("referenceFrameSha256").equals(raw.path("referenceFrameSha256"));
+    }
+    static String canonicalDigest(JsonNode value,JsonMapper json) {return StyledSpriteCodec.sha(json.writeValueAsBytes(canonical(value,json)));}
+    private static JsonNode canonical(JsonNode value,JsonMapper json) {
+        if(value.isObject()) {var o=json.createObjectNode();for(String key:new TreeSet<>(value.propertyNames()))o.set(key,canonical(value.path(key),json));return o;}
+        if(value.isArray()) {var a=json.createArrayNode();value.forEach(v->a.add(canonical(v,json)));return a;}
+        return value;
+    }
+    /** Legacy JSONB reorders object keys. Rebind only against the original archived adoption,
+     * exact raw QA, nine frames and current passing evidence; never rewrite a quality verdict. */
+    static JsonNode normalizeLegacy(JsonNode result,JsonNode report,JsonNode seeds,String direction,JsonNode archive,JsonMapper json) {
+        var d=result.path("derivation");var raw=d.path("rawProviderReview");
+        if(!derived(result) || d.has("rawReviewHashVersion") || !archive.path("rawMotionAdoption").asBoolean()
+            || !archive.at("/quality/rawEditReview").equals(raw) || !genuinePass(raw,report.path("action").asText())
+            || !archive.at("/quality/seedHashes").equals(seeds)
+            || !archive.at("/result/sha256").equals(d.path("sourceMotionSha256"))
+            || !archive.at("/quality/inputSha256").equals(d.path("sourceMotionSha256"))
+            || !archive.at("/result/rawEdit/sha256").equals(result.path("sha256"))
+            || !archive.at("/quality/rawEditSha256").equals(result.path("sha256")))return null;
+        var candidate=(ObjectNode)result.deepCopy();var proof=(ObjectNode)candidate.path("derivation");
+        proof.put("legacyRawReviewSha256",d.path("rawReviewSha256").asText()).put("rawReviewHashVersion",HASH_VERSION)
+            .put("rawReviewSha256",canonicalDigest(raw,json)).put("normalizationSourceSha256",canonicalDigest(archive,json));
+        return bound(candidate,report,seeds,direction,json)?candidate:null;
     }
     private static AssetException invalid(){return new AssetException(409,"RAW_MOTION_SOURCE_CHANGED");}
 }

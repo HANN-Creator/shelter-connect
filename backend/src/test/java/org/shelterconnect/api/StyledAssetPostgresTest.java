@@ -1904,7 +1904,7 @@ class StyledAssetPostgresTest {
             if(!isRaw)report.putArray("issues").add("IDENTITY_DRIFT");
             if(mode.equals("uncertain"))report.putArray("uncertainProperties").add("tail");
             if(isRaw && mode.equals("revoked"))jdbc.update("UPDATE shelter.asset_source_permissions SET revoked_at=now() WHERE id=?",permission);
-            return report;
+            var reversed=json.createObjectNode();var keys=new ArrayList<>(report.propertyNames());Collections.reverse(keys);keys.forEach(k->reversed.set(k,report.path(k)));return reversed;
         });
         int submissions=jdbc.queryForObject("SELECT count(*) FROM shelter.asset_submissions WHERE job_id=?",Integer.class,id);
         if(mode.equals("audit-only"))post(subject,path(id)+"/quality-recheck",seedRecheckBody(id),200);
@@ -1923,6 +1923,24 @@ class StyledAssetPostgresTest {
             assertThat(history.at("/quality/rawEditReview/passed").asBoolean()).isTrue();
             assertThat(history.at("/result/sha256").asText()).isEqualTo(sha(old));
             assertThat(objects.get(oldKey)).isEqualTo(old);assertThat(objects.get(rawKey)).isEqualTo(raw);
+            // Reproduce a legacy insertion-order digest after JSONB has reordered the same report.
+            var legacy=(tools.jackson.databind.node.ObjectNode)after.path("result").deepCopy();var proof=(tools.jackson.databind.node.ObjectNode)legacy.path("derivation");
+            var reordered=json.createObjectNode();var keys=new ArrayList<>(proof.path("rawProviderReview").propertyNames());Collections.reverse(keys);
+            keys.forEach(k->reordered.set(k,proof.path("rawProviderReview").path(k)));String legacyDigest=sha(json.writeValueAsBytes(reordered));
+            proof.remove("rawReviewHashVersion");proof.put("rawReviewSha256",legacyDigest);
+            String savedHistory=jdbc.queryForObject("SELECT attempt_history::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-west'",String.class,id);
+            jdbc.update("UPDATE shelter.styled_asset_steps SET result=?::jsonb,attempt_history='[]'::jsonb WHERE job_id=? AND label='idle-west'",legacy.toString(),id);
+            jdbc.update("UPDATE shelter.asset_jobs SET status='REVIEW',quality_approval=NULL,reviewed_at=NULL,failure_code='AUTO_APPROVAL_EVIDENCE_REQUIRED' WHERE id=?",id);
+            var hashes=new HashMap<String,String>();read(id).path("steps").forEach(st->{if(!st.path("action").asText().equals("BASE"))hashes.put(st.path("label").asText(),st.at("/result/sha256").asText());});
+            var evidence=Map.of("note","Recheck only final evidence without changing images or quality observations","evidenceOnly",true,"expectedRulesSha256",currentRules(),"expectedSeedHashes",read(id).at("/steps/0/result/hashes"),"expectedSheetHashes",hashes);
+            clearInvocations(provider,quality,seedQuality);
+            post(subject,path(id)+"/quality-recheck",evidence,200);assertThat(read(id).path("status").asText()).isEqualTo("REVIEW");publicStatus(404);
+            jdbc.update("UPDATE shelter.styled_asset_steps SET attempt_history=?::jsonb WHERE job_id=? AND label='idle-west'",savedHistory,id);
+            post(subject,path(id)+"/quality-recheck",evidence,200);assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
+            var fixed=step(id,"idle-west");assertThat(fixed.path("qualityReport")).isEqualTo(after.path("qualityReport"));
+            assertThat(fixed.at("/result/sha256")).isEqualTo(after.at("/result/sha256"));assertThat(fixed.at("/result/frameHashes")).isEqualTo(after.at("/result/frameHashes"));
+            assertThat(fixed.at("/result/derivation/legacyRawReviewSha256").asText()).isEqualTo(legacyDigest);
+            post(subject,path(id)+"/quality-recheck",evidence,200);verifyNoInteractions(provider,quality,seedQuality);after=fixed;
             var original=after.deepCopy();for(int i=0;i<3;i++)tick();assertThat(step(id,"idle-west")).isEqualTo(original);verifyNoInteractions(provider);
             // Simulate another held clip in a private pack; approved/public packs are immutable.
             jdbc.update("UPDATE shelter.asset_jobs SET status='REVIEW',quality_approval=NULL,reviewed_at=NULL WHERE id=?",id);

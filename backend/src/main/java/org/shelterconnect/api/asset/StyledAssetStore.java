@@ -155,13 +155,25 @@ public class StyledAssetStore {
     /** Explicitly audit a completed, unapproved pack after rules change; never reset paid attempts. */
     @Transactional public Job recheck(UUID subject,UUID dog,UUID id,JsonNode body) {
         access.requireDogForWrite(subject,dog);properties.requireEnabled();
-        AssetInput.fields(body,"note","expectedSeedHashes","expectedRulesSha256");
+        AssetInput.fields(body,"note","expectedSeedHashes","expectedRulesSha256","evidenceOnly","expectedSheetHashes");
+        if(body.has("evidenceOnly") && !body.path("evidenceOnly").isBoolean())throw AssetException.invalid();
         String note=AssetInput.text(body,"note",2000),expected=AssetInput.text(body,"expectedRulesSha256",64);
         if(note.length()<20 || !expected.matches("[a-f0-9]{64}"))throw AssetException.invalid();
         lock(id);var j=job(id);if(!j.dogId().equals(dog))throw missing();legacy.valid(id,true);
         if(j.steps().isEmpty() || j.steps().getFirst().result()==null ||
             !j.steps().getFirst().result().path("hashes").equals(body.path("expectedSeedHashes")))
             throw new AssetException(409,"SEED_REVIEW_STALE");
+        if(body.path("evidenceOnly").asBoolean()) {
+            var sheets=body.path("expectedSheetHashes");
+            if(j.qualityPolicy()==null || !j.complete() || !Set.of("REVIEW","APPROVED").contains(j.status())
+                || !expected.equals(StyledSpriteCodec.qualityRulesSha()) || !expected.equals(j.qualityPolicy().path("rulesSha256").asText())
+                || !automaticSeedPassed(j) || !historicallyApprovedSeed(j) || !qualityPassed(j))throw new AssetException(409,"QUALITY_EVIDENCE_RECHECK_NOT_ALLOWED");
+            if(!sheets.isObject() || sheets.size()!=j.steps().size()-1 || j.steps().stream().skip(1)
+                .anyMatch(step->!step.result().path("sha256").equals(sheets.path(step.label()))))throw new AssetException(409,"QUALITY_RECHECK_STALE");
+            if(!j.status().equals("APPROVED"))finishPack(j);
+            return job(id);
+        }
+        if(body.has("expectedSheetHashes"))throw AssetException.invalid();
         boolean failedRecheck=failedSeedRecheck(j);
         if(j.qualityPolicy()==null || (!failedRecheck && !Set.of("SEED_REVIEW","REVIEW","QUEUED","RUNNING").contains(j.status())))
             throw new AssetException(409,"QUALITY_RECHECK_NOT_ALLOWED");
@@ -597,7 +609,25 @@ public class StyledAssetStore {
         jdbc.sql("UPDATE shelter.asset_jobs SET seed_review=CAST(:r AS jsonb) WHERE id=:id")
             .param("r",json.writeValueAsString(StyledAutoApproval.seedEvidence(j,json))).param("id",j.id()).update();
     }
+    private Job normalizeRawEvidence(Job j) {
+        for(var step:j.steps().subList(1,j.steps().size())) {
+            var r=step.result();var q=step.qualityReport();var seeds=j.steps().getFirst().result().path("hashes");
+            if(!StyledRawMotion.derived(r) || StyledRawMotion.bound(r,q,seeds,step.direction(),json))continue;
+            var history=jdbc.sql("SELECT attempt_history::text FROM shelter.styled_asset_steps WHERE job_id=:id AND label=:label")
+                .param("id",j.id()).param("label",step.label()).query(String.class).single();
+            for(var archive:json.readTree(history)) {
+                var normalized=StyledRawMotion.normalizeLegacy(r,q,seeds,step.direction(),archive,json);if(normalized==null)continue;
+                jdbc.sql("""
+                    UPDATE shelter.styled_asset_steps SET attempt_history=attempt_history || jsonb_build_array(jsonb_build_object(
+                      'rawEvidenceNormalization',true,'result',result,'quality',quality_report,'repairCount',repair_count)),result=CAST(:r AS jsonb)
+                    WHERE job_id=:id AND label=:label
+                    """).param("r",json.writeValueAsString(normalized)).param("id",j.id()).param("label",step.label()).update();break;
+            }
+        }
+        return job(j.id());
+    }
     private void finishPack(Job j) {
+        if(automaticSeedPassed(j) && j.complete() && qualityPassed(j))j=normalizeRawEvidence(j);
         if(automaticSeedPassed(j) && StyledAutoApproval.pack(j,json) && lessonsBound(j.id(),false)) {
             jdbc.sql("""
                 UPDATE shelter.asset_jobs SET status='APPROVED',quality_approval=CAST(:a AS jsonb),
