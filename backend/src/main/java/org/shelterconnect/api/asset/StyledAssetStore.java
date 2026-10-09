@@ -245,6 +245,97 @@ public class StyledAssetStore {
             && grant.path("startingRepairCount").asInt(-1)==w.repairCount()
             && grant.path("repairLimit").asInt(-1)==StyledRecovery.limit(w.qualityPolicy(),true);
     }
+    /** Reobserve a held complete pack under changed rules, authorizing only selected remaining budgets. */
+    @Transactional public Job resumeMotionRepair(UUID subject,UUID dog,UUID id,JsonNode body) {
+        var actor=access.requireDogForWrite(subject,dog);properties.requireEnabled();
+        AssetInput.fields(body,"requestId","note","expectedSeedHashes","expectedSheetHashes","expectedRulesSha256");
+        UUID requestId=AssetInput.id(body,"requestId");String note=AssetInput.text(body,"note",2000);
+        String expected=AssetInput.text(body,"expectedRulesSha256",64);var seeds=body.path("expectedSeedHashes");var sheets=body.path("expectedSheetHashes");
+        if(note.length()<20 || !expected.matches("[a-f0-9]{64}") || !seeds.isObject() || seeds.size()!=4
+            || StyledSpriteCodec.DIRECTIONS.stream().anyMatch(d->!seeds.path(d).asText().matches("[a-f0-9]{64}"))
+            || !sheets.isObject() || sheets.isEmpty() || sheets.size()>32
+            || sheets.valueStream().anyMatch(n->!n.asText().matches("[a-f0-9]{64}")))throw AssetException.invalid();
+        lock(id);var j=job(id);if(!j.dogId().equals(dog))throw missing();legacy.valid(id,true);var policy=j.qualityPolicy();
+        if(policy==null)throw new AssetException(409,"MOTION_REPAIR_RESUME_NOT_ALLOWED");
+        var prior=policy.path("motionRepairResume");
+        if(!prior.isMissingNode()) {
+            if(prior.path("requestId").asText().equals(requestId.toString()) && prior.path("seedHashes").equals(seeds)
+                && prior.path("sheetHashes").equals(sheets) && prior.path("previousRulesSha256").asText().equals(expected)
+                && prior.path("note").asText().equals(note))return j;
+            throw new AssetException(409,"MOTION_REPAIR_RESUME_ALREADY_REQUESTED");
+        }
+        if(!j.status().equals("REVIEW") || !j.complete() || !StyledRecovery.enabled(policy) || !StyledAutoApproval.enabled(policy)
+            || j.qualityApproval()!=null || !historicallyApprovedSeed(j))
+            throw new AssetException(409,"MOTION_REPAIR_RESUME_NOT_ALLOWED");
+        if(!seeds.equals(j.steps().getFirst().result().path("hashes")) || !seeds.equals(j.seedReview().path("hashes")))
+            throw new AssetException(409,"SEED_REVIEW_STALE");
+        if(!expected.equals(policy.path("rulesSha256").asText()))throw new AssetException(409,"QUALITY_RECHECK_STALE");
+        if(expected.equals(StyledSpriteCodec.qualityRulesSha()))throw new AssetException(409,"QUALITY_RULES_UNCHANGED");
+        var plans=json.createObjectNode();
+        for(var e:sheets.properties()) {
+            var step=j.steps().stream().filter(s->s.label().equals(e.getKey()) && !s.action().equals("BASE")).findFirst().orElseThrow(AssetException::invalid);
+            if(!e.getValue().asText().equals(step.result().path("sha256").asText()) || !boundQuality(step,policy)
+                || step.qualityReport().path("passed").asBoolean())throw new AssetException(409,"MOTION_REPAIR_RESUME_STALE");
+            int limit=StyledRecovery.limit(policy,false);
+            if(step.repairCount()>limit || (step.repairCount()==limit && (!step.action().equals("IDLE") || StyledIdleHold.derived(step.result()))))
+                throw new AssetException(409,"MOTION_REPAIR_BUDGET_EXHAUSTED");
+            plans.putObject(step.label()).put("sha256",e.getValue().asText()).put("startingRepairCount",step.repairCount()).put("repairLimit",limit);
+        }
+        var grant=json.createObjectNode().put("requestId",requestId.toString()).put("requestedBy",actor.userId().toString())
+            .put("requestedAt",Instant.now().toString()).put("rulesSha256",StyledSpriteCodec.qualityRulesSha()).put("previousRulesSha256",expected).put("note",note);
+        grant.set("seedHashes",seeds);grant.set("sheetHashes",sheets);grant.set("plans",plans);
+        jdbc.sql("""
+            UPDATE shelter.styled_asset_steps SET attempt_history=attempt_history || jsonb_build_array(jsonb_build_object(
+              'motionRepairResume',true,'providerJobId',provider_job_id,'result',result,'quality',quality_report,
+              'repairCount',repair_count,'learnedLessons',learned_lessons)),quality_report=NULL,learned_lessons='[]'::jsonb,status='CHECKING'
+            WHERE job_id=:id
+            """).param("id",id).update();
+        jdbc.sql("""
+            UPDATE shelter.asset_jobs SET quality_policy=quality_policy || jsonb_build_object('rulesSha256',:rules,'rulesRevision',:revision,
+              'motionRepairResume',CAST(:grant AS jsonb),'idleHoldVersion',:hold),seed_review=NULL,status='QUEUED',failure_code=NULL,
+              next_run_at=now(),lease_token=NULL,lease_until=NULL WHERE id=:id
+            """).param("rules",StyledSpriteCodec.qualityRulesSha()).param("revision",StyledSpriteCodec.qualityRules(json).path("revision").asText())
+            .param("grant",json.writeValueAsString(grant)).param("hold",StyledIdleHold.VERSION).param("id",id).update();
+        return job(id);
+    }
+    private boolean historicallyApprovedSeed(Job j) {
+        if(j.steps().isEmpty() || j.seedReview()==null)return false;
+        var base=j.steps().getFirst();var r=base.qualityReport();var approval=j.seedReview();
+        // Old bound approval authorizes a NEW audit; it is never accepted as current quality.
+        return base.result()!=null && r!=null && r.path("passed").asBoolean()
+            && r.path("rulesSha256").equals(j.qualityPolicy().path("rulesSha256"))
+            && approval.path("actor").asText().equals("SYSTEM") && approval.path("decision").asText().equals("APPROVE")
+            && approval.path("hashes").equals(base.result().path("hashes"))
+            && approval.path("reportSha256").asText().equals(StyledAutoApproval.digest(r,json));
+    }
+    static boolean motionResumeAllowed(Work w) {
+        if(w.character() || !w.status().equals("CHECKING") || w.qualityPolicy()==null || w.result()==null)return false;
+        var grant=w.qualityPolicy().path("motionRepairResume");var plan=grant.path("plans").path(w.label());
+        return grant.path("requestId").asText().matches("[a-f0-9-]{36}")
+            && grant.path("rulesSha256").asText().equals(StyledSpriteCodec.qualityRulesSha())
+            && plan.path("sha256").equals(w.result().path("sha256"))
+            && plan.path("startingRepairCount").asInt(-1)==w.repairCount()
+            && plan.path("repairLimit").asInt(-1)==StyledRecovery.limit(w.qualityPolicy(),false);
+    }
+    @Transactional public boolean idleHoldCheckpoint(Work w,JsonNode report,JsonNode previous,JsonNode derived) {
+        if(!authorized(w))return true;
+        if(!StyledIdleHold.eligible(w,report,previous))return false;
+        var j=job(w.id());var base=j.steps().getFirst().result();
+        if(!automaticSeedPassed(j) || j.seedReview()==null || !j.seedReview().path("hashes").equals(base.path("hashes"))
+            || !base.path("hashes").equals(derived.at("/derivation/seedHashes")) || !StyledIdleHold.derived(derived)
+            || !previous.path("sha256").equals(derived.at("/derivation/sourceMotionSha256")))throw new AssetException(409,"IDLE_HOLD_SOURCE_CHANGED");
+        int changed=jdbc.sql("""
+            UPDATE shelter.styled_asset_steps SET attempt_history=attempt_history || jsonb_build_array(jsonb_build_object(
+              'idleHoldFallback',true,'providerJobId',provider_job_id,'submittedAt',submitted_at,'requestSha256',request_sha256,
+              'result',CAST(:r AS jsonb),'quality',CAST(:q AS jsonb),'repairCount',repair_count,'learnedLessons',learned_lessons)),
+              status='PERSISTING',provider_job_id=NULL,submitted_at=NULL,request_sha256=NULL,provider_result=CAST(:d AS jsonb),
+              result=NULL,quality_report=NULL WHERE job_id=:id AND label=:l AND status IN ('PERSISTING','CHECKING')
+            """).param("r",json.writeValueAsString(previous)).param("q",json.writeValueAsString(report)).param("d",json.writeValueAsString(derived))
+            .param("id",w.id()).param("l",w.label()).update();
+        if(changed!=1)throw new AssetException(409,"IDLE_HOLD_STATE_CHANGED");
+        defer(w,0);return true;
+    }
+
     /** Resume only the recorded pre-vision recheck failure, after a new rule deployment. */
     private boolean failedSeedRecheck(Job j) {
         if(!j.status().equals("FAILED") || !"RECOVERY_INPUT_CHANGED".equals(j.failureCode())
@@ -350,7 +441,7 @@ public class StyledAssetStore {
         var recovery=StyledSpriteCodec.qualityRules(json).path("recovery");
         p.put("recoveryVersion",StyledRecovery.VERSION);p.put("seedRepairVersion",StyledSeedRepair.VERSION);p.put("seedTailEvidenceVersion",StyledTailAnatomy.VERSION);p.put("motionFrameSize",40);p.put("seedMotionMargin",1);
         p.put("maxSeedRepairs",recovery.path("maxSeedRepairs").asInt());p.put("maxRepairsPerClip",recovery.path("maxMotionRepairs").asInt());
-        p.remove("seedEyeRepair");p.remove("learningRecovery");return p;}
+        p.put("idleHoldVersion",StyledIdleHold.VERSION);p.remove("seedEyeRepair");p.remove("learningRecovery");return p;}
     private boolean seedQualityPassed(Job j) {
         var step=j.steps().getFirst();return StyledSeedQualityAgent.passed(step.qualityReport(),step.result()==null?json.createObjectNode():step.result().path("hashes"),j.qualityPolicy());
     }
@@ -576,7 +667,7 @@ public class StyledAssetStore {
     @Transactional public boolean retryQuality(Work w,JsonNode report,JsonNode result) {
         if(!authorized(w))return true;
         // Explicit rechecks judge the stored bytes, even if a new rule finds a defect with budget left.
-        if(w.status().equals("CHECKING") && !seedResumeAllowed(w))return false;
+        if(w.status().equals("CHECKING") && !seedResumeAllowed(w) && !motionResumeAllowed(w))return false;
         if(w.character() && StyledCoatReview.unresolved(report))return false;
         if(StyledMotionReview.unresolved(report))return false;
         if(w.qualityPolicy()!=null && w.qualityPolicy().path("referenceOnly").asBoolean())return false;

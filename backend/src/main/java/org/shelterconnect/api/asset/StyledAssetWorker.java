@@ -25,7 +25,7 @@ public class StyledAssetWorker {
             if(!store.authorized(w))return;
             boolean learning=!store.learningRecovery(w).isEmpty();
             boolean learnedEdit=learning && w.action().equals("IDLE");
-            boolean edit=learnedEdit || (!learning && motionEdit(w));
+            boolean edit=!StyledIdleHold.derived(w.providerResult()) && (learnedEdit || (!learning && motionEdit(w)));
             if(w.qualityPolicy()!=null && w.qualityPolicy().has("rulesSha256")
                 && !StyledSpriteCodec.qualityRulesSha().equals(w.qualityPolicy().path("rulesSha256").asText()))
                 throw new AssetException(409,"QUALITY_RULES_CHANGED");
@@ -167,7 +167,7 @@ public class StyledAssetWorker {
                 // Bind canonical frames extracted from the stored sheet, not provider-specific PNG encoding.
                 // Rechecks must observe the same hashes without altering any RGBA pixel.
                 if(recovery)frames=StyledSpriteCodec.frames(sheet);
-                String key=w.prefix()+"sheets/"+(w.repairCount()==0?"":"repair-"+w.repairCount()+"/")+w.label()+".png";storage.put(key,sheet);
+                String key=w.prefix()+"sheets/"+(StyledIdleHold.derived(result)?"idle-hold/":w.repairCount()==0?"":"repair-"+w.repairCount()+"/")+w.label()+".png";storage.put(key,sheet);
                 var spec=StyledSpriteCodec.rules(json).path("actions").path(w.action());
                 var metadata=json.valueToTree(Map.of("key",key,"sha256",StyledSpriteCodec.sha(sheet),"frameCount",9,
                     "durationMs",spec.path("durationMs").asInt(),"loop",spec.path("loop").asBoolean()));
@@ -298,6 +298,8 @@ public class StyledAssetWorker {
             else if(report.path("rawEditReview").path("passed").asBoolean())lessons.record(w,report,metadata,seeds);
         } else lessons.record(w,report,metadata,seeds);
         if(!store.retryQuality(w,report,metadata)) {
+            if(StyledIdleHold.eligible(w,report,metadata)
+                && store.idleHoldCheckpoint(w,report,metadata,StyledIdleHold.result(seed(w),seeds.path("hashes"),w.direction(),metadata,json)))return;
             recovery.observe(w,report,metadata,seeds);
             store.success(w,metadata);
         }

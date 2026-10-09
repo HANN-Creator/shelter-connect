@@ -12,7 +12,7 @@ import tools.jackson.databind.node.ObjectNode;
 
 /** Separates reference identity from temporal motion; disagreement is not a training label. */
 final class StyledMotionReview {
-    static final String VERSION="motion-observation-tristate-v3";
+    static final String VERSION="motion-observation-tristate-v4";
     static final Set<String> MOTIONS=Set.of("STILL","BREATH_BLINK","WALK_RUN","TAIL_MOVEMENT","OTHER_MOVEMENT","UNCERTAIN");
     static final Map<String,String> PROPERTIES=Map.ofEntries(
         Map.entry("referencePose","DISCONTINUITY"),Map.entry("identity","IDENTITY_DRIFT"),
@@ -67,12 +67,15 @@ final class StyledMotionReview {
         var edges=new ArrayList<Integer>();for(int i=0;i<9;i++)if(StyledQualityAgent.touchesEdge(StyledSpriteCodec.motionFrame(frames.get(i))))edges.add(i);
         if(!edges.isEmpty())issues.add("CANVAS_CLIPPING");
         var upper=new TreeSet<>(StyledQualityAgent.frontalTailFrames(seeds.getFirst(),frames,action,direction,contract.path("tailCarriage").asText(),rules.path("frontalLowTail")));
-        if(direction.equals("south"))upper.addAll(StyledQualityAgent.frontalHeadGrowth(seeds.getFirst(),frames,rules.at("/recovery/frontalHeadGrowth")));
+        var headGrowth=direction.equals("south")?StyledQualityAgent.frontalHeadGrowth(seeds.getFirst(),frames,rules.at("/recovery/frontalHeadGrowth")):List.<Integer>of();
+        upper.addAll(headGrowth);
         if(!upper.isEmpty())issues.add("TAIL_CARRIAGE");
         var detached=new ArrayList<Integer>();if(action.equals("TAIL_WAG"))for(int i=0;i<9;i++)if(StyledQualityAgent.detachedPixels(StyledSpriteCodec.motionFrame(frames.get(i))))detached.add(i);
         if(!detached.isEmpty())issues.add("DETACHED_PIXELS");
         var idle=StyledQualityAgent.idleMotionFrames(seed,frames,action,rules.path("idleMotion"));if(!idle.isEmpty())issues.add("IDLE_MOTION");
         if(action.equals("WALK") && evidence.path("alphaChangedFromFrame0").valueStream().mapToInt(JsonNode::asInt).max().orElse(0)<5)issues.add("ACTION_MISSING");
+        boolean headDefect=resolveFrontalAppendage(action,direction,initial,second,lower,headGrowth);
+        if(headDefect){uncertain.remove("tail");if(!confirmed.valueStream().anyMatch(n->n.asText().equals("tail")))confirmed.add("tail");flagged.addAll(upper);}
         String decision=!uncertain.isEmpty()?"UNCERTAIN":issues.isEmpty()?"PASS":"CONFIRMED_DEFECT";
         var out=json.createObjectNode().put("version",StyledQualityAgent.VERSION).put("motionReviewVersion",VERSION)
             .put("motionDecision",decision).put("passed",decision.equals("PASS")).put("referencePoseUsable",referencePose)
@@ -82,7 +85,7 @@ final class StyledMotionReview {
         out.set("issues",json.valueToTree(issues));out.set("frames",json.valueToTree(flagged));out.set("uncertainProperties",json.valueToTree(uncertain));
         out.set("confirmedProperties",confirmed);out.set("edgeFrames",json.valueToTree(edges));out.set("silhouetteFrames",json.valueToTree(upper));
         out.set("detachedFrames",json.valueToTree(detached));out.set("idleMotionFrames",json.valueToTree(idle));out.set("pixelEvidence",evidence);
-        out.set("lowerBodyEvidence",lower);out.put("unsupportedWalkResolved",contradictedWalk);
+        out.put("frontalAppendageConfirmed",headDefect);out.set("lowerBodyEvidence",lower);out.put("unsupportedWalkResolved",contradictedWalk);
         out.set("colorEvidence",color);out.put("subtlePaletteResolved",subtlePalette);
         out.set("initialVision",initial);if(second!=null)out.set("consistencyReview",second);
         out.put("observationCount",second==null?1:2);
@@ -139,6 +142,24 @@ final class StyledMotionReview {
             && second.path("properties").valueStream().allMatch(p->p.path("state").asText().equals("PASS"))
             && first.path("properties").valueStream().allMatch(p->p.path("state").asText().equals("PASS")
                 || (Set.of("action","idleStillness").contains(p.path("property").asText()) && p.path("state").asText().equals("FAIL")));
+    }
+    /** Resolve toward a defect only: two motion observations plus new central-head pixels.
+     * UNKNOWN photographic carriage cannot waive an invented moving head appendage.
+     * Any other uncertainty, rear/side view, ear-only growth or normal breathing remains held.
+     */
+    static boolean resolveFrontalAppendage(String action,String direction,JsonNode a,JsonNode b,JsonNode lower,Collection<Integer> growth) {
+        if(!action.equals("IDLE") || !direction.equals("south") || b==null || growth.isEmpty() || !stationaryLowerBody(lower))return false;
+        boolean failedTail=false;
+        for(var observation:List.of(a,b)) {
+            if(!observation.path("observedMotion").asText().equals("TAIL_MOVEMENT"))return false;
+            for(String key:PROPERTIES.keySet()) {
+                String state=property(observation,key).path("state").asText();
+                if(key.equals("tail")){if(!Set.of("FAIL","UNCERTAIN").contains(state))return false;failedTail|=state.equals("FAIL");}
+                else if(Set.of("action","idleStillness","loop").contains(key)){if(!state.equals("FAIL"))return false;}
+                else if(!state.equals("PASS"))return false;
+            }
+        }
+        return failedTail;
     }
     private static boolean stationaryLowerBody(JsonNode lower) {
         return lower.path("alphaChanged").size()==9 && lower.path("darkContourChanged").size()==9

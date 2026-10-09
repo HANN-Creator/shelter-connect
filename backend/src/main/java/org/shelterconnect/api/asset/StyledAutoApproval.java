@@ -55,6 +55,8 @@ final class StyledAutoApproval {
                 || !sha(result.path("motionSeedSha256")) || !result.path("motionSeedSha256").equals(r.path("motionSeedSha256"))
                 || !result.path("frameHashes").isArray() || result.path("frameHashes").size()!=9
                 || !result.path("frameHashes").equals(r.path("frameHashes"))))return false;
+            if(StyledIdleHold.derived(result) && (!step.action().equals("IDLE")
+                || !StyledIdleHold.bound(result,job.steps().getFirst().result().path("hashes"),step.direction())))return false;
             if(result.has("rawEdit") && (!sha(result.at("/rawEdit/sha256"))
                 || !result.at("/rawEdit/sha256").equals(r.path("rawEditSha256"))
                 || !report(r.path("rawEditReview"),StyledQualityAgent.VERSION)

@@ -31,6 +31,16 @@ def decode_recorded_alpha(rows):
 
 
 class QualityRegressionTest(unittest.TestCase):
+    def test_actual_idle_failure_retains_all_nine_frames_and_shared_prevention(self):
+        root=Path(__file__).parent/'fixtures/idle-hold-v26'
+        for case in read(root/'evidence.json')['cases']:
+            self.assertEqual(digest(root/case['file']),case['sha256'])
+            with Image.open(root/case['file']) as image:self.assertEqual(image.size,(360,40))
+            self.assertFalse(read(root/(case['id']+'-review.json'))['passed'])
+        self.assertIn('never create a crown',load_quality()['recovery']['frontOcclusion'])
+        self.assertEqual(load_quality()['recovery']['idleHoldVersion'],'approved-seed-idle-hold-v1')
+
+
     def test_coat_repair_keeps_deployed_source_and_prevention_on_initial_generation(self):
         root=Path(__file__).parent/'fixtures/material-coat-v25'
         evidence=read(root/'evidence.json')

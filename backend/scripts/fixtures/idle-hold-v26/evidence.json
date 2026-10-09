@@ -1,0 +1,21 @@
+{
+  "source": "Actual packaged v25 PixelLab/Luna run, 2026-10-10; original outcomes retained",
+  "cases": [
+    {
+      "id": "idle-south",
+      "file": "idle-south.png",
+      "sha256": "ca500f1e7f7e9b1b0c6c961df3bec8a18090f332f170fd8422cca1c33a660921",
+      "repairCount": 0,
+      "expected": "BLOCK",
+      "reason": "Unwanted temporal appendage or movement in IDLE; source seed is unchanged and approved."
+    },
+    {
+      "id": "idle-north",
+      "file": "idle-north.png",
+      "sha256": "842661d0941c962cc2c012aeea102a7a2e145bc106a9936ebf69085aa96a2769",
+      "repairCount": 3,
+      "expected": "BLOCK",
+      "reason": "Unwanted temporal appendage or movement in IDLE; source seed is unchanged and approved."
+    }
+  ]
+}
