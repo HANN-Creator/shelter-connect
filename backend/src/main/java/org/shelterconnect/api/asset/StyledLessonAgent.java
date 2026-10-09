@@ -141,7 +141,8 @@ public class StyledLessonAgent {
     private static byte[] motionCasesBoard(JsonNode scope,List<Case> cases) {
         if(!scope.path("action").asText().equals("IDLE"))return board(cases);
         if(cases.size()<2 || cases.size()>4)throw invalid();
-        var image=new BufferedImage(1020,728*cases.size(),BufferedImage.TYPE_INT_RGB);var g=image.createGraphics();
+        int width=cases.stream().anyMatch(c->StyledSpriteCodec.motionFrame(c.frames().getFirst()).getWidth()==40)?1020:896;
+        var image=new BufferedImage(width,728*cases.size(),BufferedImage.TYPE_INT_RGB);var g=image.createGraphics();
         try {
             g.setColor(Color.WHITE);g.fillRect(0,0,image.getWidth(),image.getHeight());g.setColor(Color.BLACK);
             for(int i=0;i<cases.size();i++){g.drawString(cases.get(i).key(),12,i*728+18);g.drawImage(ImageIO.read(new ByteArrayInputStream(motionBoard(scope,cases.get(i)))),0,i*728+24,null);}

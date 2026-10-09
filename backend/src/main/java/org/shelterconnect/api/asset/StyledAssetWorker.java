@@ -144,6 +144,8 @@ public class StyledAssetWorker {
                     storage.put(rawKey,raw);rawEdit=json.valueToTree(Map.of("key",rawKey,"sha256",StyledSpriteCodec.sha(raw)));
                     frames=recovery?StyledSpriteCodec.anchorEdit(frames,seed(w)):StyledSpriteCodec.restoreEditPalette(frames,seed(w));
                 }
+                if(recovery && frames.stream().anyMatch(f->StyledSpriteCodec.motionFrame(f).getWidth()!=40))
+                    throw new AssetException(422,"STYLED_FRAME_INVALID");
                 byte[] sheet=recovery?StyledSpriteCodec.rawSheet(frames):StyledSpriteCodec.sheet(frames,seed(w));
                 // Bind canonical frames extracted from the stored sheet, not provider-specific PNG encoding.
                 // Rechecks must observe the same hashes without altering any RGBA pixel.

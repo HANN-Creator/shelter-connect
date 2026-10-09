@@ -1,0 +1,966 @@
+{
+  "kind": "Actual production classes, local authorized execution; not a hosted deployment",
+  "photoSha256": "99f83d8386ef5f709cec093e1cf204d55287dcbefc381bb4af7a204c41655005",
+  "originalLocalExpectationReplay": [
+    {
+      "actual": false,
+      "case": "base-1",
+      "expected": false,
+      "issues": [
+        "CANVAS_CLIPPING",
+        "SEED_IDENTITY",
+        "SEED_MOTION_MARGIN"
+      ]
+    },
+    {
+      "actual": false,
+      "case": "base-2",
+      "expected": false,
+      "issues": [
+        "CANVAS_CLIPPING",
+        "SEED_IDENTITY",
+        "SEED_MOTION_MARGIN"
+      ]
+    },
+    {
+      "actual": false,
+      "case": "base-3",
+      "expected": true,
+      "issues": [
+        "SEED_IDENTITY"
+      ]
+    },
+    {
+      "actual": false,
+      "case": "walk-south-initial",
+      "expected": false,
+      "issues": [
+        "TAIL_CARRIAGE"
+      ]
+    },
+    {
+      "actual": true,
+      "case": "walk-south-selected",
+      "expected": true,
+      "issues": []
+    }
+  ],
+  "reclassificationReason": "Independent source-photo inspection confirms the broad white torso patches are underrepresented in the formerly accepted local base3. Keep its old local PASS and actual differing server opinions, rather than treating a past AI PASS as an immutable positive label.",
+  "finalBaseRepair": {
+    "newPixelLabCalls": 1,
+    "productionPublished": false,
+    "report": {
+      "version": "seed-eyes-v1",
+      "recoveryVersion": "photo-grounded-recovery-v1",
+      "reviewVersion": "photo-observed-features-review-v4",
+      "passed": true,
+      "inputSha256": "4959587724dc81227ad4fb0f1044d0862dc0408e3fd50ff6971256b3217c507c",
+      "photoSha256": "99f83d8386ef5f709cec093e1cf204d55287dcbefc381bb4af7a204c41655005",
+      "rulesSha256": "3430ce089c11a94500d5bb202511b250334c729fa208081e5d47b8aae78e6c9f",
+      "model": "gpt-5.6-luna",
+      "reviewedAt": "2026-10-09T03:35:49.196214Z",
+      "identity": "PASS",
+      "appearance": "PASS",
+      "repairDescription": "",
+      "note": "네 방향 모두 의도한 방향, 사진에서 확인되는 주요 무늬, 승인된 픽셀 스타일과 일치합니다.",
+      "issues": [],
+      "edgeDirections": [],
+      "views": [
+        {
+          "direction": "south",
+          "readability": "PASS",
+          "note": "정면 방향과 흰색 얼굴·가슴·다리 무늬가 사진과 잘 맞습니다.",
+          "style": "PASS"
+        },
+        {
+          "direction": "north",
+          "readability": "NOT_VISIBLE",
+          "note": "후면에는 얼굴이 없어야 하며, 사진에 숨은 후면 무늬를 과도하게 단정하지 않았습니다.",
+          "style": "PASS"
+        },
+        {
+          "direction": "west",
+          "readability": "PASS",
+          "note": "서쪽 측면의 얼굴·가슴·다리 무늬와 꼬리 방향이 자연스럽습니다.",
+          "style": "PASS"
+        },
+        {
+          "direction": "east",
+          "readability": "PASS",
+          "note": "동쪽 측면도 동일한 코트 패턴과 둥근 픽셀 스타일을 유지합니다.",
+          "style": "PASS"
+        }
+      ],
+      "propertyReview": {
+        "repairDescription": "",
+        "views": [
+          {
+            "direction": "south",
+            "observedSpriteMarkings": "The front sprite has a brown head and ears with a clear white forehead blaze, white muzzle, white chest, and white lower legs/paws; the visible body is primarily brown with white at the front.",
+            "observedPhotoMarkings": "The visible photo shows a brown head with a broad white forehead blaze continuing onto the white muzzle, plus a white chest and white legs. The body has brown patches over a largely white torso; rear and tail markings are not visible in this front crop.",
+            "directionCorrect": true,
+            "eyesReadable": true,
+            "identityMatches": true,
+            "styleMatches": true,
+            "tailPlausible": true,
+            "confidence": 0.96,
+            "issues": [],
+            "note": "정면 방향과 흰색 얼굴·가슴·다리 무늬가 사진과 잘 맞습니다."
+          },
+          {
+            "direction": "north",
+            "observedSpriteMarkings": "The rear sprite shows brown ears and a brown back with a broad white band across the upper torso/neck area; the lower rear is brown with a small dark central tail-area mark and no face.",
+            "observedPhotoMarkings": "The rear body is not directly visible in the provided photographs. The visible side torso does show a large white body area with a brown patch, but the exact rear pattern and tail are hidden.",
+            "directionCorrect": true,
+            "eyesReadable": true,
+            "identityMatches": true,
+            "styleMatches": true,
+            "tailPlausible": true,
+            "confidence": 0.86,
+            "issues": [],
+            "note": "후면에는 얼굴이 없어야 하며, 사진에 숨은 후면 무늬를 과도하게 단정하지 않았습니다."
+          },
+          {
+            "direction": "west",
+            "observedSpriteMarkings": "The left-facing profile has a brown head and upright ear, a white muzzle and throat/chest, a brown torso with a large white underside/front patch, white lower-leg markings, and a raised brown tail at the rear.",
+            "observedPhotoMarkings": "The visible photo supports a brown head with a white muzzle, white chest, white legs, and a brown-and-white torso. The tail is not visible in the photo, so its exact shape is unknown.",
+            "directionCorrect": true,
+            "eyesReadable": true,
+            "identityMatches": true,
+            "styleMatches": true,
+            "tailPlausible": true,
+            "confidence": 0.94,
+            "issues": [],
+            "note": "서쪽 측면의 얼굴·가슴·다리 무늬와 꼬리 방향이 자연스럽습니다."
+          },
+          {
+            "direction": "east",
+            "observedSpriteMarkings": "The right-facing profile has a brown head and upright ear, a white muzzle and throat/chest, a brown torso with a white underside/front patch, white lower-leg markings, and a raised brown tail at the rear.",
+            "observedPhotoMarkings": "The visible photo supports the brown head, white muzzle and chest, white legs, and brown patches over the white torso. The tail and far-side body are hidden in the photographs.",
+            "directionCorrect": true,
+            "eyesReadable": true,
+            "identityMatches": true,
+            "styleMatches": true,
+            "tailPlausible": true,
+            "confidence": 0.93,
+            "issues": [],
+            "note": "동쪽 측면도 동일한 코트 패턴과 둥근 픽셀 스타일을 유지합니다."
+          }
+        ],
+        "note": "네 방향 모두 의도한 방향, 사진에서 확인되는 주요 무늬, 승인된 픽셀 스타일과 일치합니다.",
+        "tailConsistent": true
+      },
+      "learnedLessons": [],
+      "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "reviewImageHashes": {
+        "Actual body photo": "99f83d8386ef5f709cec093e1cf204d55287dcbefc381bb4af7a204c41655005",
+        "Actual face photo": "189a876d95e2b9eadd8ba4b467fbe970a21fb141351cf3ded4a89552eccb6ec4",
+        "Approved art style only; not this dog": "bf5e5641f0768a45f7a87f10bbb5bf26e987dee581b1b2cf4d08d2c4c0cd539c",
+        "Unapproved view: south": "4e3d9ac60625747ceb720a410547ecb305ae936d266d6479cd8e3d0e427a28cd",
+        "Unapproved view: north": "a574c6643f511cf32214221d3846cd41aca8b3c19eca8f124d66735a9a9ade2f",
+        "Unapproved view: west": "6d09e253d95fd57accb55798e1d5fc3f0467a89aba363aa539c0b0aeb0419db5",
+        "Unapproved view: east": "627b0487ce9fc579d2204ed95b3be0230c5897c7285ec5698121f419cefea6c5"
+      },
+      "minimumClearPixels": 1,
+      "marginDirections": [],
+      "clearPixelsLeftTopRightBottom": {
+        "south": [
+          4,
+          3,
+          6,
+          1
+        ],
+        "north": [
+          5,
+          2,
+          7,
+          1
+        ],
+        "west": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "east": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    "passed": true
+  },
+  "outputHashes": {
+    "west.png": "5471a247d8b9dd1b8a50db8150a40806338732e34491a6682037e86e32ec52c1",
+    "north.png": "6c610b66298f62e3ca37eaafd2db538c95de513356b62928c4d4dab57ec02530",
+    "east.png": "b82dec005dfdc4bee35800484835a20e3f0652e8aa055eeff0eeddf828675809",
+    "south.png": "c9598bf0bb70cc0dec7de012e1532ff325c942e377355a6e86152237d40a8106"
+  },
+  "finalReviewerReports": {
+    "walk-south-selected-review": {
+      "reviewedAt": "2026-10-09T03:33:16.731829Z",
+      "rulesRevision": "sprite-regressions-2026-10-09-v15",
+      "model": "gpt-5.6-luna",
+      "edgeFrames": [],
+      "rulesSha256": "3430ce089c11a94500d5bb202511b250334c729fa208081e5d47b8aae78e6c9f",
+      "note": "모든 프레임에서 남쪽을 향한 얼굴과 정체성이 유지되며, 다리와 발이 교대로 움직이는 보행이 확인됩니다. 연속성 및 꼬리 이상이 없습니다.",
+      "issues": [],
+      "frames": [],
+      "version": "sprite-quality-v1",
+      "passed": true,
+      "silhouetteFrames": [],
+      "detachedFrames": [],
+      "idleMotionFrames": [],
+      "pixelEvidence": {
+        "version": "native-frame-delta-v1",
+        "reference": "frame0",
+        "frameCount": 9,
+        "alphaStable": false,
+        "maxVisibleRgbDelta": 255,
+        "subtleShadingOnly": false,
+        "alphaChangedFromFrame0": [
+          0,
+          6,
+          15,
+          8,
+          48,
+          17,
+          8,
+          6,
+          1
+        ],
+        "alphaChangedFromPrevious": [
+          0,
+          6,
+          9,
+          7,
+          48,
+          51,
+          9,
+          6,
+          5
+        ],
+        "maxRgbDeltaFromFrame0": [
+          0,
+          253,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          189
+        ],
+        "maxRgbDeltaFromPrevious": [
+          0,
+          253,
+          255,
+          252,
+          252,
+          255,
+          252,
+          252,
+          252
+        ],
+        "rgbChangedPixelsFromFrame0": [
+          0,
+          362,
+          362,
+          362,
+          388,
+          364,
+          362,
+          364,
+          363
+        ],
+        "boundsExclusive": [
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            6,
+            30,
+            34
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ]
+        ]
+      },
+      "reviewLayout": "matched-seed-nine-pairs-v2",
+      "propertyReview": {
+        "actionVisible": true,
+        "continuityUsable": true,
+        "directionPreserved": true,
+        "eyesPreserved": true,
+        "identityPreserved": true,
+        "limbsPlausible": true,
+        "paletteStable": true,
+        "tailConsistent": true,
+        "passed": true,
+        "confidence": 0.96,
+        "issues": [],
+        "frames": [],
+        "note": "모든 프레임에서 남쪽을 향한 얼굴과 정체성이 유지되며, 다리와 발이 교대로 움직이는 보행이 확인됩니다. 연속성 및 꼬리 이상이 없습니다."
+      }
+    },
+    "base-1-review": {
+      "version": "seed-eyes-v1",
+      "recoveryVersion": "photo-grounded-recovery-v1",
+      "reviewVersion": "photo-observed-features-review-v4",
+      "passed": false,
+      "inputSha256": "500934026d976b93999a37eb4e96eb7326213ad5119e1be5b914e0542f9e1c47",
+      "photoSha256": "99f83d8386ef5f709cec093e1cf204d55287dcbefc381bb4af7a204c41655005",
+      "rulesSha256": "3430ce089c11a94500d5bb202511b250334c729fa208081e5d47b8aae78e6c9f",
+      "model": "gpt-5.6-luna",
+      "reviewedAt": "2026-10-09T03:32:29.460566Z",
+      "identity": "FAIL",
+      "appearance": "FAIL",
+      "repairDescription": "Preserve the compact outlined pixel-art style and all four directions. Reduce the brown body area in the WEST and EAST sprites, adding a broader white torso/side region to better match the photographed white neck, chest, and body with a reddish-brown side patch. Keep the white forehead stripe, muzzle, legs, upright ears, and plausible raised tails.",
+      "note": "네 방향 모두 의도한 방향과 귀 형태는 자연스럽습니다. 얼굴의 흰 줄무늬와 흰 주둥이·가슴·다리는 사진과 대체로 일치하지만, 측면 몸통의 갈색 비중은 사진보다 높습니다.",
+      "issues": [
+        "CANVAS_CLIPPING",
+        "SEED_IDENTITY",
+        "SEED_MOTION_MARGIN"
+      ],
+      "edgeDirections": [
+        "east"
+      ],
+      "views": [
+        {
+          "readability": "PASS",
+          "direction": "south",
+          "style": "PASS",
+          "note": "정면 방향과 얼굴 무늬가 사진과 잘 맞습니다."
+        },
+        {
+          "readability": "NOT_VISIBLE",
+          "direction": "north",
+          "style": "PASS",
+          "note": "자연스러운 후면 실루엣이며, 사진에 가려진 후면 무늬는 판단하지 않았습니다."
+        },
+        {
+          "readability": "PASS",
+          "direction": "west",
+          "style": "PASS",
+          "note": "방향과 머리 무늬는 맞지만 몸통의 갈색 영역이 사진보다 넓습니다."
+        },
+        {
+          "readability": "PASS",
+          "direction": "east",
+          "style": "PASS",
+          "note": "프로필 방향과 얼굴 무늬는 맞지만 몸통 색 분할이 사진보다 갈색 위주입니다."
+        }
+      ],
+      "propertyReview": {
+        "note": "네 방향 모두 의도한 방향과 귀 형태는 자연스럽습니다. 얼굴의 흰 줄무늬와 흰 주둥이·가슴·다리는 사진과 대체로 일치하지만, 측면 몸통의 갈색 비중은 사진보다 높습니다.",
+        "views": [
+          {
+            "direction": "south",
+            "observedSpriteMarkings": "이마 중앙에 세로 흰 줄이 있고, 흰 주둥이와 흰 가슴이 보입니다. 앞다리는 흰색이며 머리와 몸통은 갈색입니다.",
+            "observedPhotoMarkings": "사진 정면에는 이마 중앙의 넓은 흰 줄, 흰 주둥이와 흰 가슴이 명확히 보입니다. 앞다리도 흰색이며 머리와 몸통은 적갈색입니다. 꼬리는 정면 사진에서 보이지 않습니다.",
+            "directionCorrect": true,
+            "eyesReadable": true,
+            "identityMatches": true,
+            "styleMatches": true,
+            "tailPlausible": true,
+            "confidence": 0.96,
+            "issues": [],
+            "note": "정면 방향과 얼굴 무늬가 사진과 잘 맞습니다."
+          },
+          {
+            "direction": "north",
+            "observedSpriteMarkings": "얼굴 없이 갈색 등과 머리 뒤쪽이 보이며, 목에서 등 중앙으로 흰 세로 무늬가 이어집니다. 뒷다리 끝은 밝은 색입니다.",
+            "observedPhotoMarkings": "사진에서 등과 후면 전체는 보이지 않아 후면 무늬와 꼬리는 확인할 수 없습니다. 보이는 몸통 일부에는 흰 털과 적갈색 패치가 있습니다.",
+            "directionCorrect": true,
+            "eyesReadable": true,
+            "identityMatches": true,
+            "styleMatches": true,
+            "tailPlausible": true,
+            "confidence": 0.78,
+            "issues": [],
+            "note": "자연스러운 후면 실루엣이며, 사진에 가려진 후면 무늬는 판단하지 않았습니다."
+          },
+          {
+            "direction": "west",
+            "observedSpriteMarkings": "왼쪽을 향한 프로필로, 갈색 머리에 작은 흰 이마 줄이 있고 흰 주둥이·목·가슴이 보입니다. 몸통은 주로 갈색이며 다리 일부가 흰색입니다. 뒤쪽 꼬리는 위로 말려 있습니다.",
+            "observedPhotoMarkings": "사진의 보이는 측면에는 흰 목·가슴과 넓은 흰 몸통 영역, 그 위의 적갈색 몸통 패치가 보입니다. 얼굴 측면과 꼬리는 사진에서 충분히 보이지 않습니다.",
+            "directionCorrect": true,
+            "eyesReadable": true,
+            "identityMatches": true,
+            "styleMatches": true,
+            "tailPlausible": true,
+            "confidence": 0.86,
+            "issues": [
+              "COAT_MISMATCH"
+            ],
+            "note": "방향과 머리 무늬는 맞지만 몸통의 갈색 영역이 사진보다 넓습니다."
+          },
+          {
+            "direction": "east",
+            "observedSpriteMarkings": "오른쪽을 향한 프로필로, 갈색 머리와 흰 이마 줄, 흰 주둥이·목·가슴이 보입니다. 몸통은 갈색 중심이며 다리 끝은 흰색입니다. 뒤쪽 꼬리는 위로 들려 있습니다.",
+            "observedPhotoMarkings": "사진에서 보이는 측면에는 흰 목·가슴과 넓은 흰 몸통, 적갈색 등·옆구리 패치가 있습니다. 꼬리와 얼굴 반대쪽 세부 무늬는 사진에 가려져 있습니다.",
+            "directionCorrect": true,
+            "eyesReadable": true,
+            "identityMatches": true,
+            "styleMatches": true,
+            "tailPlausible": true,
+            "confidence": 0.86,
+            "issues": [
+              "COAT_MISMATCH"
+            ],
+            "note": "프로필 방향과 얼굴 무늬는 맞지만 몸통 색 분할이 사진보다 갈색 위주입니다."
+          }
+        ],
+        "repairDescription": "Preserve the compact outlined pixel-art style and all four directions. Reduce the brown body area in the WEST and EAST sprites, adding a broader white torso/side region to better match the photographed white neck, chest, and body with a reddish-brown side patch. Keep the white forehead stripe, muzzle, legs, upright ears, and plausible raised tails.",
+        "tailConsistent": true
+      },
+      "learnedLessons": [],
+      "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "reviewImageHashes": {
+        "Actual body photo": "99f83d8386ef5f709cec093e1cf204d55287dcbefc381bb4af7a204c41655005",
+        "Actual face photo": "189a876d95e2b9eadd8ba4b467fbe970a21fb141351cf3ded4a89552eccb6ec4",
+        "Approved art style only; not this dog": "bf5e5641f0768a45f7a87f10bbb5bf26e987dee581b1b2cf4d08d2c4c0cd539c",
+        "Unapproved view: south": "c3eb053baa9446e9b85bc8ed516b1c54ece6cdc2dbaf1005b1f67949216fe477",
+        "Unapproved view: north": "f4540f0cdb1f67a0b1b7516243a7b5d0f404779b23b5e83325a9bd1906a2dca5",
+        "Unapproved view: west": "bd1b8eba208beed0a337aa44d39f6e81c38c75f86d6f6ea8987000cd13931e3c",
+        "Unapproved view: east": "fd8d95629d865bd81854faeda79c6cfb41bd2b492895b78764600950505f258d"
+      },
+      "minimumClearPixels": 1,
+      "marginDirections": [
+        "east"
+      ],
+      "clearPixelsLeftTopRightBottom": {
+        "south": [
+          5,
+          3,
+          5,
+          1
+        ],
+        "north": [
+          6,
+          2,
+          6,
+          1
+        ],
+        "west": [
+          1,
+          1,
+          2,
+          1
+        ],
+        "east": [
+          3,
+          1,
+          0,
+          1
+        ]
+      }
+    },
+    "walk-south-initial-review": {
+      "reviewedAt": "2026-10-09T03:33:10.553363Z",
+      "rulesRevision": "sprite-regressions-2026-10-09-v15",
+      "model": "gpt-5.6-luna",
+      "edgeFrames": [],
+      "rulesSha256": "3430ce089c11a94500d5bb202511b250334c729fa208081e5d47b8aae78e6c9f",
+      "note": "전체 9프레임에서 남쪽을 향한 얼굴과 눈이 유지됩니다. 다리와 발의 교대 움직임이 보여 걷기 동작이 확인되며, 연결·연속성·색상도 안정적입니다.",
+      "issues": [
+        "TAIL_CARRIAGE"
+      ],
+      "frames": [],
+      "version": "sprite-quality-v1",
+      "passed": false,
+      "silhouetteFrames": [
+        4,
+        5,
+        6
+      ],
+      "detachedFrames": [],
+      "idleMotionFrames": [],
+      "pixelEvidence": {
+        "version": "native-frame-delta-v1",
+        "reference": "frame0",
+        "frameCount": 9,
+        "alphaStable": false,
+        "maxVisibleRgbDelta": 255,
+        "subtleShadingOnly": false,
+        "alphaChangedFromFrame0": [
+          0,
+          13,
+          23,
+          18,
+          55,
+          30,
+          20,
+          14,
+          1
+        ],
+        "alphaChangedFromPrevious": [
+          0,
+          13,
+          14,
+          11,
+          45,
+          51,
+          10,
+          10,
+          13
+        ],
+        "maxRgbDeltaFromFrame0": [
+          0,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          206
+        ],
+        "maxRgbDeltaFromPrevious": [
+          0,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ],
+        "rgbChangedPixelsFromFrame0": [
+          0,
+          150,
+          158,
+          152,
+          289,
+          161,
+          149,
+          144,
+          128
+        ],
+        "boundsExclusive": [
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            6,
+            30,
+            34
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ]
+        ]
+      },
+      "reviewLayout": "matched-seed-nine-pairs-v2",
+      "propertyReview": {
+        "actionVisible": true,
+        "continuityUsable": true,
+        "directionPreserved": true,
+        "eyesPreserved": true,
+        "identityPreserved": true,
+        "limbsPlausible": true,
+        "paletteStable": true,
+        "tailConsistent": true,
+        "passed": true,
+        "confidence": 0.94,
+        "issues": [],
+        "frames": [],
+        "note": "전체 9프레임에서 남쪽을 향한 얼굴과 눈이 유지됩니다. 다리와 발의 교대 움직임이 보여 걷기 동작이 확인되며, 연결·연속성·색상도 안정적입니다."
+      }
+    },
+    "base-2-review": {
+      "version": "seed-eyes-v1",
+      "recoveryVersion": "photo-grounded-recovery-v1",
+      "reviewVersion": "photo-observed-features-review-v4",
+      "passed": false,
+      "inputSha256": "701dd0ab11aa78f4845dcfbad994f4e966b6061203e470aa65ef5195559bd907",
+      "photoSha256": "99f83d8386ef5f709cec093e1cf204d55287dcbefc381bb4af7a204c41655005",
+      "rulesSha256": "3430ce089c11a94500d5bb202511b250334c729fa208081e5d47b8aae78e6c9f",
+      "model": "gpt-5.6-luna",
+      "reviewedAt": "2026-10-09T03:32:44.216368Z",
+      "identity": "FAIL",
+      "appearance": "FAIL",
+      "repairDescription": "Preserve the current compact outlined style and coat colors. Repair the WEST view by fitting the brown tail fully inside the 32px canvas so it is not clipped; keep its natural side-view carriage consistent with EAST.",
+      "note": "네 방향 모두 사진 속 갈색·흰색 개의 색상과 귀 형태를 대체로 잘 반영합니다. WEST 꼬리는 캔버스 가장자리에서 잘린 것으로 보입니다.",
+      "issues": [
+        "CANVAS_CLIPPING",
+        "SEED_IDENTITY",
+        "SEED_MOTION_MARGIN"
+      ],
+      "edgeDirections": [
+        "west",
+        "east"
+      ],
+      "views": [
+        {
+          "readability": "PASS",
+          "direction": "south",
+          "style": "PASS",
+          "note": "정면 방향과 흰 얼굴·가슴 무늬가 사진과 잘 맞습니다."
+        },
+        {
+          "readability": "NOT_VISIBLE",
+          "direction": "north",
+          "style": "PASS",
+          "note": "후면 방향과 무표정한 무얼굴 처리가 적절합니다."
+        },
+        {
+          "readability": "PASS",
+          "direction": "west",
+          "style": "PASS",
+          "note": "측면 방향과 주요 얼굴·가슴 색은 맞지만 꼬리가 오른쪽 가장자리에서 잘립니다."
+        },
+        {
+          "readability": "PASS",
+          "direction": "east",
+          "style": "PASS",
+          "note": "오른쪽 측면 방향과 얼굴·가슴 색 배치가 적절합니다."
+        }
+      ],
+      "propertyReview": {
+        "note": "네 방향 모두 사진 속 갈색·흰색 개의 색상과 귀 형태를 대체로 잘 반영합니다. WEST 꼬리는 캔버스 가장자리에서 잘린 것으로 보입니다.",
+        "views": [
+          {
+            "direction": "south",
+            "observedSpriteMarkings": "이 정면 스프라이트는 갈색 머리와 귀, 중앙의 흰 이마 줄무늬, 흰 주둥이와 가슴, 흰 앞다리를 보여 줍니다. 몸통 양옆은 갈색입니다.",
+            "observedPhotoMarkings": "사진의 정면 얼굴에는 갈색 이마와 양쪽 볼, 넓은 흰 중앙 블레이즈, 흰 주둥이와 가슴이 보입니다. 사진에서 뒷몸통과 꼬리는 정면 구도로 대부분 숨겨져 있습니다.",
+            "directionCorrect": true,
+            "eyesReadable": true,
+            "identityMatches": true,
+            "styleMatches": true,
+            "tailPlausible": true,
+            "confidence": 0.96,
+            "issues": [],
+            "note": "정면 방향과 흰 얼굴·가슴 무늬가 사진과 잘 맞습니다."
+          },
+          {
+            "direction": "north",
+            "observedSpriteMarkings": "이 후면 스프라이트는 갈색 귀와 머리·등·엉덩이, 머리에서 등으로 이어지는 중앙 흰 줄무늬를 보여 줍니다. 얼굴과 눈은 없습니다.",
+            "observedPhotoMarkings": "사진에는 후면 전체가 보이지 않아 엉덩이, 꼬리, 등 중앙의 후면 무늬는 확인할 수 없습니다. 보이는 측면 몸통에는 갈색 등과 흰 털 영역이 있습니다.",
+            "directionCorrect": true,
+            "eyesReadable": true,
+            "identityMatches": true,
+            "styleMatches": true,
+            "tailPlausible": true,
+            "confidence": 0.87,
+            "issues": [],
+            "note": "후면 방향과 무표정한 무얼굴 처리가 적절합니다."
+          },
+          {
+            "direction": "west",
+            "observedSpriteMarkings": "이 측면 스프라이트는 왼쪽을 향한 갈색 머리와 귀, 흰 주둥이·목·가슴, 갈색 몸통과 흰 발을 보여 줍니다. 뒤쪽 꼬리는 오른쪽 캔버스 가장자리까지 이어집니다.",
+            "observedPhotoMarkings": "사진의 보이는 측면에는 갈색 머리와 귀, 흰 목·가슴, 갈색 몸통과 넓은 흰 등/옆구리 패치가 있습니다. 사진 구도상 꼬리와 반대쪽 다리는 숨겨져 있습니다.",
+            "directionCorrect": true,
+            "eyesReadable": true,
+            "identityMatches": true,
+            "styleMatches": true,
+            "tailPlausible": false,
+            "confidence": 0.91,
+            "issues": [
+              "CANVAS_CLIPPING"
+            ],
+            "note": "측면 방향과 주요 얼굴·가슴 색은 맞지만 꼬리가 오른쪽 가장자리에서 잘립니다."
+          },
+          {
+            "direction": "east",
+            "observedSpriteMarkings": "이 측면 스프라이트는 오른쪽을 향한 갈색 머리와 귀, 흰 주둥이·목·가슴, 갈색 몸통과 흰 발을 보여 줍니다. 왼쪽 뒤에는 짧은 갈색 꼬리가 보입니다.",
+            "observedPhotoMarkings": "사진의 보이는 측면에는 갈색 머리와 귀, 흰 목·가슴, 갈색 몸통 및 넓은 흰 등/옆구리 패치가 있습니다. 꼬리는 사진에서 잘려 보이지 않아 길이와 형태는 알 수 없습니다.",
+            "directionCorrect": true,
+            "eyesReadable": true,
+            "identityMatches": true,
+            "styleMatches": true,
+            "tailPlausible": true,
+            "confidence": 0.9,
+            "issues": [],
+            "note": "오른쪽 측면 방향과 얼굴·가슴 색 배치가 적절합니다."
+          }
+        ],
+        "repairDescription": "Preserve the current compact outlined style and coat colors. Repair the WEST view by fitting the brown tail fully inside the 32px canvas so it is not clipped; keep its natural side-view carriage consistent with EAST.",
+        "tailConsistent": false
+      },
+      "learnedLessons": [],
+      "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "reviewImageHashes": {
+        "Actual body photo": "99f83d8386ef5f709cec093e1cf204d55287dcbefc381bb4af7a204c41655005",
+        "Actual face photo": "189a876d95e2b9eadd8ba4b467fbe970a21fb141351cf3ded4a89552eccb6ec4",
+        "Approved art style only; not this dog": "bf5e5641f0768a45f7a87f10bbb5bf26e987dee581b1b2cf4d08d2c4c0cd539c",
+        "Unapproved view: south": "e2e77660296983d270a4bb859e7822824cc189ba27c173340d833fa77ec08d1b",
+        "Unapproved view: north": "76472910ffe4853017dab0336713370c427a2b748af64c233a7d69f27222f244",
+        "Unapproved view: west": "cece7a046c025e28719bd0e25e08e5564ec6ec942124d55cdcfa66d0f7615d63",
+        "Unapproved view: east": "79480a6e9e8eb6ce330aace1f41d109e29b122b001c88f8524817d9f74241f7d"
+      },
+      "minimumClearPixels": 1,
+      "marginDirections": [
+        "west",
+        "east"
+      ],
+      "clearPixelsLeftTopRightBottom": {
+        "south": [
+          5,
+          3,
+          5,
+          1
+        ],
+        "north": [
+          6,
+          2,
+          6,
+          1
+        ],
+        "west": [
+          1,
+          1,
+          0,
+          1
+        ],
+        "east": [
+          0,
+          1,
+          0,
+          1
+        ]
+      }
+    },
+    "base-3-review": {
+      "version": "seed-eyes-v1",
+      "recoveryVersion": "photo-grounded-recovery-v1",
+      "reviewVersion": "photo-observed-features-review-v4",
+      "passed": false,
+      "inputSha256": "aa949da8a3f7bc78e7c139abf6b24b9ed41b4e297cd68ff947c7fe4f01c48da7",
+      "photoSha256": "99f83d8386ef5f709cec093e1cf204d55287dcbefc381bb4af7a204c41655005",
+      "rulesSha256": "3430ce089c11a94500d5bb202511b250334c729fa208081e5d47b8aae78e6c9f",
+      "model": "gpt-5.6-luna",
+      "reviewedAt": "2026-10-09T03:33:03.028281Z",
+      "identity": "FAIL",
+      "appearance": "FAIL",
+      "repairDescription": "SOUTH: add the broad white forehead blaze continuing onto the muzzle. NORTH: add a visible, coherent rear tail while keeping the faceless rear view. WEST and EAST: preserve the compact outlined pixel style but extend the white coat patch from the neck across the shoulder and mid-body, with the large brown saddle patch matching the photographed body.",
+      "note": "네 방향 모두 의도된 방향은 대체로 맞지만, 실제 얼굴의 넓은 흰색 이마 줄무늬와 측면의 큰 흰색 몸통 패치가 충분히 반영되지 않았고 NORTH에는 꼬리가 보이지 않습니다.",
+      "issues": [
+        "SEED_IDENTITY"
+      ],
+      "edgeDirections": [],
+      "views": [
+        {
+          "readability": "PASS",
+          "direction": "south",
+          "style": "PASS",
+          "note": "정면 방향과 스타일은 맞지만 이마 흰색 줄무늬가 실제보다 부족합니다."
+        },
+        {
+          "readability": "NOT_VISIBLE",
+          "direction": "north",
+          "style": "PASS",
+          "note": "올바른 후면 무표정 뷰지만 꼬리가 보이지 않습니다."
+        },
+        {
+          "readability": "PASS",
+          "direction": "west",
+          "style": "PASS",
+          "note": "프로필 방향과 꼬리는 자연스럽지만 몸통의 큰 흰색 패치가 빠졌습니다."
+        },
+        {
+          "readability": "PASS",
+          "direction": "east",
+          "style": "PASS",
+          "note": "프로필 방향은 맞지만 실제 몸통의 흰색 패치 배치가 다릅니다."
+        }
+      ],
+      "propertyReview": {
+        "note": "네 방향 모두 의도된 방향은 대체로 맞지만, 실제 얼굴의 넓은 흰색 이마 줄무늬와 측면의 큰 흰색 몸통 패치가 충분히 반영되지 않았고 NORTH에는 꼬리가 보이지 않습니다.",
+        "views": [
+          {
+            "direction": "south",
+            "observedSpriteMarkings": "정면 머리와 귀는 갈색이며, 흰색은 주로 좁은 주둥이와 목·가슴 중앙에 보입니다. 이마의 넓은 흰색 줄무늬는 뚜렷하지 않고, 앞다리는 대부분 흰색입니다.",
+            "observedPhotoMarkings": "사진의 정면 얼굴에는 갈색 이마 양쪽 사이로 넓은 흰색 줄무늬가 코까지 이어집니다. 주둥이, 목과 가슴, 보이는 앞다리는 흰색이며 귀와 얼굴 외곽은 갈색입니다. 꼬리는 정면 사진에서 보이지 않습니다.",
+            "directionCorrect": true,
+            "eyesReadable": true,
+            "identityMatches": false,
+            "styleMatches": true,
+            "tailPlausible": true,
+            "confidence": 0.94,
+            "issues": [
+              "COAT_MISMATCH"
+            ],
+            "note": "정면 방향과 스타일은 맞지만 이마 흰색 줄무늬가 실제보다 부족합니다."
+          },
+          {
+            "direction": "north",
+            "observedSpriteMarkings": "뒷머리와 귀, 등은 갈색이고 목 아래에는 흰색 가로 패치가 있습니다. 후면에는 얼굴이나 눈이 없으며, 몸 아래쪽은 갈색과 어두운 윤곽으로 끝나고 꼬리는 보이지 않습니다.",
+            "observedPhotoMarkings": "후면 사진은 제공되지 않아 뒤통수, 등, 꼬리의 실제 무늬와 꼬리 형태는 알 수 없습니다. 정면 사진에서만 흰색 목·가슴과 갈색 머리 일부가 확인됩니다.",
+            "directionCorrect": true,
+            "eyesReadable": true,
+            "identityMatches": true,
+            "styleMatches": true,
+            "tailPlausible": false,
+            "confidence": 0.88,
+            "issues": [
+              "TAIL_MISSING"
+            ],
+            "note": "올바른 후면 무표정 뷰지만 꼬리가 보이지 않습니다."
+          },
+          {
+            "direction": "west",
+            "observedSpriteMarkings": "측면 머리와 귀, 등은 갈색이고 주둥이와 큰 가슴 패치는 흰색입니다. 다리는 흰색과 갈색이 섞였고, 엉덩이 뒤에는 짧은 갈색 꼬리가 보입니다.",
+            "observedPhotoMarkings": "측면에 가까운 사진에서는 갈색 머리와 귀, 흰색 목·가슴이 보입니다. 어깨 뒤 몸통에는 넓은 흰색 바탕과 큰 갈색 패치가 보이지만, 꼬리와 반대편 다리는 사진에 가려져 알 수 없습니다.",
+            "directionCorrect": true,
+            "eyesReadable": true,
+            "identityMatches": false,
+            "styleMatches": true,
+            "tailPlausible": true,
+            "confidence": 0.86,
+            "issues": [
+              "COAT_MISMATCH"
+            ],
+            "note": "프로필 방향과 꼬리는 자연스럽지만 몸통의 큰 흰색 패치가 빠졌습니다."
+          },
+          {
+            "direction": "east",
+            "observedSpriteMarkings": "반대쪽 측면의 머리와 등은 갈색이며 흰색 주둥이·목·가슴이 이어집니다. 다리는 주로 흰색이고, 뒤쪽에 낮고 둥근 갈색 꼬리가 보입니다.",
+            "observedPhotoMarkings": "사진에서 확인되는 얼굴과 몸통은 갈색 머리·귀, 흰색 목과 가슴, 어깨 뒤의 넓은 흰색 몸통 패치 및 큰 갈색 등 패턴입니다. 이쪽 꼬리와 반대편 다리는 사진에 보이지 않습니다.",
+            "directionCorrect": true,
+            "eyesReadable": true,
+            "identityMatches": false,
+            "styleMatches": true,
+            "tailPlausible": true,
+            "confidence": 0.85,
+            "issues": [
+              "COAT_MISMATCH"
+            ],
+            "note": "프로필 방향은 맞지만 실제 몸통의 흰색 패치 배치가 다릅니다."
+          }
+        ],
+        "repairDescription": "SOUTH: add the broad white forehead blaze continuing onto the muzzle. NORTH: add a visible, coherent rear tail while keeping the faceless rear view. WEST and EAST: preserve the compact outlined pixel style but extend the white coat patch from the neck across the shoulder and mid-body, with the large brown saddle patch matching the photographed body.",
+        "tailConsistent": false
+      },
+      "learnedLessons": [],
+      "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "reviewImageHashes": {
+        "Actual body photo": "99f83d8386ef5f709cec093e1cf204d55287dcbefc381bb4af7a204c41655005",
+        "Actual face photo": "189a876d95e2b9eadd8ba4b467fbe970a21fb141351cf3ded4a89552eccb6ec4",
+        "Approved art style only; not this dog": "bf5e5641f0768a45f7a87f10bbb5bf26e987dee581b1b2cf4d08d2c4c0cd539c",
+        "Unapproved view: south": "3785c30d712da4554aa41c7303e8326df6f816364960374b0792d242a2d64864",
+        "Unapproved view: north": "f41e462865051761e715e190db257cabdc0b5d3b81b89e168c1c8549eca4bfa4",
+        "Unapproved view: west": "354c5e38c8c2a4d036180cf456ccc3fc8d22b6f0c0853742d4f99ae15522b630",
+        "Unapproved view: east": "8d6d28b0caf01f72f352bcb05e02902e37c61a6d9870b10ae5f97023f431f481"
+      },
+      "minimumClearPixels": 1,
+      "marginDirections": [],
+      "clearPixelsLeftTopRightBottom": {
+        "south": [
+          4,
+          3,
+          6,
+          1
+        ],
+        "north": [
+          5,
+          2,
+          7,
+          1
+        ],
+        "west": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "east": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    }
+  }
+}

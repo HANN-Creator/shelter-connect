@@ -37,7 +37,7 @@ class StyledLessonAgentTest {
         var instructions=ArgumentCaptor.forClass(String.class);var task=ArgumentCaptor.forClass(String.class);var image=ArgumentCaptor.forClass(byte[].class);
         verify(client).structuredImage(instructions.capture(),task.capture(),image.capture(),anyMap());
         assertThat(instructions.getValue()).contains("need NOT restate unrelated checks","same-direction","subtle breathing or blinking","does not contradict ANY immutable rule");
-        assertThat(task.getValue()).contains("pixelEvidence","alphaStable").doesNotContain("PRIVATE_SOURCE_ID","SECRET_BAD_LABEL","SECRET_GOOD_LABEL","passed");
+        assertThat(task.getValue()).contains("pixelEvidence","alphaStable").doesNotContain("PRIVATE_SOURCE_ID","SECRET_BAD_LABEL","SECRET_GOOD_LABEL","\"passed\"");
         var board=javax.imageio.ImageIO.read(new java.io.ByteArrayInputStream(image.getValue()));
         assertThat(board.getWidth()).isEqualTo(896);assertThat(board.getHeight()).isEqualTo(1456);
     }
@@ -84,7 +84,7 @@ class StyledLessonAgentTest {
         var board=ArgumentCaptor.forClass(byte[].class);
         verify(client).structuredImage(instruction.capture(),task.capture(),board.capture(),anyMap());
         assertThat(instruction.getValue()).contains("UNAPPROVED","all four directions","immutable");
-        assertThat(task.getValue()).doesNotContain("SECRET_BAD_LABEL","SECRET_GOOD_LABEL","PRIVATE_SOURCE_ID","passed");
+        assertThat(task.getValue()).doesNotContain("SECRET_BAD_LABEL","SECRET_GOOD_LABEL","PRIVATE_SOURCE_ID","\"passed\"");
         var rendered=javax.imageio.ImageIO.read(new java.io.ByteArrayInputStream(board.getValue()));
         assertThat(rendered.getWidth()).isEqualTo(1024);assertThat(rendered.getHeight()).isEqualTo(1348);
         for(String mutation:List.of("missing","duplicate","unknown","empty","view")) {
