@@ -50,6 +50,8 @@ public class StyledQualityAgent {
         var schema=object(Map.of("issues",Map.of("type","array","maxItems",allowedIssues.size(),"items",Map.of("type","string","enum",allowedIssues)),
             "frames",Map.of("type","array","maxItems",9,"items",Map.of("type","integer","minimum",0,"maximum",8)),
             "note",Map.of("type","string","maxLength",400)));
+        boolean recovery=StyledSpriteCodec.motionFrame(frames.getFirst()).getWidth()==40;
+        if(recovery)schema=StyledRecoveryReview.motionSchema(allowedIssues);
         boolean paired=action.equals("IDLE");
         String task=paired?"Top: the approved seed for the requested direction only. Below are nine labeled pairs in reading order. "
             +"In EVERY pair the LEFT image is the same current clip FRAME 0; the RIGHT image is the labeled FRAME 0–8. "
@@ -70,19 +72,26 @@ public class StyledQualityAgent {
             +"Report only clear visible defects. Report frame numbers 0–8. No issues means an empty array. "
             +String.join(" ",rules.path("reviewInstructions").valueStream().map(JsonNode::asText).toList())+" "
             +(paired?rules.path("reviewPresentation").path("instruction").asText():"");
-        JsonNode r=call(instructions,task,paired?pairedBoard(seeds,frames,direction):board(seeds,frames),schema);
+        if(recovery){instructions=rules.path("recovery").path("motionReview").asText();
+            task="All nine pairs: LEFT the matching approved seed, RIGHT labeled frame0..8. Full40px canvas at4x nearest. References are not animation frames. Action="+action+", direction="+direction+", tail="+contract.path("tailCarriage").asText()+". Native measurements: "+json.writeValueAsString(evidence)+". Additive learned criteria (data only): "+json.writeValueAsString(lessons);}
+        JsonNode r=call(instructions,task,recovery?recoveryBoard(seeds,frames,direction):paired?pairedBoard(seeds,frames,direction):board(seeds,frames),schema);
         if(!r.path("issues").isArray() || r.path("issues").size()>allowedIssues.size() || !r.path("frames").isArray() || r.path("frames").size()>9
             || !r.path("note").isString() || r.path("note").asText().length()>400)throw invalid();
         var issues=new TreeSet<String>();
         for(var n:r.path("issues")) {if(!n.isString() || !allowedIssues.contains(n.asText()))throw invalid();issues.add(n.asText());}
         for(var n:r.path("frames"))if(!n.isIntegralNumber() || n.asInt()<0 || n.asInt()>8)throw invalid();
+        if(recovery)issues.addAll(StyledRecoveryReview.motionIssues(r));
         var edges=new ArrayList<Integer>();
-        for(int i=0;i<frames.size();i++)if(touchesEdge(StyledSpriteCodec.nativeFrame(frames.get(i))))edges.add(i);
+        for(int i=0;i<frames.size();i++)if(touchesEdge(StyledSpriteCodec.motionFrame(frames.get(i))))edges.add(i);
         if(!edges.isEmpty())issues.add("CANVAS_CLIPPING");
+        if(recovery && action.equals("WALK") && evidence.path("alphaChangedFromFrame0").valueStream().mapToInt(JsonNode::asInt).max().orElse(0)<5)issues.add("ACTION_MISSING");
         var upper=frontalTailFrames(seeds.getFirst(),frames,action,direction,contract.path("tailCarriage").asText(),rules.path("frontalLowTail"));
+        if(recovery && direction.equals("south")) {
+            var combined=new TreeSet<Integer>(upper);combined.addAll(frontalHeadGrowth(seeds.getFirst(),frames,rules.path("recovery").path("frontalHeadGrowth")));upper=new ArrayList<>(combined);
+        }
         if(!upper.isEmpty())issues.add("TAIL_CARRIAGE");
         var detached=new ArrayList<Integer>();
-        if(action.equals("TAIL_WAG"))for(int i=0;i<frames.size();i++)if(detachedPixels(StyledSpriteCodec.nativeFrame(frames.get(i))))detached.add(i);
+        if(action.equals("TAIL_WAG"))for(int i=0;i<frames.size();i++)if(detachedPixels(StyledSpriteCodec.motionFrame(frames.get(i))))detached.add(i);
         if(!detached.isEmpty())issues.add("DETACHED_PIXELS");
         int directionIndex=List.of("south","north","west","east").indexOf(direction);
         if(directionIndex<0)throw invalid();
@@ -90,7 +99,7 @@ public class StyledQualityAgent {
         if(!idle.isEmpty())issues.add("IDLE_MOTION");
         JsonNode consistency=null;
         var consistencyRules=rules.path("idleConsistencyReview");
-        if(paired && issues.contains("IDLE_MOTION") && edges.isEmpty() && idle.isEmpty()
+        if(!recovery && paired && issues.contains("IDLE_MOTION") && edges.isEmpty() && idle.isEmpty()
             && evidence.path("alphaStable").asBoolean() && evidence.path("maxVisibleRgbDelta").asInt()>0
             && evidence.path("maxVisibleRgbDelta").asInt()<=consistencyRules.path("maximumRgbDelta").asInt()) {
             // One independent, evidence-scoped check, not a numeric pass or a repeated retry until acceptance.
@@ -126,20 +135,23 @@ public class StyledQualityAgent {
             ((tools.jackson.databind.node.ObjectNode)result).set("frames",json.valueToTree(mergedFrames));
             ((tools.jackson.databind.node.ObjectNode)result).put("note",consistency.path("note").asText());
         }
-        ((tools.jackson.databind.node.ObjectNode)result).put("reviewLayout",paired?"matched-direction-frame-pairs-v1":"four-direction-temporal-grid-v1");
+        ((tools.jackson.databind.node.ObjectNode)result).put("reviewLayout",recovery?"matched-seed-nine-pairs-v2":paired?"matched-direction-frame-pairs-v1":"four-direction-temporal-grid-v1");
+        if(recovery)((tools.jackson.databind.node.ObjectNode)result).set("propertyReview",r);
         return result;
     }
     /** Measurements inform vision; they never turn a vision or structural failure into a pass. */
     static JsonNode pixelEvidence(List<byte[]> frames,JsonNode rules,JsonMapper json) {
         if(frames.size()!=9)throw invalid();
-        var decoded=frames.stream().map(StyledSpriteCodec::nativeFrame).toList();
+        var decoded=frames.stream().map(StyledSpriteCodec::motionFrame).toList();
+        if(decoded.stream().anyMatch(f->f.getWidth()!=decoded.getFirst().getWidth()))throw invalid();
         var alphaFirst=new ArrayList<Integer>();var alphaPrevious=new ArrayList<Integer>();
         var rgbFirst=new ArrayList<Integer>();var rgbPrevious=new ArrayList<Integer>();
         var changedRgb=new ArrayList<Integer>();var bounds=new ArrayList<List<Integer>>();
         for(int i=0;i<9;i++) {
             var frame=decoded.get(i);var first=decoded.getFirst();var previous=decoded.get(Math.max(0,i-1));
-            int af=0,ap=0,rf=0,rp=0,changed=0,left=32,top=32,right=-1,bottom=-1;
-            for(int y=0;y<32;y++)for(int x=0;x<32;x++) {
+            int n=frame.getWidth();
+            int af=0,ap=0,rf=0,rp=0,changed=0,left=n,top=n,right=-1,bottom=-1;
+            for(int y=0;y<frame.getHeight();y++)for(int x=0;x<frame.getWidth();x++) {
                 int pixel=frame.getRGB(x,y),base=first.getRGB(x,y),prev=previous.getRGB(x,y);
                 if((pixel>>>24)!=(base>>>24))af++;
                 if((pixel>>>24)!=(prev>>>24))ap++;
@@ -169,12 +181,12 @@ public class StyledQualityAgent {
     }
     static List<Integer> idleMotionFrames(byte[] approved,List<byte[]> frames,String action,JsonNode rules) {
         if(!action.equals("IDLE"))return List.of();
-        var seed=StyledSpriteCodec.nativeFrame(approved);
+        var seed=StyledSpriteCodec.motionFrame(approved);
         int radius=rules.path("seedTolerancePixels").asInt(),minimum=rules.path("minimumChangedPixels").asInt();
         var result=new ArrayList<Integer>();
         for(int i=0;i<frames.size();i++) {
-            var frame=StyledSpriteCodec.nativeFrame(frames.get(i));int changed=0;
-            for(int y=0;y<32;y++)for(int x=0;x<32;x++) {
+            var frame=StyledSpriteCodec.motionFrame(frames.get(i));int changed=0;
+            for(int y=0;y<frame.getHeight();y++)for(int x=0;x<frame.getWidth();x++) {
                 boolean added=(frame.getRGB(x,y)>>>24)!=0 && !nearOpaque(seed,x,y,radius);
                 boolean removed=(seed.getRGB(x,y)>>>24)!=0 && !nearOpaque(frame,x,y,radius);
                 if(added || removed)changed++;
@@ -184,25 +196,40 @@ public class StyledQualityAgent {
         return result;
     }
     static boolean nearOpaque(BufferedImage image,int x,int y,int radius) {
-        for(int sy=Math.max(0,y-radius);sy<=Math.min(31,y+radius);sy++)
-            for(int sx=Math.max(0,x-radius);sx<=Math.min(31,x+radius);sx++)
+        for(int sy=Math.max(0,y-radius);sy<=Math.min(image.getHeight()-1,y+radius);sy++)
+            for(int sx=Math.max(0,x-radius);sx<=Math.min(image.getWidth()-1,x+radius);sx++)
                 if((image.getRGB(sx,sy)>>>24)!=0)return true;
         return false;
     }
+    /** A fixed-facing frontal head cannot grow a new central appendage; allow normal two-pixel bob. */
+    static List<Integer> frontalHeadGrowth(byte[] approved,List<byte[]> frames,JsonNode rules) {
+        var seed=StyledSpriteCodec.motionFrame(approved);int n=seed.getWidth(),left=n,top=n,right=-1,bottom=-1;
+        for(int y=0;y<n;y++)for(int x=0;x<n;x++)if((seed.getRGB(x,y)>>>24)!=0){left=Math.min(left,x);top=Math.min(top,y);right=Math.max(right,x+1);bottom=Math.max(bottom,y+1);}
+        int inset=(right-left)*rules.path("horizontalInsetPercent").asInt()/100;
+        int cutoff=top+(bottom-top)*rules.path("upperBandPercent").asInt()/100;
+        var bad=new ArrayList<Integer>();
+        for(int i=0;i<frames.size();i++) {
+            var f=StyledSpriteCodec.motionFrame(frames.get(i));if(f.getWidth()!=n)throw invalid();int changed=0;
+            for(int y=0;y<cutoff;y++)for(int x=left+inset;x<right-inset;x++)
+                if((f.getRGB(x,y)>>>24)!=0 && !nearOpaque(seed,x,y,rules.path("seedTolerancePixels").asInt()))changed++;
+            if(changed>=rules.path("minimumNewPixels").asInt())bad.add(i);
+        }
+        return bad;
+    }
     static List<Integer> frontalTailFrames(byte[] approved,List<byte[]> frames,String action,String direction,String tail,JsonNode rules) {
         if(!action.equals("TAIL_WAG") || !direction.equals("south") || !tail.equals("LOW"))return List.of();
-        var seed=StyledSpriteCodec.nativeFrame(approved);int top=32,bottom=0;
-        for(int y=0;y<32;y++)for(int x=0;x<32;x++)if((seed.getRGB(x,y)>>>24)!=0){top=Math.min(top,y);bottom=Math.max(bottom,y+1);}
-        if(top==32)throw invalid();
+        var seed=StyledSpriteCodec.motionFrame(approved);int top=seed.getHeight(),bottom=0;
+        for(int y=0;y<seed.getHeight();y++)for(int x=0;x<seed.getWidth();x++)if((seed.getRGB(x,y)>>>24)!=0){top=Math.min(top,y);bottom=Math.max(bottom,y+1);}
+        if(top==seed.getHeight())throw invalid();
         int cutoff=top+(bottom-top)*rules.path("upperBandPercent").asInt()/100;
         int radius=rules.path("seedTolerancePixels").asInt(),minimum=rules.path("minimumNewPixels").asInt();
         var result=new ArrayList<Integer>();
         for(int i=0;i<frames.size();i++){
-            var frame=StyledSpriteCodec.nativeFrame(frames.get(i));int added=0;
-            for(int y=0;y<cutoff;y++)for(int x=0;x<32;x++)if((frame.getRGB(x,y)>>>24)!=0){
+            var frame=StyledSpriteCodec.motionFrame(frames.get(i));int added=0;
+            for(int y=0;y<cutoff;y++)for(int x=0;x<frame.getWidth();x++)if((frame.getRGB(x,y)>>>24)!=0){
                 boolean allowed=false;
-                for(int sy=Math.max(0,y-radius);sy<=Math.min(31,y+radius);sy++)
-                    for(int sx=Math.max(0,x-radius);sx<=Math.min(31,x+radius);sx++)
+                for(int sy=Math.max(0,y-radius);sy<=Math.min(seed.getHeight()-1,y+radius);sy++)
+                    for(int sx=Math.max(0,x-radius);sx<=Math.min(seed.getWidth()-1,x+radius);sx++)
                         if((seed.getRGB(sx,sy)>>>24)!=0)allowed=true;
                 if(!allowed)added++;
             }
@@ -211,52 +238,75 @@ public class StyledQualityAgent {
         return result;
     }
     static boolean detachedPixels(BufferedImage im) {
-        var remaining=new HashSet<Integer>();for(int y=0;y<32;y++)for(int x=0;x<32;x++)if((im.getRGB(x,y)>>>24)!=0)remaining.add(y*32+x);
+        int n=im.getWidth();var remaining=new HashSet<Integer>();for(int y=0;y<n;y++)for(int x=0;x<n;x++)if((im.getRGB(x,y)>>>24)!=0)remaining.add(y*n+x);
         var stack=new ArrayDeque<Integer>();if(!remaining.isEmpty()){int first=remaining.iterator().next();remaining.remove(first);stack.add(first);}
         while(!stack.isEmpty()) {
-            int p=stack.removeLast(),x=p%32,y=p/32;
+            int p=stack.removeLast(),x=p%n,y=p/n;
             for(int dy=-1;dy<=1;dy++)for(int dx=-1;dx<=1;dx++) {
-                int nx=x+dx,ny=y+dy;if(nx>=0 && nx<32 && ny>=0 && ny<32 && remaining.remove(ny*32+nx))stack.add(ny*32+nx);
+                int nx=x+dx,ny=y+dy;if(nx>=0 && nx<n && ny>=0 && ny<n && remaining.remove(ny*n+nx))stack.add(ny*n+nx);
             }
         }
         return !remaining.isEmpty();
     }
     static boolean touchesEdge(BufferedImage im) {
-        for(int i=0;i<32;i++)if((im.getRGB(i,0)>>>24)!=0 || (im.getRGB(i,31)>>>24)!=0 || (im.getRGB(0,i)>>>24)!=0 || (im.getRGB(31,i)>>>24)!=0)return true;
+        int n=im.getWidth();for(int i=0;i<n;i++)if((im.getRGB(i,0)>>>24)!=0 || (im.getRGB(i,n-1)>>>24)!=0 || (im.getRGB(0,i)>>>24)!=0 || (im.getRGB(n-1,i)>>>24)!=0)return true;
         return false;
     }
     /** Same-direction identity reference and adjacent frame-zero comparisons, without modifying source pixels. */
     static byte[] pairedBoard(List<byte[]> seeds,List<byte[]> frames,String direction) {
         int index=List.of("south","north","west","east").indexOf(direction);
         if(seeds.size()!=4 || frames.size()!=9 || index<0)throw invalid();
+        if(StyledSpriteCodec.motionFrame(frames.getFirst()).getWidth()==40){
+            var padded=seeds.stream().map(b->StyledSpriteCodec.motionFrame(b).getWidth()==32?StyledSpriteCodec.paddedSeed(b):b).toList();
+            return recoveryBoard(padded,frames,direction);
+        }
         var out=new BufferedImage(896,704,BufferedImage.TYPE_INT_RGB);var g=out.createGraphics();
         g.setColor(new Color(235,237,225));g.fillRect(0,0,896,704);
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
         g.setColor(Color.DARK_GRAY);g.setFont(new Font(Font.SANS_SERIF,Font.BOLD,14));
         g.drawString("APPROVED "+direction.toUpperCase(Locale.ROOT)+" (identity reference, not a motion frame)",16,20);
-        g.drawImage(StyledSpriteCodec.nativeFrame(seeds.get(index)),16,32,128,128,null);
+        g.drawImage(StyledSpriteCodec.motionFrame(seeds.get(index)),16,32,128,128,null);
         g.drawString("Compare each RIGHT frame with the identical FRAME 0 on its LEFT.",176,70);
         g.drawString("Follow RIGHT frames 0 to 8 for temporal order. Full canvas, uniform 4x scale.",176,94);
-        var first=StyledSpriteCodec.nativeFrame(frames.getFirst());
+        var first=StyledSpriteCodec.motionFrame(frames.getFirst());
         for(int i=0;i<9;i++) {
             int x=16+(i%3)*288,y=184+(i/3)*168;
             g.setColor(new Color(205,210,198));g.drawRect(x-6,y-16,278,162);g.setColor(Color.DARK_GRAY);
             g.drawString("REFERENCE 0",x,y);g.drawString("FRAME "+i,x+144,y);
             g.drawImage(first,x,y+8,128,128,null);
-            g.drawImage(StyledSpriteCodec.nativeFrame(frames.get(i)),x+144,y+8,128,128,null);
+            g.drawImage(StyledSpriteCodec.motionFrame(frames.get(i)),x+144,y+8,128,128,null);
         }
         g.dispose();try{var bytes=new ByteArrayOutputStream();ImageIO.write(out,"png",bytes);return bytes.toByteArray();}catch(IOException e){throw invalid();}
     }
     // Historical lesson boards retain their separate multi-direction layout and matching instructions.
     static byte[] board(List<byte[]> seeds,List<byte[]> frames) {
         if(seeds.size()!=4 || frames.size()!=9)throw invalid();
+        if(StyledSpriteCodec.motionFrame(frames.getFirst()).getWidth()==40){
+            var out=new BufferedImage(800,760,BufferedImage.TYPE_INT_RGB);var g=out.createGraphics();g.setColor(new Color(235,237,225));g.fillRect(0,0,800,760);g.setColor(Color.DARK_GRAY);
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+            for(int i=0;i<4;i++){var seed=StyledSpriteCodec.motionFrame(seeds.get(i));if(seed.getWidth()==32)seed=StyledSpriteCodec.motionFrame(StyledSpriteCodec.paddedSeed(seeds.get(i)));
+                g.drawString(StyledSpriteCodec.DIRECTIONS.get(i),i*200+10,16);g.drawImage(seed,i*200+16,24,160,160,null);}
+            for(int i=0;i<9;i++){int x=i%3*260+20,y=200+i/3*180;g.drawString("FRAME "+i,x,y+12);g.drawImage(StyledSpriteCodec.motionFrame(frames.get(i)),x,y+16,160,160,null);}
+            g.dispose();return StyledSpriteCodec.png(out);
+        }
         var out=new BufferedImage(640,608,BufferedImage.TYPE_INT_RGB);var g=out.createGraphics();
         g.setColor(new Color(235,237,225));g.fillRect(0,0,640,608);g.setColor(Color.DARK_GRAY);
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
         var names=List.of("SOUTH","NORTH","WEST","EAST");
-        for(int i=0;i<4;i++){g.drawString(names.get(i),i*160+10,16);g.drawImage(StyledSpriteCodec.nativeFrame(seeds.get(i)),i*160+16,24,128,128,null);}
-        for(int i=0;i<9;i++){int x=(i%3)*208+30,y=168+(i/3)*144;g.drawString("FRAME "+i,x,y+12);g.drawImage(StyledSpriteCodec.nativeFrame(frames.get(i)),x,y+16,128,128,null);}
+        for(int i=0;i<4;i++){g.drawString(names.get(i),i*160+10,16);g.drawImage(StyledSpriteCodec.motionFrame(seeds.get(i)),i*160+16,24,128,128,null);}
+        for(int i=0;i<9;i++){int x=(i%3)*208+30,y=168+(i/3)*144;g.drawString("FRAME "+i,x,y+12);g.drawImage(StyledSpriteCodec.motionFrame(frames.get(i)),x,y+16,128,128,null);}
         g.dispose();try{var bytes=new ByteArrayOutputStream();ImageIO.write(out,"png",bytes);return bytes.toByteArray();}catch(IOException e){throw invalid();}
+    }
+    static byte[] recoveryBoard(List<byte[]> seeds,List<byte[]> frames,String direction) {
+        int index=StyledSpriteCodec.DIRECTIONS.indexOf(direction);
+        if(index<0 || seeds.size()!=4 || frames.size()!=9)throw invalid();
+        var out=new BufferedImage(1020,624,BufferedImage.TYPE_INT_RGB);var g=out.createGraphics();
+        g.setColor(new Color(232,240,216));g.fillRect(0,0,1020,624);g.setColor(Color.DARK_GRAY);
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+        var seed=StyledSpriteCodec.motionFrame(seeds.get(index));
+        for(int i=0;i<9;i++){int x=(i%3)*340,y=(i/3)*208;g.drawString("SEED                         FRAME "+i,x+8,y+20);
+            g.drawImage(seed,x+8,y+34,160,160,null);g.drawImage(StyledSpriteCodec.motionFrame(frames.get(i)),x+176,y+34,160,160,null);}
+        g.dispose();return StyledSpriteCodec.png(out);
     }
     private JsonNode call(String instruction,String task,byte[] image,Map<String,Object> schema) {
         try{return client.structuredImage(instruction,task,image,schema);}catch(AiFailure e){throw new AssetException(502,"QUALITY_"+e.code());}

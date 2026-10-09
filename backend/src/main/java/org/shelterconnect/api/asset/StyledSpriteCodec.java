@@ -61,7 +61,7 @@ public class StyledSpriteCodec {
         return motion(traits,action,direction,seed,json.createObjectNode());
     }
     public JsonNode motion(JsonNode traits,String action,String direction,byte[] seed,JsonNode quality) {
-        nativeFrame(seed);
+        if(motionFrame(seed).getWidth()!=StyledRecovery.size(quality))throw new AssetException(422,"STYLED_FRAME_INVALID");
         if(!ACTIONS.contains(action) || !DIRECTIONS.contains(direction)) throw AssetException.invalid();
         return payload(Map.of("mode","motion","traits",traits,"action",action,"direction",direction,"quality",quality),"seed.png",seed);
     }
@@ -147,6 +147,33 @@ public class StyledSpriteCodec {
             return image;
         } catch(IOException e) { throw new AssetException(422,"STYLED_FRAME_INVALID"); }
     }
+    static BufferedImage motionFrame(byte[] bytes) {
+        if(bytes==null || bytes.length>100_000)throw new AssetException(422,"STYLED_FRAME_INVALID");
+        int[] size=SpriteNormalizer.dimensions(bytes,40);
+        if(size[0]!=size[1] || (size[0]!=32 && size[0]!=40))throw new AssetException(422,"STYLED_FRAME_INVALID");
+        if(size[0]==32)return nativeFrame(bytes);
+        try {
+            var image=ImageIO.read(new ByteArrayInputStream(bytes));boolean visible=false,clear=false;
+            for(int y=0;y<40;y++)for(int x=0;x<40;x++){int alpha=image.getRGB(x,y)>>>24;visible|=alpha!=0;clear|=alpha==0;}
+            if(!visible || !clear)throw new AssetException(422,"STYLED_ALPHA_INVALID");return image;
+        }catch(IOException e){throw new AssetException(422,"STYLED_FRAME_INVALID");}
+    }
+    static byte[] png(BufferedImage image) {
+        try {var out=new ByteArrayOutputStream();ImageIO.write(image,"png",out);return out.toByteArray();}
+        catch(IOException e){throw new AssetException(422,"STYLED_FRAME_INVALID");}
+    }
+    static byte[] paddedSeed(byte[] seed) {
+        var source=nativeFrame(seed);var out=new BufferedImage(40,40,BufferedImage.TYPE_INT_ARGB);
+        for(int y=0;y<32;y++)for(int x=0;x<32;x++)out.setRGB(x+4,y+4,source.getRGB(x,y));return png(out);
+    }
+    /** Only frame0 RGB may be restored, and only with the exact seed alpha mask. Never recolor other frames. */
+    static List<byte[]> anchorEdit(List<byte[]> frames,byte[] seed) {
+        if(frames.size()!=9)throw new AssetException(422,"STYLED_FRAME_COUNT_INVALID");
+        var first=motionFrame(frames.getFirst());var reference=motionFrame(seed);int n=reference.getWidth();
+        if(first.getWidth()!=n)return frames;
+        for(int y=0;y<n;y++)for(int x=0;x<n;x++)if((first.getRGB(x,y)>>>24)!=(reference.getRGB(x,y)>>>24))return frames;
+        var out=new ArrayList<>(frames);out.set(0,seed);return out;
+    }
     static byte[] rawSheet(List<byte[]> frames) { return sheet(frames,frames.getFirst()); }
     static List<byte[]> restoreEditPalette(List<byte[]> frames,byte[] seed) {
         if(frames.size()!=9)throw new AssetException(422,"STYLED_FRAME_COUNT_INVALID");
@@ -170,25 +197,25 @@ public class StyledSpriteCodec {
         return result;
     }
     static byte[] sheet(List<byte[]> frames,byte[] seed) {
-        if(frames.size()!=9) throw new AssetException(422,"STYLED_FRAME_COUNT_INVALID");
-        var origin=nativeFrame(seed);var sheet=new BufferedImage(288,32,BufferedImage.TYPE_INT_ARGB);
+        if(frames.size()!=9)throw new AssetException(422,"STYLED_FRAME_COUNT_INVALID");
+        var origin=motionFrame(seed);int n=origin.getWidth();var sheet=new BufferedImage(n*9,n,BufferedImage.TYPE_INT_ARGB);
         for(int i=0;i<9;i++) {
-            var frame=nativeFrame(frames.get(i));
-            for(int y=0;y<32;y++)for(int x=0;x<32;x++) {
+            var frame=motionFrame(frames.get(i));if(frame.getWidth()!=n)throw new AssetException(422,"STYLED_FRAME_INVALID");
+            for(int y=0;y<n;y++)for(int x=0;x<n;x++) {
                 int pixel=frame.getRGB(x,y);
-                if(i==0 && pixel!=origin.getRGB(x,y)) throw new AssetException(422,"STYLED_SOURCE_FRAME_CHANGED");
-                sheet.setRGB(i*32+x,y,pixel);
+                if(i==0 && pixel!=origin.getRGB(x,y))throw new AssetException(422,"STYLED_SOURCE_FRAME_CHANGED");
+                sheet.setRGB(i*n+x,y,pixel);
             }
         }
-        try { var out=new ByteArrayOutputStream();ImageIO.write(sheet,"png",out);return out.toByteArray(); }
-        catch(IOException e) { throw AssetException.unavailable(); }
+        return png(sheet);
     }
     static List<byte[]> frames(byte[] sheet) {
-        if(sheet==null || sheet.length>900_000 || !Arrays.equals(SpriteNormalizer.dimensions(sheet,288),new int[]{288,32}))throw new AssetException(422,"STYLED_SHEET_INVALID");
+        if(sheet==null || sheet.length>900_000)throw new AssetException(422,"STYLED_SHEET_INVALID");
+        int[] dimensions=SpriteNormalizer.dimensions(sheet,360);int n=dimensions[1];
+        if((n!=32 && n!=40) || dimensions[0]!=n*9)throw new AssetException(422,"STYLED_SHEET_INVALID");
         try {
             var im=ImageIO.read(new ByteArrayInputStream(sheet));var frames=new ArrayList<byte[]>();
-            for(int i=0;i<9;i++){var out=new ByteArrayOutputStream();ImageIO.write(im.getSubimage(i*32,0,32,32),"png",out);frames.add(out.toByteArray());}
-            return frames;
+            for(int i=0;i<9;i++)frames.add(png(im.getSubimage(i*n,0,n,n)));return frames;
         }catch(IOException e){throw new AssetException(422,"STYLED_SHEET_INVALID");}
     }
     static String sha(byte[] bytes) {

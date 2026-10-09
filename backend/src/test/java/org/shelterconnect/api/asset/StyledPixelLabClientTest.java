@@ -23,6 +23,7 @@ class StyledPixelLabClientTest {
         assertThat(client.submit(false,json.readTree("{}"))).isEqualTo(id);assertThat(requestPath).isEqualTo("/animate-pixminimax");
         assertThat(client.editAnimation(json.readTree("{}"))).isEqualTo(id);assertThat(requestPath).isEqualTo("/edit-animation-v2");
         assertThat(client.editSeedEyes(json.readTree("{}"))).isEqualTo(id);assertThat(requestPath).isEqualTo("/inpaint-v3");
+        assertThat(client.editSeeds(json.readTree("{}"))).isEqualTo(id);assertThat(requestPath).isEqualTo("/edit-images-v2");
         body="{}";assertThatThrownBy(()->client.submit(true,json.readTree("{}"))).isInstanceOfSatisfying(AssetProvider.Failure.class,e->assertThat(e.uncertain).isTrue());
         status=429;assertThatThrownBy(()->client.submit(true,json.readTree("{}"))).isInstanceOfSatisfying(AssetProvider.Failure.class,e->assertThat(e.uncertain).isFalse());
     }
@@ -42,6 +43,16 @@ class StyledPixelLabClientTest {
         assertThat(client.poll(UUID.randomUUID(),false).path("frames").size()).isEqualTo(9);
         body=json.writeValueAsString(Map.of("status","completed","last_response",Map.of("images",List.of(Map.of("url","http://127.0.0.1/internal")))));
         assertThatThrownBy(()->client.poll(UUID.randomUUID(),false)).isInstanceOf(AssetException.class);
+    }
+    @Test void baseEditsKeepFourViewOrderAndMotionAcceptsExactlyNineFortyPixelFrames()throws Exception {
+        var images=new ArrayList<Object>();for(int i=0;i<4;i++){var image=StyledSpriteCodec.nativeFrame(png);image.setRGB(10,10,0xffaa0000+i);
+            images.add(Map.of("base64",Base64.getEncoder().encodeToString(StyledSpriteCodec.png(image))));}
+        body=json.writeValueAsString(Map.of("status","completed","last_response",Map.of("images",images)));
+        var result=client.pollSeeds(UUID.randomUUID());for(int i=0;i<4;i++)assertThat(StyledSpriteCodec.nativeFrame(StyledPixelLabClient.decode(result.at("/directions/"+StyledSpriteCodec.DIRECTIONS.get(i)).asText())).getRGB(10,10)).isEqualTo(0xffaa0000+i);
+        byte[] padded=StyledSpriteCodec.paddedSeed(png);
+        body=json.writeValueAsString(Map.of("status","completed","last_response",Map.of("images",Collections.nCopies(9,Map.of("base64",Base64.getEncoder().encodeToString(padded))))));
+        assertThat(client.poll(UUID.randomUUID(),false).path("frames").size()).isEqualTo(9);
+        assertThatThrownBy(()->client.pollSeeds(UUID.randomUUID())).isInstanceOf(AssetException.class);
     }
     @Test void eyeEditRequiresAnExactNativeFourViewStripAndNeverFollowsUrls() {
         byte[] raw=StyledSeedEyeRepair.png(StyledSeedEyeRepair.strip(Collections.nCopies(4,png)));

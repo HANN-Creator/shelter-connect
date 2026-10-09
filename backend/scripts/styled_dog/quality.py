@@ -86,6 +86,10 @@ def motion_guidance(action, direction, quality):
         parts.append(rules['rearView'])
     if issues:
         parts.append('CORRECTION: '+' '.join(rules['corrections'][i] for i in sorted(set(issues))))
+    if quality.get('recoveryVersion') == rules['recovery']['version']:
+        parts = [part.replace('32x32', '40x40') for part in parts if part != rules['commonMotion']]
+        parts.append('Same native dog size, coat, eyes, crisp palette; fixed camera, no props/text.')
+        parts += [rules['recovery']['frontOcclusion'], rules['recovery']['motionCanvas']]
     return ' '.join(parts)
 
 
@@ -107,12 +111,12 @@ def frontal_tail_frames(frames, seed, action, direction, tail):
         ImageFilter.MaxFilter(2*rules['seedTolerancePixels']+1))
     return [i for i,frame in enumerate(frames)
             if sum(frame.getpixel((x,y))[3]>0 and allowed.getpixel((x,y))==0
-                   for y in range(cutoff) for x in range(32))>=rules['minimumNewPixels']]
+                   for y in range(cutoff) for x in range(frame.width))>=rules['minimumNewPixels']]
 
 
 def components(frame):
     """8-connectivity permits diagonal pixel outlines but rejects floating debris."""
-    pixels = {(x,y) for y in range(32) for x in range(32) if frame.getpixel((x,y))[3]}
+    pixels = {(x,y) for y in range(frame.height) for x in range(frame.width) if frame.getpixel((x,y))[3]}
     sizes = []
     while pixels:
         stack = [pixels.pop()]
@@ -149,7 +153,7 @@ def idle_motion_frames(frames, seed, action):
         expanded = alpha.filter(ImageFilter.MaxFilter(2 * radius + 1))
         changed = sum(bool(alpha.getpixel((x, y))) and not allowed.getpixel((x, y))
                       or bool(original.getpixel((x, y))) and not expanded.getpixel((x, y))
-                      for y in range(32) for x in range(32))
+                      for y in range(frame.height) for x in range(frame.width))
         if changed >= rules['minimumChangedPixels']:
             failed.append(i)
     return failed
@@ -158,7 +162,7 @@ def idle_motion_frames(frames, seed, action):
 
 def pixel_evidence(frames):
     """Exact visible changes, shared with server vision input; not a quality verdict."""
-    if len(frames) != 9 or any(f.size != (32, 32) or f.mode != 'RGBA' for f in frames):
+    if len(frames) != 9 or any(f.size not in ((32,32),(40,40)) or f.size != frames[0].size or f.mode != 'RGBA' for f in frames):
         raise ValueError('Expected nine native 32px RGBA frames')
     data = [list(f.getdata()) for f in frames]
     first = data[0]
@@ -183,22 +187,32 @@ def pixel_evidence(frames):
             'rgbChangedPixelsFromFrame0':rgb_changed, 'boundsExclusive':bounds}
 
 
+def frontal_head_growth(frames,seed):
+    rules=load_quality()['recovery']['frontalHeadGrowth'];alpha=seed.getchannel('A');left,top,right,bottom=alpha.getbbox()
+    inset=(right-left)*rules['horizontalInsetPercent']//100;cutoff=top+(bottom-top)*rules['upperBandPercent']//100
+    allowed=alpha.filter(ImageFilter.MaxFilter(2*rules['seedTolerancePixels']+1))
+    return [i for i,f in enumerate(frames) if sum(f.getpixel((x,y))[3]>0 and not allowed.getpixel((x,y))
+        for y in range(cutoff) for x in range(left+inset,right-inset))>=rules['minimumNewPixels']]
+
+
 def frame_audit(frames, seed, action=None, direction=None, tail=None):
     if len(frames) != 9 or frames[0].tobytes() != seed.tobytes():
         raise ValueError('Expected nine frames and an unchanged approved first frame')
     edges = []
     for i, frame in enumerate(frames):
-        if frame.size != (32,32) or frame.mode != 'RGBA':
+        if frame.size not in ((32,32),(40,40)) or frame.size != seed.size or frame.mode != 'RGBA':
             raise ValueError('Expected native 32px RGBA; never resize to pass')
         box = frame.getchannel('A').getbbox()
         if box is None:
             raise ValueError('Empty frame')
-        if box[0] == 0 or box[1] == 0 or box[2] == 32 or box[3] == 32:
+        if box[0] == 0 or box[1] == 0 or box[2] == frame.width or box[3] == frame.height:
             edges.append(i)
     upper=frontal_tail_frames(frames,seed,action,direction,tail)
+    if seed.size==(40,40) and direction=='south': upper=sorted(set(upper+frontal_head_growth(frames,seed)))
     idle=idle_motion_frames(frames,seed,action)
     detached=[i for i,frame in enumerate(frames) if len(components(frame))!=1] if action=='TAIL_WAG' else []
     issues=(['CANVAS_CLIPPING'] if edges else [])+(['TAIL_CARRIAGE'] if upper else [])+(['DETACHED_PIXELS'] if detached else [])+(['IDLE_MOTION'] if idle else [])
+    if seed.size==(40,40) and action=='WALK' and max(pixel_evidence(frames)['alphaChangedFromFrame0'])<5: issues.append('ACTION_MISSING')
     return {'structuralPassed':not issues, 'issues':issues, 'silhouetteFrames':upper,
             'idleMotionFrames':idle, 'edgeFrames':edges, 'detachedFrames':detached, 'visualReviewRequired':True, 'qualityRules':quality_binding(),
             'pixelEvidence':pixel_evidence(frames)}

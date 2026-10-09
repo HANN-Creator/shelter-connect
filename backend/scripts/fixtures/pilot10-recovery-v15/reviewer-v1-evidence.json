@@ -1,0 +1,557 @@
+{
+  "version": "server-review-replay-v1",
+  "results": [
+    {
+      "expected": false,
+      "issues": [
+        "CANVAS_CLIPPING",
+        "SEED_IDENTITY",
+        "SEED_MOTION_MARGIN"
+      ],
+      "actual": false,
+      "case": "base-1"
+    },
+    {
+      "expected": false,
+      "issues": [
+        "CANVAS_CLIPPING",
+        "EYE_READABILITY",
+        "SEED_IDENTITY",
+        "SEED_MOTION_MARGIN"
+      ],
+      "actual": false,
+      "case": "base-2"
+    },
+    {
+      "expected": true,
+      "issues": [
+        "EYE_READABILITY",
+        "SEED_IDENTITY"
+      ],
+      "actual": false,
+      "case": "base-3"
+    },
+    {
+      "expected": false,
+      "issues": [],
+      "actual": true,
+      "case": "walk-south-initial"
+    },
+    {
+      "expected": true,
+      "issues": [],
+      "actual": true,
+      "case": "walk-south-selected"
+    }
+  ],
+  "reports": {
+    "walk-south-selected-review": {
+      "issues": [],
+      "frames": [],
+      "version": "sprite-quality-v1",
+      "passed": true,
+      "reviewedAt": "2026-10-09T03:18:24.227888Z",
+      "rulesRevision": "sprite-regressions-2026-10-09-v15",
+      "model": "gpt-5.6-luna",
+      "edgeFrames": [],
+      "rulesSha256": "d93ad4c90b1a8efbe2a02bcf9ec0a5a004ff40113b2dce8fdc6cbc0f6df50b31",
+      "note": "No clear visible defects. The dog retains its identity and facing, and the frames show an in-place walking gait with alternating paw positions.",
+      "silhouetteFrames": [],
+      "detachedFrames": [],
+      "idleMotionFrames": [],
+      "pixelEvidence": {
+        "version": "native-frame-delta-v1",
+        "reference": "frame0",
+        "frameCount": 9,
+        "alphaStable": false,
+        "maxVisibleRgbDelta": 255,
+        "subtleShadingOnly": false,
+        "alphaChangedFromFrame0": [
+          0,
+          6,
+          15,
+          8,
+          48,
+          17,
+          8,
+          6,
+          1
+        ],
+        "alphaChangedFromPrevious": [
+          0,
+          6,
+          9,
+          7,
+          48,
+          51,
+          9,
+          6,
+          5
+        ],
+        "maxRgbDeltaFromFrame0": [
+          0,
+          253,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          189
+        ],
+        "maxRgbDeltaFromPrevious": [
+          0,
+          253,
+          255,
+          252,
+          252,
+          255,
+          252,
+          252,
+          252
+        ],
+        "rgbChangedPixelsFromFrame0": [
+          0,
+          362,
+          362,
+          362,
+          388,
+          364,
+          362,
+          364,
+          363
+        ],
+        "boundsExclusive": [
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            6,
+            30,
+            34
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ]
+        ]
+      },
+      "reviewLayout": "four-direction-temporal-grid-v1"
+    },
+    "base-1-review": {
+      "version": "seed-eyes-v1",
+      "passed": false,
+      "inputSha256": "500934026d976b93999a37eb4e96eb7326213ad5119e1be5b914e0542f9e1c47",
+      "rulesSha256": "d93ad4c90b1a8efbe2a02bcf9ec0a5a004ff40113b2dce8fdc6cbc0f6df50b31",
+      "model": "gpt-5.6-luna",
+      "reviewedAt": "2026-10-09T03:17:46.591581Z",
+      "issues": [
+        "CANVAS_CLIPPING",
+        "SEED_IDENTITY",
+        "SEED_MOTION_MARGIN"
+      ],
+      "views": [
+        {
+          "style": "PASS",
+          "note": "Compact dark-outlined front view with appropriate stepped shading, upright ears, white muzzle/chest, and tan-brown facial patches.",
+          "readability": "PASS",
+          "direction": "south"
+        },
+        {
+          "style": "PASS",
+          "note": "Appropriate rear view with coherent ears, rump, and white rear markings; no face or eyes are shown.",
+          "readability": "NOT_VISIBLE",
+          "direction": "north"
+        },
+        {
+          "style": "PASS",
+          "note": "Readable left-facing side view with the expected white muzzle/chest, brown saddle, tan head, and a visible rear tail silhouette.",
+          "readability": "PASS",
+          "direction": "west"
+        },
+        {
+          "style": "PASS",
+          "note": "Readable right-facing side view with generally correct coat placement, but the rear ends without a complete visible tail.",
+          "readability": "PASS",
+          "direction": "east"
+        }
+      ],
+      "identity": "PASS",
+      "note": "The four views preserve the compact pixel-puppy rendering and broadly match the photo's tan, brown, and white coat pattern. South, west, and east show readable faces with small solid eyes; north correctly shows no face. The east rear silhouette lacks a complete visible tail.",
+      "edgeDirections": [
+        "east"
+      ],
+      "photoSha256": "99f83d8386ef5f709cec093e1cf204d55287dcbefc381bb4af7a204c41655005",
+      "learnedLessons": [],
+      "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "recoveryVersion": "photo-grounded-recovery-v1",
+      "appearance": "FAIL",
+      "repairDescription": "Keep the SOUTH, NORTH, WEST, EAST order and existing compact pixel style. Redraw the EAST as a complete compact silhouette inside a 1px border, adding a clearly attached, complete rear tail rather than ending the rump flat. Preserve the photo-based white muzzle/chest and legs, tan head and ears, and brown saddle patches; do not crop or remove anatomy.",
+      "minimumClearPixels": 1,
+      "marginDirections": [
+        "east"
+      ],
+      "clearPixelsLeftTopRightBottom": {
+        "south": [
+          5,
+          3,
+          5,
+          1
+        ],
+        "north": [
+          6,
+          2,
+          6,
+          1
+        ],
+        "west": [
+          1,
+          1,
+          2,
+          1
+        ],
+        "east": [
+          3,
+          1,
+          0,
+          1
+        ]
+      }
+    },
+    "walk-south-initial-review": {
+      "issues": [],
+      "frames": [],
+      "version": "sprite-quality-v1",
+      "passed": true,
+      "reviewedAt": "2026-10-09T03:18:15.535926Z",
+      "rulesRevision": "sprite-regressions-2026-10-09-v15",
+      "model": "gpt-5.6-luna",
+      "edgeFrames": [],
+      "rulesSha256": "d93ad4c90b1a8efbe2a02bcf9ec0a5a004ff40113b2dce8fdc6cbc0f6df50b31",
+      "note": "No clear visible defects detected across the nine WALK frames.",
+      "silhouetteFrames": [],
+      "detachedFrames": [],
+      "idleMotionFrames": [],
+      "pixelEvidence": {
+        "version": "native-frame-delta-v1",
+        "reference": "frame0",
+        "frameCount": 9,
+        "alphaStable": false,
+        "maxVisibleRgbDelta": 255,
+        "subtleShadingOnly": false,
+        "alphaChangedFromFrame0": [
+          0,
+          13,
+          23,
+          18,
+          55,
+          30,
+          20,
+          14,
+          1
+        ],
+        "alphaChangedFromPrevious": [
+          0,
+          13,
+          14,
+          11,
+          45,
+          51,
+          10,
+          10,
+          13
+        ],
+        "maxRgbDeltaFromFrame0": [
+          0,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          206
+        ],
+        "maxRgbDeltaFromPrevious": [
+          0,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ],
+        "rgbChangedPixelsFromFrame0": [
+          0,
+          150,
+          158,
+          152,
+          289,
+          161,
+          149,
+          144,
+          128
+        ],
+        "boundsExclusive": [
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            6,
+            30,
+            34
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ]
+        ]
+      },
+      "reviewLayout": "four-direction-temporal-grid-v1"
+    },
+    "base-2-review": {
+      "version": "seed-eyes-v1",
+      "passed": false,
+      "inputSha256": "701dd0ab11aa78f4845dcfbad994f4e966b6061203e470aa65ef5195559bd907",
+      "rulesSha256": "d93ad4c90b1a8efbe2a02bcf9ec0a5a004ff40113b2dce8fdc6cbc0f6df50b31",
+      "model": "gpt-5.6-luna",
+      "reviewedAt": "2026-10-09T03:17:57.667846Z",
+      "issues": [
+        "CANVAS_CLIPPING",
+        "EYE_READABILITY",
+        "SEED_IDENTITY",
+        "SEED_MOTION_MARGIN"
+      ],
+      "views": [
+        {
+          "style": "PASS",
+          "note": "Compact pixel rendering and dark outline are broadly consistent with the approved style, but the face is missing readable eyes and the white facial blaze is not faithfully placed.",
+          "readability": "FAIL",
+          "direction": "south"
+        },
+        {
+          "style": "PASS",
+          "note": "Rear-facing rendering is appropriately simplified with no face or eyes. The tan-and-white rear pattern is plausible, though the silhouette is too bulky and the tail/anatomy are not clearly supported.",
+          "readability": "NOT_VISIBLE",
+          "direction": "north"
+        },
+        {
+          "style": "PASS",
+          "note": "Pixel outline and stepped shading fit the approved style, but the body is too long and low, with an oversized tail. White neck/rear patches are broadly plausible but need closer placement to the photo.",
+          "readability": "PASS",
+          "direction": "west"
+        },
+        {
+          "style": "PASS",
+          "note": "Side rendering is stylistically coherent, but the silhouette is overly elongated and the large tail is not supported by the photo. Refine the white chest, muzzle and rear patches to match the individual dog.",
+          "readability": "PASS",
+          "direction": "east"
+        }
+      ],
+      "identity": "UNCERTAIN",
+      "note": "The four views retain a generally plausible tan-and-white puppy palette, but the front view lacks readable eyes, the side silhouettes are overly elongated, and both side tails are too large/long for the photo-supported dog. Coat markings also need a clearer white forehead blaze and more faithful white body/chest placement.",
+      "edgeDirections": [
+        "west",
+        "east"
+      ],
+      "photoSha256": "99f83d8386ef5f709cec093e1cf204d55287dcbefc381bb4af7a204c41655005",
+      "learnedLessons": [],
+      "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "recoveryVersion": "photo-grounded-recovery-v1",
+      "appearance": "FAIL",
+      "repairDescription": "Redraw SOUTH,NORTH,WEST,EAST in the existing pixel style inside a compact complete silhouette with a 1px border. Add small solid readable eyes to SOUTH and preserve the neutral mouth; keep NORTH fully rear-facing with no face or eyes. Restore the photo’s white forehead blaze, white muzzle/chest and white body patches against the tan ears and back. Shorten and simplify both side tails unless the photo clearly supports more length, while keeping complete visible anatomy rather than cropping it.",
+      "minimumClearPixels": 1,
+      "marginDirections": [
+        "west",
+        "east"
+      ],
+      "clearPixelsLeftTopRightBottom": {
+        "south": [
+          5,
+          3,
+          5,
+          1
+        ],
+        "north": [
+          6,
+          2,
+          6,
+          1
+        ],
+        "west": [
+          1,
+          1,
+          0,
+          1
+        ],
+        "east": [
+          0,
+          1,
+          0,
+          1
+        ]
+      }
+    },
+    "base-3-review": {
+      "version": "seed-eyes-v1",
+      "passed": false,
+      "inputSha256": "aa949da8a3f7bc78e7c139abf6b24b9ed41b4e297cd68ff947c7fe4f01c48da7",
+      "rulesSha256": "d93ad4c90b1a8efbe2a02bcf9ec0a5a004ff40113b2dce8fdc6cbc0f6df50b31",
+      "model": "gpt-5.6-luna",
+      "reviewedAt": "2026-10-09T03:18:08.217739Z",
+      "issues": [
+        "EYE_READABILITY",
+        "SEED_IDENTITY"
+      ],
+      "views": [
+        {
+          "style": "PASS",
+          "note": "Compact puppy proportions, dark stepped outline, calm solid eyes, and stepped shading are appropriate. The forehead blaze is missing or too indistinct compared with the photo, and the white muzzle/chest boundary is too simplified.",
+          "readability": "PASS",
+          "direction": "south"
+        },
+        {
+          "style": "PASS",
+          "note": "A suitable rear rendering with no face or eyes shown. The rear white patch and body silhouette should be aligned more carefully with the photo-inferred coat pattern.",
+          "readability": "NOT_VISIBLE",
+          "direction": "north"
+        },
+        {
+          "style": "PASS",
+          "note": "The side rendering uses the approved outlined pixel style and a complete-looking tail, but the head has no readable eye. White neck/chest placement and the tan back patch need closer matching.",
+          "readability": "FAIL",
+          "direction": "west"
+        },
+        {
+          "style": "PASS",
+          "note": "The outlined stepped rendering is stylistically appropriate and the tail is visible, but the eye is missing or unreadable. The white neck and tan body patch placement needs refinement to retain the individual markings.",
+          "readability": "FAIL",
+          "direction": "east"
+        }
+      ],
+      "identity": "UNCERTAIN",
+      "note": "The compact pixel rendering is generally consistent, but the south face does not preserve the photo's clear white forehead blaze, and the side views lack readable eyes. Coat blocks are broadly plausible, but the visible side-tail silhouettes and patch transitions need refinement against the photo.",
+      "edgeDirections": [],
+      "photoSha256": "99f83d8386ef5f709cec093e1cf204d55287dcbefc381bb4af7a204c41655005",
+      "learnedLessons": [],
+      "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "recoveryVersion": "photo-grounded-recovery-v1",
+      "appearance": "FAIL",
+      "repairDescription": "Redraw SOUTH,NORTH,WEST,EAST in the existing compact pixel style inside a 1px border, preserving complete anatomy rather than cropping. Restore the photo's distinct white forehead blaze, white muzzle/chest and leg patches, and coherent tan body placement. Add small solid readable eyes to SOUTH, WEST, and EAST; keep NORTH fully rear-facing with no face or eyes. Refine both side tails as complete silhouettes, retaining a naturally short appearance only if supported by the photo, with dark stepped outlines and no flat sticker-like redesign.",
+      "minimumClearPixels": 1,
+      "marginDirections": [],
+      "clearPixelsLeftTopRightBottom": {
+        "south": [
+          4,
+          3,
+          6,
+          1
+        ],
+        "north": [
+          5,
+          2,
+          7,
+          1
+        ],
+        "west": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "east": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    }
+  }
+}

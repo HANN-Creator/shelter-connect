@@ -77,6 +77,23 @@ public class OpenAiResponsesClient implements AiProvider {
 			"text",Map.of("format",Map.of("type","json_schema","name","dog_appearance","strict",true,"schema",schema))));
 		return structuredResult(payload);
 	}
+	/** Keep identity photos separate from native-pixel art so a combined board cannot shrink either. */
+    public JsonNode structuredImages(String instructions,String task,Map<String,byte[]> images,Map<String,Object> schema) {
+        if(!properties.enabled())throw new AiFailure("AI_UNAVAILABLE");
+        if(images.isEmpty() || images.size()>7)throw new AiFailure("AI_INVALID_IMAGE");
+        var content=new ArrayList<Map<String,String>>();content.add(Map.of("type","input_text","text",task));
+        long total=0;
+        for(var image:images.entrySet()) {
+            total+=image.getValue().length;
+            if(image.getValue().length==0 || total>8*1024*1024 || image.getKey().length()>160)throw new AiFailure("AI_INVALID_IMAGE");
+            content.add(Map.of("type","input_text","text",image.getKey()));
+            content.add(Map.of("type","input_image","detail","high","image_url","data:image/png;base64,"+Base64.getEncoder().encodeToString(image.getValue())));
+        }
+        var payload=json.writeValueAsString(Map.of("model",properties.model(),"store",false,"max_output_tokens",4000,
+            "reasoning",Map.of("effort","low"),"instructions",instructions,"input",List.of(Map.of("role","user","content",content)),
+            "text",Map.of("format",Map.of("type","json_schema","name","dog_sprite_review","strict",true,"schema",schema))));
+        return structuredResult(payload);
+    }
 	private JsonNode structuredResult(String payload) {
 		try {
 			var root=json.readTree(send(payload));

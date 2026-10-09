@@ -73,6 +73,22 @@ class StyledSeedQualityAgentTest {
         when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(verdict("south","PASS","PASS"));
         assertThat(agent.review(seed(),Collections.nCopies(4,seed())).path("passed").asBoolean()).isTrue();
     }
+    @Test void recoveryRequiresEveryPhotoPropertyEvenWithEmptyIssues()throws Exception {
+        var verdict=json.createObjectNode().put("tailConsistent",true).put("note","Photo identity checked").put("repairDescription","Restore the photographed white chest while keeping this puppy pixel style.");
+        var views=verdict.putArray("views");
+        for(String d:StyledSpriteCodec.DIRECTIONS) {
+            var v=views.addObject().put("direction",d).put("confidence",.95).put("note","native style").put("observedSpriteMarkings","white chest").put("observedPhotoMarkings","white chest");v.putArray("issues");
+            StyledRecoveryReview.BASE.keySet().forEach(k->v.put(k,true));
+        }
+        ((tools.jackson.databind.node.ObjectNode)views.get(0)).put("identityMatches",false);
+        when(client.structuredImages(anyString(),anyString(),anyMap(),anyMap())).thenReturn(verdict);
+        var report=agent.review(seed(),Collections.nCopies(4,seed()),json.createArrayNode(),true);
+        assertThat(report.path("passed").asBoolean()).isFalse();assertThat(report.path("issues").toString()).contains("SEED_IDENTITY");
+        assertThat(report.path("repairDescription")).isEqualTo(verdict.path("repairDescription"));
+        ((tools.jackson.databind.node.ObjectNode)views.get(0)).put("identityMatches",true);
+        assertThat(agent.review(seed(),Collections.nCopies(4,seed()),json.createArrayNode(),true).path("passed").asBoolean()).isTrue();
+        verdict.remove("repairDescription");assertThatThrownBy(()->agent.review(seed(),Collections.nCopies(4,seed()),json.createArrayNode(),true)).hasMessage("QUALITY_RECOVERY_RESPONSE_INVALID");
+    }
     @Test void rearEyesAndIdentityDriftFailAndDuplicateDirectionsAreMalformed()throws Exception {
         when(client.structuredImage(anyString(),anyString(),any(),anyMap())).thenReturn(verdict("north","PASS","FAIL"));
         var r=agent.review(seed(),Collections.nCopies(4,seed()));

@@ -23,6 +23,18 @@ public class StyledPixelLabClient implements StyledAssetProvider {
         return submitEndpoint(character?"create-character-pro":"animate-pixminimax",payload);
     }
     public UUID editAnimation(JsonNode payload) { return submitEndpoint("edit-animation-v2",payload); }
+    public UUID editSeeds(JsonNode payload){return submitEndpoint("edit-images-v2",payload);}
+    public JsonNode pollSeeds(UUID id){
+        var response=json.readTree(send("background-jobs/"+id,null,4_000_000));String state=response.path("status").asText();
+        if(Set.of("processing","queued","pending").contains(state))return json.valueToTree(Map.of("status","WAITING"));
+        if(state.equals("failed"))return json.valueToTree(Map.of("status","FAILED"));
+        var images=response.at("/last_response/images");if(!state.equals("completed") || !images.isArray() || images.size()!=4)throw new AssetException(422,"STYLED_FRAME_COUNT_INVALID");
+        var rotations=new LinkedHashMap<String,String>();for(int i=0;i<4;i++){byte[] image=decode(images.get(i).path("base64").asText());StyledSpriteCodec.nativeFrame(image);
+            rotations.put(StyledSpriteCodec.DIRECTIONS.get(i),Base64.getEncoder().encodeToString(image));}
+        var out=json.createObjectNode().put("status","COMPLETED");out.set("directions",json.valueToTree(rotations));
+        var usage=response.path("usage");if(usage.isMissingNode() || usage.isNull())usage=response.at("/last_response/billing_usage");
+        if(!usage.isMissingNode() && !usage.isNull())out.set("usage",usage);return out;
+    }
     public UUID editSeedEyes(JsonNode payload) { return submitEndpoint("inpaint-v3",payload); }
     public JsonNode pollSeedEyes(UUID id) {
         var response=json.readTree(send("background-jobs/"+id,null,4_000_000));String state=response.path("status").asText();
@@ -86,7 +98,7 @@ public class StyledPixelLabClient implements StyledAssetProvider {
     static byte[] decode(String encoded) {
         if(encoded.startsWith("data:image/png;base64,")) encoded=encoded.substring(22);
         if(encoded.length()>140_000) throw new AssetException(422,"STYLED_FRAME_INVALID");
-        try { byte[] bytes=Base64.getDecoder().decode(encoded);StyledSpriteCodec.nativeFrame(bytes);return bytes; }
+        try { byte[] bytes=Base64.getDecoder().decode(encoded);StyledSpriteCodec.motionFrame(bytes);return bytes; }
         catch(IllegalArgumentException e) { throw new AssetException(422,"STYLED_FRAME_INVALID"); }
     }
     private byte[] send(String path,byte[] body,int max) {
