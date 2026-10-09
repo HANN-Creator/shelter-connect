@@ -302,6 +302,47 @@ public class StyledAssetStore {
             .param("grant",json.writeValueAsString(grant)).param("history",json.writeValueAsString(history)).param("hold",StyledIdleHold.VERSION).param("id",id).update();
         return job(id);
     }
+    /** Resume only a stored motion's malformed response, without granting a generation or resetting quality. */
+    @Transactional public Job resumeQualityResponse(UUID subject,UUID dog,UUID id,JsonNode body) {
+        var actor=access.requireDogForWrite(subject,dog);properties.requireEnabled();
+        AssetInput.fields(body,"requestId","note","expectedSeedHashes","expectedSheetSha256","expectedRulesSha256","label");
+        UUID requestId=AssetInput.id(body,"requestId");String note=AssetInput.text(body,"note",2000),label=AssetInput.text(body,"label",80);
+        String rules=AssetInput.text(body,"expectedRulesSha256",64),sheet=AssetInput.text(body,"expectedSheetSha256",64);var seeds=body.path("expectedSeedHashes");
+        if(note.length()<20 || !rules.matches("[a-f0-9]{64}") || !sheet.matches("[a-f0-9]{64}") || !seeds.isObject() || seeds.size()!=4
+            || StyledSpriteCodec.DIRECTIONS.stream().anyMatch(d->!seeds.path(d).asText().matches("[a-f0-9]{64}")))throw AssetException.invalid();
+        lock(id);var j=job(id);if(!j.dogId().equals(dog))throw missing();legacy.valid(id,true);var policy=j.qualityPolicy();
+        if(policy==null)throw new AssetException(409,"QUALITY_RESPONSE_RESUME_NOT_ALLOWED");
+        var grants=json.createArrayNode();if(policy.path("qualityResponseResumes").isArray())grants.addAll((tools.jackson.databind.node.ArrayNode)policy.path("qualityResponseResumes"));
+        for(var grant:grants)if(grant.path("request").path("requestId").asText().equals(requestId.toString())) {
+            if(grant.path("request").equals(body))return j;throw new AssetException(409,"QUALITY_RESPONSE_RESUME_ALREADY_REQUESTED");
+        }
+        if(grants.valueStream().anyMatch(g->g.path("request").path("label").asText().equals(label)
+            && g.path("responseProtocolVersion").asText().equals(StyledMotionReview.RESPONSE_VERSION)))
+            throw new AssetException(409,"QUALITY_RESPONSE_RESUME_ALREADY_REQUESTED");
+        if(!j.status().equals("FAILED") || !"QUALITY_MOTION_RESPONSE_INVALID".equals(j.failureCode()) || j.qualityApproval()!=null
+            || !automaticSeedPassed(j) || !historicallyApprovedSeed(j) || policy.path("referenceOnly").asBoolean())
+            throw new AssetException(409,"QUALITY_RESPONSE_RESUME_NOT_ALLOWED");
+        if(!rules.equals(StyledSpriteCodec.qualityRulesSha()) || !rules.equals(policy.path("rulesSha256").asText())
+            || !seeds.equals(j.steps().getFirst().result().path("hashes")))throw new AssetException(409,"QUALITY_RECHECK_STALE");
+        var failed=j.steps().stream().filter(s->s.status().equals("FAILED")).toList();
+        if(failed.size()!=1 || !failed.getFirst().label().equals(label) || failed.getFirst().action().equals("BASE"))throw new AssetException(409,"QUALITY_RESPONSE_RESUME_NOT_ALLOWED");
+        var step=failed.getFirst();
+        if(step.result()==null || !sheet.equals(step.result().path("sha256").asText()) || step.qualityReport()==null
+            || !Set.of("STARTED","RESPONSE_INVALID").contains(step.qualityReport().path("status").asText()))throw new AssetException(409,"QUALITY_RECHECK_STALE");
+        var grant=grants.addObject().put("requestedBy",actor.userId().toString()).put("requestedAt",Instant.now().toString())
+            .put("responseProtocolVersion",StyledMotionReview.RESPONSE_VERSION).put("startingRepairCount",step.repairCount());grant.set("request",body);
+        jdbc.sql("""
+            UPDATE shelter.styled_asset_steps SET attempt_history=attempt_history || jsonb_build_array(jsonb_build_object(
+              'qualityResponseResume',true,'result',result,'quality',quality_report,'repairCount',repair_count)),quality_report=NULL,status='CHECKING'
+            WHERE job_id=:id AND label=:l AND status='FAILED'
+            """).param("id",id).param("l",label).update();
+        jdbc.sql("UPDATE shelter.styled_learning_recoveries SET state='QUEUED',reason='RESPONSE_FORMAT_RESUME',updated_at=now() WHERE job_id=:id AND label=:l AND state='FAILED' AND reason='QUALITY_MOTION_RESPONSE_INVALID'")
+            .param("id",id).param("l",label).update();
+        jdbc.sql("""
+            UPDATE shelter.asset_jobs SET quality_policy=quality_policy || jsonb_build_object('qualityResponseResumes',CAST(:g AS jsonb)),
+              status='QUEUED',failure_code=NULL,next_run_at=now(),lease_token=NULL,lease_until=NULL WHERE id=:id
+            """).param("g",json.writeValueAsString(grants)).param("id",id).update();return job(id);
+    }
     private boolean historicallyApprovedSeed(Job j) {
         if(j.steps().isEmpty() || j.seedReview()==null)return false;
         var base=j.steps().getFirst();var r=base.qualityReport();var approval=j.seedReview();

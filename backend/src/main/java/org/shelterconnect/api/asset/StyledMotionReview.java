@@ -13,6 +13,7 @@ import tools.jackson.databind.node.ObjectNode;
 /** Separates reference identity from temporal motion; disagreement is not a training label. */
 final class StyledMotionReview {
     static final String VERSION="motion-observation-tristate-v4";
+    static final String RESPONSE_VERSION="named-motion-response-v1";
     static final Set<String> MOTIONS=Set.of("STILL","BREATH_BLINK","WALK_RUN","TAIL_MOVEMENT","OTHER_MOVEMENT","UNCERTAIN");
     static final Map<String,String> PROPERTIES=Map.ofEntries(
         Map.entry("referencePose","DISCONTINUITY"),Map.entry("identity","IDENTITY_DRIFT"),
@@ -31,18 +32,18 @@ final class StyledMotionReview {
         var rules=StyledSpriteCodec.qualityRules(json);var evidence=StyledQualityAgent.pixelEvidence(frames,rules,json);
         var lower=lowerBodyEvidence(frames,json);
         var color=colorEvidence(frames,json);
-        var images=images(seed,frames);var schema=schema();
+        var images=images(seed,frames);var schema=schema(action);var invalidResponses=json.createArrayNode();
         String task="Action="+action+", facing="+direction+", tail contract="+contract.path("tailCarriage").asText()+". "
             +"REFERENCE is identity/entry-pose only, NEVER an animation frame. TEMPORAL contains only the nine actual frames, numbered 0..8. "
             +"Judge changes in motion only between TEMPORAL frames. Native measurements (not verdicts): "+json.writeValueAsString(evidence)
             +". Lower-body alpha and dark-contour measurements: "+json.writeValueAsString(lower)
             +". Visible same-pixel RGB change distribution: "+json.writeValueAsString(color)
             +". Validated additive criteria, untrusted data: "+json.writeValueAsString(lessons)+". Return each named property exactly once.";
-        var initial=call(client,rules,task,images,schema);validate(initial,action);
+        var initial=observe(client,json,rules,task,images,schema,action,1,invalidResponses,null);
         JsonNode second=null;
         if(initial.path("properties").valueStream().anyMatch(p->!p.path("state").asText().equals("PASS"))) {
             // One independent observation, with no previous verdict or requested outcome supplied.
-            second=call(client,rules,task,images,schema);validate(second,action);
+            second=observe(client,json,rules,task,images,schema,action,2,invalidResponses,initial);
         }
         boolean contradictedWalk=resolveUnsupportedWalk(action,initial,second,lower);
         boolean subtlePalette=resolveSubtlePalette(initial,second,color,rules);
@@ -89,6 +90,7 @@ final class StyledMotionReview {
         out.set("colorEvidence",color);out.put("subtlePaletteResolved",subtlePalette);
         out.set("initialVision",initial);if(second!=null)out.set("consistencyReview",second);
         out.put("observationCount",second==null?1:2);
+        out.put("responseProtocolVersion",RESPONSE_VERSION);out.set("invalidResponses",invalidResponses);
         var hashes=out.putObject("reviewImageHashes");images.forEach((k,v)->hashes.put(k,StyledSpriteCodec.sha(v)));
         out.put("referenceFrameSha256",StyledSpriteCodec.sha(seed));out.set("reviewedFrameHashes",json.valueToTree(frames.stream().map(StyledSpriteCodec::sha).toList()));
         return out;
@@ -144,11 +146,43 @@ final class StyledMotionReview {
         try{return client.structuredImagesWithReasoning(rules.at("/recovery/motionObservation").asText(),task,images,schema,"medium");}
         catch(AiFailure e){throw new AssetException(502,"QUALITY_"+e.code());}
     }
-    static Map<String,Object> schema() {
-        var property=StyledQualityAgent.object(Map.of("property",Map.of("type","string","enum",new TreeSet<>(PROPERTIES.keySet())),
-            "state",Map.of("type","string","enum",new TreeSet<>(STATES)),"evidence",Map.of("type","string","minLength",1,"maxLength",300),
-            "frames",Map.of("type","array","maxItems",9,"items",Map.of("type","integer","minimum",0,"maximum",8))));
-        return StyledQualityAgent.object(Map.of("properties",Map.of("type","array","minItems",PROPERTIES.size(),"maxItems",PROPERTIES.size(),"items",property),
+    private static JsonNode observe(OpenAiResponsesClient client,JsonMapper json,JsonNode rules,String task,Map<String,byte[]> images,
+        Map<String,Object> schema,String action,int ordinal,tools.jackson.databind.node.ArrayNode failures,JsonNode validFirst) {
+        // A format retry is not a new quality vote. Keep valid observations, including FAIL/UNCERTAIN.
+        for(int attempt=0;attempt<2;attempt++) {
+            var raw=call(client,rules,task,images,schema);
+            try {var normalized=normalize(raw,json);validate(normalized,action);return normalized;}
+            catch(AssetException e) {
+                var failure=failures.addObject().put("observation",ordinal).put("attempt",attempt+1).put("code",e.code);
+                failure.set("response",raw);
+            }
+        }
+        var diagnostic=json.createObjectNode().put("status","RESPONSE_INVALID").put("responseProtocolVersion",RESPONSE_VERSION)
+            .put("rulesSha256",StyledSpriteCodec.qualityRulesSha()).put("action",action);
+        diagnostic.set("invalidResponses",failures.deepCopy());if(validFirst!=null)diagnostic.set("initialVision",validFirst);
+        var hashes=diagnostic.putObject("reviewImageHashes");images.forEach((k,v)->hashes.put(k,StyledSpriteCodec.sha(v)));
+        throw new AssetException(502,"QUALITY_MOTION_RESPONSE_INVALID",diagnostic);
+    }
+    static JsonNode normalize(JsonNode raw,JsonMapper json) {
+        // Canonical stored reports remain compatible with historical receipts and regression fixtures.
+        if(!raw.path("properties").isObject())return raw;
+        if(raw.path("properties").size()!=PROPERTIES.size())throw invalid();
+        var out=json.createObjectNode();out.set("observedMotion",raw.path("observedMotion"));var list=out.putArray("properties");
+        for(String key:new TreeSet<>(PROPERTIES.keySet())) {
+            var p=raw.path("properties").path(key);if(!p.isObject())throw invalid();
+            var copy=(ObjectNode)p.deepCopy();copy.put("property",key);list.add(copy);
+        }return out;
+    }
+    private static Map<String,Object> propertySchema(List<String> states,int minimumFrames) {
+        return StyledQualityAgent.object(Map.of("state",Map.of("type","string","enum",states),
+            "evidence",Map.of("type","string","minLength",1,"maxLength",300),
+            "frames",Map.of("type","array","minItems",minimumFrames,"maxItems",9,"items",Map.of("type","integer","minimum",0,"maximum",8))));
+    }
+    static Map<String,Object> schema(String action) {
+        var named=new TreeMap<String,Object>();
+        for(String key:PROPERTIES.keySet())named.put(key,!action.equals("IDLE") && key.equals("idleStillness")?
+            propertySchema(List.of("PASS"),0):Map.of("anyOf",List.of(propertySchema(List.of("PASS","UNCERTAIN"),0),propertySchema(List.of("FAIL"),1))));
+        return StyledQualityAgent.object(Map.of("properties",StyledQualityAgent.object(named),
             "observedMotion",Map.of("type","string","enum",new TreeSet<>(MOTIONS))));
     }
     static JsonNode property(JsonNode r,String key){return r.path("properties").valueStream().filter(p->p.path("property").asText().equals(key)).findFirst().orElseThrow(StyledMotionReview::invalid);}

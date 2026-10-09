@@ -2098,4 +2098,47 @@ class StyledAssetPostgresTest {
     JsonNode post(UUID subject,String path,Object body,int status) throws Exception {var req=org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(path).contentType("application/json").content(json.writeValueAsBytes(body));if(subject!=null)req.header("Authorization",bearer(subject));var result=mvc.perform(req).andExpect(status().is(status)).andReturn();return json.readTree(result.getResponse().getContentAsString());}
     JsonNode get(UUID subject,String path,int status) throws Exception {var req=org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(path);if(subject!=null)req.header("Authorization",bearer(subject));var result=mvc.perform(req).andExpect(status().is(status)).andReturn();return json.readTree(result.getResponse().getContentAsString());}
     void outsideTransaction() {assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isFalse();}
+    Map<String,Object> responseResumeFixture(UUID id)throws Exception {
+        // Synthetic legacy format-failure fixture; never rewrites any live job.
+        jdbc.update("UPDATE shelter.asset_jobs SET status='FAILED',failure_code='QUALITY_MOTION_RESPONSE_INVALID',quality_approval=NULL WHERE id=?",id);
+        jdbc.update("UPDATE shelter.styled_asset_steps SET status='FAILED',quality_report='{\"status\":\"STARTED\"}'::jsonb WHERE job_id=? AND label='idle-south'",id);
+        return new HashMap<>(Map.of("requestId",UUID.randomUUID().toString(),"note","Resume only the stored malformed review without changing passed clips or buying a generation",
+            "expectedSeedHashes",read(id).at("/steps/0/result/hashes"),"expectedSheetSha256",step(id,"idle-south").at("/result/sha256").asText(),
+            "expectedRulesSha256",currentRules(),"label","idle-south"));
+    }
+    @Test void responseResumePreservesEveryOtherReportBudgetAndStoredImage()throws Exception {
+        UUID id=b75HeldPack();var body=responseResumeFixture(id);var before=read(id);var saved=new HashMap<>(objects);
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("south"))).thenAnswer(c->b75MotionReport(c.getArgument(1),c.getArgument(2),"south",true,"PASS"));
+        clearInvocations(provider,quality);post(subject,path(id)+"/quality-response-resume",body,200);post(subject,path(id)+"/quality-response-resume",body,200);finish(id);
+        assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
+        for(var s:before.path("steps")) {
+            var after=step(id,s.path("label").asText());assertThat(after.path("repairCount")).isEqualTo(s.path("repairCount"));assertThat(after.path("result")).isEqualTo(s.path("result"));
+            if(!s.path("label").asText().equals("idle-south"))assertThat(after.path("qualityReport")).isEqualTo(s.path("qualityReport"));
+        }
+        for(var e:saved.entrySet())assertThat(objects.get(e.getKey())).isEqualTo(e.getValue());
+        verifyNoInteractions(provider);verify(quality,times(1)).review(any(),anyList(),anyList(),eq("IDLE"),eq("south"));
+        var history=json.readTree(jdbc.queryForObject("SELECT attempt_history FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-south'",String.class,id));
+        assertThat(history.toString()).contains("qualityResponseResume","STARTED");
+        post(subject,path(id)+"/quality-response-resume",body,200);tick();verifyNoInteractions(provider);
+        body.put("note","A changed replay cannot authorize another review of the same source");post(subject,path(id)+"/quality-response-resume",body,409);
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"seed","sheet","rules","label","failure","status","verdict","unauthorized","anonymous","revoked","duplicate"})
+    void responseResumeRejectsUnsafeOrRepeatedRecovery(String defect)throws Exception {
+        UUID id=b75HeldPack();var body=responseResumeFixture(id);UUID actor=subject;int expected=409;
+        switch(defect) {
+            case "seed" -> body.put("expectedSeedHashes",Map.of("south","1".repeat(64),"north","1".repeat(64),"west","1".repeat(64),"east","1".repeat(64)));
+            case "sheet" -> body.put("expectedSheetSha256","1".repeat(64));
+            case "rules" -> body.put("expectedRulesSha256","1".repeat(64));
+            case "label" -> body.put("label","walk-south");
+            case "failure" -> jdbc.update("UPDATE shelter.asset_jobs SET failure_code='QUALITY_AI_TIMEOUT' WHERE id=?",id);
+            case "status" -> jdbc.update("UPDATE shelter.asset_jobs SET status='REVIEW' WHERE id=?",id);
+            case "verdict" -> jdbc.update("UPDATE shelter.styled_asset_steps SET quality_report='{\"passed\":false}'::jsonb WHERE job_id=? AND label='idle-south'",id);
+            case "unauthorized" -> {actor=UUID.randomUUID();expected=403;}
+            case "anonymous" -> {actor=null;expected=401;}
+            case "revoked" -> jdbc.update("UPDATE shelter.asset_source_permissions SET revoked_at=now() WHERE id=?",permission);
+            case "duplicate" -> {post(subject,path(id)+"/quality-response-resume",body,200);body.put("requestId",UUID.randomUUID().toString());}
+        }
+        clearInvocations(provider);post(actor,path(id)+"/quality-response-resume",body,expected);verifyNoInteractions(provider);
+    }
 }

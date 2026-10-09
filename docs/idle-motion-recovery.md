@@ -29,9 +29,19 @@ B-75는 실제 B-74 패키지 실행에서 발견한 정면 IDLE의 머리 위 �
 
 ## 검증 기록
 
-- Java 단위 484개 중 470개 통과, 별도 실호출 전용 14개 생략.
-- PostgreSQL 통합 465개 중 463개 통과, 기존 2개 생략. 새 권한·낡은 해시·중복·미완성·소진 WALK 차단, 기존 예산·원본 보존, IDLE 대체의 새 검수 통과/실패 차단을 포함한다.
+- Java 단위 488개 중 474개 통과, 별도 실호출 전용 14개 생략.
+- PostgreSQL 통합 477개 중 475개 통과, 기존 2개 생략. 새 권한·낡은 해시·중복·미완성·소진 WALK 차단, 기존 예산·원본 보존, IDLE 대체의 새 검수 통과/실패 차단을 포함한다.
 - Python 61개 통과. 모든 행동/방향/꼬리/보완 조합의 프롬프트 길이와 공통 규칙 연결 포함.
 - v26 규칙 SHA: `cdd63d12b0eb39ff39518b7188f99196cf8e5795a33810cc70a95b42453a1856`.
 - 실제 v25 격리 작업은 12개 생성 완료, 10개 통과·앞/뒤 IDLE 2개 보류였다. v26 동일 작업 재개로 앞 IDLE은 실제 PixelLab 편집 1회 후 통과했다. 뒤 IDLE은 원본의 loop 불확실성이 확정된 IDLE 실패까지 막아 v27의 별도 정지 대체 경계 회귀 사례가 되었다. v27의 실제 실행·최종 승인·저장/조회 결과와 배포 여부는 [PR #88 검증 기록](https://github.com/HANN-Creator/shelter-connect/pull/88) 및 [B-75 작업 기록](https://app.notion.com/p/3f45b2d1a55f80bdb396fd29378ecdc3)에 실행 근거와 함께 기록한다. 단위/통합 회귀 통과만으로 실제 모델 품질이나 운영 배포 완료를 의미하지 않는다.
 - v27 규칙 SHA: `2a0f031e1b982d9df39940dca03124da771d2e39cbb197e749b34204ec1b46d3`.
+
+## 응답 형식 오류 복구
+
+실제 v27 팩은 BASE·IDLE 4방향·WALK 4방향을 통과한 뒤 sit-south에서 `QUALITY_MOTION_RESPONSE_INVALID`로 중단됐다. 이전 구현은 잘못된 응답 원문을 저장하지 않았으므로 어떤 필드였는지는 확인할 수 없다.
+
+`named-motion-response-v1`은 필수 속성을 이름별 객체로 요청해 중복/누락을 막고, FAIL은 최소 한 개의 근거 프레임을 요구한다. IDLE이 아닌 동작의 idleStillness는 적용 대상이 아니므로 PASS만 허용한다. JSON 스키마 제약은 [OpenAI 공식 Structured Outputs 문서](https://developers.openai.com/api/docs/guides/structured-outputs)를 따른다. 기존 저장 보고서는 배열 형태를 유지한다. 품질 규칙·기준 버전·해시는 바꾸지 않는다.
+
+형식 검증에 실패한 관찰만 같은 입력으로 한 번 재요청한다. 정상 FAIL/UNCERTAIN은 형식 재시도 대상이 아니며, 정상 첫 관찰을 버리고 재투표하지 않는다. 잘못된 응답은 최종 보고서나 실패 진단에 보존한다. 공급자 시간초과/거절/인증 오류는 이 재시도의 대상이 아니다.
+
+`POST /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/quality-response-resume`은 같은 보호소의 쓰기 권한·사진 사용 권한·기존 SYSTEM BASE 승인·이미지/규칙 해시를 확인한다. 정확히 한 개의 저장 동작이 응답 형식 오류로 실패했을 때만 해당 검수 단계로 복구한다. 동작/응답 프로토콜 버전당 1회이며 요청 ID와 본문은 재전송 가능하다. 기존 검수/이미지/횟수/영수증/예산은 그대로다. 실제 데이터의 상태나 판정은 SQL로 재설정하지 않는다.

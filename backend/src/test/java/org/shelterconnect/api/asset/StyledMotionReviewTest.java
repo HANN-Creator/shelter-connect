@@ -137,4 +137,38 @@ class StyledMotionReviewTest {
         for(String id:List.of("idle-south","idle-west","genuine-walk"))assertThat(json.readTree(Files.readAllBytes(root.resolve("package-v24/"+id+".json"))).path("passed").asBoolean()).isTrue();
         for(String id:List.of("idle-north","clipped-last","face-flicker","still-is-not-walk"))assertThat(json.readTree(Files.readAllBytes(root.resolve("package-v24/"+id+".json"))).path("passed").asBoolean()).isFalse();
     }
+    JsonNode named(JsonNode source) {
+        var n=json.createObjectNode();n.set("observedMotion",source.path("observedMotion"));var fields=n.putObject("properties");
+        for(var p:source.path("properties")){var copy=(ObjectNode)p.deepCopy();copy.remove("property");fields.set(p.path("property").asText(),copy);}return n;
+    }
+    @Test void namedSchemaPreventsDuplicateKeysAndRequiresEvidenceFramesForFail() {
+        var schema=json.valueToTree(StyledMotionReview.schema("SIT"));var props=schema.at("/properties/properties");
+        assertThat(props.path("required").size()).isEqualTo(10);assertThat(props.path("additionalProperties").asBoolean()).isFalse();
+        assertThat(props.at("/properties/idleStillness/properties/state/enum").toString()).isEqualTo("[\"PASS\"]");
+        assertThat(props.at("/properties/tail/anyOf/1/properties/frames/minItems").asInt()).isEqualTo(1);
+        assertThat(StyledMotionReview.normalize(named(observation("tail","FAIL")),json)).isEqualTo(observation("tail","FAIL"));
+    }
+    @Test void invalidResponseRetriesOnceAndPreservesPayloadWithoutChangingValidDefects()throws Exception {
+        var bad=observation("tail","FAIL");((ObjectNode)StyledMotionReview.property(bad,"tail")).putArray("frames");
+        var valid=observation("tail","FAIL");var client=mock(OpenAiResponsesClient.class);
+        when(client.structuredImagesWithReasoning(anyString(),anyString(),anyMap(),anyMap(),eq("medium"))).thenReturn(bad,named(valid),named(valid));
+        var r=run(client,"idle-west.png","IDLE");assertThat(r.path("motionDecision").asText()).isEqualTo("CONFIRMED_DEFECT");
+        assertThat(r.path("observationCount").asInt()).isEqualTo(2);assertThat(r.at("/invalidResponses/0/response")).isEqualTo(bad);
+        verify(client,times(3)).structuredImagesWithReasoning(anyString(),anyString(),anyMap(),anyMap(),eq("medium"));
+    }
+    @Test void invalidSecondObservationDoesNotDiscardValidFirstAndStopsAfterOneRetry()throws Exception {
+        var valid=observation("tail","FAIL");var bad=named(valid);((ObjectNode)bad.path("properties")).remove("tail");
+        var client=mock(OpenAiResponsesClient.class);
+        when(client.structuredImagesWithReasoning(anyString(),anyString(),anyMap(),anyMap(),eq("medium"))).thenReturn(named(valid),bad,bad);
+        try{run(client,"idle-west.png","IDLE");fail("Malformed observation must never pass");}
+        catch(AssetException e){assertThat(e.code).isEqualTo("QUALITY_MOTION_RESPONSE_INVALID");
+            assertThat(e.diagnostics.path("initialVision")).isEqualTo(valid);assertThat(e.diagnostics.path("invalidResponses").size()).isEqualTo(2);
+            assertThat(e.diagnostics.path("reviewImageHashes").size()).isEqualTo(2);}
+        verify(client,times(3)).structuredImagesWithReasoning(anyString(),anyString(),anyMap(),anyMap(),eq("medium"));
+    }
+    @Test void malformedLegacyPropertiesAreRejectedAndOnlyApplicableIdleMayFail() {
+        var duplicate=observation("tail","FAIL");((ObjectNode)duplicate.path("properties").get(0)).put("property","tail");
+        assertThatThrownBy(()->StyledMotionReview.validate(duplicate,"IDLE")).hasMessage("QUALITY_MOTION_RESPONSE_INVALID");
+        assertThatThrownBy(()->StyledMotionReview.validate(observation("idleStillness","FAIL"),"SIT")).hasMessage("QUALITY_MOTION_RESPONSE_INVALID");
+    }
 }

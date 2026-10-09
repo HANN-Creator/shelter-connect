@@ -2847,6 +2847,46 @@
         "expectedSheetHashes"
       ],
       "additionalProperties": false
+    },
+    "StyledQualityResponseResume": {
+      "type": "object",
+      "properties": {
+        "note": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 2000
+        },
+        "expectedSeedHashes": {
+          "$ref": "#/components/schemas/StyledSeedHashes"
+        },
+        "expectedRulesSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "현재 서버 및 작업에 고정된 품질 규칙 SHA. 규칙 변경을 허용하지 않습니다."
+        },
+        "requestId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "동작·응답 프로토콜 버전별 1회 복구. 동일 본문 재전송은 재사용합니다."
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "expectedSheetSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "note",
+        "expectedSeedHashes",
+        "expectedRulesSha256",
+        "requestId",
+        "label",
+        "expectedSheetSha256"
+      ],
+      "additionalProperties": false
     }
   },
   "operations": {
@@ -4639,6 +4679,24 @@
       ],
       "request": {
         "schema": "StyledMotionRepairResume"
+      }
+    },
+    "POST /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/quality-response-resume": {
+      "summary": "저장된 동작의 검수 응답 형식 오류만 복구",
+      "description": "같은 보호소 담당자 전용. 자동 BASE 승인이 유효하고 정확히 한 개의 저장 동작이 QUALITY_MOTION_RESPONSE_INVALID로 FAILED인 경우만 허용합니다. 원본 도트·시트·현재 규칙 해시를 확인하고 해당 동작 검수만 재개합니다. 기존 통과 판정·이미지·영수증·보완 횟수·예산은 유지합니다. 오류 응답은 이력에 보존하며 새 생성 예산을 주지 않습니다. 일반 불합격·불확실 판정·시간초과·규칙 변경은 대상이 아닙니다. 동작·응답 프로토콜 버전별 1회, 동일 요청 재전송은 재사용합니다.",
+      "tag": "32px 에셋",
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "403",
+        "404",
+        "409",
+        "503"
+      ],
+      "request": {
+        "schema": "StyledQualityResponseResume"
       }
     }
   }
