@@ -62,7 +62,7 @@ def character_request(root, traits, rules, quality=None):
     if len(description) > 2000:
         raise ValueError('Character prompt exceeds provider limit')
     if quality and quality.get('recoveryVersion') == load_quality()['recovery']['version']:
-        description = description.replace(load_quality()['seedMargin'], 'One clear pixel at each 32px edge; complete side tails. Motion uses separate transparent padding.')
+        description = description.replace(load_quality()['seedMargin'], load_quality()['recovery']['tailPrevention'])
         description += ' Match actual white/colored coat patch locations. Front tail may be hidden; never add a tail above the head. Preserve white muzzle fur; use a short neutral mouth line, never a wide toothy grin.'
         if len(description)>2000: raise ValueError('Recovery character prompt exceeds provider limit')
     return {'description':description, 'image_size':{'width':32,'height':32},

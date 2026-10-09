@@ -1,0 +1,141 @@
+{
+  "note": "네 방향 모두 실제로 보이는 털 무늬와 귀·주둥이 형태, 승인된 픽셀 스타일에 부합합니다.",
+  "model": "gpt-5.6-luna",
+  "views": [
+    {
+      "note": "정면 방향과 흰색 블레이즈·주둥이·가슴·다리 배치가 사진과 잘 맞습니다.",
+      "style": "PASS",
+      "direction": "south",
+      "readability": "PASS"
+    },
+    {
+      "note": "자연스러운 뒷모습이며 얼굴이 없는 것이 올바릅니다. 사진에 없는 후면 무늬는 판단하지 않았습니다.",
+      "style": "PASS",
+      "direction": "north",
+      "readability": "NOT_VISIBLE"
+    },
+    {
+      "note": "좌측 프로필의 귀·주둥이·가슴과 짧은 털 표현이 사진의 개와 일치합니다.",
+      "style": "PASS",
+      "direction": "west",
+      "readability": "PASS"
+    },
+    {
+      "note": "우측 프로필의 흰색 얼굴·가슴과 탄색 몸통이 실제 사진과 잘 맞습니다.",
+      "style": "PASS",
+      "direction": "east",
+      "readability": "PASS"
+    }
+  ],
+  "issues": [],
+  "passed": true,
+  "version": "seed-eyes-v1",
+  "identity": "PASS",
+  "appearance": "PASS",
+  "reviewedAt": "2026-10-09T06:51:33.089760942Z",
+  "inputSha256": "62a94cfecc4b52f82d8eabf9e16344b5d2ee03177231f7bbfb89f5858a747bf5",
+  "photoSha256": "64e648c7d8372d2c49e093b25011b3b26798086f43a329394644931f1f4e36bf",
+  "rulesSha256": "9c15e399b631c8b7794c725daa52691f8d460bca5b84d234b3d9bb34e0e012c1",
+  "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "reviewVersion": "photo-observed-features-review-v4",
+  "edgeDirections": [],
+  "learnedLessons": [],
+  "propertyReview": {
+    "note": "네 방향 모두 실제로 보이는 털 무늬와 귀·주둥이 형태, 승인된 픽셀 스타일에 부합합니다.",
+    "views": [
+      {
+        "note": "정면 방향과 흰색 블레이즈·주둥이·가슴·다리 배치가 사진과 잘 맞습니다.",
+        "issues": [],
+        "direction": "south",
+        "confidence": 0.97,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "observedPhotoMarkings": "The visible front photographs show tan ears and forehead sides, a broad white forehead blaze continuing down the muzzle, a white muzzle and throat/chest, and white legs. The visible body has tan side/back patches; the tail and rear markings are hidden.",
+        "observedSpriteMarkings": "Front-facing compact dog with tan ears and tan forehead sides, a broad white blaze down the forehead and muzzle, a white muzzle, white chest, and mostly white front legs with small tan upper-leg patches. The body is predominantly tan at the sides."
+      },
+      {
+        "note": "자연스러운 뒷모습이며 얼굴이 없는 것이 올바릅니다. 사진에 없는 후면 무늬는 판단하지 않았습니다.",
+        "issues": [],
+        "direction": "north",
+        "confidence": 0.86,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "observedPhotoMarkings": "The rear is not visible in the photographs, so rear stripe, rump, and tail markings are unknown. Visible photographs do confirm tan body coloring and white neck/chest coloring, but cannot verify the rear pattern.",
+        "observedSpriteMarkings": "Rear-facing view with tan ears, tan outer head and back, a central white stripe descending from the neck onto the upper back, and a small white lower central rear patch above darker feet. No face or eyes are visible."
+      },
+      {
+        "note": "좌측 프로필의 귀·주둥이·가슴과 짧은 털 표현이 사진의 개와 일치합니다.",
+        "issues": [],
+        "direction": "west",
+        "confidence": 0.93,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "observedPhotoMarkings": "The photographs visibly show the same tan short coat, white muzzle and throat/chest, and white lower legs. The supplied face and body photos do not clearly show a left-facing profile or the tail, so those regions are partly hidden or unknown.",
+        "observedSpriteMarkings": "Left-facing profile with a tan head and upright tan ears, a white blaze and white muzzle, a white throat/chest band, a mostly tan compact body, and white lower feet. A small dark tail shape is visible at the rear."
+      },
+      {
+        "note": "우측 프로필의 흰색 얼굴·가슴과 탄색 몸통이 실제 사진과 잘 맞습니다.",
+        "issues": [],
+        "direction": "east",
+        "confidence": 0.96,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "observedPhotoMarkings": "The visible right-facing profile photo shows tan head and ears, a white forehead blaze reaching the muzzle, white muzzle and throat/chest, and white legs. The tail is not visible in the photo, so its exact carriage is unknown.",
+        "observedSpriteMarkings": "Right-facing profile with tan head, upright ears, and tan body, a white forehead-to-muzzle area, white muzzle and throat/chest, white lower feet, and a small dark tail at the rear."
+      }
+    ],
+    "tailConsistent": true,
+    "repairDescription": ""
+  },
+  "recoveryVersion": "photo-grounded-recovery-v1",
+  "marginDirections": [],
+  "repairDescription": "",
+  "reviewImageHashes": {
+    "Actual body photo": "64e648c7d8372d2c49e093b25011b3b26798086f43a329394644931f1f4e36bf",
+    "Actual face photo": "074024a348bef2f0f65940308428041994c2e8659ca87c02fbb2ce1174692468",
+    "Unapproved view: east": "ffb5584a3dce6a7461e16f98f3e2c77852739f5f07104f545a118e0b27ba7f74",
+    "Unapproved view: west": "7f49ee73fb63d58e5afcb94fec1709f8a93a7c720a5d3d7d5e9b5515108cf7d0",
+    "Unapproved view: north": "f31160369b83a1946474a1ff462b5b070a7799f9a63eb475c74f619a1a6d117b",
+    "Unapproved view: south": "4a6c6552a3d0a49edc662743e687968f78155379caaddf563b8bb95f6afec907",
+    "Approved art style only; not this dog": "bf5e5641f0768a45f7a87f10bbb5bf26e987dee581b1b2cf4d08d2c4c0cd539c"
+  },
+  "minimumClearPixels": 1,
+  "clearPixelsLeftTopRightBottom": {
+    "east": [
+      1,
+      2,
+      1,
+      1
+    ],
+    "west": [
+      1,
+      2,
+      1,
+      1
+    ],
+    "north": [
+      6,
+      2,
+      6,
+      1
+    ],
+    "south": [
+      6,
+      3,
+      6,
+      2
+    ]
+  }
+}

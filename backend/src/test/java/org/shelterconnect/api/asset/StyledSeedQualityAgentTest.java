@@ -81,12 +81,13 @@ class StyledSeedQualityAgentTest {
             StyledRecoveryReview.BASE.keySet().forEach(k->v.put(k,true));
         }
         ((tools.jackson.databind.node.ObjectNode)views.get(0)).put("identityMatches",false);
-        when(client.structuredImages(anyString(),anyString(),anyMap(),anyMap())).thenReturn(verdict);
-        var report=agent.review(seed(),Collections.nCopies(4,seed()),json.createArrayNode(),true);
+        when(client.structuredImages(anyString(),anyString(),anyMap(),anyMap())).thenAnswer(c->
+            c.<Map<String,Object>>getArgument(2).size()==3?StyledSeedTailEvidenceTest.observation(json,"OBSCURED","COMPLETE_CONNECTED","COMPLETE_CONNECTED",.95):verdict);
+        var report=agent.review(seed(),Collections.nCopies(4,StyledSeedTailEvidenceTest.tailSeed()),json.createArrayNode(),true);
         assertThat(report.path("passed").asBoolean()).isFalse();assertThat(report.path("issues").toString()).contains("SEED_IDENTITY");
         assertThat(report.path("repairDescription")).isEqualTo(verdict.path("repairDescription"));
         ((tools.jackson.databind.node.ObjectNode)views.get(0)).put("identityMatches",true);
-        assertThat(agent.review(seed(),Collections.nCopies(4,seed()),json.createArrayNode(),true).path("passed").asBoolean()).isTrue();
+        assertThat(agent.review(seed(),Collections.nCopies(4,StyledSeedTailEvidenceTest.tailSeed()),json.createArrayNode(),true).path("passed").asBoolean()).isTrue();
         verdict.remove("repairDescription");assertThatThrownBy(()->agent.review(seed(),Collections.nCopies(4,seed()),json.createArrayNode(),true)).hasMessage("QUALITY_RECOVERY_RESPONSE_INVALID");
     }
     @Test void rearEyesAndIdentityDriftFailAndDuplicateDirectionsAreMalformed()throws Exception {

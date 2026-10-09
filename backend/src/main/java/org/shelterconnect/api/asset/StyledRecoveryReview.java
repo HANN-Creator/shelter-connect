@@ -88,7 +88,8 @@ final class StyledRecoveryReview {
             .put("repairDescription",repair).put("note",r.path("note").asText());
         report.set("issues",json.valueToTree(issues));report.set("edgeDirections",json.valueToTree(edges));report.set("views",views);
         report.set("propertyReview",r);report.set("learnedLessons",lessons);report.put("lessonsSha256",StyledSpriteCodec.sha(json.writeValueAsBytes(lessons)));
-        var hashes=new LinkedHashMap<String,String>();images.forEach((k,v)->hashes.put(k,StyledSpriteCodec.sha(v)));report.set("reviewImageHashes",json.valueToTree(hashes));return report;
+        var hashes=new LinkedHashMap<String,String>();images.forEach((k,v)->hashes.put(k,StyledSpriteCodec.sha(v)));report.set("reviewImageHashes",json.valueToTree(hashes));
+        StyledSeedTailEvidence.merge(json,report,StyledSeedTailEvidence.review(client,properties,json,photo,seeds));return report;
     }
     static Map<String,byte[]> seedImages(byte[] photo,List<byte[]> seeds,JsonNode traits) {
         try {

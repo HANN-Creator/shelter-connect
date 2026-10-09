@@ -93,7 +93,7 @@ public class StyledAssetStore {
     }
     @Transactional public Job referenceInsert(UUID subject,UUID dog,UUID photo,UUID id,String selection,JsonNode body,JsonNode result) {
         var actor=access.requireDogForWrite(subject,dog);referencePhoto(subject,dog,photo);
-        var policy=new HashMap<String,Object>(newSeedQualityPolicy());policy.remove("automaticApproval");policy.remove("seedMotionMargin");policy.put("referenceOnly",true);policy.put("referenceInput",body);
+        var policy=new HashMap<String,Object>(newSeedQualityPolicy());policy.remove("automaticApproval");policy.remove("seedMotionMargin");policy.remove("seedTailEvidenceVersion");policy.put("referenceOnly",true);policy.put("referenceInput",body);
         policy.put("referenceRecordedBy",actor.userId().toString());policy.put("referenceRecordedAt",Instant.now().toString());
         var inserted=jdbc.sql("""
             INSERT INTO shelter.asset_jobs(id,photo_id,dog_id,shelter_id,permission_id,pipeline_version,selection_key,action_plan,styled_input,quality_policy)
@@ -276,7 +276,7 @@ public class StyledAssetStore {
         p.put("lessonRevision",StyledLessonStore.REVISION_VERSION);p.put("seedMotionMargin",2);p.put("seedEyeRepair",StyledSeedEyeRepair.VERSION);
         p.put("automaticApproval",StyledAutoApproval.VERSION);
         var recovery=StyledSpriteCodec.qualityRules(json).path("recovery");
-        p.put("recoveryVersion",StyledRecovery.VERSION);p.put("seedRepairVersion",StyledSeedRepair.VERSION);p.put("motionFrameSize",40);p.put("seedMotionMargin",1);
+        p.put("recoveryVersion",StyledRecovery.VERSION);p.put("seedRepairVersion",StyledSeedRepair.VERSION);p.put("seedTailEvidenceVersion",StyledSeedTailEvidence.VERSION);p.put("motionFrameSize",40);p.put("seedMotionMargin",1);
         p.put("maxSeedRepairs",recovery.path("maxSeedRepairs").asInt());p.put("maxRepairsPerClip",recovery.path("maxMotionRepairs").asInt());
         p.remove("seedEyeRepair");p.remove("learningRecovery");return p;}
     private boolean seedQualityPassed(Job j) {
