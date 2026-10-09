@@ -1,0 +1,41 @@
+{
+  "id": "resp_030609d8d8e3682f016ac88fae1a7087d09b4996cd17f854d0",
+  "model": "gpt-5.6-luna",
+  "usage": {
+    "input_tokens": 3866,
+    "input_tokens_details": {
+      "cache_write_tokens": 3863,
+      "cached_tokens": 0
+    },
+    "output_tokens": 606,
+    "output_tokens_details": {
+      "reasoning_tokens": 270
+    },
+    "total_tokens": 4472
+  },
+  "observation": {
+    "photoTail": "OBSCURED",
+    "photoEvidence": "사진들은 개의 머리와 몸통 위주이며 후방/꼬리 부위가 프레임 밖이거나 몸통에 가려져 실제 꼬리는 식별할 수 없다.",
+    "views": [
+      {
+        "direction": "north",
+        "tail": "VERY_SHORT_STUB",
+        "visibleEvidence": "몸통 뒤쪽 중앙 아래에 어두운 갈색의 짧고 곧은 돌출부가 보인다. 뒷다리나 외곽선과 구분되는 작은 꼬리 단서로 보이지만 길이는 매우 짧다.",
+        "confidence": 0.84
+      },
+      {
+        "direction": "west",
+        "tail": "VERY_SHORT_STUB",
+        "visibleEvidence": "오른쪽 뒤쪽 끝에 갈색에서 거의 검은색으로 이어지는 작은 돌출 픽셀이 보인다. 긴 꼬리처럼 연장되지는 않는다.",
+        "confidence": 0.68
+      },
+      {
+        "direction": "east",
+        "tail": "NO_DISCERNIBLE_TAIL",
+        "visibleEvidence": "왼쪽 뒤쪽에는 몸통 외곽과 색상 블록은 보이지만, 별도로 이어지는 꼬리 돌출을 확실히 식별할 수 없다.",
+        "confidence": 0.62
+      }
+    ],
+    "note": "스프라이트에서는 북쪽이 가장 명확한 짧은 꼬리 단서를 보이며, 어떤 방향에서도 긴 꼬리는 보이지 않는다. 동쪽의 불확실한 외곽 픽셀은 등/엉덩이 윤곽일 가능성을 배제할 수 없다."
+  }
+}
