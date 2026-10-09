@@ -1,0 +1,11 @@
+{
+  "jarSha256": "4877967ad1a5c694fa52976023f538896f51e143b244c49d58f0d005b8c907c0",
+  "rulesSha256": "c7402961098211887af131ea5c26e6f4f07d28490299a58bf9d6b5c1d2f9c365",
+  "unchangedLiveVerifiedClasses": {
+    "StyledMotionReview": "b6cf610c3c75991196d8dc94ecf776d1dfcd98088d31a29d6989970bb231fb6a",
+    "StyledQualityAgent": "82697e56712732f6b41ceda1b513106366742b97ed059b6d9bcae73f9577f1cb",
+    "StyledAssetWorker": "152ef88970d947c2921fb2f516e089ab67bafe5899ec765ad6df6412d775a9a7",
+    "StyledAutoApproval": "3d31cbd2530aeea084229651f0594de6831b6255700238367ff011fdff0bc75e"
+  },
+  "change": "Only final job hold reason: MOTION_OBSERVATION_UNCERTAIN instead of exhausted repairs. Actual PostgreSQL integration test passed; no provider calls repeated."
+}

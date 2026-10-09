@@ -1698,6 +1698,7 @@ class StyledAssetPostgresTest {
             var r=(tools.jackson.databind.node.ObjectNode)automaticMotionReport(false);r.put("motionDecision","UNCERTAIN");
             r.set("issues",json.valueToTree(List.of("IDLE_MOTION")));return r;});
         finish(id);assertThat(read(id).path("status").asText()).isEqualTo("REVIEW");
+        assertThat(read(id).path("failureCode").asText()).isEqualTo("MOTION_OBSERVATION_UNCERTAIN");
         assertThat(step(id,"idle-west").path("repairCount").asInt()).isZero();
         verify(provider,never()).editAnimation(any());
         assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=? AND label='idle-west'",Integer.class,id)).isZero();

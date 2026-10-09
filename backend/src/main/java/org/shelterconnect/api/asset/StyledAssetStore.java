@@ -324,7 +324,8 @@ public class StyledAssetStore {
                   reviewed_by=NULL,reviewed_at=now(),failure_code=NULL,lease_token=NULL,lease_until=NULL WHERE id=:id
                 """).param("a",json.writeValueAsString(StyledAutoApproval.packEvidence(j,json))).param("id",j.id()).update();
         } else status(j.id(),"REVIEW",qualityPassed(j)?
-            (StyledAutoApproval.enabled(j.qualityPolicy())?"AUTO_APPROVAL_EVIDENCE_REQUIRED":null):"QUALITY_REPAIR_EXHAUSTED");
+            (StyledAutoApproval.enabled(j.qualityPolicy())?"AUTO_APPROVAL_EVIDENCE_REQUIRED":null):
+                j.steps().stream().skip(1).anyMatch(s->StyledMotionReview.unresolved(s.qualityReport()))?"MOTION_OBSERVATION_UNCERTAIN":"QUALITY_REPAIR_EXHAUSTED");
     }
     @Transactional public Job recover(UUID subject,UUID id,JsonNode body) {
         operator(subject);properties.requireEnabled();lock(id);legacy.valid(id,true);var j=job(id);
