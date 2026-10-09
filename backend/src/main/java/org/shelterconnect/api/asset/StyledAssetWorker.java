@@ -159,7 +159,8 @@ public class StyledAssetWorker {
                 if(edit || (!learning && mirrorRepair(w))) {
                     byte[] raw=StyledSpriteCodec.rawSheet(frames);String rawKey=w.prefix()+"raw-edits/"+w.label()+"-"+w.repairCount()+".png";
                     storage.put(rawKey,raw);rawEdit=json.valueToTree(Map.of("key",rawKey,"sha256",StyledSpriteCodec.sha(raw)));
-                    frames=recovery?StyledSpriteCodec.anchorEdit(frames,seed(w)):StyledSpriteCodec.restoreEditPalette(frames,seed(w));
+                    // Native40 edits already contain all nine frames: changing only frame0 creates palette flicker.
+                    if(!recovery)frames=StyledSpriteCodec.restoreEditPalette(frames,seed(w));
                 }
                 if(recovery && frames.stream().anyMatch(f->StyledSpriteCodec.motionFrame(f).getWidth()!=40))
                     throw new AssetException(422,"STYLED_FRAME_INVALID");
@@ -280,6 +281,8 @@ public class StyledAssetWorker {
                 combined.set("issues",json.valueToTree(issues));combined.put("passed",review.path("passed").asBoolean() && rawReview.path("passed").asBoolean());
                 combined.set("rawEditReview",rawReview);combined.put("rawEditSha256",source.path("sha256").asText());
             }
+            // Recheck source authorization after external observations, before reading/binding seed bytes.
+            if(!store.authorized(w))return;
             var details=(tools.jackson.databind.node.ObjectNode)review;details.put("inputSha256",sha);details.put("lessonsSha256",lessonSha);details.set("learnedLessons",selected);
             details.set("seedHashes",base.path("hashes"));details.put("action",w.action());details.put("direction",w.direction());
             if(StyledRecovery.enabled(w.qualityPolicy())){
@@ -298,6 +301,12 @@ public class StyledAssetWorker {
             if(report.has("restoredReview"))lessons.record(w,report.path("restoredReview"),metadata,seeds);
             else if(report.path("rawEditReview").path("passed").asBoolean())lessons.record(w,report,metadata,seeds);
         } else lessons.record(w,report,metadata,seeds);
+        if(StyledRawMotion.eligible(w,report,metadata)) {
+            byte[] raw=storage.asset(metadata.at("/rawEdit/key").asText());
+            var candidate=StyledRawMotion.candidate(w,report,metadata,raw,seed(w),seeds.path("hashes"),json);
+            storage.put(candidate.result().path("key").asText(),raw);
+            if(store.adoptRawMotion(w,report,metadata,candidate))return;
+        }
         if(!store.retryQuality(w,report,metadata)) {
             if(StyledIdleHold.eligible(w,report,metadata)
                 && store.idleHoldCheckpoint(w,report,metadata,StyledIdleHold.result(seed(w),seeds.path("hashes"),w.direction(),metadata,json)))return;

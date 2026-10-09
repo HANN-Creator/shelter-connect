@@ -362,6 +362,29 @@ public class StyledAssetStore {
             && plan.path("startingRepairCount").asInt(-1)==w.repairCount()
             && plan.path("repairLimit").asInt(-1)==StyledRecovery.limit(w.qualityPolicy(),false);
     }
+    /** Adopt the separately reviewed provider image, never relabel the rejected postprocessed image. */
+    @Transactional public boolean adoptRawMotion(Work w,JsonNode previousReport,JsonNode previous,StyledRawMotion.Candidate candidate) {
+        if(!authorized(w))return true;
+        if(!StyledRawMotion.eligible(w,previousReport,previous))return false;
+        var j=job(w.id());var seeds=j.steps().getFirst().result().path("hashes");
+        if(!automaticSeedPassed(j) || !historicallyApprovedSeed(j)
+            || !StyledRawMotion.bound(candidate.result(),candidate.report(),seeds,w.direction(),json)
+            || !previous.path("sha256").equals(candidate.result().at("/derivation/sourceMotionSha256"))
+            || !previous.at("/rawEdit/sha256").equals(candidate.result().path("sha256"))
+            || !previousReport.path("rawEditReview").equals(candidate.result().at("/derivation/rawProviderReview")))
+            throw new AssetException(409,"RAW_MOTION_SOURCE_CHANGED");
+        int changed=jdbc.sql("""
+            UPDATE shelter.styled_asset_steps SET attempt_history=attempt_history || jsonb_build_array(jsonb_build_object(
+              'rawMotionAdoption',true,'providerJobId',provider_job_id,'submittedAt',submitted_at,'requestSha256',request_sha256,
+              'result',CAST(:r AS jsonb),'quality',CAST(:q AS jsonb),'repairCount',repair_count,'learnedLessons',learned_lessons)),
+              quality_report=CAST(:checked AS jsonb) WHERE job_id=:id AND label=:l AND status IN ('PERSISTING','CHECKING')
+            """).param("r",json.writeValueAsString(previous)).param("q",json.writeValueAsString(previousReport))
+            .param("checked",json.writeValueAsString(candidate.report())).param("id",w.id()).param("l",w.label()).update();
+        if(changed!=1)throw new AssetException(409,"RAW_MOTION_STATE_CHANGED");
+        // This outer transaction commits the chosen report, result and pack decision atomically.
+        success(w,candidate.result());return true;
+    }
+
     @Transactional public boolean idleHoldCheckpoint(Work w,JsonNode report,JsonNode previous,JsonNode derived) {
         if(!authorized(w))return true;
         if(!StyledIdleHold.eligible(w,report,previous))return false;

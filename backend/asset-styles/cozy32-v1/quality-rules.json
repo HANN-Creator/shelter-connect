@@ -1,5 +1,5 @@
 {
-  "revision": "sprite-regressions-2026-10-10-v28",
+  "revision": "sprite-regressions-2026-10-10-v29",
   "pixelEvidence": {
     "version": "native-frame-delta-v1",
     "subtleRgbChannelDelta": 24
@@ -53,6 +53,15 @@
     "EYES: compare open-eye frames with the approved seed: keep pupil shape, position and local contrast. A brief natural blink is allowed. Eyes that stay erased, become hollow rings, or merge into fur in open-eye frames are IDENTITY_DRIFT. North has no face; do not invent eyes."
   ],
   "regressions": [
+    {
+      "id": "native-nine-frame-rgba-preservation",
+      "action": "ALL",
+      "direction": "ALL",
+      "issue": "DISCONTINUITY",
+      "check": "provider-rgba-and-byte-bound-candidate-selection",
+      "fixture": "native-rgba-v29/idle-west-review.json",
+      "expected": "First generation and every native40 edit preserve all nine provider RGBA frames, including frame0. Never replace entry shading with BASE. If a legacy postprocessed result fails but its exact raw nine-frame candidate independently passes all current observations and pixel checks, an authorized generation/repair may adopt that separately stored raw candidate without a new generation or reroll. Bind the seed, rules, source sheet and all nine frame hashes. Preserve the rejected report, both original images, receipts and counters. Ordinary audit-only rechecks, raw FAIL/UNCERTAIN, stale or changed input cannot adopt."
+    },
     {
       "id": "front-sit-color-only-entry-tail-occlusion",
       "action": "SIT",

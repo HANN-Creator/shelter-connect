@@ -16,15 +16,15 @@ class StyledRecoveryTest {
         assertThat(round).hasSize(9);for(byte[] frame:round)assertThat(frame).isEqualTo(padded);
         assertThatThrownBy(()->StyledSpriteCodec.sheet(frames,original)).hasMessage("STYLED_FRAME_INVALID");
     }
-    @Test void anchoringNeverErasesChangedGeometryOrRecolorsFramesOneToEight()throws Exception {
-        byte[] seed=StyledSpriteCodec.paddedSeed(seed());var raw=StyledSpriteCodec.motionFrame(seed);raw.setRGB(13,10,0xff993355);
-        byte[] changed=StyledSpriteCodec.png(raw);var frames=new ArrayList<>(Collections.nCopies(9,changed));
-        var anchored=StyledSpriteCodec.anchorEdit(frames,seed);assertThat(anchored.getFirst()).isEqualTo(seed);
-        for(int i=1;i<9;i++)assertThat(anchored.get(i)).isSameAs(changed);
-        raw.setRGB(39,10,0xff993355);frames.set(0,StyledSpriteCodec.png(raw));
-        assertThat(StyledSpriteCodec.anchorEdit(frames,seed)).isSameAs(frames);
-        assertThat(StyledQualityAgent.touchesEdge(raw)).isTrue();
-        assertThat(StyledQualityAgent.touchesEdge(StyledSpriteCodec.motionFrame(seed))).isFalse();
+    @Test void nativeEditSheetPreservesAllNineFramesIncludingDifferentEntryShading()throws Exception {
+        var root=java.nio.file.Path.of("scripts/fixtures/native-rgba-v29");
+        byte[] raw=java.nio.file.Files.readAllBytes(root.resolve("raw.png"));
+        byte[] restored=java.nio.file.Files.readAllBytes(root.resolve("restored.png"));
+        var frames=StyledSpriteCodec.frames(raw);var old=StyledSpriteCodec.frames(restored);
+        assertThat(frames.getFirst()).isNotEqualTo(old.getFirst());
+        for(int i=1;i<9;i++)assertThat(frames.get(i)).isEqualTo(old.get(i));
+        var round=StyledSpriteCodec.frames(StyledSpriteCodec.rawSheet(frames));
+        for(int i=0;i<9;i++)assertThat(round.get(i)).isEqualTo(frames.get(i));
     }
     @Test void wholeClipEditsKeepLastFrameAndDoNotDependOnLowTailOrSecondAttempt()throws Exception {
         byte[] padded=StyledSpriteCodec.paddedSeed(seed());var frames=new ArrayList<>(Collections.nCopies(9,padded));
