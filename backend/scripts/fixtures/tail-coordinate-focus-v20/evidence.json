@@ -1,0 +1,29 @@
+{
+  "sourceAnimalId": "448536202600925",
+  "sourceJobStatus": "SEED_REVIEW",
+  "sourceRulesRevision": "sprite-regressions-2026-10-09-v18",
+  "knownFailure": "EAST coordinates pass through transparent cells (2,11), (2,10), (2,9) after repeated two-view observation",
+  "sourcePhotoSha256": "e9c4cd227b1c4976423b323c32e70f73839bcbb05fc025b3e48294a4d19cde7a",
+  "repairCount": 1,
+  "pixelLabSubmissions": 2,
+  "published": false,
+  "imageBytesChangedForLocalization": false,
+  "sha256": {
+    "west.png": "81f256fb4aead87334508fd00f5798e30ab733fe46b18a4917b3532cad0bd9f9",
+    "north.png": "35f3c2dea252fbb0c840b37c45e972d54dff92d0f92085dc7c2535001e0eb63c",
+    "east.png": "8f6f7f49aa3a73063f55ef59bde0409d4e8c3ab2f01aa5c072e9446a366156f5",
+    "south.png": "4d33c8ef0a6f2e6461fa547101805291e003a6a4bc7244d18cad775ba2742e20",
+    "deployed-review.json": "6699de218e9955fcaf32f9f36a6465492f936e64191b0cd8e8e843b4f2a59e14",
+    "live-focus-review.json": "249cf3f4f656fe8ae53ab27cefe65f5abb38b477e72903ebc72daf29068ca095"
+  },
+  "liveFocus": {
+    "model": "gpt-5.6-luna",
+    "passed": true,
+    "eastConfidence": 0.79,
+    "realCalls": 1,
+    "rulesSha256": "c4ca9267dfa9b734debb459a9a0ce76950994702bd0922a0fadf41e696911721",
+    "photoSha256": "e9c4cd227b1c4976423b323c32e70f73839bcbb05fc025b3e48294a4d19cde7a",
+    "inputSha256": "376455ea0e1bc2bfd1c0d277f0e5b53b7c781aebd118e998046c969fa6249446",
+    "scope": "Coordinate re-observation only; initial immutable v18 observation supplied. Not a full live server approval or motion run."
+  }
+}

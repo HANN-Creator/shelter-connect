@@ -82,20 +82,20 @@ class StyledTailRefinementTest {
     }
     @Test void reobserveOnceOnSameBytesAndRetainBothReplies(){
         var client=mock(OpenAiResponsesClient.class);var first=raw("UNCERTAIN","COMPLETE_CONNECTED");var second=raw("COMPLETE_CONNECTED","COMPLETE_CONNECTED");
-        when(client.structuredImages(anyString(),anyString(),anyMap(),anyMap())).thenReturn(first,second);
+        when(client.structuredImages(anyString(),anyString(),anyMap(),anyMap())).thenReturn(first,second.at("/views/0"));
         byte[] seed=StyledSeedTailEvidenceTest.tailSeed();var seeds=Collections.nCopies(4,seed);
         var result=StyledSeedTailEvidence.review(client,ai,json,seed,seeds);
         assertThat(result.path("passed").asBoolean()).isTrue();assertThat(result.path("observationHistory").size()).isEqualTo(2);
         assertThat(result.at("/observationHistory/0/observation")).isEqualTo(first);
         assertThat(result.at("/observationHistory/1/observation")).isEqualTo(second);
-        verify(client).structuredImages(contains("Re-observe once"),contains("alphaRows"),anyMap(),anyMap());
+        verify(client).structuredImages(contains("Re-observe once per uncertain direction"),contains("alphaRows"),anyMap(),anyMap());
         verify(client,times(2)).structuredImages(anyString(),anyString(),anyMap(),anyMap());
     }
     @Test void unresolvedAndFailedReobservationKeepHoldAndHaveBoundedCost(){
         for(String mode:List.of("uncertain","timeout","malformed")){
             var client=mock(OpenAiResponsesClient.class);var response=when(client.structuredImages(anyString(),anyString(),anyMap(),anyMap())).thenReturn(raw("UNCERTAIN","COMPLETE_CONNECTED"));
             if(mode.equals("timeout"))response.thenThrow(new AiFailure("AI_TIMEOUT"));
-            else response.thenReturn(mode.equals("malformed")?json.createObjectNode():raw("UNCERTAIN","COMPLETE_CONNECTED"));
+            else response.thenReturn(mode.equals("malformed")?json.createObjectNode():raw("UNCERTAIN","COMPLETE_CONNECTED").at("/views/0"));
             byte[] seed=StyledSeedTailEvidenceTest.tailSeed();var result=StyledSeedTailEvidence.review(client,ai,json,seed,Collections.nCopies(4,seed));
             assertThat(result.path("passed").asBoolean()).as(mode).isFalse();
             assertThat(result.path("observationHistory").size()).isEqualTo(mode.equals("uncertain")?2:1);
