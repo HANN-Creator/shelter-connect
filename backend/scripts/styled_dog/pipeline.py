@@ -61,6 +61,10 @@ def character_request(root, traits, rules, quality=None):
         description += learned_seed_guidance(quality)
     if len(description) > 2000:
         raise ValueError('Character prompt exceeds provider limit')
+    if quality and quality.get('recoveryVersion') == load_quality()['recovery']['version']:
+        description = description.replace(load_quality()['seedMargin'], 'One clear pixel at each 32px edge; complete side tails. Motion uses separate transparent padding.')
+        description += ' Match actual white/colored coat patch locations. Front tail may be hidden; never add a tail above the head.'
+        if len(description)>2000: raise ValueError('Recovery character prompt exceeds provider limit')
     return {'description':description, 'image_size':{'width':32,'height':32},
             'method':rules['characterMethod'], 'concept_image':image_argument(root/'photo-concept.png'),
             'reference_image':image_argument(root/'style-reference.png'), 'template_id':'dog',
@@ -199,6 +203,8 @@ def motion_payload(traits, rules, action, direction, first_frame, quality=None):
     if spec['loop']:
         motion += ' Loop smoothly to the initial pose.'
     motion += learned_guidance(action, direction, quality)
+    if quality.get('recoveryVersion') == load_quality()['recovery']['version']:
+        motion = motion.replace('paws lift above the planted baseline, never below.', 'alternating paw lifts and a tiny body bob.')
     if len(motion)>1000:
         raise ValueError('Quality animation prompt exceeds provider limit')
     attempt = quality.get('attempt', 0)

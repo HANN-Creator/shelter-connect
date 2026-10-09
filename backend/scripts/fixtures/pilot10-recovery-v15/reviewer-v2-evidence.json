@@ -1,0 +1,795 @@
+{
+  "version": "server-required-properties-v2",
+  "results": [
+    {
+      "actual": false,
+      "case": "base-1",
+      "expected": false,
+      "issues": [
+        "CANVAS_CLIPPING",
+        "SEED_IDENTITY",
+        "SEED_MOTION_MARGIN"
+      ]
+    },
+    {
+      "actual": false,
+      "case": "base-2",
+      "expected": false,
+      "issues": [
+        "CANVAS_CLIPPING",
+        "SEED_IDENTITY",
+        "SEED_MOTION_MARGIN"
+      ]
+    },
+    {
+      "actual": false,
+      "case": "base-3",
+      "expected": true,
+      "issues": [
+        "SEED_IDENTITY"
+      ]
+    },
+    {
+      "actual": true,
+      "case": "walk-south-initial",
+      "expected": false,
+      "issues": []
+    },
+    {
+      "actual": true,
+      "case": "walk-south-selected",
+      "expected": true,
+      "issues": []
+    }
+  ],
+  "reports": {
+    "walk-south-selected-review": {
+      "rulesSha256": "f68a42436b576fb128782b7258811372bedf72531d47ceff17028c980816f4fb",
+      "note": "모든 프레임에서 남쪽을 향한 정면 방향과 얼굴·눈·귀·털 무늬가 유지됩니다. 다리와 발이 교대로 자연스럽게 움직이며 연속성도 양호합니다.",
+      "issues": [],
+      "frames": [],
+      "version": "sprite-quality-v1",
+      "passed": true,
+      "reviewedAt": "2026-10-09T03:27:20.429012Z",
+      "rulesRevision": "sprite-regressions-2026-10-09-v15",
+      "model": "gpt-5.6-luna",
+      "edgeFrames": [],
+      "silhouetteFrames": [],
+      "detachedFrames": [],
+      "idleMotionFrames": [],
+      "pixelEvidence": {
+        "version": "native-frame-delta-v1",
+        "reference": "frame0",
+        "frameCount": 9,
+        "alphaStable": false,
+        "maxVisibleRgbDelta": 255,
+        "subtleShadingOnly": false,
+        "alphaChangedFromFrame0": [
+          0,
+          6,
+          15,
+          8,
+          48,
+          17,
+          8,
+          6,
+          1
+        ],
+        "alphaChangedFromPrevious": [
+          0,
+          6,
+          9,
+          7,
+          48,
+          51,
+          9,
+          6,
+          5
+        ],
+        "maxRgbDeltaFromFrame0": [
+          0,
+          253,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          189
+        ],
+        "maxRgbDeltaFromPrevious": [
+          0,
+          253,
+          255,
+          252,
+          252,
+          255,
+          252,
+          252,
+          252
+        ],
+        "rgbChangedPixelsFromFrame0": [
+          0,
+          362,
+          362,
+          362,
+          388,
+          364,
+          362,
+          364,
+          363
+        ],
+        "boundsExclusive": [
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            6,
+            30,
+            34
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ]
+        ]
+      },
+      "reviewLayout": "matched-seed-nine-pairs-v2",
+      "propertyReview": {
+        "actionVisible": true,
+        "continuityUsable": true,
+        "directionPreserved": true,
+        "eyesPreserved": true,
+        "identityPreserved": true,
+        "limbsPlausible": true,
+        "paletteStable": true,
+        "tailConsistent": true,
+        "passed": true,
+        "confidence": 0.96,
+        "issues": [],
+        "frames": [],
+        "note": "모든 프레임에서 남쪽을 향한 정면 방향과 얼굴·눈·귀·털 무늬가 유지됩니다. 다리와 발이 교대로 자연스럽게 움직이며 연속성도 양호합니다."
+      }
+    },
+    "base-1-review": {
+      "version": "seed-eyes-v1",
+      "recoveryVersion": "photo-grounded-recovery-v1",
+      "reviewVersion": "photo-separate-property-review-v2",
+      "passed": false,
+      "inputSha256": "500934026d976b93999a37eb4e96eb7326213ad5119e1be5b914e0542f9e1c47",
+      "photoSha256": "99f83d8386ef5f709cec093e1cf204d55287dcbefc381bb4af7a204c41655005",
+      "rulesSha256": "f68a42436b576fb128782b7258811372bedf72531d47ceff17028c980816f4fb",
+      "model": "gpt-5.6-luna",
+      "reviewedAt": "2026-10-09T03:26:46.501216Z",
+      "identity": "FAIL",
+      "appearance": "FAIL",
+      "repairDescription": "Preserve the compact outlined pixel-art style, but replace the gray-brown coat with the photographed dog's warm tan-brown coat and white markings: a clear white facial blaze and muzzle, white chest and legs, and broad white body patches. Keep the existing front, rear, and side directions and readable minimal eyes.",
+      "note": "네 방향 모두 의도한 방향은 맞지만, 실제 개의 황갈색 털과 넓은 흰색 무늬가 전반적으로 부족합니다.",
+      "issues": [
+        "CANVAS_CLIPPING",
+        "SEED_IDENTITY",
+        "SEED_MOTION_MARGIN"
+      ],
+      "edgeDirections": [
+        "east"
+      ],
+      "views": [
+        {
+          "direction": "south",
+          "style": "PASS",
+          "note": "정면 방향과 눈은 명확하지만 실제 개의 따뜻한 황갈색 털과 흰색 이마 무늬가 충분히 반영되지 않았습니다.",
+          "readability": "PASS"
+        },
+        {
+          "direction": "north",
+          "style": "PASS",
+          "note": "후면 방향은 올바르고 얼굴이 없는 표현도 적절하지만 털 색과 흰색·황갈색 배치가 사진과 다릅니다.",
+          "readability": "NOT_VISIBLE"
+        },
+        {
+          "direction": "west",
+          "style": "PASS",
+          "note": "측면 방향과 꼬리 위치는 자연스럽지만 회갈색 외피와 단순한 무늬가 실제 개의 황갈색·흰색 패턴과 맞지 않습니다.",
+          "readability": "PASS"
+        },
+        {
+          "direction": "east",
+          "style": "PASS",
+          "note": "측면 방향과 꼬리는 자연스럽지만 실제 사진의 황갈색 등과 넓은 흰색 몸통 무늬가 반영되지 않았습니다.",
+          "readability": "PASS"
+        }
+      ],
+      "propertyReview": {
+        "views": [
+          {
+            "directionCorrect": true,
+            "eyesReadable": true,
+            "identityMatches": false,
+            "styleMatches": true,
+            "tailPlausible": true,
+            "direction": "south",
+            "confidence": 0.96,
+            "issues": [
+              "COAT_MISMATCH",
+              "SEED_IDENTITY"
+            ],
+            "note": "정면 방향과 눈은 명확하지만 실제 개의 따뜻한 황갈색 털과 흰색 이마 무늬가 충분히 반영되지 않았습니다."
+          },
+          {
+            "directionCorrect": true,
+            "eyesReadable": true,
+            "identityMatches": false,
+            "styleMatches": true,
+            "tailPlausible": true,
+            "direction": "north",
+            "confidence": 0.91,
+            "issues": [
+              "COAT_MISMATCH",
+              "SEED_IDENTITY"
+            ],
+            "note": "후면 방향은 올바르고 얼굴이 없는 표현도 적절하지만 털 색과 흰색·황갈색 배치가 사진과 다릅니다."
+          },
+          {
+            "directionCorrect": true,
+            "eyesReadable": true,
+            "identityMatches": false,
+            "styleMatches": true,
+            "tailPlausible": true,
+            "direction": "west",
+            "confidence": 0.94,
+            "issues": [
+              "COAT_MISMATCH",
+              "SEED_IDENTITY"
+            ],
+            "note": "측면 방향과 꼬리 위치는 자연스럽지만 회갈색 외피와 단순한 무늬가 실제 개의 황갈색·흰색 패턴과 맞지 않습니다."
+          },
+          {
+            "directionCorrect": true,
+            "eyesReadable": true,
+            "identityMatches": false,
+            "styleMatches": true,
+            "tailPlausible": true,
+            "direction": "east",
+            "confidence": 0.94,
+            "issues": [
+              "COAT_MISMATCH",
+              "SEED_IDENTITY"
+            ],
+            "note": "측면 방향과 꼬리는 자연스럽지만 실제 사진의 황갈색 등과 넓은 흰색 몸통 무늬가 반영되지 않았습니다."
+          }
+        ],
+        "repairDescription": "Preserve the compact outlined pixel-art style, but replace the gray-brown coat with the photographed dog's warm tan-brown coat and white markings: a clear white facial blaze and muzzle, white chest and legs, and broad white body patches. Keep the existing front, rear, and side directions and readable minimal eyes.",
+        "tailConsistent": true,
+        "note": "네 방향 모두 의도한 방향은 맞지만, 실제 개의 황갈색 털과 넓은 흰색 무늬가 전반적으로 부족합니다."
+      },
+      "learnedLessons": [],
+      "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "reviewImageHashes": {
+        "Actual body photo": "99f83d8386ef5f709cec093e1cf204d55287dcbefc381bb4af7a204c41655005",
+        "Actual face photo": "189a876d95e2b9eadd8ba4b467fbe970a21fb141351cf3ded4a89552eccb6ec4",
+        "Approved art style only; not this dog": "bf5e5641f0768a45f7a87f10bbb5bf26e987dee581b1b2cf4d08d2c4c0cd539c",
+        "All four selected views": "bd92cb145e2b184856857062298d4b3a37e66d83d98fa664ac1124c33438e793"
+      },
+      "minimumClearPixels": 1,
+      "marginDirections": [
+        "east"
+      ],
+      "clearPixelsLeftTopRightBottom": {
+        "south": [
+          5,
+          3,
+          5,
+          1
+        ],
+        "north": [
+          6,
+          2,
+          6,
+          1
+        ],
+        "west": [
+          1,
+          1,
+          2,
+          1
+        ],
+        "east": [
+          3,
+          1,
+          0,
+          1
+        ]
+      }
+    },
+    "walk-south-initial-review": {
+      "rulesSha256": "f68a42436b576fb128782b7258811372bedf72531d47ceff17028c980816f4fb",
+      "note": "모든 프레임에서 남쪽을 향한 정면 보행과 교차하는 발걸음이 확인되며, 눈·귀·무늬·사지 연결과 연속성이 안정적입니다.",
+      "issues": [],
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "version": "sprite-quality-v1",
+      "passed": true,
+      "reviewedAt": "2026-10-09T03:27:16.638342Z",
+      "rulesRevision": "sprite-regressions-2026-10-09-v15",
+      "model": "gpt-5.6-luna",
+      "edgeFrames": [],
+      "silhouetteFrames": [],
+      "detachedFrames": [],
+      "idleMotionFrames": [],
+      "pixelEvidence": {
+        "version": "native-frame-delta-v1",
+        "reference": "frame0",
+        "frameCount": 9,
+        "alphaStable": false,
+        "maxVisibleRgbDelta": 255,
+        "subtleShadingOnly": false,
+        "alphaChangedFromFrame0": [
+          0,
+          13,
+          23,
+          18,
+          55,
+          30,
+          20,
+          14,
+          1
+        ],
+        "alphaChangedFromPrevious": [
+          0,
+          13,
+          14,
+          11,
+          45,
+          51,
+          10,
+          10,
+          13
+        ],
+        "maxRgbDeltaFromFrame0": [
+          0,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          206
+        ],
+        "maxRgbDeltaFromPrevious": [
+          0,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255,
+          255
+        ],
+        "rgbChangedPixelsFromFrame0": [
+          0,
+          150,
+          158,
+          152,
+          289,
+          161,
+          149,
+          144,
+          128
+        ],
+        "boundsExclusive": [
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            6,
+            30,
+            34
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ],
+          [
+            8,
+            7,
+            30,
+            35
+          ]
+        ]
+      },
+      "reviewLayout": "matched-seed-nine-pairs-v2",
+      "propertyReview": {
+        "actionVisible": true,
+        "continuityUsable": true,
+        "directionPreserved": true,
+        "eyesPreserved": true,
+        "identityPreserved": true,
+        "limbsPlausible": true,
+        "paletteStable": true,
+        "tailConsistent": true,
+        "passed": true,
+        "confidence": 0.96,
+        "issues": [],
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "note": "모든 프레임에서 남쪽을 향한 정면 보행과 교차하는 발걸음이 확인되며, 눈·귀·무늬·사지 연결과 연속성이 안정적입니다."
+      }
+    },
+    "base-2-review": {
+      "version": "seed-eyes-v1",
+      "recoveryVersion": "photo-grounded-recovery-v1",
+      "reviewVersion": "photo-separate-property-review-v2",
+      "passed": false,
+      "inputSha256": "701dd0ab11aa78f4845dcfbad994f4e966b6061203e470aa65ef5195559bd907",
+      "photoSha256": "99f83d8386ef5f709cec093e1cf204d55287dcbefc381bb4af7a204c41655005",
+      "rulesSha256": "f68a42436b576fb128782b7258811372bedf72531d47ceff17028c980816f4fb",
+      "model": "gpt-5.6-luna",
+      "reviewedAt": "2026-10-09T03:26:57.748447Z",
+      "identity": "FAIL",
+      "appearance": "FAIL",
+      "repairDescription": "Keep the current compact pixel style and coat pattern. Add a clearly visible complete tail to both WEST and EAST side views, with consistent carriage; the photographed dog’s tail is not visible, so avoid inventing a strongly specific shape.",
+      "note": "네 방향의 해부학적 방향과 색상 배치는 대체로 일치하며, 양쪽 옆모습의 꼬리만 보완이 필요합니다.",
+      "issues": [
+        "CANVAS_CLIPPING",
+        "SEED_IDENTITY",
+        "SEED_MOTION_MARGIN"
+      ],
+      "edgeDirections": [
+        "west",
+        "east"
+      ],
+      "views": [
+        {
+          "direction": "south",
+          "style": "PASS",
+          "note": "정면 방향과 얼굴, 갈색·흰색 무늬가 사진과 일치합니다.",
+          "readability": "PASS"
+        },
+        {
+          "direction": "north",
+          "style": "PASS",
+          "note": "뒷모습 방향이 맞고 얼굴이 없는 표현도 적절합니다.",
+          "readability": "NOT_VISIBLE"
+        },
+        {
+          "direction": "west",
+          "style": "PASS",
+          "note": "옆모습과 무늬는 맞지만 완전한 꼬리가 보이지 않습니다.",
+          "readability": "PASS"
+        },
+        {
+          "direction": "east",
+          "style": "PASS",
+          "note": "옆모습과 무늬는 맞지만 완전한 꼬리가 보이지 않습니다.",
+          "readability": "PASS"
+        }
+      ],
+      "propertyReview": {
+        "views": [
+          {
+            "directionCorrect": true,
+            "eyesReadable": true,
+            "identityMatches": true,
+            "styleMatches": true,
+            "tailPlausible": true,
+            "direction": "south",
+            "confidence": 0.97,
+            "issues": [],
+            "note": "정면 방향과 얼굴, 갈색·흰색 무늬가 사진과 일치합니다."
+          },
+          {
+            "directionCorrect": true,
+            "eyesReadable": true,
+            "identityMatches": true,
+            "styleMatches": true,
+            "tailPlausible": true,
+            "direction": "north",
+            "confidence": 0.94,
+            "issues": [],
+            "note": "뒷모습 방향이 맞고 얼굴이 없는 표현도 적절합니다."
+          },
+          {
+            "directionCorrect": true,
+            "eyesReadable": true,
+            "identityMatches": true,
+            "styleMatches": true,
+            "tailPlausible": false,
+            "direction": "west",
+            "confidence": 0.91,
+            "issues": [
+              "TAIL_MISSING"
+            ],
+            "note": "옆모습과 무늬는 맞지만 완전한 꼬리가 보이지 않습니다."
+          },
+          {
+            "directionCorrect": true,
+            "eyesReadable": true,
+            "identityMatches": true,
+            "styleMatches": true,
+            "tailPlausible": false,
+            "direction": "east",
+            "confidence": 0.91,
+            "issues": [
+              "TAIL_MISSING"
+            ],
+            "note": "옆모습과 무늬는 맞지만 완전한 꼬리가 보이지 않습니다."
+          }
+        ],
+        "repairDescription": "Keep the current compact pixel style and coat pattern. Add a clearly visible complete tail to both WEST and EAST side views, with consistent carriage; the photographed dog’s tail is not visible, so avoid inventing a strongly specific shape.",
+        "tailConsistent": false,
+        "note": "네 방향의 해부학적 방향과 색상 배치는 대체로 일치하며, 양쪽 옆모습의 꼬리만 보완이 필요합니다."
+      },
+      "learnedLessons": [],
+      "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "reviewImageHashes": {
+        "Actual body photo": "99f83d8386ef5f709cec093e1cf204d55287dcbefc381bb4af7a204c41655005",
+        "Actual face photo": "189a876d95e2b9eadd8ba4b467fbe970a21fb141351cf3ded4a89552eccb6ec4",
+        "Approved art style only; not this dog": "bf5e5641f0768a45f7a87f10bbb5bf26e987dee581b1b2cf4d08d2c4c0cd539c",
+        "All four selected views": "afa6db189ec810cf49217929f67c8eefcefb61e4a5d4385ccbcd9c03c68614f2"
+      },
+      "minimumClearPixels": 1,
+      "marginDirections": [
+        "west",
+        "east"
+      ],
+      "clearPixelsLeftTopRightBottom": {
+        "south": [
+          5,
+          3,
+          5,
+          1
+        ],
+        "north": [
+          6,
+          2,
+          6,
+          1
+        ],
+        "west": [
+          1,
+          1,
+          0,
+          1
+        ],
+        "east": [
+          0,
+          1,
+          0,
+          1
+        ]
+      }
+    },
+    "base-3-review": {
+      "version": "seed-eyes-v1",
+      "recoveryVersion": "photo-grounded-recovery-v1",
+      "reviewVersion": "photo-separate-property-review-v2",
+      "passed": false,
+      "inputSha256": "aa949da8a3f7bc78e7c139abf6b24b9ed41b4e297cd68ff947c7fe4f01c48da7",
+      "photoSha256": "99f83d8386ef5f709cec093e1cf204d55287dcbefc381bb4af7a204c41655005",
+      "rulesSha256": "f68a42436b576fb128782b7258811372bedf72531d47ceff17028c980816f4fb",
+      "model": "gpt-5.6-luna",
+      "reviewedAt": "2026-10-09T03:27:10.541887Z",
+      "identity": "FAIL",
+      "appearance": "FAIL",
+      "repairDescription": "Add the dog's prominent white forehead blaze to the SOUTH front view while preserving the existing compact pixel-art style; keep the other views unchanged.",
+      "note": "네 방향 모두 올바른 방향이며 꼬리 형태도 일관됩니다.",
+      "issues": [
+        "SEED_IDENTITY"
+      ],
+      "edgeDirections": [],
+      "views": [
+        {
+          "direction": "south",
+          "style": "PASS",
+          "note": "정면 방향과 눈은 명확하지만, 실제 얼굴의 뚜렷한 흰색 이마 blaze가 빠졌습니다.",
+          "readability": "PASS"
+        },
+        {
+          "direction": "north",
+          "style": "PASS",
+          "note": "후면 방향이 정확하고 얼굴이 없는 표현도 적절합니다. 보이지 않는 후면 무늬는 판단하지 않았습니다.",
+          "readability": "NOT_VISIBLE"
+        },
+        {
+          "direction": "west",
+          "style": "PASS",
+          "note": "왼쪽 프로필과 귀, 흰 목·주둥이, 갈색 몸통이 사진과 일치합니다.",
+          "readability": "PASS"
+        },
+        {
+          "direction": "east",
+          "style": "PASS",
+          "note": "오른쪽 프로필과 주요 색 배치 및 귀 형태가 사진과 일치합니다.",
+          "readability": "PASS"
+        }
+      ],
+      "propertyReview": {
+        "views": [
+          {
+            "directionCorrect": true,
+            "eyesReadable": true,
+            "identityMatches": false,
+            "styleMatches": true,
+            "tailPlausible": true,
+            "direction": "south",
+            "confidence": 0.97,
+            "issues": [
+              "COAT_MISMATCH"
+            ],
+            "note": "정면 방향과 눈은 명확하지만, 실제 얼굴의 뚜렷한 흰색 이마 blaze가 빠졌습니다."
+          },
+          {
+            "directionCorrect": true,
+            "eyesReadable": true,
+            "identityMatches": true,
+            "styleMatches": true,
+            "tailPlausible": true,
+            "direction": "north",
+            "confidence": 0.82,
+            "issues": [],
+            "note": "후면 방향이 정확하고 얼굴이 없는 표현도 적절합니다. 보이지 않는 후면 무늬는 판단하지 않았습니다."
+          },
+          {
+            "directionCorrect": true,
+            "eyesReadable": true,
+            "identityMatches": true,
+            "styleMatches": true,
+            "tailPlausible": true,
+            "direction": "west",
+            "confidence": 0.9,
+            "issues": [],
+            "note": "왼쪽 프로필과 귀, 흰 목·주둥이, 갈색 몸통이 사진과 일치합니다."
+          },
+          {
+            "directionCorrect": true,
+            "eyesReadable": true,
+            "identityMatches": true,
+            "styleMatches": true,
+            "tailPlausible": true,
+            "direction": "east",
+            "confidence": 0.9,
+            "issues": [],
+            "note": "오른쪽 프로필과 주요 색 배치 및 귀 형태가 사진과 일치합니다."
+          }
+        ],
+        "repairDescription": "Add the dog's prominent white forehead blaze to the SOUTH front view while preserving the existing compact pixel-art style; keep the other views unchanged.",
+        "tailConsistent": true,
+        "note": "네 방향 모두 올바른 방향이며 꼬리 형태도 일관됩니다."
+      },
+      "learnedLessons": [],
+      "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "reviewImageHashes": {
+        "Actual body photo": "99f83d8386ef5f709cec093e1cf204d55287dcbefc381bb4af7a204c41655005",
+        "Actual face photo": "189a876d95e2b9eadd8ba4b467fbe970a21fb141351cf3ded4a89552eccb6ec4",
+        "Approved art style only; not this dog": "bf5e5641f0768a45f7a87f10bbb5bf26e987dee581b1b2cf4d08d2c4c0cd539c",
+        "All four selected views": "c887d0176344149cf84ddd68a170dbcccef784afd2d1d4462ea1688ea5e0d719"
+      },
+      "minimumClearPixels": 1,
+      "marginDirections": [],
+      "clearPixelsLeftTopRightBottom": {
+        "south": [
+          4,
+          3,
+          6,
+          1
+        ],
+        "north": [
+          5,
+          2,
+          7,
+          1
+        ],
+        "west": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "east": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    }
+  }
+}

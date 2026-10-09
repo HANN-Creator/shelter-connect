@@ -106,6 +106,18 @@ class OpenAiResponsesClientTest {
 	private String response(String status,String output) {
 		return json.writeValueAsString(Map.of("id","resp_test","status",status,"output",List.of(Map.of("type","message","content",List.of(Map.of("type","output_text","text",output))))));
 	}
+    @Test void multiImageReviewKeepsOrderedNamesAndImagesWithNoProviderStorage() {
+        serve(200,response("completed","{\"ok\":true}"),0);
+        var images=new LinkedHashMap<String,byte[]>();images.put("Actual photo",new byte[]{1});images.put("Native views",new byte[]{2});
+        assertThat(client.structuredImages("Review photos separately","Check",images,Map.of("type","object")).path("ok").asBoolean()).isTrue();
+        var payload=json.readTree(request.get());assertThat(payload.path("store").asBoolean()).isFalse();
+        assertThat(payload.at("/input/0/content/1/text").asText()).isEqualTo("Actual photo");
+        assertThat(payload.at("/input/0/content/2/image_url").asText()).isEqualTo("data:image/png;base64,AQ==");
+        assertThat(payload.at("/input/0/content/3/text").asText()).isEqualTo("Native views");
+        assertThat(payload.at("/text/format/strict").asBoolean()).isTrue();assertThat(calls.get()).isEqualTo(1);
+        assertThatThrownBy(()->client.structuredImages("a","b",Map.of("invalid",new byte[0]),Map.of())).hasMessage("AI_INVALID_IMAGE");
+        assertThat(calls.get()).isEqualTo(1);
+    }
 	@Test void imageAnalysisSendsTheActualPhotoToLunaAsAnImageWithStrictOutputAndNoStorage() {
 		serve(200,response("completed","{\"headVisible\":true}"),0);
 		byte[] photo=new byte[]{1,2,3,4};

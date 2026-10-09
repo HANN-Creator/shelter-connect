@@ -1027,7 +1027,7 @@ class StyledAssetPostgresTest {
         post(opSubject,"/v1/operations/styled-quality-lessons/"+lesson+"/disable",Map.of("note","Stop this lesson for later generations"),200);
         clearInvocations(provider);var request=json.valueToTree(input());((tools.jackson.databind.node.ObjectNode)request.path("traits")).put("seed",43);
         UUID after=UUID.fromString(post(subject,"/v1/shelter-admin/dogs/"+dog+"/styled-assets",request,202).at("/data/id").asText());
-        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=quality_policy-'automaticApproval'-'seedMotionMargin'-'lessonRevision' WHERE id=?",after);
+        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=quality_policy-'automaticApproval'-'seedMotionMargin'-'lessonRevision'-'recoveryVersion'-'motionFrameSize' WHERE id=?",after);
         tick();tick();review(after,true,"APPROVE",200);finish(after);
         var afterPayloads=org.mockito.ArgumentCaptor.forClass(JsonNode.class);verify(provider,atLeastOnce()).submit(eq(false),afterPayloads.capture());
         assertThat(afterPayloads.getAllValues().stream().anyMatch(n->n.path("description").asText().contains(learnedPrevention()))).isFalse();
@@ -1483,7 +1483,8 @@ class StyledAssetPostgresTest {
     UUID automaticRequest()throws Exception {
         when(seedQuality.review(any(),anyList())).thenAnswer(c->{outsideTransaction();return automaticSeedReport(c.getArgument(1),true);});
         when(quality.review(any(),anyList(),anyList(),anyString(),anyString())).thenAnswer(c->{outsideTransaction();return automaticMotionReport(true);});
-        return UUID.fromString(post(subject,"/v1/shelter-admin/dogs/"+dog+"/styled-assets",automaticInput(),202).at("/data/id").asText());
+        UUID id=UUID.fromString(post(subject,"/v1/shelter-admin/dogs/"+dog+"/styled-assets",automaticInput(),202).at("/data/id").asText());
+        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=(quality_policy-'recoveryVersion'-'motionFrameSize'-'maxSeedRepairs') || '{\"seedMotionMargin\":2,\"maxRepairsPerClip\":2,\"seedEyeRepair\":\"native-seed-eye-inpaint-v1\",\"learningRecovery\":\"validated-motion-learning-v2\"}'::jsonb WHERE id=?",id);return id;
     }
     @Test void newJobsApproveSeedsAndCompletePackWithoutEitherHumanReviewCall()throws Exception {
         UUID id=automaticRequest();tick();tick();
@@ -1633,11 +1634,67 @@ class StyledAssetPostgresTest {
         assertThatThrownBy(()->jdbc.update("UPDATE shelter.asset_jobs SET quality_approval='{}'::jsonb WHERE id=?",id)).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
         assertThatThrownBy(()->jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=quality_policy-'automaticApproval' WHERE id=?",id)).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
     }
+    UUID recoveryRequest(int failedBaseReviews,boolean failSouthWalk)throws Exception {
+        var seedCalls=new java.util.concurrent.atomic.AtomicInteger();var edits=new java.util.concurrent.atomic.AtomicInteger();
+        var motionCalls=new java.util.concurrent.atomic.AtomicInteger();var requests=new HashMap<UUID,JsonNode>();
+        when(seedQuality.reviewRecovery(any(),anyList(),any(),any())).thenAnswer(c->{outsideTransaction();
+            boolean passed=seedCalls.getAndIncrement()>=failedBaseReviews;var report=(tools.jackson.databind.node.ObjectNode)automaticSeedReport(c.getArgument(1),passed);
+            report.put("recoveryVersion","photo-grounded-recovery-v1");report.put("appearance",passed?"PASS":"FAIL");report.put("repairDescription","Restore the photo white blaze while keeping the current shaded puppy style.");return report;});
+        when(provider.editSeeds(any())).thenAnswer(c->{outsideTransaction();return UUID.randomUUID();});
+        when(provider.pollSeeds(any())).thenAnswer(c->{outsideTransaction();var im=ImageIO.read(new ByteArrayInputStream(png));im.setRGB(12,9,0xffaab000+edits.incrementAndGet());
+            var out=new ByteArrayOutputStream();ImageIO.write(im,"png",out);String b=Base64.getEncoder().encodeToString(out.toByteArray());
+            return json.valueToTree(Map.of("status","COMPLETED","directions",Map.of("south",b,"north",b,"west",b,"east",b)));});
+        doAnswer(c->{outsideTransaction();return json.valueToTree(Map.of("first",Base64.getEncoder().encodeToString(c.getArgument(3)),"action",c.getArgument(1),"direction",c.getArgument(2)));}).when(codec).motion(any(),anyString(),anyString(),any(),any());
+        when(provider.submit(eq(false),any())).thenAnswer(c->{outsideTransaction();UUID id=UUID.randomUUID();requests.put(id,c.getArgument(1));return id;});
+        when(provider.editAnimation(any())).thenAnswer(c->{outsideTransaction();UUID id=UUID.randomUUID();requests.put(id,c.getArgument(0));return id;});
+        when(provider.poll(any(),eq(false))).thenAnswer(c->{outsideTransaction();var req=requests.get(c.getArgument(0));
+            var frames=req.has("frames")?req.path("frames").valueStream().map(f->f.at("/image/base64").asText()).toList():Collections.nCopies(9,req.path("first").asText());
+            return json.valueToTree(Map.of("status","COMPLETED","frames",frames));});
+        when(quality.review(any(),anyList(),anyList(),anyString(),anyString())).thenAnswer(c->{outsideTransaction();
+            boolean passed=!(failSouthWalk && c.getArgument(3).equals("WALK") && c.getArgument(4).equals("south") && motionCalls.getAndIncrement()==0);
+            var report=(tools.jackson.databind.node.ObjectNode)automaticMotionReport(passed);report.put("note",passed?"Synthetic valid verdict":"Frontal tail appears above the head");
+            if(!passed)report.set("issues",json.valueToTree(List.of("TAIL_CARRIAGE")));return report;});
+        return UUID.fromString(post(subject,"/v1/shelter-admin/dogs/"+dog+"/styled-assets",automaticInput(),202).at("/data/id").asText());
+    }
+    @Test void recoveryEditsBaseThenOnlyFailedMotionAndPublishesBoundFortyPixelBundle()throws Exception {
+        UUID id=recoveryRequest(3,true);finish(id);var j=read(id);
+        assertThat(j.path("status").asText()).as("failure %s",j.path("failureCode")).isEqualTo("APPROVED");
+        assertThat(j.at("/qualityPolicy/recoveryVersion").asText()).isEqualTo("photo-grounded-recovery-v1");
+        assertThat(step(id,"character").path("repairCount").asInt()).isEqualTo(3);
+        assertThat(step(id,"walk-south").path("repairCount").asInt()).isEqualTo(1);
+        verify(provider,times(1)).submit(eq(true),any());verify(provider,times(3)).editSeeds(any());verify(provider,times(1)).editAnimation(any());
+        var manifest=get(null,"/v1/dogs/"+dog+"/assets",200).path("data");
+        assertThat(manifest.at("/frameSize/width").asInt()).isEqualTo(40);
+        assertThat(manifest.at("/baseFrameSize/width").asInt()).isEqualTo(32);
+        assertThat(manifest.at("/mapDirections/DOWN/WALK/frames/8/x").asInt()).isEqualTo(320);
+        assertThat(objects.keySet()).anyMatch(k->k.contains("raw-edits/walk-south-1"));
+        for(var step:j.path("steps"))if(!step.path("action").asText().equals("BASE")){
+            assertThat(step.at("/result/frameHashes").size()).isEqualTo(9);
+            assertThat(step.at("/result/frameHashes")).isEqualTo(step.at("/qualityReport/frameHashes"));
+            assertThat(step.at("/qualityReport/firstFrameUnchanged").asBoolean()).isTrue();}
+        clearInvocations(provider);for(int i=0;i<3;i++)tick();
+        assertThat(post(subject,"/v1/shelter-admin/dogs/"+dog+"/styled-assets",automaticInput(),202).at("/data/id").asText()).isEqualTo(id.toString());verifyNoInteractions(provider);
+        jdbc.update("UPDATE shelter.asset_jobs SET status='RUNNING',quality_approval=NULL,reviewed_at=NULL,lease_token=NULL,lease_until=NULL WHERE id=?",id);
+        jdbc.update("UPDATE shelter.styled_asset_steps SET quality_report=jsonb_set(quality_report,'{frameHashes}','[]'::jsonb) WHERE job_id=? AND label='walk-south'",id);
+        tick();assertThat(read(id).path("status").asText()).isEqualTo("REVIEW");publicStatus(404);verifyNoInteractions(provider);
+    }
+    @Test void recoveryBudgetExhaustionCannotStartMotionOrPublishFailedBase()throws Exception {
+        UUID id=recoveryRequest(99,false);finish(id);assertThat(read(id).path("status").asText()).isEqualTo("SEED_REVIEW");
+        assertThat(step(id,"character").path("repairCount").asInt()).isEqualTo(3);
+        verify(provider,times(3)).editSeeds(any());verify(provider,never()).submit(eq(false),any());publicStatus(404);
+        review(id,true,"APPROVE",409);clearInvocations(provider);for(int i=0;i<3;i++)tick();verifyNoInteractions(provider);
+        assertThat(jdbc.queryForObject("SELECT jsonb_array_length(attempt_history) FROM shelter.styled_asset_steps WHERE job_id=? AND label='character'",Integer.class,id)).isEqualTo(3);
+    }
+    @Test void uncertainPaidBaseEditIsHeldWithoutDuplicateSubmission()throws Exception {
+        UUID id=recoveryRequest(1,false);when(provider.editSeeds(any())).thenThrow(new AssetProvider.Failure("PIXELLAB_CONNECTION",true));
+        finish(id);assertThat(read(id).path("status").asText()).isEqualTo("OUTCOME_UNKNOWN");
+        verify(provider,times(1)).editSeeds(any());clearInvocations(provider);for(int i=0;i<3;i++)tick();verifyNoInteractions(provider);publicStatus(404);
+    }
     Map<String,Object> input() {return Map.of("photoId",photo,"traits",Map.of("sourcePhotoSha256","a".repeat(64),"faceBox",List.of(.1,.1,.8,.8),"identityDescription","brown dog","motionDescription","brown dog","rearDescription","unknown markings","seed",42,"reviewNote","Reviewed full body photo and face crop for this dog"));}
     // Existing cases exercise persisted pre-B63 jobs and their explicit manual review contract.
     UUID request() throws Exception {
         UUID id=UUID.fromString(post(subject,"/v1/shelter-admin/dogs/"+dog+"/styled-assets",input(),202).at("/data/id").asText());
-        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=quality_policy-'automaticApproval'-'seedMotionMargin'-'lessonRevision'-'seedEyeRepair' WHERE id=?",id);return id;
+        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=(quality_policy-'automaticApproval'-'seedMotionMargin'-'lessonRevision'-'seedEyeRepair'-'recoveryVersion'-'motionFrameSize'-'maxSeedRepairs') || '{\"maxRepairsPerClip\":2,\"learningRecovery\":\"validated-motion-learning-v2\"}'::jsonb WHERE id=?",id);return id;
     }
     String path(UUID id) {return "/v1/shelter-admin/dogs/"+dog+"/styled-assets/"+id;}
     JsonNode read(UUID id) throws Exception {return get(subject,path(id),200).path("data");}

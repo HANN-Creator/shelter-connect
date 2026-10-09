@@ -183,7 +183,7 @@ public class StyledAssetStore {
               jsonb_build_object('recheckFromRulesSha256',:previous,'recheckNote',:note,'recheckedAt',now()),
               seed_review=CASE WHEN :recheckSeed THEN NULL ELSE seed_review END,
               status='QUEUED',failure_code=NULL,next_run_at=now(),lease_token=NULL,lease_until=NULL WHERE id=:id
-            """).param("policy",json.writeValueAsString(recheckSeed?seedQualityPolicy():qualityPolicy()))
+            """).param("policy",json.writeValueAsString(StyledRecovery.enabled(j.qualityPolicy())?newSeedQualityPolicy():recheckSeed?seedQualityPolicy():qualityPolicy()))
                 .param("recheckSeed",recheckSeed).param("previous",expected).param("note",note).param("id",id).update();
         return job(id);
     }
@@ -274,7 +274,11 @@ public class StyledAssetStore {
     private Map<String,Object> seedQualityPolicy(){var p=new HashMap<String,Object>(qualityPolicy());p.put("seedQualityVersion",StyledSeedQualityAgent.VERSION);return p;}
     private Map<String,Object> newSeedQualityPolicy(){var p=seedQualityPolicy();p.put("learningRecovery",StyledLearningRecoveryStore.VERSION);
         p.put("lessonRevision",StyledLessonStore.REVISION_VERSION);p.put("seedMotionMargin",2);p.put("seedEyeRepair",StyledSeedEyeRepair.VERSION);
-        p.put("automaticApproval",StyledAutoApproval.VERSION);return p;}
+        p.put("automaticApproval",StyledAutoApproval.VERSION);
+        var recovery=StyledSpriteCodec.qualityRules(json).path("recovery");
+        p.put("recoveryVersion",StyledRecovery.VERSION);p.put("motionFrameSize",40);p.put("seedMotionMargin",1);
+        p.put("maxSeedRepairs",recovery.path("maxSeedRepairs").asInt());p.put("maxRepairsPerClip",recovery.path("maxMotionRepairs").asInt());
+        p.remove("seedEyeRepair");p.remove("learningRecovery");return p;}
     private boolean seedQualityPassed(Job j) {
         var step=j.steps().getFirst();return StyledSeedQualityAgent.passed(step.qualityReport(),step.result()==null?json.createObjectNode():step.result().path("hashes"),j.qualityPolicy());
     }
@@ -431,6 +435,14 @@ public class StyledAssetStore {
             throw new AssetException(409,"TAIL_EDIT_INPUT_INVALID");
         return result;
     }
+    @Transactional public JsonNode previousRecoveryBase(Work w) {
+        if(!authorized(w))throw new AssetException(409,"ASSET_LEASE_LOST");
+        if(!w.character() || !StyledRecovery.enabled(w.qualityPolicy()) || w.repairCount()<1)throw new AssetException(409,"RECOVERY_INPUT_INVALID");
+        var history=jdbc.sql("SELECT attempt_history->-1 FROM shelter.styled_asset_steps WHERE job_id=:id AND label=:l")
+            .param("id",w.id()).param("l",w.label()).query(String.class).single();
+        if(history==null)throw new AssetException(409,"RECOVERY_INPUT_INVALID");var prior=json.readTree(history);
+        if(prior.path("repairCount").asInt()!=w.repairCount()-1)throw new AssetException(409,"RECOVERY_INPUT_CHANGED");return prior;
+    }
     /** The archived attempt remains stable when the current quality report is replaced on resume. */
     @Transactional public JsonNode previousSeedEyeAttempt(Work w) {
         if(!authorized(w))throw new AssetException(409,"ASSET_LEASE_LOST");
@@ -493,7 +505,7 @@ public class StyledAssetStore {
         // Explicit rechecks judge the stored bytes, even if a new rule finds a defect with budget left.
         if(w.status().equals("CHECKING"))return false;
         if(w.qualityPolicy()!=null && w.qualityPolicy().path("referenceOnly").asBoolean())return false;
-        if(report.path("passed").asBoolean() || w.repairCount()>=2)return false;
+        if(report.path("passed").asBoolean() || w.repairCount()>=StyledRecovery.limit(w.qualityPolicy(),w.character()))return false;
         // The provider finished definitively. Archive the receipt and image before buying a corrective attempt.
         jdbc.sql("""
             UPDATE shelter.styled_asset_steps SET attempt_history=attempt_history || jsonb_build_array(jsonb_build_object(

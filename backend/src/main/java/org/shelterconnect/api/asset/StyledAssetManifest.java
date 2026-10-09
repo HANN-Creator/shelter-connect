@@ -41,6 +41,10 @@ public class StyledAssetManifest {
         var result=new LinkedHashMap<String,Object>(Map.of("schemaVersion",1,"id",job.id(),"status",job.status(),"provider","PixelLab Pro + PixMiniMax",
             "generatorVersion",StyledSpriteCodec.VERSION,"frameSize",Map.of("width",32,"height",32),"anchorPixels",Map.of("x",16,"y",30),
             "expiresAt",Instant.now().plusSeconds(60),"baseUrl",directions.get("south"),"sampling","nearest"));
+        int motionSize=StyledRecovery.size(job.qualityPolicy());
+        if(motionSize==40 && !seedsOnly){result.put("frameSize",Map.of("width",40,"height",40));result.put("anchorPixels",Map.of("x",20,"y",34));
+            result.put("baseFrameSize",Map.of("width",32,"height",32));result.put("baseAnchorPixels",Map.of("x",16,"y",30));
+            result.put("contentPaddingPixels",4);result.put("nativeContentSize",32);}
         if(job.generationPlan()!=null)result.put("generationPlan",job.generationPlan());
         result.put("availableActions",job.availableActions());
         if(job.qualityPolicy()!=null && job.qualityPolicy().path("referenceOnly").asBoolean()) {
@@ -55,7 +59,7 @@ public class StyledAssetManifest {
         for(String direction:names.values())clips.put(direction,new LinkedHashMap<>());
         for(var step:job.steps().subList(1,job.steps().size())) {
             JsonNode m=step.result();int duration=m.path("durationMs").asInt();boolean loop=m.path("loop").asBoolean();
-            var frames=new ArrayList<Map<String,Integer>>();for(int i=0;i<9;i++)frames.add(Map.of("x",i*32,"y",0,"width",32,"height",32,"durationMs",duration));
+            var frames=new ArrayList<Map<String,Integer>>();for(int i=0;i<9;i++)frames.add(Map.of("x",i*motionSize,"y",0,"width",motionSize,"height",motionSize,"durationMs",duration));
             var unit=switch(step.direction()) { case "south"->new int[]{0,1};case "north"->new int[]{0,-1};case "west"->new int[]{-1,0};default->new int[]{1,0}; };
             boolean moving=Set.of("WALK","RUN","BACK_OFF").contains(step.action());int sign=step.action().equals("BACK_OFF")?-1:1;
             clips.get(names.get(step.direction())).put(step.action(),Map.of("spritesheetUrl",url(urls,m.path("key").asText()),"frameCount",9,"frames",frames,

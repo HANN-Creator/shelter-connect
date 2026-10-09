@@ -31,6 +31,8 @@ public class StyledAssetWorker {
                 throw new AssetException(409,"QUALITY_RULES_CHANGED");
             var eyeAttempt=w.character()?store.previousSeedEyeAttempt(w):json.createObjectNode();
             boolean eyeEdit=eyeAttempt!=null && !eyeAttempt.isEmpty();
+            boolean recovery=StyledRecovery.enabled(w.qualityPolicy());
+            boolean baseEdit=recovery && w.character() && w.repairCount()>0;
             if(!w.character() && w.qualityPolicy()!=null && !w.qualityPolicy().has("contract")) {
                 if(!store.startContract(w))return;
                 var contract=quality.contract(storage.photo(w.dogId(),w.bucket(),w.key()),w.traits());
@@ -52,7 +54,7 @@ public class StyledAssetWorker {
                 }
                 byte[] sheet=storage.asset(w.result().path("key").asText());
                 if(!StyledSpriteCodec.sha(sheet).equals(w.result().path("sha256").asText()))throw new AssetException(409,"STYLED_SHEET_CHANGED");
-                var frames=StyledSpriteCodec.frames(sheet);StyledSpriteCodec.sheet(frames,seed(w));
+                var frames=StyledSpriteCodec.frames(sheet);if(!recovery)StyledSpriteCodec.sheet(frames,seed(w));
                 inspect(w,frames,w.result());return;
             }
             if(w.status().equals("PENDING")) {
@@ -75,7 +77,8 @@ public class StyledAssetWorker {
                         json.valueToTree(Map.of("contract",w.qualityPolicy().path("contract"),"attempt",w.repairCount(),
                             "rulesSha256",w.qualityPolicy().path("rulesSha256").asText(),
                             "issues",w.qualityReport()!=null && w.qualityReport().path("issues").isArray()?w.qualityReport().path("issues"):json.createArrayNode()));
-                JsonNode payload=eyeEdit?eyes.payload(eyeSeeds(w,eyeAttempt),eyeAttempt.at("/quality/eyeRepairPlan"),
+                if(recovery)((tools.jackson.databind.node.ObjectNode)policy).put("recoveryVersion",StyledRecovery.VERSION);
+                JsonNode payload=baseEdit?recoveryBasePayload(w):eyeEdit?eyes.payload(eyeSeeds(w,eyeAttempt),eyeAttempt.at("/quality/eyeRepairPlan"),
                     (int)Math.floorMod(w.traits().path("seed").asLong()+7919L*w.repairCount(),2147483647L)):
                     learning?learnedPayload(w,policy):motionEdit(w)?motionEditPayload(w):w.character()?codec.character(w.dogId(),w.traits(),storage.photo(w.dogId(),w.bucket(),w.key()),policy):
                     codec.motion(w.traits(),w.action(),w.direction(),seed(w),policy);
@@ -86,12 +89,12 @@ public class StyledAssetWorker {
                 }
                 if(!store.reserve(w,payload))return;
                 submitted=true;
-                UUID id=eyeEdit?provider.editSeedEyes(payload):edit?provider.editAnimation(payload):provider.submit(w.character(),payload);store.accepted(w,id);return;
+                UUID id=baseEdit?provider.editSeeds(payload):eyeEdit?provider.editSeedEyes(payload):edit?provider.editAnimation(payload):provider.submit(w.character(),payload);store.accepted(w,id);return;
             }
             JsonNode result=w.providerResult();
             if(result==null) {
                 if(w.submittedAt()==null || w.submittedAt().plusSeconds(7200).isBefore(Instant.now())) { store.fail(w,true,"PROVIDER_WAIT_EXPIRED");return; }
-                try { result=eyeEdit?provider.pollSeedEyes(w.providerId()):provider.poll(w.providerId(),w.character()); }
+                try { result=baseEdit?provider.pollSeeds(w.providerId()):eyeEdit?provider.pollSeedEyes(w.providerId()):provider.poll(w.providerId(),w.character()); }
                 catch(AssetProvider.Failure e) { store.defer(w,20);return; }
                 if(result.path("status").asText().equals("WAITING")) { store.defer(w,5);return; }
                 if(result.path("status").asText().equals("FAILED")) { store.fail(w,false,"PROVIDER_JOB_FAILED");return; }
@@ -122,6 +125,7 @@ public class StyledAssetWorker {
                         alignments.put(d,Map.of("rawKey",rawKey,"rawSha256",StyledSpriteCodec.sha(image),"dx",aligned.dx(),"dy",aligned.dy(),"resampled",false));
                         image=aligned.image();
                     }
+                    StyledSpriteCodec.nativeFrame(image);
                     String key=w.prefix()+"directions/"+(w.repairCount()==0?"":"repair-"+w.repairCount()+"/")+d+".png";
                     storage.put(key,image);keys.put(d,key);hashes.put(d,StyledSpriteCodec.sha(image));seeds.add(image);
                 }
@@ -138,13 +142,21 @@ public class StyledAssetWorker {
                 if(edit || (!learning && mirrorRepair(w))) {
                     byte[] raw=StyledSpriteCodec.rawSheet(frames);String rawKey=w.prefix()+"raw-edits/"+w.label()+"-"+w.repairCount()+".png";
                     storage.put(rawKey,raw);rawEdit=json.valueToTree(Map.of("key",rawKey,"sha256",StyledSpriteCodec.sha(raw)));
-                    frames=StyledSpriteCodec.restoreEditPalette(frames,seed(w));
+                    frames=recovery?StyledSpriteCodec.anchorEdit(frames,seed(w)):StyledSpriteCodec.restoreEditPalette(frames,seed(w));
                 }
-                byte[] sheet=StyledSpriteCodec.sheet(frames,seed(w));
+                if(recovery && frames.stream().anyMatch(f->StyledSpriteCodec.motionFrame(f).getWidth()!=40))
+                    throw new AssetException(422,"STYLED_FRAME_INVALID");
+                byte[] sheet=recovery?StyledSpriteCodec.rawSheet(frames):StyledSpriteCodec.sheet(frames,seed(w));
+                // Bind canonical frames extracted from the stored sheet, not provider-specific PNG encoding.
+                // Rechecks must observe the same hashes without altering any RGBA pixel.
+                if(recovery)frames=StyledSpriteCodec.frames(sheet);
                 String key=w.prefix()+"sheets/"+(w.repairCount()==0?"":"repair-"+w.repairCount()+"/")+w.label()+".png";storage.put(key,sheet);
                 var spec=StyledSpriteCodec.rules(json).path("actions").path(w.action());
                 var metadata=json.valueToTree(Map.of("key",key,"sha256",StyledSpriteCodec.sha(sheet),"frameCount",9,
                     "durationMs",spec.path("durationMs").asInt(),"loop",spec.path("loop").asBoolean()));
+                if(recovery){var m=(tools.jackson.databind.node.ObjectNode)metadata;
+                    m.put("frameSize",40);m.put("motionSeedSha256",StyledSpriteCodec.sha(seed(w)));m.put("recoveryVersion",StyledRecovery.VERSION);
+                    m.set("frameHashes",json.valueToTree(frames.stream().map(StyledSpriteCodec::sha).toList()));}
                 if(rawEdit!=null)((tools.jackson.databind.node.ObjectNode)metadata).set("rawEdit",rawEdit);
                 if(result.has("derivation"))((tools.jackson.databind.node.ObjectNode)metadata).set("derivation",result.path("derivation"));
                 if(result.has("usage"))((tools.jackson.databind.node.ObjectNode)metadata).set("providerUsage",result.path("usage"));
@@ -167,7 +179,8 @@ public class StyledAssetWorker {
             || !lessonSha.equals(report.path("lessonsSha256").asText())
             || !StyledSpriteCodec.qualityRulesSha().equals(report.path("rulesSha256").asText())) {
             if(!store.startQuality(w))return;
-            var checked=selected.isEmpty()?seedQuality.review(photo,seeds):seedQuality.review(photo,seeds,selected);
+            var checked=StyledRecovery.enabled(w.qualityPolicy())?seedQuality.reviewRecovery(photo,seeds,selected,w.traits()):
+                selected.isEmpty()?seedQuality.review(photo,seeds):seedQuality.review(photo,seeds,selected);
             checked=StyledSeedQualityAgent.motionMargin(checked,seeds,w.qualityPolicy(),json);
             var details=(tools.jackson.databind.node.ObjectNode)checked.deepCopy();
             if(allowRepair && w.repairCount()<2 && !w.qualityPolicy().path("referenceOnly").asBoolean()
@@ -227,7 +240,7 @@ public class StyledAssetWorker {
             for(String d:StyledSpriteCodec.DIRECTIONS) {
                 var seed=storage.asset(base.path("keys").path(d).asText());
                 if(!StyledSpriteCodec.sha(seed).equals(base.path("hashes").path(d).asText()))throw new AssetException(409,"STYLED_SEED_CHANGED");
-                seeds.add(seed);
+                seeds.add(StyledRecovery.enabled(w.qualityPolicy())?StyledSpriteCodec.paddedSeed(seed):seed);
             }
             if(!store.startQuality(w))return;
             var review=(selected.isEmpty()?quality.review(w.qualityPolicy().path("contract"),seeds,frames,w.action(),w.direction()):
@@ -245,6 +258,15 @@ public class StyledAssetWorker {
             }
             var details=(tools.jackson.databind.node.ObjectNode)review;details.put("inputSha256",sha);details.put("lessonsSha256",lessonSha);details.set("learnedLessons",selected);
             details.set("seedHashes",base.path("hashes"));details.put("action",w.action());details.put("direction",w.direction());
+            if(StyledRecovery.enabled(w.qualityPolicy())){
+                details.put("recoveryVersion",StyledRecovery.VERSION);details.put("motionSeedSha256",StyledSpriteCodec.sha(seed(w)));
+                details.set("frameHashes",json.valueToTree(frames.stream().map(StyledSpriteCodec::sha).toList()));
+                var first=StyledSpriteCodec.motionFrame(frames.getFirst());var origin=StyledSpriteCodec.motionFrame(seed(w));boolean matches=true;
+                for(int y=0;y<40;y++)for(int x=0;x<40;x++)if(first.getRGB(x,y)!=origin.getRGB(x,y))matches=false;
+                details.put("firstFrameUnchanged",matches);
+                if(!matches){var issues=new TreeSet<String>();review.path("issues").forEach(n->issues.add(n.asText()));issues.add("DISCONTINUITY");
+                    details.set("issues",json.valueToTree(issues));details.put("passed",false);}
+            }
             report=review;store.quality(w,report);
         }
         // Each report labels only its own exact bytes. The combined gate still requires BOTH to pass.
@@ -281,7 +303,7 @@ public class StyledAssetWorker {
             && w.qualityReport()!=null && w.qualityReport().path("issues").isArray()
             && w.qualityReport().path("issues").valueStream().anyMatch(i->i.asText().equals("CANVAS_CLIPPING"));
     }
-    static boolean motionEdit(StyledAssetStore.Work w) {return tailEdit(w) || idleEdit(w) || marginEdit(w);}
+    static boolean motionEdit(StyledAssetStore.Work w) {return (StyledRecovery.enabled(w.qualityPolicy()) && !w.character() && w.repairCount()>0) || tailEdit(w) || idleEdit(w) || marginEdit(w);}
     private static JsonNode continuation(StyledAssetStore.Work w) {
         if(w.qualityPolicy()==null)return tools.jackson.databind.node.MissingNode.getInstance();
         var plan=w.qualityPolicy().at("/repairContinuation/plans/"+w.label());
@@ -305,17 +327,27 @@ public class StyledAssetWorker {
     }
     private JsonNode motionEditPayload(StyledAssetStore.Work w) {
         int seed=(int)(((long)w.traits().path("seed").asInt()+7919L*w.repairCount())%2147483647);
-        if(idleEdit(w) && (StyledSpriteCodec.SEED_IDLE_VERSION.equals(w.qualityPolicy().path("seedIdleRepair").asText())
+        if(!StyledRecovery.enabled(w.qualityPolicy()) && idleEdit(w) && (StyledSpriteCodec.SEED_IDLE_VERSION.equals(w.qualityPolicy().path("seedIdleRepair").asText())
             || StyledSpriteCodec.SEED_IDLE_VERSION.equals(continuation(w).path("strategy").asText())))return codec.seedIdle(w.direction(),seed(w),seed);
         var previous=store.previousAttempt(w);byte[] sheet=storage.asset(previous.path("key").asText());
         if(!StyledSpriteCodec.sha(sheet).equals(previous.path("sha256").asText()))throw new AssetException(409,"STYLED_SHEET_CHANGED");
+        if(StyledRecovery.enabled(w.qualityPolicy()))return StyledRecovery.motionPayload(json,StyledSpriteCodec.frames(sheet),w.action(),w.direction(),w.qualityReport(),seed);
         if(idleEdit(w))return codec.idleEdit(w.direction(),sheet,seed);
         if(tailEdit(w))return codec.tailEdit(w.direction(),sheet,seed);
         return codec.marginEdit(w.action(),w.direction(),sheet,seed);
     }
+    private JsonNode recoveryBasePayload(StyledAssetStore.Work w) {
+        var previous=store.previousRecoveryBase(w);var seeds=new ArrayList<byte[]>();
+        for(String d:StyledSpriteCodec.DIRECTIONS){String key=previous.at("/result/keys/"+d).asText();
+            if(!key.startsWith(w.prefix()+"directions/"))throw new AssetException(409,"RECOVERY_INPUT_CHANGED");
+            byte[] image=storage.asset(key);StyledSpriteCodec.nativeFrame(image);
+            if(!StyledSpriteCodec.sha(image).equals(previous.at("/result/hashes/"+d).asText()))throw new AssetException(409,"RECOVERY_INPUT_CHANGED");seeds.add(image);}
+        int seed=(int)Math.floorMod(w.traits().path("seed").asLong()+7919L*w.repairCount(),2147483647L);
+        return StyledRecovery.basePayload(json,seeds,previous.path("quality"),seed);
+    }
     private byte[] seed(StyledAssetStore.Work w) {
         var base=store.seed(w);byte[] seed=storage.asset(base.path("keys").path(w.direction()).asText());
         if(!StyledSpriteCodec.sha(seed).equals(base.path("hashes").path(w.direction()).asText()))throw new AssetException(409,"STYLED_SEED_CHANGED");
-        return seed;
+        return StyledRecovery.enabled(w.qualityPolicy())?StyledSpriteCodec.paddedSeed(seed):seed;
     }
 }

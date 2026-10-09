@@ -1,0 +1,327 @@
+{
+  "source": "Actual authorized PixelLab/Luna local pilot, 2026-10-09",
+  "animalId": "447505202600916",
+  "productionReplay": false,
+  "resampled": false,
+  "initialWholeDogsPassed": 9,
+  "finalWholeDogsPassed": 10,
+  "cases": {
+    "base-1": {
+      "passed": false,
+      "structuralPassed": false,
+      "luna": {
+        "views": [
+          {
+            "direction": "south",
+            "sourceIndex": 0,
+            "identityMatches": true,
+            "eyesReadable": true,
+            "styleMatches": true,
+            "directionCorrect": true,
+            "tailPlausible": true,
+            "confidence": 0.93,
+            "issues": [
+              "COAT_MISMATCH"
+            ],
+            "note": "정면 방향과 흰 주둥이·가슴, 갈색 무늬는 일치하지만 갈색이 실제보다 어둡고 회색빛입니다."
+          },
+          {
+            "direction": "west",
+            "sourceIndex": 6,
+            "identityMatches": true,
+            "eyesReadable": true,
+            "styleMatches": true,
+            "directionCorrect": true,
+            "tailPlausible": false,
+            "confidence": 0.9,
+            "issues": [
+              "TAIL_MISSING",
+              "COAT_MISMATCH"
+            ],
+            "note": "왼쪽을 보는 옆모습은 정확하고 무늬도 대체로 맞지만, 완전한 꼬리가 보이지 않으며 털색이 실제보다 어둡습니다."
+          },
+          {
+            "direction": "north",
+            "sourceIndex": 4,
+            "identityMatches": true,
+            "eyesReadable": true,
+            "styleMatches": true,
+            "directionCorrect": true,
+            "tailPlausible": true,
+            "confidence": 0.82,
+            "issues": [
+              "COAT_MISMATCH"
+            ],
+            "note": "뒤통수와 귀 방향은 자연스럽고 얼굴이 없는 점도 적절하지만, 등 쪽 갈색이 실제보다 어둡고 회색빛입니다."
+          },
+          {
+            "direction": "east",
+            "sourceIndex": 2,
+            "identityMatches": true,
+            "eyesReadable": true,
+            "styleMatches": true,
+            "directionCorrect": true,
+            "tailPlausible": false,
+            "confidence": 0.9,
+            "issues": [
+              "TAIL_MISSING",
+              "COAT_MISMATCH"
+            ],
+            "note": "오른쪽을 보는 옆모습과 얼굴 구조는 맞지만, 완전한 꼬리가 보이지 않고 털색이 실제보다 어둡습니다."
+          }
+        ],
+        "sharedTailCarriage": "UNKNOWN",
+        "tailConsistent": false,
+        "overallNote": "네 방향 모두 귀와 흰 얼굴·가슴 무늬로 동일 개체성이 보이며 방향과 픽셀 스타일도 적절합니다. 다만 옆모습에는 꼬리가 보이지 않고, 전반적인 갈색이 실제 사진보다 어둡고 회색빛입니다."
+      }
+    },
+    "base-2": {
+      "passed": false,
+      "structuralPassed": false,
+      "luna": {
+        "views": [
+          {
+            "direction": "south",
+            "sourceIndex": 0,
+            "identityMatches": true,
+            "eyesReadable": true,
+            "styleMatches": true,
+            "directionCorrect": true,
+            "tailPlausible": true,
+            "confidence": 0.97,
+            "issues": [],
+            "note": "정면 방향과 얼굴, 갈색·흰색 무늬가 사진과 잘 맞습니다."
+          },
+          {
+            "direction": "west",
+            "sourceIndex": 6,
+            "identityMatches": true,
+            "eyesReadable": true,
+            "styleMatches": true,
+            "directionCorrect": true,
+            "tailPlausible": true,
+            "confidence": 0.93,
+            "issues": [],
+            "note": "왼쪽을 보는 옆모습이며 귀, 짧은 털, 등과 가슴의 색 배치가 일치합니다."
+          },
+          {
+            "direction": "north",
+            "sourceIndex": 4,
+            "identityMatches": true,
+            "eyesReadable": true,
+            "styleMatches": true,
+            "directionCorrect": true,
+            "tailPlausible": true,
+            "confidence": 0.89,
+            "issues": [],
+            "note": "얼굴이 없는 뒷모습으로 방향이 올바르고, 귀와 갈색·흰색 몸통 배치가 자연스럽습니다."
+          },
+          {
+            "direction": "east",
+            "sourceIndex": 2,
+            "identityMatches": true,
+            "eyesReadable": true,
+            "styleMatches": true,
+            "directionCorrect": true,
+            "tailPlausible": true,
+            "confidence": 0.93,
+            "issues": [],
+            "note": "오른쪽을 보는 옆모습이며 주둥이, 귀, 흰 가슴과 갈색 등 무늬가 사진과 맞습니다."
+          }
+        ],
+        "sharedTailCarriage": "UNKNOWN",
+        "tailConsistent": true,
+        "overallNote": "네 뷰 모두 동일한 개체의 특징과 귀여운 픽셀 스타일을 잘 유지합니다. 사진에서 꼬리가 가려져 꼬리 운반은 판단하지 않았습니다."
+      }
+    },
+    "base-3": {
+      "passed": true,
+      "structuralPassed": true,
+      "luna": {
+        "views": [
+          {
+            "direction": "south",
+            "sourceIndex": 0,
+            "identityMatches": true,
+            "eyesReadable": true,
+            "styleMatches": true,
+            "directionCorrect": true,
+            "tailPlausible": true,
+            "confidence": 0.97,
+            "issues": [],
+            "note": "탄색 얼굴과 흰 blaze·가슴, 큰 직립 귀가 사진과 잘 맞습니다. 정면 방향도 정확합니다."
+          },
+          {
+            "direction": "west",
+            "sourceIndex": 6,
+            "identityMatches": true,
+            "eyesReadable": true,
+            "styleMatches": true,
+            "directionCorrect": true,
+            "tailPlausible": true,
+            "confidence": 0.9,
+            "issues": [],
+            "note": "한쪽 눈이 보이는 좌측 프로필이며, 짧은 털과 탄색 등·흰 목 부분이 일치합니다. 꼬리도 위로 든 형태로 자연스럽습니다."
+          },
+          {
+            "direction": "north",
+            "sourceIndex": 4,
+            "identityMatches": true,
+            "eyesReadable": true,
+            "styleMatches": true,
+            "directionCorrect": true,
+            "tailPlausible": true,
+            "confidence": 0.83,
+            "issues": [],
+            "note": "얼굴이 없는 후면 방향이 정확하고, 직립 귀와 탄색·흰 목/몸통 배치가 개체와 대체로 맞습니다. 후면에서 꼬리는 몸에 가려졌을 가능성이 있습니다."
+          },
+          {
+            "direction": "east",
+            "sourceIndex": 2,
+            "identityMatches": true,
+            "eyesReadable": true,
+            "styleMatches": true,
+            "directionCorrect": true,
+            "tailPlausible": true,
+            "confidence": 0.9,
+            "issues": [],
+            "note": "한쪽 눈이 보이는 우측 프로필이며, 탄색 등과 흰 목·가슴 무늬가 사진과 일치합니다. 꼬리 방향도 다른 측면과 일관됩니다."
+          }
+        ],
+        "sharedTailCarriage": "HIGH",
+        "tailConsistent": true,
+        "overallNote": "네 방향 모두 둥글고 컴팩트한 픽셀 스타일을 유지하며, 귀·털 길이·탄색과 흰색 무늬가 실제 개체와 대체로 일치합니다."
+      }
+    },
+    "walk-south": {
+      "passed": true,
+      "luna": {
+        "passed": true,
+        "confidence": 0.96,
+        "directionPreserved": true,
+        "identityPreserved": true,
+        "eyesPreserved": true,
+        "stepsVisible": true,
+        "tailConsistent": true,
+        "paletteStable": true,
+        "loopUsable": true,
+        "limbsPlausible": true,
+        "issues": [],
+        "problemFrames": [],
+        "note": "모든 9개 프레임에서 남쪽을 향한 얼굴, 눈, 귀와 외형이 유지됩니다. 다리의 교대 보행과 작은 바운스가 보이며, 팔다리 연결·캔버스 여백·팔레트가 안정적이고 프레임 8에서 0으로의 루프도 자연스럽습니다."
+      }
+    },
+    "walk-north": {
+      "passed": true,
+      "luna": {
+        "passed": true,
+        "confidence": 0.98,
+        "directionPreserved": true,
+        "identityPreserved": true,
+        "eyesPreserved": true,
+        "stepsVisible": true,
+        "tailConsistent": true,
+        "paletteStable": true,
+        "loopUsable": true,
+        "limbsPlausible": true,
+        "issues": [],
+        "problemFrames": [],
+        "note": "전 프레임에서 북쪽을 향한 후면 방향과 개의 정체성이 유지됩니다. 네 다리의 교대 보행이 보이며, 팔레트·꼬리·루프 연결에도 시각적 결함이 없습니다."
+      }
+    },
+    "walk-west": {
+      "passed": true,
+      "luna": {
+        "passed": true,
+        "confidence": 0.98,
+        "directionPreserved": true,
+        "identityPreserved": true,
+        "eyesPreserved": true,
+        "stepsVisible": true,
+        "tailConsistent": true,
+        "paletteStable": true,
+        "loopUsable": true,
+        "limbsPlausible": true,
+        "issues": [],
+        "problemFrames": [],
+        "note": "9개 프레임 모두 서쪽 방향과 개의 정체성, 눈·귀·털 무늬를 유지합니다. 네 다리의 교대 보행과 자연스러운 꼬리 연결이 보이며, 캔버스 클리핑이나 팔레트 이탈 없이 루프도 매끄럽습니다."
+      }
+    },
+    "walk-east": {
+      "passed": true,
+      "luna": {
+        "passed": true,
+        "confidence": 0.97,
+        "directionPreserved": true,
+        "identityPreserved": true,
+        "eyesPreserved": true,
+        "stepsVisible": true,
+        "tailConsistent": true,
+        "paletteStable": true,
+        "loopUsable": true,
+        "limbsPlausible": true,
+        "issues": [],
+        "problemFrames": [],
+        "note": "9개 프레임 모두 동쪽을 향하며 얼굴·눈·귀·무늬가 유지됩니다. 네 다리의 교대 보행과 연결된 꼬리가 자연스럽고, 캔버스 클리핑이나 팔레트 드리프트 없이 루프가 usable합니다."
+      }
+    }
+  },
+  "sha256": {
+    "base-1/west.png": "72e7da82f8b4fcf85cce92969e7101460fa806350c1099d68432c29457e2d8fd",
+    "base-1/north.png": "90d4d1823b85aa692a7408697c2eb53fff0f5c942cf4ea0d56d194d53634c149",
+    "base-1/east.png": "0200dc0d363ed32adac4e19dac8bee2db6d8b2a7d2ec80185f6b6e995ad9e3ab",
+    "base-1/south.png": "00a8d5a037684b070e6d8ff7a5683e2a48a61bb34ff54d4980819c1243659f10",
+    "base-2/west.png": "b29d312fc27deef3e1d52e266ae699f5e0a06bcf69e38f5e12240c244bce3448",
+    "base-2/north.png": "73cea4dcbe8d68a54d8dd2e061ff61d95b1cd1c1f506e02002e548f02eb2af5f",
+    "base-2/east.png": "fceb848c1864ee8e7ef7d89439a6acfba3e13a86c9c594f4325954453d1acf7f",
+    "base-2/south.png": "4ee61c87fa20bb471ee161c3c95890d6f7e58d6b07247f58fd7d8d8ed036b101",
+    "base-3/west.png": "579112a019f948202bc1bb50cccd67f8cf1444acd1892e9ad16b0152f408652d",
+    "base-3/north.png": "944182b167ad4a3b5e2b7e3e3f373bd83a690940ed019c51faf78943bbc9b025",
+    "base-3/east.png": "7a397c08a054c1d4a879c2cec1ea5ac401edbe89a5493d97bd850fc6590feb7b",
+    "base-3/south.png": "abb3d8d55b95b5234d3359ec297ed6c9e16a2eae7dd17935c285e0d339fa2457",
+    "seeds/south.png": "32148b2a878897c04639a38e9f407b8d377a4310b4c4ab636d515e61efa40341",
+    "selected/walk-south.png": "d175e07684db014aa7a69a6ea0107ffc55b57bbc75cbced4ad4888d178bf7301",
+    "initial-walk-south/00.png": "32148b2a878897c04639a38e9f407b8d377a4310b4c4ab636d515e61efa40341",
+    "initial-walk-south/01.png": "bc0d1c7ff6def16e078e04b934ed1d56a0a88bc5a86c79ccb69b77e79d96bea7",
+    "initial-walk-south/03.png": "30bf299f6c813c120a5c78cf61768125374d413168440f1cece414d3f0902904",
+    "initial-walk-south/02.png": "f3199b28389914b4496111e47739285113604c61659abe23448b1b6b5069100e",
+    "initial-walk-south/06.png": "9200d8155e799ac7cb11369dd7733e026e2ade6234c30352a262f05c6adffc12",
+    "initial-walk-south/07.png": "ab1ac99f8873850e21e7bf02628a5825240e3366e0e73c5bf76013140e8bffdb",
+    "initial-walk-south/05.png": "64ff264e0a4b8659867de3dc5b45abd3d95c0653025b66ae85c599beb92ba91c",
+    "initial-walk-south/04.png": "0f1ef01c67985638b1eb34b3b0e3037963bc0b8cedc1123cc125ea84ee75c94e",
+    "initial-walk-south/08.png": "4d6ac4107692411ced2b4ddbff9ee380a84b0f0357522c7735a0320ccf4ac532",
+    "seeds/north.png": "98f38464c39c5306601a9caee985e322efeaa2de824460c29c026462abb9be2c",
+    "selected/walk-north.png": "0bb200a506666ea07c6b67acbdad56f210dbaec7d99aa65454ca8ba15829a111",
+    "initial-walk-north/00.png": "98f38464c39c5306601a9caee985e322efeaa2de824460c29c026462abb9be2c",
+    "initial-walk-north/01.png": "d93a62f25de28227c4e8b252f032c0627cdb697f205f874604c52c27739eae26",
+    "initial-walk-north/03.png": "f8dc051e08fa54924280fd76e5ce37be884b6c6dd599dcf179dfd08c3569781d",
+    "initial-walk-north/02.png": "e73faf76e9e7ccdd642174947febba1172d5b642837935ad649b3fc8eb6cd358",
+    "initial-walk-north/06.png": "c8333342589015a7ccf3148500d4696be6814974739279f0bd6495860ebf8f2b",
+    "initial-walk-north/07.png": "7e82ad4ec97671a1e09cd769ffbdf9982e8d4b588aad530929645fe7b3413d2e",
+    "initial-walk-north/05.png": "17d7e48f060da7e09033da806c37128c26f2a9030c76d1428a8841b12c611ddb",
+    "initial-walk-north/04.png": "b9fcd1d77a63a9956677aa7e74c884a9037d857d689bb00d1ca8cc709e88169f",
+    "initial-walk-north/08.png": "666345830144a945beb6568c9ab31fba774c618ca9f25fe0cbe8ed65eaf2f602",
+    "seeds/west.png": "d407d1688f0e44a161a4c6471112b4271f433c6c929fae7323b6da50a95164fb",
+    "selected/walk-west.png": "9caff4fec404bc28c9fa30e32a7e09fe1f8cf32b36676977d709f892a2fa9947",
+    "initial-walk-west/00.png": "d407d1688f0e44a161a4c6471112b4271f433c6c929fae7323b6da50a95164fb",
+    "initial-walk-west/01.png": "6ad7663987435024b2a5e8ca6c4a47e9fb127191b23927500af43ddf8674ef4a",
+    "initial-walk-west/03.png": "68649d6a4234287c39d9c98babb53f55d0e69204b3d6d71c904953374d107e77",
+    "initial-walk-west/02.png": "3b37a705ed7ffb4db5df1b16948ebbffcec94800f63c915f25dfdb94e06d2b02",
+    "initial-walk-west/06.png": "813c365a10478fc5e173a02317b47449e5eb3ce665f7de5962388be881b57b3a",
+    "initial-walk-west/07.png": "9408d9ab31797544b0a10f5bf748edaa269a3ef5f7de6beded894da42fe85d45",
+    "initial-walk-west/05.png": "101b8a2245949acd0d065d78c9edee8e6ad6cb384f8fe7872c645311de641dd1",
+    "initial-walk-west/04.png": "a6946488d4e30ef88b2a78e448fd862e609b23e59838f32bc69b55cafbd5cd20",
+    "initial-walk-west/08.png": "513b24dea79e186e3a8b89e7d4317a0498aa064bc7191973064b3f3a56d1726d",
+    "seeds/east.png": "02f594a6487e6b489f1222425167157c9b4e94a8023ac0978f897eca7a3194d8",
+    "selected/walk-east.png": "8e8518d9db2d3f08776db53ebf506fc6e3f59c52cce3cb2dc59361f209bf8063",
+    "initial-walk-east/00.png": "02f594a6487e6b489f1222425167157c9b4e94a8023ac0978f897eca7a3194d8",
+    "initial-walk-east/01.png": "499544f7abfce533a7db950a9bcdadde64ef82f226a714dc3f2e677be4422cf7",
+    "initial-walk-east/03.png": "fd1c73a4100796c79c6300ab1facd79031376bd4ff984dad66a812e25a580dd2",
+    "initial-walk-east/02.png": "b133e8ff27ba10e4ddfbaff00d2653fa3525aa6add397095493bcc09baf32a85",
+    "initial-walk-east/06.png": "6a92d76e1f779b46e254605646fa8c0eb0e9f1ff9c0a09bb0259d321363d33de",
+    "initial-walk-east/07.png": "934f8380dd0ca5279df5a98a368eeec605c884183188c5033f6dfe6842d68968",
+    "initial-walk-east/05.png": "8133626367186ea2c6406e2c1846ceb7288c68581f763905c503f16c37d0e3b8",
+    "initial-walk-east/04.png": "e306c83fc4780d0210bfd849c58edf7bc38a692d7706ad944d44db8d6ddf97c5",
+    "initial-walk-east/08.png": "7847bc87af36888b57368eb4cc777c164fff7c2390ce79646a838442d3be3195"
+  }
+}
