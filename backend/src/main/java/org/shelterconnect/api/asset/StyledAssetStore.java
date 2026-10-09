@@ -582,6 +582,7 @@ public class StyledAssetStore {
     private Map<String,Object> newSeedQualityPolicy(){var p=seedQualityPolicy();p.put("learningRecovery",StyledLearningRecoveryStore.VERSION);
         p.put("lessonRevision",StyledLessonStore.REVISION_VERSION);p.put("seedMotionMargin",2);p.put("seedEyeRepair",StyledSeedEyeRepair.VERSION);
         p.put("automaticApproval",StyledAutoApproval.VERSION);
+        p.put("aestheticPolicy",StyledAestheticPolicy.VERSION);
         var recovery=StyledSpriteCodec.qualityRules(json).path("recovery");
         p.put("recoveryVersion",StyledRecovery.VERSION);p.put("seedRepairVersion",StyledSeedRepair.VERSION);p.put("seedTailEvidenceVersion",StyledTailAnatomy.VERSION);p.put("motionFrameSize",40);p.put("seedMotionMargin",1);
         p.put("maxSeedRepairs",recovery.path("maxSeedRepairs").asInt());p.put("maxRepairsPerClip",recovery.path("maxMotionRepairs").asInt());

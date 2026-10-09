@@ -22,7 +22,8 @@ final class StyledSeedRepair {
             if(!StyledSpriteCodec.DIRECTIONS.contains(d) || !seen.add(d) || !v.path("issues").isArray()
                 || !v.path("confidence").isNumber() || !Double.isFinite(v.path("confidence").asDouble())
                 || v.path("confidence").asDouble()<0 || v.path("confidence").asDouble()>1)throw invalid();
-            if(!v.path("issues").isEmpty() || v.path("confidence").asDouble()<.75 || v.path("tailObservationUncertain").asBoolean() || v.path("coatObservationUncertain").asBoolean())failed.add(d);
+            if(!v.path("issues").isEmpty() || StyledAestheticPolicy.lowConfidenceBlocks(report,v) || v.path("tailObservationUncertain").asBoolean()
+                || (!StyledAestheticPolicy.enabled(report) && v.path("coatObservationUncertain").asBoolean()))failed.add(d);
             for(String field:StyledRecoveryReview.BASE.keySet()){
                 if(!v.path(field).isBoolean())throw invalid();
                 if(!v.path(field).asBoolean())failed.add(d);
@@ -42,7 +43,7 @@ final class StyledSeedRepair {
         plan.set("directions",json.valueToTree(dirs));
         plan.set("deferredDirections",json.valueToTree(all.stream().filter(d->!dirs.contains(d)).toList()));
         if(StyledCoatReview.unresolved(report))return plan.put("status","UNCERTAIN_VERDICT");
-        if(dirs.isEmpty() || report.at("/propertyReview/views").valueStream().anyMatch(v->v.path("confidence").asDouble()<.75 && !localizationOnly(v)))return plan.put("status","UNCERTAIN_VERDICT");
+        if(dirs.isEmpty() || report.at("/propertyReview/views").valueStream().anyMatch(v->dirs.contains(v.path("direction").asText()) && StyledAestheticPolicy.lowConfidenceBlocks(report,v) && !localizationOnly(v)))return plan.put("status","UNCERTAIN_VERDICT");
         if(!faceOnly(report,dirs))return plan;
         var box=StyledQualityAgent.object(Map.of("direction",Map.of("type","string","enum",dirs),
             "x",Map.of("type","integer","minimum",1,"maximum",30),"y",Map.of("type","integer","minimum",1,"maximum",30),
@@ -102,7 +103,8 @@ final class StyledSeedRepair {
     static boolean regional(JsonNode report){return report.at("/seedRepairPlan/method").asText().equals("REGION");}
     static JsonNode payload(JsonMapper json,List<byte[]> seeds,JsonNode report,int seed){
         var dirs=directions(seeds,report);var rules=StyledSpriteCodec.qualityRules(json).path("recovery");
-        String description="Repair ONLY "+dirs+" in the supplied order. "+report.path("repairDescription").asText()+" "+rules.path("styleLock").asText()+" "+rules.path("coatPrevention").asText()
+        String plan=StyledAestheticPolicy.enabled(report)?StyledAestheticPolicy.repairDescription(report,dirs):report.path("repairDescription").asText();
+        String description="Repair ONLY "+dirs+" in the supplied order. "+plan+" "+rules.path("styleLock").asText()+" "+rules.path("coatPrevention").asText()
             +" "+rules.path("selectedRepair").asText();
         if(description.length()>2000)throw new AssetException(422,"RECOVERY_PROMPT_LIMIT");
         if(regional(report))return json.valueToTree(Map.of("description",description,

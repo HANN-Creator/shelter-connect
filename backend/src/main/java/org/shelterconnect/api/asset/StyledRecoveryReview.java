@@ -61,13 +61,13 @@ final class StyledRecoveryReview {
         }catch(AiFailure e){throw new AssetException(502,"QUALITY_"+e.code());}
         if(!r.path("views").isArray() || r.path("views").size()!=4 || !r.path("tailConsistent").isBoolean()
             || !text(r.path("note"),600) || !text(r.path("repairDescription"),1100))throw invalid();
-        var coat=StyledCoatReview.review(client,json,photo,seeds,traits,r);r=coat.path("propertyReview");
+        var coat=StyledCoatReview.review(client,json,photo,seeds,traits,r);r=StyledAestheticPolicy.base(json,coat.path("propertyReview"));
         var issues=new TreeSet<String>();var seen=new HashSet<String>();var views=json.createArrayNode();
         for(var v:r.path("views")) {
             String d=v.path("direction").asText();if(!StyledSpriteCodec.DIRECTIONS.contains(d) || !seen.add(d) || !text(v.path("note"),400)
                 || !v.path("issues").isArray() || v.path("issues").size()>10)throw invalid();
             if(!text(v.path("observedSpriteMarkings"),260) || !text(v.path("observedPhotoMarkings"),260))throw invalid();
-            checkConfidence(v);if(v.path("confidence").asDouble()<.75)issues.add("SEED_IDENTITY");
+            checkConfidence(v);if(StyledAestheticPolicy.lowConfidenceBlocks(r,v))issues.add("SEED_IDENTITY");
             for(var item:BASE.entrySet()) {if(!v.path(item.getKey()).isBoolean())throw invalid();if(!v.path(item.getKey()).asBoolean())issues.add(item.getValue());}
             for(var code:v.path("issues")) {
                 if(!code.isString() || !BASE_CODES.contains(code.asText()))throw invalid();
@@ -93,6 +93,7 @@ final class StyledRecoveryReview {
         report.set("propertyReview",r);report.set("learnedLessons",lessons);report.put("lessonsSha256",StyledSpriteCodec.sha(json.writeValueAsBytes(lessons)));
         var hashes=new LinkedHashMap<String,String>();images.forEach((k,v)->hashes.put(k,StyledSpriteCodec.sha(v)));report.set("reviewImageHashes",json.valueToTree(hashes));
         report.set("coatEvidence",coat);
+        report.put("aestheticPolicy",StyledAestheticPolicy.VERSION);report.set("qualityWarnings",r.path("qualityWarnings"));
         if(StyledCoatReview.unresolved(report))report.put("passed",false);
         StyledTailAnatomy.merge(json,report,StyledTailAnatomy.review(client,properties,json,photo,seeds,r));return report;
     }

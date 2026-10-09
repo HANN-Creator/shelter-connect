@@ -20,6 +20,10 @@ class StyledCoatReviewTest {
         assertThat(r.at("/views/0/coatRepairScope").asText()).isEqualTo(d.startsWith("FACE")?"FACE":"BODY");}}
     @Test void unknownObservationBlocksWithoutInventingAnImageDefect(){var r=json.createObjectNode();r.set("propertyReview",StyledCoatReview.resolve(json,general(),observation("UNCERTAIN"),List.of("south")));
         assertThat(StyledCoatReview.unresolved(r)).isTrue();assertThat(r.at("/propertyReview/views/0/issues").toString()).doesNotContain("COAT_MISMATCH");}
+    @Test void rearFacialPatchClaimCannotBecomeAConfirmedRepairTarget(){var g=general();((ObjectNode)g.at("/views/0")).put("direction","north");
+        var o=observation("FACE_PATTERN_MISSING");((ObjectNode)o.at("/views/0")).put("direction","north");
+        var r=StyledCoatReview.resolve(json,g,o,List.of("north"));assertThat(r.at("/views/0/issues").toString()).doesNotContain("COAT_MISMATCH");
+        assertThat(r.at("/views/0/coatObservationUncertain").asBoolean()).isTrue();assertThat(r.at("/views/0/coatRepairScope").asText()).isEqualTo("NONE");}
     @Test void missingOrUnexpectedDirectionsAndBlankEvidenceCannotClearDefect(){var obs=observation("PRESERVED");
         assertThatThrownBy(()->StyledCoatReview.resolve(json,general(),obs,List.of("west"))).isInstanceOf(AssetException.class);
         ((ObjectNode)obs.path("views").get(0)).put("photoPattern","");assertThatThrownBy(()->StyledCoatReview.resolve(json,general(),obs,List.of("south"))).isInstanceOf(AssetException.class);}

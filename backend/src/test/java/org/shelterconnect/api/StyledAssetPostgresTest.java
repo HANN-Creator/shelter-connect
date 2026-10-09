@@ -1705,6 +1705,25 @@ class StyledAssetPostgresTest {
         assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_lessons WHERE source_job_id=? AND source_label='idle-west'",Integer.class,id)).isZero();
         publicStatus(404);
     }
+    @Test void cosmeticWarningsPersistThroughSystemApprovalWithoutPaidRepairOrLearning()throws Exception {
+        UUID id=recoveryRequest(0,false);
+        doAnswer(c->{
+            var r=(tools.jackson.databind.node.ObjectNode)automaticSeedReport(c.getArgument(1),true);
+            r.put("recoveryVersion","photo-grounded-recovery-v1").put("appearance","PASS").put("aestheticPolicy","aesthetic-warnings-v1");
+            r.putArray("qualityWarnings").addObject().put("code","STYLE_VARIATION").put("blocking",false).put("severity","WARNING").put("evidence","Synthetic cosmetic warning, not a real visual finding");return r;}).when(seedQuality).reviewRecovery(any(),anyList(),any(),any());
+        doAnswer(c->{
+            var r=(tools.jackson.databind.node.ObjectNode)automaticMotionReport(true);
+            r.put("motionReviewVersion","motion-observation-tristate-v4").put("motionDecision","PASS").put("referencePoseUsable",true).put("aestheticPolicy","aesthetic-warnings-v1");
+            r.put("referenceFrameSha256",sha(c.<List<byte[]>>getArgument(1).get(List.of("south","north","west","east").indexOf(c.getArgument(4)))));
+            r.set("reviewedFrameHashes",json.valueToTree(c.<List<byte[]>>getArgument(2).stream().map(this::sha).toList()));
+            r.putArray("qualityWarnings").addObject().put("code","PALETTE_UNCERTAIN").put("blocking",false).put("severity","WARNING").put("evidence","Synthetic palette warning");return r;}).when(quality).review(any(),anyList(),anyList(),anyString(),anyString());
+        finish(id);var job=read(id);assertThat(job.path("status").asText()).isEqualTo("APPROVED");
+        assertThat(job.at("/qualityApproval/actor").asText()).isEqualTo("SYSTEM");publicStatus(200);
+        for(var step:job.path("steps")){assertThat(step.at("/qualityReport/qualityWarnings").size()).isEqualTo(1);assertThat(step.path("repairCount").asInt()).isZero();}
+        verify(provider,never()).editSeeds(any());verify(provider,never()).editSeedEyes(any());verify(provider,never()).editAnimation(any());
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=?",Integer.class,id)).isZero();
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_lessons WHERE source_job_id=?",Integer.class,id)).isZero();
+    }
     @Test void recoveryEditsBaseThenOnlyFailedMotionAndPublishesBoundFortyPixelBundle()throws Exception {
         UUID id=recoveryRequest(3,true);finish(id);var j=read(id);
         assertThat(j.path("status").asText()).as("failure %s",j.path("failureCode")).isEqualTo("APPROVED");

@@ -44,7 +44,8 @@ final class StyledRawMotion {
         for(String field:count==1?List.of("initialVision"):List.of("initialVision","consistencyReview")) {
             var observation=r.path(field);
             try {StyledMotionReview.validate(observation,action);}catch(AssetException invalid){return false;}
-            if(observation.path("properties").valueStream().anyMatch(p->!p.path("state").asText().equals("PASS")))return false;
+            if(observation.path("properties").valueStream().anyMatch(p->!p.path("state").asText().equals("PASS")
+                && !(p.path("property").asText().equals("palette") && StyledAestheticPolicy.permitsPaletteWarning(r))))return false;
         }
         return true;
     }

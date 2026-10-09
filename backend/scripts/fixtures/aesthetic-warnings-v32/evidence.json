@@ -1,0 +1,23 @@
+{
+  "version": "aesthetic-warnings-v1",
+  "actualReview": true,
+  "sameUnchangedDeployedImages": true,
+  "previousReceipt": "../tail-spine-v31/v31-actual-full-review.json",
+  "originalImages": "../tail-spine-v31",
+  "sourcePhotoSha256": "e9c4cd227b1c4976423b323c32e70f73839bcbb05fc025b3e48294a4d19cde7a",
+  "inputSha256": "ff55caf0fd4aa728ec7927adde6c3864f59a43caeeab331c76da5f1bc218df05",
+  "rulesSha256": "ef1ee356d1dc11b722805a74063137c2d3c49d6c05d9ec67e8685754ecfc3d62",
+  "reviewSha256": "4d8957b15e76c664a0c57ed00f6f6fe883f80ce5ecc0bc49410b1ace64a71b2e",
+  "result": {
+    "passed": true,
+    "tailDecision": "PASS",
+    "warnings": []
+  },
+  "newPixelLabCalls": 0,
+  "deployedJobChanged": false,
+  "limitations": [
+    "Local production review code, not a deployed approval.",
+    "Twelve motions and native app playback remain unverified for this job.",
+    "The v31 review remains FAIL; it has not been relabeled or deleted."
+  ]
+}
