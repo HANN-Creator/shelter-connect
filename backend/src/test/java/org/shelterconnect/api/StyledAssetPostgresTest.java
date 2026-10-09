@@ -1471,7 +1471,7 @@ class StyledAssetPostgresTest {
         var tail=json.createObjectNode().put("version","tail-anatomy-tristate-v2").put("passed",true).put("decision","PASS").put("shortTailSupported",false)
             .put("model","fixture-vision").put("reviewedAt",java.time.Instant.now().toString());tail.putArray("failedDirections");tail.putArray("uncertainDirections");
         for(String field:List.of("inputSha256","photoSha256","rulesSha256"))tail.set(field,r.path(field));
-        tail.set("geometry",json.valueToTree(Map.of("west",Map.of("edgeContact",false,"opaqueComponents",1,"branchVersion","rear-silhouette-branches-v1","rearBranchSupport",true),"east",Map.of("edgeContact",false,"opaqueComponents",1,"branchVersion","rear-silhouette-branches-v1","rearBranchSupport",true))));
+        tail.set("geometry",json.valueToTree(Map.of("west",Map.of("edgeContact",false,"opaqueComponents",1,"branchVersion","rear-silhouette-branches-v2","rearBranchSupport",true),"east",Map.of("edgeContact",false,"opaqueComponents",1,"branchVersion","rear-silhouette-branches-v2","rearBranchSupport",true))));
         tail.set("observation",json.valueToTree(Map.of("photoTail","OBSCURED","photoEvidence","Synthetic hidden photo tail",
             "views",List.of(Map.of("direction","west","tail","COMPLETE_CONNECTED","visibleEvidence","Synthetic complete tail","attachment","CONNECTED","contour","DISTINCT","tip","VISIBLE"),
                 Map.of("direction","east","tail","COMPLETE_CONNECTED","visibleEvidence","Synthetic complete tail","attachment","CONNECTED","contour","DISTINCT","tip","VISIBLE")))));
@@ -1959,7 +1959,11 @@ class StyledAssetPostgresTest {
     }
 
     JsonNode candidateConflict()throws Exception {
-        return json.readTree(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/native-rgba-v29/sit-north-v30-review.json")));
+        var r=(tools.jackson.databind.node.ObjectNode)json.readTree(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/native-rgba-v29/sit-north-v30-review.json")));
+        // Synthetic current-policy observations for the mocked worker; the stored real receipt is unchanged.
+        r.put("rulesSha256",currentRules());
+        for(String key:List.of("rawEditReview","restoredReview"))if(r.has(key))((tools.jackson.databind.node.ObjectNode)r.path(key)).put("rulesSha256",currentRules());
+        return r;
     }
     UUID candidateHeldPack()throws Exception {
         UUID id=recoveryRequest(0,false);finish(id);

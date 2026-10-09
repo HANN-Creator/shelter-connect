@@ -15,9 +15,20 @@ class StyledMotionCandidateTest {
     JsonNode actual(String label)throws Exception {
         return json.readTree(Files.readAllBytes(Path.of("scripts/fixtures/native-rgba-v29/"+label+"-v30-review.json")));
     }
+    JsonNode replay(String label)throws Exception {
+        var r=(ObjectNode)actual(label);
+        // Synthetic current-policy replay of archived observations, never a provider receipt.
+        r.put("rulesSha256",StyledSpriteCodec.qualityRulesSha());
+        for(String key:List.of("rawEditReview","restoredReview"))if(r.has(key))((ObjectNode)r.path(key)).put("rulesSha256",StyledSpriteCodec.qualityRulesSha());
+        return r;
+    }
+    @Test void historicalReceiptCannotAuthorizeACandidateAfterRulesChange()throws Exception {
+        var old=actual("sit-north");assertThat(old.path("rulesSha256").asText()).isNotEqualTo(StyledSpriteCodec.qualityRulesSha());
+        assertThat(StyledMotionCandidate.plan(old,"SIT",json)).isNull();
+    }
     @ParameterizedTest @ValueSource(strings={"sit-south","sit-north","walk-south"})
     void realConflictsProposeAnAlternativeWithoutRelabelingEvidence(String label)throws Exception {
-        var r=actual(label);var unchanged=r.deepCopy();String action=label.startsWith("sit")?"SIT":"WALK";
+        var r=replay(label);var unchanged=r.deepCopy();String action=label.startsWith("sit")?"SIT":"WALK";
         var plan=StyledMotionCandidate.plan(r,action,json);
         assertThat(plan).isNotNull();assertThat(plan.path("assessment").asText()).isEqualTo("UNCONFIRMED_CANDIDATE_ONLY");
         assertThat(plan.path("frames").size()).isGreaterThan(0);assertThat(r).isEqualTo(unchanged);
@@ -31,7 +42,7 @@ class StyledMotionCandidateTest {
     }
     @ParameterizedTest @ValueSource(strings={"unknown-only","reference","missing-observation","missing-frame","bad-frame","stale","passed"})
     void unsupportedOrUnboundObservationsCannotBuyACandidate(String defect)throws Exception {
-        var r=(ObjectNode)actual("sit-north");
+        var r=(ObjectNode)replay("sit-north");
         switch(defect) {
             case "unknown-only" -> {for(var p:r.path("initialVision").path("properties"))if(!p.path("state").asText().equals("PASS"))((ObjectNode)p).put("state","UNCERTAIN");}
             case "reference" -> ((ObjectNode)StyledMotionReview.property(r.path("initialVision"),"referencePose")).put("state","UNCERTAIN");

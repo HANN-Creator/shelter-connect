@@ -45,6 +45,12 @@ class StyledRawMotionTest {
     @ParameterizedTest @ValueSource(strings={"valid","missing-archive","changed-review","changed-raw","changed-old-sheet","changed-seeds","uncertain"})
     void realLegacyOrderMismatchRequiresExactArchivedAdoptionAndCurrentFullPass(String defect)throws Exception {
         var fixture=json.readTree(Files.readAllBytes(root.resolve("legacy-json-order-v30.json")));
+        // The old real receipt is stale. Replay its ordering problem in synthetic current-policy
+        // copies; never rewrite the fixture or claim these copies are fresh provider reviews.
+        assertThat(StyledRawMotion.normalizeLegacy(fixture.path("result"),fixture.path("quality"),fixture.at("/quality/seedHashes"),"west",fixture.path("archive"),json)).isNull();
+        ((ObjectNode)fixture.path("quality")).put("rulesSha256",StyledSpriteCodec.qualityRulesSha());
+        ((ObjectNode)fixture.at("/result/derivation/rawProviderReview")).put("rulesSha256",StyledSpriteCodec.qualityRulesSha());
+        ((ObjectNode)fixture.at("/archive/quality/rawEditReview")).put("rulesSha256",StyledSpriteCodec.qualityRulesSha());
         var result=fixture.path("result");var report=fixture.path("quality");var archive=(ObjectNode)fixture.path("archive").deepCopy();var unchanged=report.deepCopy();
         assertThat(StyledRawMotion.bound(result,report,report.path("seedHashes"),"west",json)).isFalse();
         switch(defect) {
