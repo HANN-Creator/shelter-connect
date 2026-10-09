@@ -109,7 +109,9 @@ final class StyledSeedTailEvidence {
             var observation=evidence.at("/observation/views").valueStream().filter(n->n.path("direction").equals(v.path("direction"))).findFirst().orElseThrow(StyledRecoveryReview::invalid);
             double confidence=Math.min(v.path("confidence").asDouble(),observation.path("confidence").asDouble());
             // Invalid/insufficient localization of a claimed complete tail is uncertainty, not permission to redraw arbitrary anatomy.
-            if(observation.path("tail").asText().equals("COMPLETE_CONNECTED") && !evidence.path("pixelAudit").path(v.path("direction").asText()).path("completeContour").asBoolean())confidence=Math.min(confidence,.74);
+            String category=observation.path("tail").asText();var audit=evidence.path("pixelAudit").path(v.path("direction").asText());
+            if(category.equals("UNCERTAIN") || (category.equals("COMPLETE_CONNECTED") && !audit.path("completeContour").asBoolean())
+                || (category.equals("SHORT_STUB") && evidence.path("shortTailSupported").asBoolean() && !audit.path("visiblePath").asBoolean()))confidence=Math.min(confidence,.74);
             v.put("confidence",confidence);
             var codes=new LinkedHashSet<String>();v.path("issues").forEach(n->codes.add(n.asText()));codes.add("TAIL_MISSING");v.set("issues",json.valueToTree(codes));
         }

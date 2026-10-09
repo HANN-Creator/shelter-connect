@@ -63,6 +63,10 @@ class StyledSeedTailEvidenceTest {
         ((ObjectNode)old.at("/propertyReview/views/2")).put("confidence",.6);
         var client=mock(OpenAiResponsesClient.class);
         assertThat(StyledSeedRepair.plan(client,json,seeds,old).path("status").asText()).isEqualTo("UNCERTAIN_VERDICT");verifyNoInteractions(client);
+        var uncertain=(ObjectNode)json.readTree(Files.readAllBytes(Path.of("scripts/fixtures/tail-evidence-v17/deployed-seed-review.json")));
+        uncertain.put("rulesSha256",StyledSpriteCodec.qualityRulesSha());
+        StyledSeedTailEvidence.merge(json,uncertain,StyledSeedTailEvidence.assess(json,observation(json,"OBSCURED","UNCERTAIN","UNCERTAIN",.99)));
+        assertThat(StyledSeedRepair.plan(client,json,seeds,uncertain).path("status").asText()).isEqualTo("UNCERTAIN_VERDICT");verifyNoInteractions(client);
     }
     @Test void passingEvidenceMustMatchSourcePhotoAllFourSpritesModelAndCurrentRules()throws Exception{
         var ai=new AiProperties(true,"fixture-key","gpt-5.6-luna",30);var client=mock(OpenAiResponsesClient.class);

@@ -886,6 +886,7 @@ class StyledAssetPostgresTest {
     @Test void importedReferencesKeepAiVerdictAndLearnHumanFailureOnlyAfterPositiveApproval()throws Exception {
         var badBody=referenceBody(png,"NEGATIVE");UUID bad=UUID.fromString(reference(subject,png,badBody,202).path("id").asText());
         assertThat(reference(subject,png,badBody,202).path("id").asText()).isEqualTo(bad.toString());
+        assertThat(read(bad).path("qualityPolicy").has("seedTailEvidenceVersion")).isFalse(); // Imported references use their separate manual-only review path.
         tick();assertThat(read(bad).at("/steps/0/qualityReport/passed").asBoolean()).isTrue();
         var example=json.readTree(jdbc.queryForObject("SELECT report::text FROM shelter.styled_quality_examples WHERE job_id=?",String.class,bad));
         assertThat(example.path("passed").asBoolean()).isFalse();assertThat(example.at("/aiAssessment/passed").asBoolean()).isTrue();
@@ -1492,7 +1493,7 @@ class StyledAssetPostgresTest {
         when(seedQuality.review(any(),anyList())).thenAnswer(c->{outsideTransaction();return automaticSeedReport(c.getArgument(1),true);});
         when(quality.review(any(),anyList(),anyList(),anyString(),anyString())).thenAnswer(c->{outsideTransaction();return automaticMotionReport(true);});
         UUID id=UUID.fromString(post(subject,"/v1/shelter-admin/dogs/"+dog+"/styled-assets",automaticInput(),202).at("/data/id").asText());
-        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=(quality_policy-'recoveryVersion'-'motionFrameSize'-'maxSeedRepairs') || '{\"seedMotionMargin\":2,\"maxRepairsPerClip\":2,\"seedEyeRepair\":\"native-seed-eye-inpaint-v1\",\"learningRecovery\":\"validated-motion-learning-v2\"}'::jsonb WHERE id=?",id);return id;
+        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=(quality_policy-'seedTailEvidenceVersion'-'recoveryVersion'-'motionFrameSize'-'maxSeedRepairs') || '{\"seedMotionMargin\":2,\"maxRepairsPerClip\":2,\"seedEyeRepair\":\"native-seed-eye-inpaint-v1\",\"learningRecovery\":\"validated-motion-learning-v2\"}'::jsonb WHERE id=?",id);return id;
     }
     @Test void newJobsApproveSeedsAndCompletePackWithoutEitherHumanReviewCall()throws Exception {
         UUID id=automaticRequest();tick();tick();
