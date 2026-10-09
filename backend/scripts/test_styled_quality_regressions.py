@@ -31,6 +31,21 @@ def decode_recorded_alpha(rows):
 
 
 class QualityRegressionTest(unittest.TestCase):
+    def test_coat_warning_cannot_silently_restore_aggregate_identity_failure(self):
+        root=Path(__file__).parent/'fixtures/coat-identity-v33'
+        evidence=read(root/'evidence.json');report=read(root/'deployed-review.json')
+        self.assertEqual(digest(root/'deployed-review.json'),evidence['reviewSha256'])
+        self.assertEqual(report['inputSha256'],evidence['inputSha256'])
+        self.assertTrue(report['tailEvidence']['passed'])
+        self.assertEqual(report['issues'],['SEED_IDENTITY'])
+        south=next(v for v in report['propertyReview']['views'] if v['direction']=='south')
+        self.assertFalse(south['identityMatches']);self.assertEqual(south['issues'],[])
+        self.assertTrue(any(w['code']=='COAT_APPEARANCE_UNCERTAIN' and not w['blocking'] for w in report['qualityWarnings']))
+        self.assertFalse(evidence['rawPixelsChanged']);self.assertEqual(evidence['newPixelLabSubmissions'],0)
+        rules=load_quality()
+        self.assertIn('nonCoatIdentity',rules['recovery']['coatReview'])
+        self.assertTrue(any(c.get('fixture')=='coat-identity-v33/evidence.json' for c in rules['regressions']))
+
     def test_deployed_spine_connection_keeps_pixels_and_both_normal_observations(self):
         root=Path(__file__).parent/'fixtures/tail-spine-v31'
         evidence=read(root/'evidence.json')

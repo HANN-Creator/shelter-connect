@@ -1,0 +1,33 @@
+{
+  "source": "Actual deployed v32 review; unchanged public dog 448536202600925",
+  "jobId": "2896c6d7-4809-4275-9e09-43ec4c8ace9c",
+  "sourceRulesSha256": "ef1ee356d1dc11b722805a74063137c2d3c49d6c05d9ec67e8685754ecfc3d62",
+  "sourcePhotoSha256": "e9c4cd227b1c4976423b323c32e70f73839bcbb05fc025b3e48294a4d19cde7a",
+  "inputSha256": "ff55caf0fd4aa728ec7927adde6c3864f59a43caeeab331c76da5f1bc218df05",
+  "reviewSha256": "b62b5d96240a964835a6812ab24c4f9c5dac3520a0366fdd19906ea9fe082b9b",
+  "originalSeedsFixture": "tail-spine-v31/evidence.json",
+  "failure": "COAT_MISMATCH removed as an uncertain cosmetic warning but identityMatches=false remains and reintroduces SEED_IDENTITY.",
+  "rawPixelsChanged": false,
+  "newPixelLabSubmissions": 0,
+  "repairCount": 0,
+  "note": "The archived report is never rewritten as a passing review. New independent identity observations and normalized results have separate receipts.",
+  "tailPassed": true,
+  "independentObservation": {
+    "file": "independent-observation.json",
+    "sha256": "c0fc9e284d34a606dfbc3a97de70aa31e36c910890c350b037ea7c2a1e870a6d",
+    "model": "gpt-5.6-luna",
+    "binding": {
+      "photoSha256": "e9c4cd227b1c4976423b323c32e70f73839bcbb05fc025b3e48294a4d19cde7a",
+      "traitsSha256": "c16549654722a518f24c51d01ed6c89224fd91aa04296dd997fa85a0953d5df8",
+      "originalReportSha256": "b62b5d96240a964835a6812ab24c4f9c5dac3520a0366fdd19906ea9fe082b9b",
+      "rulesSha256": "a8cc43d4e68ef37b8a938f3ca9c5ec445b3de8fc7eb807cc05a65dd784e5b882",
+      "inputSha256": "ff55caf0fd4aa728ec7927adde6c3864f59a43caeeab331c76da5f1bc218df05"
+    },
+    "nonCoatIdentity": "PRESERVED",
+    "confidence": 0.86,
+    "coatDecision": "PRESERVED",
+    "calls": 1,
+    "productionReplayPassed": true,
+    "productionReplayNote": "The failed general review and previously passed tail observations are replayed; this is not a new full live review or deployed approval."
+  }
+}

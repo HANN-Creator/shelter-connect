@@ -9,9 +9,11 @@ class StyledCoatReviewTest {
     ObjectNode general(){var r=json.createObjectNode();var v=r.putArray("views").addObject().put("direction","south").put("identityMatches",true);
         v.putArray("issues").add("COAT_MISMATCH").add("EYE_READABILITY");return r;}
     ObjectNode observation(String decision){var r=json.createObjectNode();r.putArray("views").addObject().put("direction","south").put("decision",decision)
-        .put("photoPattern","white muzzle with brown outer cheeks").put("spritePattern","same patches in a lighter palette").put("evidence","material pattern assessment fixture, not live model evidence");return r;}
+        .put("photoPattern","white muzzle with brown outer cheeks").put("spritePattern","same patches in a lighter palette").put("evidence","material pattern assessment fixture, not live model evidence");
+        ((ObjectNode)r.at("/views/0")).putObject("nonCoatIdentity").put("decision","PRESERVED").put("confidence",.95).put("evidence","Synthetic test: corresponding ear shape, muzzle and body proportions.");return r;}
     @Test void conflictingPaletteAssessmentHoldsWithoutInventingACoatDefectOrClearingOtherDefects(){var r=general();((ObjectNode)r.path("views").get(0)).put("identityMatches",false);
-        var resolved=StyledCoatReview.resolve(json,r,observation("PRESERVED"),List.of("south"));
+        var obs=observation("PRESERVED");((ObjectNode)obs.at("/views/0/nonCoatIdentity")).put("decision","MISMATCH");
+        var resolved=StyledCoatReview.resolve(json,r,obs,List.of("south"));
         assertThat(resolved.at("/views/0/issues").toString()).isEqualTo("[\"EYE_READABILITY\"]");
         assertThat(resolved.at("/views/0/coatObservationUncertain").asBoolean()).isTrue();assertThat(resolved.at("/views/0/coatObservationConflict").asBoolean()).isTrue();
         assertThat(resolved.at("/views/0/identityMatches").asBoolean()).isFalse();assertThat(r.at("/views/0/issues").size()).isEqualTo(2);}

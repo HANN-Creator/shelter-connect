@@ -205,3 +205,5 @@ B-71: [보완된 기본 도트 재검수 상태 분리](repaired-seed-recheck.md
 - B-76 [정상 꼬리의 몸통 연결 판별](tail-spine-support.md): [노션](https://app.notion.com/p/3f45b2d1a55f8015a97fd46624c2589a). 브랜치 `backend/b-76-tail-spine-support`. 실제 배포 원본에서 머리까지 이어진 경로의 중간 몸통 연결점 측정, 원본·이전 관찰·좌우 대칭·결함 차단 회귀 검사. v31, DB/API 변경 없음. 실제 꼬리 검수는 통과했으나 전체 검수의 별도 털무늬 충돌은 남아 있으며 병합·배포·자동 승인 완료로 보고하지 않는다.
 
 - B-77 [명확한 결함과 미관 경고 분리](aesthetic-warning-policy.md): [노션](https://app.notion.com/p/3f45b2d1a55f8003be7afb5db0080409). 브랜치 `backend/b-77-aesthetic-warnings`, B-76 의존. 미관 경고는 보완·승인 차단·학습 정답에서 제외, 구조 결함은 유지. 실제 같은 원본 v32 BASE 검수 PASS; 원격 승인·앱 재생은 배포 후 별도 검증. DB V23 유지.
+
+- B-78 [무늬 경고의 중복 외형 불일치 차단 수정](coat-identity-warning.md): [노션](https://app.notion.com/p/3f45b2d1a55f809f8951d700d20ddb70). 브랜치 `backend/b-78-coat-identity-warning`. B-77 실제 배포에서 경고로 전환한 무늬가 종합 외형 false로 다시 차단되는 실패를 재현. 별도 외형 관찰·근거 보존으로 정상화하고 실제 구조 결함·불확실은 유지. v33, DB V23 유지. 같은 원본의 실제 독립 관찰과 생산 코드 재생은 통과했으며 배포 서버 승인·앱 재생은 별도 확인한다.

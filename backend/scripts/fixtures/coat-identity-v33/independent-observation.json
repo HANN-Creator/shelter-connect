@@ -1,0 +1,16 @@
+{
+  "views": [
+    {
+      "direction": "south",
+      "photoPattern": "Front-facing dog has a broad white facial blaze, white muzzle and cheeks, white chest and lower legs, with tan coloring across the forehead and outer face.",
+      "spritePattern": "South sprite shows a centered white blaze, white muzzle and lower face, white chest/front area and pale lower paws, with tan forehead and side-face coloring.",
+      "decision": "PRESERVED",
+      "evidence": "The main visible facial and front-body fur patches correspond in position: centered blaze, pale muzzle/chest, and tan surrounding face. Softer pixel-art contrast and simplified patch edges do not remove the markings.",
+      "nonCoatIdentity": {
+        "confidence": 0.86,
+        "evidence": "The sprite preserves upright triangular ears, a short tapered muzzle, and a compact upright front-facing body silhouette. Coat length is simplified by the 32px style but does not show a concrete identity mismatch.",
+        "decision": "PRESERVED"
+      }
+    }
+  ]
+}

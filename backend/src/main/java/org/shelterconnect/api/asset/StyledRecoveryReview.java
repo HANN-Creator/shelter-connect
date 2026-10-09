@@ -45,7 +45,8 @@ final class StyledRecoveryReview {
         view.put("direction",Map.of("type","string","enum",StyledSpriteCodec.DIRECTIONS));
         view.put("observedSpriteMarkings",Map.of("type","string","maxLength",260,"description","First describe the coat patches actually visible in THIS named sprite: forehead, muzzle, chest, legs and body. Observe the pixels before deciding whether any feature is missing. Do not describe desired corrections here."));
         view.put("observedPhotoMarkings",Map.of("type","string","maxLength",260,"description","Now describe the corresponding markings actually visible in the photo. Explicitly distinguish photo-hidden regions from visible ones."));
-        BASE.keySet().stream().sorted().forEach(k->view.put(k,bool()));view.put("confidence",confidence());
+        BASE.keySet().stream().sorted().forEach(k->view.put(k,k.equals("identityMatches")?Map.of("type","boolean","description",
+            "Judge ear form, muzzle silhouette, body proportions and coat length separately from coat markings and style. Report material fur-patch loss with COAT_MISMATCH only; do not duplicate that finding as identityMatches=false or SEED_IDENTITY. Other structural failures remain independent."):bool()));view.put("confidence",confidence());
         view.put("issues",Map.of("type","array","maxItems",10,"items",Map.of("type","string","enum",BASE_CODES)));
         view.put("note",Map.of("type","string","maxLength",400));
         var schema=StyledQualityAgent.object(Map.of("views",Map.of("type","array","minItems",4,"maxItems",4,"items",StyledQualityAgent.object(view)),

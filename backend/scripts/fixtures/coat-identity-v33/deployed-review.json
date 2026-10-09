@@ -1,0 +1,703 @@
+{
+  "note": "사진에서 꼬리는 몸에 가려져 있거나 촬영 범위 밖이라 길이를 판단할 수 없습니다. 양쪽 옆모습의 위로 말린 꼬리 carriage는 서로 일관됩니다.",
+  "model": "gpt-5.6-luna",
+  "views": [
+    {
+      "note": "정면 방향과 눈은 읽히지만 사진의 짙은 볼 마스크가 부족합니다.",
+      "style": "PASS",
+      "direction": "south",
+      "readability": "PASS"
+    },
+    {
+      "note": "후면에 얼굴이 없는 것은 올바르며 숨겨진 사진 부위와 충돌하지 않습니다.",
+      "style": "PASS",
+      "direction": "north",
+      "readability": "NOT_VISIBLE"
+    },
+    {
+      "note": "옆 방향, 흰 가슴과 등 음영이 사진의 확인 가능한 특징과 맞습니다.",
+      "style": "PASS",
+      "direction": "west",
+      "readability": "PASS"
+    },
+    {
+      "note": "반대쪽 옆 방향과 주요 몸 색 배치는 일치합니다.",
+      "style": "PASS",
+      "direction": "east",
+      "readability": "PASS"
+    }
+  ],
+  "issues": [
+    "SEED_IDENTITY"
+  ],
+  "passed": false,
+  "version": "seed-eyes-v1",
+  "identity": "FAIL",
+  "appearance": "FAIL",
+  "reviewedAt": "2026-10-09T22:47:04.884637004Z",
+  "inputSha256": "ff55caf0fd4aa728ec7927adde6c3864f59a43caeeab331c76da5f1bc218df05",
+  "photoSha256": "e9c4cd227b1c4976423b323c32e70f73839bcbb05fc025b3e48294a4d19cde7a",
+  "rulesSha256": "ef1ee356d1dc11b722805a74063137c2d3c49d6c05d9ec67e8685754ecfc3d62",
+  "coatEvidence": {
+    "version": "material-coat-review-v1",
+    "reviewedAt": "2026-10-09T22:47:04.678767938Z",
+    "inputSha256": "ff55caf0fd4aa728ec7927adde6c3864f59a43caeeab331c76da5f1bc218df05",
+    "observation": {
+      "views": [
+        {
+          "decision": "PRESERVED",
+          "evidence": "The main recognizable facial fur patches are retained in the south sprite. The frontal view does not expose enough of the body to establish any missing large body patch, and none is clearly absent.",
+          "direction": "south",
+          "photoPattern": "White facial blaze, white muzzle and white chest against tan/brown fur.",
+          "spritePattern": "White central blaze, white muzzle and white chest are present, with tan/brown surrounding fur."
+        }
+      ]
+    },
+    "photoSha256": "e9c4cd227b1c4976423b323c32e70f73839bcbb05fc025b3e48294a4d19cde7a",
+    "reviewCalls": 1,
+    "rulesSha256": "ef1ee356d1dc11b722805a74063137c2d3c49d6c05d9ec67e8685754ecfc3d62",
+    "propertyReview": {
+      "note": "사진에서 꼬리는 몸에 가려져 있거나 촬영 범위 밖이라 길이를 판단할 수 없습니다. 양쪽 옆모습의 위로 말린 꼬리 carriage는 서로 일관됩니다.",
+      "views": [
+        {
+          "note": "정면 방향과 눈은 읽히지만 사진의 짙은 볼 마스크가 부족합니다.",
+          "issues": [],
+          "direction": "south",
+          "confidence": 0.95,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "coatObservation": {
+            "decision": "PRESERVED",
+            "evidence": "The main recognizable facial fur patches are retained in the south sprite. The frontal view does not expose enough of the body to establish any missing large body patch, and none is clearly absent.",
+            "direction": "south",
+            "photoPattern": "White facial blaze, white muzzle and white chest against tan/brown fur.",
+            "spritePattern": "White central blaze, white muzzle and white chest are present, with tan/brown surrounding fur."
+          },
+          "coatRepairScope": "NONE",
+          "identityMatches": false,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "사진 정면에는 중앙의 흰색 이마 블레이즈와 흰 주둥이가 보이며, 양쪽 눈 주변과 볼에 짙은 갈색 마스크가 뚜렷합니다. 흰 가슴도 보입니다.",
+          "observedSpriteMarkings": "정면 스프라이트에는 황갈색 귀와 머리, 중앙의 넓은 흰색 이마 블레이즈, 흰 주둥이와 가슴이 보입니다. 양쪽 볼은 주로 황갈색이며 사진처럼 뚜렷한 짙은 갈색 안면 마스크는 거의 보이지 않습니다. 두 눈과 작은 어두운 코·입 윤곽이 보입니다.",
+          "coatObservationConflict": true,
+          "coatObservationUncertain": true
+        },
+        {
+          "note": "후면에 얼굴이 없는 것은 올바르며 숨겨진 사진 부위와 충돌하지 않습니다.",
+          "issues": [],
+          "direction": "north",
+          "confidence": 0.86,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "몸 사진에서 황갈색 등, 어두운 등 음영, 밝은 하체는 보이지만 후면의 엉덩이·꼬리·등 세부는 사진에서 가려져 확인할 수 없습니다.",
+          "observedSpriteMarkings": "후면 스프라이트에는 황갈색 등과 귀, 목에서 등으로 이어지는 짙은 갈색 음영, 밝은 황백색 엉덩이와 다리가 보입니다. 얼굴과 눈은 없는 후면입니다."
+        },
+        {
+          "note": "옆 방향, 흰 가슴과 등 음영이 사진의 확인 가능한 특징과 맞습니다.",
+          "issues": [],
+          "direction": "west",
+          "confidence": 0.9,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "몸 사진에는 황갈색 몸통과 어두운 등 음영, 밝은 하체가 보입니다. 얼굴 사진에서는 흰 목·주둥이와 짙은 안면 마스크가 확인되지만 이 옆 각도의 전체 꼬리는 보이지 않습니다.",
+          "observedSpriteMarkings": "왼쪽을 향한 옆모습에는 황갈색 몸통과 짙은 갈색 등·머리 음영, 흰 목과 가슴, 밝은 하체와 다리가 보입니다. 한쪽 눈과 코가 읽히며 꼬리는 등 위로 말려 있습니다."
+        },
+        {
+          "note": "반대쪽 옆 방향과 주요 몸 색 배치는 일치합니다.",
+          "issues": [],
+          "direction": "east",
+          "confidence": 0.9,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "몸 사진에는 황갈색 등과 어두운 등 음영, 밝은 하체가 보입니다. 얼굴 사진에서는 흰 주둥이·목과 짙은 갈색 안면 마스크가 확인되지만 꼬리는 사진에서 보이지 않습니다.",
+          "observedSpriteMarkings": "오른쪽을 향한 옆모습에는 황갈색 몸통, 짙은 갈색 등·머리 음영, 흰 목과 가슴, 밝은 하체가 보입니다. 한쪽 눈과 주둥이가 읽히며 꼬리는 등 위로 말려 있습니다."
+        }
+      ],
+      "photoTail": "OBSCURED",
+      "photoEvidence": "사진에서는 얼굴 중앙의 흰색 블레이즈와 흰 주둥이·가슴, 양쪽의 짙은 갈색 안면 마스크, 황갈색 귀와 등 털이 보입니다. 몸 사진에서는 등 쪽의 어두운 음영과 밝은 하체가 보이지만 꼬리는 보이지 않거나 몸에 가려져 있습니다.",
+      "tailConsistent": true,
+      "repairDescription": "SOUTH: restore the dog’s clearly visible dark brown cheek and eye-area masks around the white blaze and muzzle, while keeping the compact outlined pixel style. The other three views pass based on visible evidence."
+    },
+    "originalPropertyReview": {
+      "note": "사진에서 꼬리는 몸에 가려져 있거나 촬영 범위 밖이라 길이를 판단할 수 없습니다. 양쪽 옆모습의 위로 말린 꼬리 carriage는 서로 일관됩니다.",
+      "views": [
+        {
+          "note": "정면 방향과 눈은 읽히지만 사진의 짙은 볼 마스크가 부족합니다.",
+          "issues": [
+            "COAT_MISMATCH"
+          ],
+          "direction": "south",
+          "confidence": 0.95,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": false,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "사진 정면에는 중앙의 흰색 이마 블레이즈와 흰 주둥이가 보이며, 양쪽 눈 주변과 볼에 짙은 갈색 마스크가 뚜렷합니다. 흰 가슴도 보입니다.",
+          "observedSpriteMarkings": "정면 스프라이트에는 황갈색 귀와 머리, 중앙의 넓은 흰색 이마 블레이즈, 흰 주둥이와 가슴이 보입니다. 양쪽 볼은 주로 황갈색이며 사진처럼 뚜렷한 짙은 갈색 안면 마스크는 거의 보이지 않습니다. 두 눈과 작은 어두운 코·입 윤곽이 보입니다."
+        },
+        {
+          "note": "후면에 얼굴이 없는 것은 올바르며 숨겨진 사진 부위와 충돌하지 않습니다.",
+          "issues": [],
+          "direction": "north",
+          "confidence": 0.86,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "몸 사진에서 황갈색 등, 어두운 등 음영, 밝은 하체는 보이지만 후면의 엉덩이·꼬리·등 세부는 사진에서 가려져 확인할 수 없습니다.",
+          "observedSpriteMarkings": "후면 스프라이트에는 황갈색 등과 귀, 목에서 등으로 이어지는 짙은 갈색 음영, 밝은 황백색 엉덩이와 다리가 보입니다. 얼굴과 눈은 없는 후면입니다."
+        },
+        {
+          "note": "옆 방향, 흰 가슴과 등 음영이 사진의 확인 가능한 특징과 맞습니다.",
+          "issues": [],
+          "direction": "west",
+          "confidence": 0.9,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "몸 사진에는 황갈색 몸통과 어두운 등 음영, 밝은 하체가 보입니다. 얼굴 사진에서는 흰 목·주둥이와 짙은 안면 마스크가 확인되지만 이 옆 각도의 전체 꼬리는 보이지 않습니다.",
+          "observedSpriteMarkings": "왼쪽을 향한 옆모습에는 황갈색 몸통과 짙은 갈색 등·머리 음영, 흰 목과 가슴, 밝은 하체와 다리가 보입니다. 한쪽 눈과 코가 읽히며 꼬리는 등 위로 말려 있습니다."
+        },
+        {
+          "note": "반대쪽 옆 방향과 주요 몸 색 배치는 일치합니다.",
+          "issues": [],
+          "direction": "east",
+          "confidence": 0.9,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "몸 사진에는 황갈색 등과 어두운 등 음영, 밝은 하체가 보입니다. 얼굴 사진에서는 흰 주둥이·목과 짙은 갈색 안면 마스크가 확인되지만 꼬리는 사진에서 보이지 않습니다.",
+          "observedSpriteMarkings": "오른쪽을 향한 옆모습에는 황갈색 몸통, 짙은 갈색 등·머리 음영, 흰 목과 가슴, 밝은 하체가 보입니다. 한쪽 눈과 주둥이가 읽히며 꼬리는 등 위로 말려 있습니다."
+        }
+      ],
+      "photoTail": "OBSCURED",
+      "photoEvidence": "사진에서는 얼굴 중앙의 흰색 블레이즈와 흰 주둥이·가슴, 양쪽의 짙은 갈색 안면 마스크, 황갈색 귀와 등 털이 보입니다. 몸 사진에서는 등 쪽의 어두운 음영과 밝은 하체가 보이지만 꼬리는 보이지 않거나 몸에 가려져 있습니다.",
+      "tailConsistent": true,
+      "repairDescription": "SOUTH: restore the dog’s clearly visible dark brown cheek and eye-area masks around the white blaze and muzzle, while keeping the compact outlined pixel style. The other three views pass based on visible evidence."
+    }
+  },
+  "tailEvidence": {
+    "model": "gpt-5.6-luna",
+    "passed": true,
+    "version": "tail-anatomy-tristate-v2",
+    "decision": "PASS",
+    "geometry": {
+      "east": {
+        "edgeContact": false,
+        "branchVersion": "rear-silhouette-branches-v2",
+        "opaqueComponents": 1,
+        "rearBranchSupport": true,
+        "rearBranchCandidates": [
+          [
+            {
+              "x": 7,
+              "y": 14
+            },
+            {
+              "x": 7,
+              "y": 15
+            },
+            {
+              "x": 7,
+              "y": 16
+            },
+            {
+              "x": 7,
+              "y": 17
+            },
+            {
+              "x": 8,
+              "y": 18
+            },
+            {
+              "x": 9,
+              "y": 18
+            },
+            {
+              "x": 10,
+              "y": 19
+            },
+            {
+              "x": 11,
+              "y": 20
+            }
+          ]
+        ],
+        "clearPixelsLeftTopRightBottom": [
+          2,
+          2,
+          2,
+          2
+        ]
+      },
+      "west": {
+        "edgeContact": false,
+        "branchVersion": "rear-silhouette-branches-v2",
+        "opaqueComponents": 1,
+        "rearBranchSupport": true,
+        "rearBranchCandidates": [
+          [
+            {
+              "x": 24,
+              "y": 14
+            },
+            {
+              "x": 23,
+              "y": 15
+            },
+            {
+              "x": 23,
+              "y": 16
+            },
+            {
+              "x": 23,
+              "y": 17
+            },
+            {
+              "x": 23,
+              "y": 18
+            },
+            {
+              "x": 22,
+              "y": 18
+            },
+            {
+              "x": 21,
+              "y": 19
+            },
+            {
+              "x": 20,
+              "y": 19
+            }
+          ]
+        ],
+        "clearPixelsLeftTopRightBottom": [
+          2,
+          2,
+          2,
+          2
+        ]
+      }
+    },
+    "verdicts": {
+      "east": {
+        "issue": "",
+        "decision": "PASS"
+      },
+      "west": {
+        "issue": "",
+        "decision": "PASS"
+      }
+    },
+    "reviewedAt": "2026-10-09T22:47:14.855901989Z",
+    "inputSha256": "ff55caf0fd4aa728ec7927adde6c3864f59a43caeeab331c76da5f1bc218df05",
+    "observation": {
+      "views": [
+        {
+          "tip": "VISIBLE",
+          "tail": "COMPLETE_CONNECTED",
+          "contour": "DISTINCT",
+          "direction": "west",
+          "attachment": "CONNECTED",
+          "visibleEvidence": "The rump has a connected protruding appendage along its right side. It has a distinct blocky contour and a visible terminal end."
+        },
+        {
+          "tip": "VISIBLE",
+          "tail": "COMPLETE_CONNECTED",
+          "contour": "DISTINCT",
+          "direction": "east",
+          "attachment": "CONNECTED",
+          "visibleEvidence": "The rump has a connected appendage projecting to the left, with a clearly separated contour from the body and a visible end."
+        }
+      ],
+      "photoTail": "OBSCURED",
+      "photoEvidence": "사진에서는 얼굴 중앙의 흰색 블레이즈와 흰 주둥이·가슴, 양쪽의 짙은 갈색 안면 마스크, 황갈색 귀와 등 털이 보입니다. 몸 사진에서는 등 쪽의 어두운 음영과 밝은 하체가 보이지만 꼬리는 보이지 않거나 몸에 가려져 있습니다."
+    },
+    "photoSha256": "e9c4cd227b1c4976423b323c32e70f73839bcbb05fc025b3e48294a4d19cde7a",
+    "reviewCalls": 1,
+    "rulesSha256": "ef1ee356d1dc11b722805a74063137c2d3c49d6c05d9ec67e8685754ecfc3d62",
+    "failedDirections": [],
+    "observationHistory": [
+      {
+        "passed": true,
+        "decision": "PASS",
+        "geometry": {
+          "east": {
+            "edgeContact": false,
+            "branchVersion": "rear-silhouette-branches-v2",
+            "opaqueComponents": 1,
+            "rearBranchSupport": true,
+            "rearBranchCandidates": [
+              [
+                {
+                  "x": 7,
+                  "y": 14
+                },
+                {
+                  "x": 7,
+                  "y": 15
+                },
+                {
+                  "x": 7,
+                  "y": 16
+                },
+                {
+                  "x": 7,
+                  "y": 17
+                },
+                {
+                  "x": 8,
+                  "y": 18
+                },
+                {
+                  "x": 9,
+                  "y": 18
+                },
+                {
+                  "x": 10,
+                  "y": 19
+                },
+                {
+                  "x": 11,
+                  "y": 20
+                }
+              ]
+            ],
+            "clearPixelsLeftTopRightBottom": [
+              2,
+              2,
+              2,
+              2
+            ]
+          },
+          "west": {
+            "edgeContact": false,
+            "branchVersion": "rear-silhouette-branches-v2",
+            "opaqueComponents": 1,
+            "rearBranchSupport": true,
+            "rearBranchCandidates": [
+              [
+                {
+                  "x": 24,
+                  "y": 14
+                },
+                {
+                  "x": 23,
+                  "y": 15
+                },
+                {
+                  "x": 23,
+                  "y": 16
+                },
+                {
+                  "x": 23,
+                  "y": 17
+                },
+                {
+                  "x": 23,
+                  "y": 18
+                },
+                {
+                  "x": 22,
+                  "y": 18
+                },
+                {
+                  "x": 21,
+                  "y": 19
+                },
+                {
+                  "x": 20,
+                  "y": 19
+                }
+              ]
+            ],
+            "clearPixelsLeftTopRightBottom": [
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        },
+        "verdicts": {
+          "east": {
+            "issue": "",
+            "decision": "PASS"
+          },
+          "west": {
+            "issue": "",
+            "decision": "PASS"
+          }
+        },
+        "observation": {
+          "views": [
+            {
+              "tip": "VISIBLE",
+              "tail": "COMPLETE_CONNECTED",
+              "contour": "DISTINCT",
+              "direction": "west",
+              "attachment": "CONNECTED",
+              "visibleEvidence": "The rump has a connected protruding appendage along its right side. It has a distinct blocky contour and a visible terminal end."
+            },
+            {
+              "tip": "VISIBLE",
+              "tail": "COMPLETE_CONNECTED",
+              "contour": "DISTINCT",
+              "direction": "east",
+              "attachment": "CONNECTED",
+              "visibleEvidence": "The rump has a connected appendage projecting to the left, with a clearly separated contour from the body and a visible end."
+            }
+          ],
+          "photoTail": "OBSCURED",
+          "photoEvidence": "사진에서는 얼굴 중앙의 흰색 블레이즈와 흰 주둥이·가슴, 양쪽의 짙은 갈색 안면 마스크, 황갈색 귀와 등 털이 보입니다. 몸 사진에서는 등 쪽의 어두운 음영과 밝은 하체가 보이지만 꼬리는 보이지 않거나 몸에 가려져 있습니다."
+        },
+        "failedDirections": [],
+        "shortTailSupported": false,
+        "uncertainDirections": [],
+        "conflictingDirections": []
+      }
+    ],
+    "shortTailSupported": false,
+    "uncertainDirections": [],
+    "conflictingDirections": []
+  },
+  "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "reviewVersion": "photo-observed-features-review-v4",
+  "edgeDirections": [],
+  "learnedLessons": [],
+  "propertyReview": {
+    "note": "사진에서 꼬리는 몸에 가려져 있거나 촬영 범위 밖이라 길이를 판단할 수 없습니다. 양쪽 옆모습의 위로 말린 꼬리 carriage는 서로 일관됩니다.",
+    "views": [
+      {
+        "note": "정면 방향과 눈은 읽히지만 사진의 짙은 볼 마스크가 부족합니다.",
+        "issues": [],
+        "direction": "south",
+        "confidence": 0.95,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "coatObservation": {
+          "decision": "PRESERVED",
+          "evidence": "The main recognizable facial fur patches are retained in the south sprite. The frontal view does not expose enough of the body to establish any missing large body patch, and none is clearly absent.",
+          "direction": "south",
+          "photoPattern": "White facial blaze, white muzzle and white chest against tan/brown fur.",
+          "spritePattern": "White central blaze, white muzzle and white chest are present, with tan/brown surrounding fur."
+        },
+        "coatRepairScope": "NONE",
+        "identityMatches": false,
+        "directionCorrect": true,
+        "confidenceAdvisory": false,
+        "observedPhotoMarkings": "사진 정면에는 중앙의 흰색 이마 블레이즈와 흰 주둥이가 보이며, 양쪽 눈 주변과 볼에 짙은 갈색 마스크가 뚜렷합니다. 흰 가슴도 보입니다.",
+        "observedSpriteMarkings": "정면 스프라이트에는 황갈색 귀와 머리, 중앙의 넓은 흰색 이마 블레이즈, 흰 주둥이와 가슴이 보입니다. 양쪽 볼은 주로 황갈색이며 사진처럼 뚜렷한 짙은 갈색 안면 마스크는 거의 보이지 않습니다. 두 눈과 작은 어두운 코·입 윤곽이 보입니다.",
+        "coatObservationConflict": true,
+        "coatObservationUncertain": true
+      },
+      {
+        "note": "후면에 얼굴이 없는 것은 올바르며 숨겨진 사진 부위와 충돌하지 않습니다.",
+        "issues": [],
+        "direction": "north",
+        "confidence": 0.86,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "confidenceAdvisory": false,
+        "observedPhotoMarkings": "몸 사진에서 황갈색 등, 어두운 등 음영, 밝은 하체는 보이지만 후면의 엉덩이·꼬리·등 세부는 사진에서 가려져 확인할 수 없습니다.",
+        "observedSpriteMarkings": "후면 스프라이트에는 황갈색 등과 귀, 목에서 등으로 이어지는 짙은 갈색 음영, 밝은 황백색 엉덩이와 다리가 보입니다. 얼굴과 눈은 없는 후면입니다."
+      },
+      {
+        "note": "옆 방향, 흰 가슴과 등 음영이 사진의 확인 가능한 특징과 맞습니다.",
+        "issues": [],
+        "direction": "west",
+        "confidence": 0.9,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "confidenceAdvisory": false,
+        "observedPhotoMarkings": "몸 사진에는 황갈색 몸통과 어두운 등 음영, 밝은 하체가 보입니다. 얼굴 사진에서는 흰 목·주둥이와 짙은 안면 마스크가 확인되지만 이 옆 각도의 전체 꼬리는 보이지 않습니다.",
+        "observedSpriteMarkings": "왼쪽을 향한 옆모습에는 황갈색 몸통과 짙은 갈색 등·머리 음영, 흰 목과 가슴, 밝은 하체와 다리가 보입니다. 한쪽 눈과 코가 읽히며 꼬리는 등 위로 말려 있습니다."
+      },
+      {
+        "note": "반대쪽 옆 방향과 주요 몸 색 배치는 일치합니다.",
+        "issues": [],
+        "direction": "east",
+        "confidence": 0.9,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "confidenceAdvisory": false,
+        "observedPhotoMarkings": "몸 사진에는 황갈색 등과 어두운 등 음영, 밝은 하체가 보입니다. 얼굴 사진에서는 흰 주둥이·목과 짙은 갈색 안면 마스크가 확인되지만 꼬리는 사진에서 보이지 않습니다.",
+        "observedSpriteMarkings": "오른쪽을 향한 옆모습에는 황갈색 몸통, 짙은 갈색 등·머리 음영, 흰 목과 가슴, 밝은 하체가 보입니다. 한쪽 눈과 주둥이가 읽히며 꼬리는 등 위로 말려 있습니다."
+      }
+    ],
+    "photoTail": "OBSCURED",
+    "photoEvidence": "사진에서는 얼굴 중앙의 흰색 블레이즈와 흰 주둥이·가슴, 양쪽의 짙은 갈색 안면 마스크, 황갈색 귀와 등 털이 보입니다. 몸 사진에서는 등 쪽의 어두운 음영과 밝은 하체가 보이지만 꼬리는 보이지 않거나 몸에 가려져 있습니다.",
+    "tailConsistent": true,
+    "aestheticPolicy": "aesthetic-warnings-v1",
+    "qualityWarnings": [
+      {
+        "code": "COAT_APPEARANCE_UNCERTAIN",
+        "blocking": false,
+        "evidence": "The main recognizable facial fur patches are retained in the south sprite. The frontal view does not expose enough of the body to establish any missing large body patch, and none is clearly absent.",
+        "severity": "WARNING",
+        "direction": "south"
+      }
+    ],
+    "repairDescription": "SOUTH: restore the dog’s clearly visible dark brown cheek and eye-area masks around the white blaze and muzzle, while keeping the compact outlined pixel style. The other three views pass based on visible evidence."
+  },
+  "aestheticPolicy": "aesthetic-warnings-v1",
+  "qualityDecision": "CONFIRMED_DEFECT",
+  "qualityWarnings": [
+    {
+      "code": "COAT_APPEARANCE_UNCERTAIN",
+      "blocking": false,
+      "evidence": "The main recognizable facial fur patches are retained in the south sprite. The frontal view does not expose enough of the body to establish any missing large body patch, and none is clearly absent.",
+      "severity": "WARNING",
+      "direction": "south"
+    }
+  ],
+  "recoveryVersion": "photo-grounded-recovery-v1",
+  "marginDirections": [],
+  "repairDescription": "SOUTH: restore the dog’s clearly visible dark brown cheek and eye-area masks around the white blaze and muzzle, while keeping the compact outlined pixel style. The other three views pass based on visible evidence.",
+  "reviewImageHashes": {
+    "Actual body photo": "e9c4cd227b1c4976423b323c32e70f73839bcbb05fc025b3e48294a4d19cde7a",
+    "Actual face photo": "bb16c92b604a3ad697c38f759205451649dfe8eb13d25f8dcedd0fe108ebd537",
+    "Unapproved view: east": "413b6adb90a39d5bf5cbf20dd6504ae82003fd8485cbe5c86fdefacdc46044ce",
+    "Unapproved view: west": "b755a3c4bdd379acd3c258d26a29e5d788185ee60772a33552c1cfbc72e2e1ac",
+    "Unapproved view: north": "8fcb43dd44fa940b2159bd27796e1ec4b0739aadef8a76cda9265a8963cd4992",
+    "Unapproved view: south": "13c9cd3372a9b3935a18bb0f3bf988f29f6a8fcc29877dc32531ca7421525e8c",
+    "Approved art style only; not this dog": "bf5e5641f0768a45f7a87f10bbb5bf26e987dee581b1b2cf4d08d2c4c0cd539c"
+  },
+  "minimumClearPixels": 1,
+  "generalPropertyReview": {
+    "note": "사진에서 꼬리는 몸에 가려져 있거나 촬영 범위 밖이라 길이를 판단할 수 없습니다. 양쪽 옆모습의 위로 말린 꼬리 carriage는 서로 일관됩니다.",
+    "views": [
+      {
+        "note": "정면 방향과 눈은 읽히지만 사진의 짙은 볼 마스크가 부족합니다.",
+        "issues": [],
+        "direction": "south",
+        "confidence": 0.95,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "coatObservation": {
+          "decision": "PRESERVED",
+          "evidence": "The main recognizable facial fur patches are retained in the south sprite. The frontal view does not expose enough of the body to establish any missing large body patch, and none is clearly absent.",
+          "direction": "south",
+          "photoPattern": "White facial blaze, white muzzle and white chest against tan/brown fur.",
+          "spritePattern": "White central blaze, white muzzle and white chest are present, with tan/brown surrounding fur."
+        },
+        "coatRepairScope": "NONE",
+        "identityMatches": false,
+        "directionCorrect": true,
+        "confidenceAdvisory": false,
+        "observedPhotoMarkings": "사진 정면에는 중앙의 흰색 이마 블레이즈와 흰 주둥이가 보이며, 양쪽 눈 주변과 볼에 짙은 갈색 마스크가 뚜렷합니다. 흰 가슴도 보입니다.",
+        "observedSpriteMarkings": "정면 스프라이트에는 황갈색 귀와 머리, 중앙의 넓은 흰색 이마 블레이즈, 흰 주둥이와 가슴이 보입니다. 양쪽 볼은 주로 황갈색이며 사진처럼 뚜렷한 짙은 갈색 안면 마스크는 거의 보이지 않습니다. 두 눈과 작은 어두운 코·입 윤곽이 보입니다.",
+        "coatObservationConflict": true,
+        "coatObservationUncertain": true
+      },
+      {
+        "note": "후면에 얼굴이 없는 것은 올바르며 숨겨진 사진 부위와 충돌하지 않습니다.",
+        "issues": [],
+        "direction": "north",
+        "confidence": 0.86,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "confidenceAdvisory": false,
+        "observedPhotoMarkings": "몸 사진에서 황갈색 등, 어두운 등 음영, 밝은 하체는 보이지만 후면의 엉덩이·꼬리·등 세부는 사진에서 가려져 확인할 수 없습니다.",
+        "observedSpriteMarkings": "후면 스프라이트에는 황갈색 등과 귀, 목에서 등으로 이어지는 짙은 갈색 음영, 밝은 황백색 엉덩이와 다리가 보입니다. 얼굴과 눈은 없는 후면입니다."
+      },
+      {
+        "note": "옆 방향, 흰 가슴과 등 음영이 사진의 확인 가능한 특징과 맞습니다.",
+        "issues": [],
+        "direction": "west",
+        "confidence": 0.9,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "confidenceAdvisory": false,
+        "observedPhotoMarkings": "몸 사진에는 황갈색 몸통과 어두운 등 음영, 밝은 하체가 보입니다. 얼굴 사진에서는 흰 목·주둥이와 짙은 안면 마스크가 확인되지만 이 옆 각도의 전체 꼬리는 보이지 않습니다.",
+        "observedSpriteMarkings": "왼쪽을 향한 옆모습에는 황갈색 몸통과 짙은 갈색 등·머리 음영, 흰 목과 가슴, 밝은 하체와 다리가 보입니다. 한쪽 눈과 코가 읽히며 꼬리는 등 위로 말려 있습니다."
+      },
+      {
+        "note": "반대쪽 옆 방향과 주요 몸 색 배치는 일치합니다.",
+        "issues": [],
+        "direction": "east",
+        "confidence": 0.9,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "confidenceAdvisory": false,
+        "observedPhotoMarkings": "몸 사진에는 황갈색 등과 어두운 등 음영, 밝은 하체가 보입니다. 얼굴 사진에서는 흰 주둥이·목과 짙은 갈색 안면 마스크가 확인되지만 꼬리는 사진에서 보이지 않습니다.",
+        "observedSpriteMarkings": "오른쪽을 향한 옆모습에는 황갈색 몸통, 짙은 갈색 등·머리 음영, 흰 목과 가슴, 밝은 하체가 보입니다. 한쪽 눈과 주둥이가 읽히며 꼬리는 등 위로 말려 있습니다."
+      }
+    ],
+    "photoTail": "OBSCURED",
+    "photoEvidence": "사진에서는 얼굴 중앙의 흰색 블레이즈와 흰 주둥이·가슴, 양쪽의 짙은 갈색 안면 마스크, 황갈색 귀와 등 털이 보입니다. 몸 사진에서는 등 쪽의 어두운 음영과 밝은 하체가 보이지만 꼬리는 보이지 않거나 몸에 가려져 있습니다.",
+    "tailConsistent": true,
+    "aestheticPolicy": "aesthetic-warnings-v1",
+    "qualityWarnings": [
+      {
+        "code": "COAT_APPEARANCE_UNCERTAIN",
+        "blocking": false,
+        "evidence": "The main recognizable facial fur patches are retained in the south sprite. The frontal view does not expose enough of the body to establish any missing large body patch, and none is clearly absent.",
+        "severity": "WARNING",
+        "direction": "south"
+      }
+    ],
+    "repairDescription": "SOUTH: restore the dog’s clearly visible dark brown cheek and eye-area masks around the white blaze and muzzle, while keeping the compact outlined pixel style. The other three views pass based on visible evidence."
+  },
+  "clearPixelsLeftTopRightBottom": {
+    "east": [
+      2,
+      2,
+      2,
+      2
+    ],
+    "west": [
+      2,
+      2,
+      2,
+      2
+    ],
+    "north": [
+      7,
+      2,
+      7,
+      1
+    ],
+    "south": [
+      6,
+      4,
+      6,
+      1
+    ]
+  }
+}
