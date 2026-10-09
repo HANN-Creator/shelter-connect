@@ -1,0 +1,540 @@
+{
+  "note": "북쪽을 향한 정지 동작과 외형은 유지되지만, 프레임 2~7에서 꼬리 말림 형태가 변해 정지 꼬리 조건을 위반합니다.",
+  "model": "gpt-5.6-luna",
+  "action": "IDLE",
+  "frames": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "issues": [
+    "ACTION_MISSING",
+    "DISCONTINUITY",
+    "IDENTITY_DRIFT",
+    "IDLE_MOTION",
+    "TAIL_CARRIAGE"
+  ],
+  "passed": false,
+  "version": "sprite-quality-v1",
+  "direction": "north",
+  "edgeFrames": [],
+  "reviewedAt": "2026-10-09T12:47:10.251768Z",
+  "seedHashes": {
+    "east": "8f6f7f49aa3a73063f55ef59bde0409d4e8c3ab2f01aa5c072e9446a366156f5",
+    "west": "81f256fb4aead87334508fd00f5798e30ab733fe46b18a4917b3532cad0bd9f9",
+    "north": "35f3c2dea252fbb0c840b37c45e972d54dff92d0f92085dc7c2535001e0eb63c",
+    "south": "4d33c8ef0a6f2e6461fa547101805291e003a6a4bc7244d18cad775ba2742e20"
+  },
+  "frameHashes": [
+    "a7f1777bc9acd4669202b48cf3041ba71767def7498cc8ff169306aa5e65231a",
+    "534ab886e9d9a9c76e3a27c95109766198e916081651aa2a521514527de86d17",
+    "7778115ee128a282bbd913b1af5dec3b160b6cebae8f80774370b933aa97f08c",
+    "911ca8c1cf9d1827a7a1aeebef2f33070915d186fecae4bac6bbb1cc2b80f153",
+    "7dc968ec3eeb7ea88eb22a1fe45395f078d7bbfed5b56eea20aa0f6b233524dc",
+    "93ba407361a94c38f4da2030379b670386f4f3a42701354665ced997cf939157",
+    "e8d00b8d02f21ad9e69ce8a1c6950e56143cc7d71cd5b3940bc1fec423382330",
+    "07218267def1b0d858b4a5e9c428698d4482c45ef211f2bd8c78fff409e44786",
+    "2a2f0b74fe5c9fcc29487881f481e6f0b4533a7ce48c6d93876c77b7aaa10e77"
+  ],
+  "inputSha256": "75999b4289bdb227f3c982f8d9104f43e34ef4922e600061534dd7ee78c57f81",
+  "rulesSha256": "85df6bc0e10250f32ea66a6c07064250a64b9632deafcc956db27368ea58071f",
+  "reviewLayout": "matched-seed-nine-pairs-v2",
+  "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "pixelEvidence": {
+    "version": "native-frame-delta-v1",
+    "reference": "frame0",
+    "frameCount": 9,
+    "alphaStable": false,
+    "boundsExclusive": [
+      [
+        12,
+        6,
+        29,
+        34
+      ],
+      [
+        12,
+        6,
+        29,
+        34
+      ],
+      [
+        12,
+        6,
+        29,
+        34
+      ],
+      [
+        12,
+        6,
+        29,
+        34
+      ],
+      [
+        12,
+        6,
+        29,
+        34
+      ],
+      [
+        12,
+        6,
+        29,
+        34
+      ],
+      [
+        12,
+        6,
+        29,
+        34
+      ],
+      [
+        12,
+        6,
+        29,
+        34
+      ],
+      [
+        12,
+        6,
+        29,
+        34
+      ]
+    ],
+    "subtleShadingOnly": false,
+    "maxVisibleRgbDelta": 254,
+    "maxRgbDeltaFromFrame0": [
+      0,
+      213,
+      251,
+      251,
+      254,
+      254,
+      254,
+      213,
+      209
+    ],
+    "alphaChangedFromFrame0": [
+      0,
+      0,
+      2,
+      2,
+      2,
+      2,
+      2,
+      0,
+      0
+    ],
+    "maxRgbDeltaFromPrevious": [
+      0,
+      213,
+      251,
+      23,
+      217,
+      211,
+      22,
+      254,
+      213
+    ],
+    "alphaChangedFromPrevious": [
+      0,
+      0,
+      2,
+      0,
+      0,
+      0,
+      0,
+      2,
+      0
+    ],
+    "rgbChangedPixelsFromFrame0": [
+      0,
+      334,
+      334,
+      333,
+      305,
+      340,
+      344,
+      334,
+      312
+    ]
+  },
+  "rawEditReview": {
+    "note": "정지 상태에서 몸과 꼬리 자세 변화 없이 넓은 털 색상이 프레임마다 크게 깜빡여 조용한 idle 움직임으로 보기 어렵습니다.",
+    "model": "gpt-5.6-luna",
+    "frames": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "issues": [
+      "ACTION_MISSING",
+      "IDENTITY_DRIFT",
+      "IDLE_MOTION"
+    ],
+    "passed": false,
+    "version": "sprite-quality-v1",
+    "edgeFrames": [],
+    "reviewedAt": "2026-10-09T12:47:18.859589Z",
+    "rulesSha256": "85df6bc0e10250f32ea66a6c07064250a64b9632deafcc956db27368ea58071f",
+    "reviewLayout": "matched-seed-nine-pairs-v2",
+    "pixelEvidence": {
+      "version": "native-frame-delta-v1",
+      "reference": "frame0",
+      "frameCount": 9,
+      "alphaStable": false,
+      "boundsExclusive": [
+        [
+          12,
+          6,
+          29,
+          34
+        ],
+        [
+          12,
+          6,
+          29,
+          34
+        ],
+        [
+          12,
+          6,
+          29,
+          34
+        ],
+        [
+          12,
+          6,
+          29,
+          34
+        ],
+        [
+          12,
+          6,
+          29,
+          34
+        ],
+        [
+          12,
+          6,
+          29,
+          34
+        ],
+        [
+          12,
+          6,
+          29,
+          34
+        ],
+        [
+          12,
+          6,
+          29,
+          34
+        ],
+        [
+          12,
+          6,
+          29,
+          34
+        ]
+      ],
+      "subtleShadingOnly": false,
+      "maxVisibleRgbDelta": 254,
+      "maxRgbDeltaFromFrame0": [
+        0,
+        213,
+        251,
+        251,
+        254,
+        254,
+        254,
+        213,
+        209
+      ],
+      "alphaChangedFromFrame0": [
+        0,
+        0,
+        2,
+        2,
+        2,
+        2,
+        2,
+        0,
+        0
+      ],
+      "maxRgbDeltaFromPrevious": [
+        0,
+        213,
+        251,
+        23,
+        217,
+        211,
+        22,
+        254,
+        213
+      ],
+      "alphaChangedFromPrevious": [
+        0,
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "rgbChangedPixelsFromFrame0": [
+        0,
+        334,
+        334,
+        333,
+        305,
+        340,
+        344,
+        334,
+        312
+      ]
+    },
+    "rulesRevision": "sprite-regressions-2026-10-09-v21",
+    "detachedFrames": [],
+    "propertyReview": {
+      "note": "정지 상태에서 몸과 꼬리 자세 변화 없이 넓은 털 색상이 프레임마다 크게 깜빡여 조용한 idle 움직임으로 보기 어렵습니다.",
+      "frames": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "issues": [
+        "IDLE_MOTION"
+      ],
+      "passed": false,
+      "confidence": 0.93,
+      "actionVisible": false,
+      "eyesPreserved": true,
+      "paletteStable": false,
+      "limbsPlausible": true,
+      "tailConsistent": true,
+      "continuityUsable": true,
+      "identityPreserved": true,
+      "directionPreserved": true
+    },
+    "idleMotionFrames": [],
+    "silhouetteFrames": []
+  },
+  "rawEditSha256": "75999b4289bdb227f3c982f8d9104f43e34ef4922e600061534dd7ee78c57f81",
+  "rulesRevision": "sprite-regressions-2026-10-09-v21",
+  "detachedFrames": [],
+  "learnedLessons": [],
+  "propertyReview": {
+    "note": "북쪽을 향한 정지 동작과 외형은 유지되지만, 프레임 2~7에서 꼬리 말림 형태가 변해 정지 꼬리 조건을 위반합니다.",
+    "frames": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "issues": [
+      "TAIL_CARRIAGE"
+    ],
+    "passed": false,
+    "confidence": 0.84,
+    "actionVisible": true,
+    "eyesPreserved": true,
+    "paletteStable": true,
+    "limbsPlausible": true,
+    "tailConsistent": false,
+    "continuityUsable": true,
+    "identityPreserved": true,
+    "directionPreserved": true
+  },
+  "restoredReview": {
+    "note": "북쪽을 향한 정지 동작과 외형은 유지되지만, 프레임 2~7에서 꼬리 말림 형태가 변해 정지 꼬리 조건을 위반합니다.",
+    "model": "gpt-5.6-luna",
+    "frames": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "issues": [
+      "TAIL_CARRIAGE"
+    ],
+    "passed": false,
+    "version": "sprite-quality-v1",
+    "edgeFrames": [],
+    "reviewedAt": "2026-10-09T12:47:10.251768Z",
+    "rulesSha256": "85df6bc0e10250f32ea66a6c07064250a64b9632deafcc956db27368ea58071f",
+    "reviewLayout": "matched-seed-nine-pairs-v2",
+    "pixelEvidence": {
+      "version": "native-frame-delta-v1",
+      "reference": "frame0",
+      "frameCount": 9,
+      "alphaStable": false,
+      "boundsExclusive": [
+        [
+          12,
+          6,
+          29,
+          34
+        ],
+        [
+          12,
+          6,
+          29,
+          34
+        ],
+        [
+          12,
+          6,
+          29,
+          34
+        ],
+        [
+          12,
+          6,
+          29,
+          34
+        ],
+        [
+          12,
+          6,
+          29,
+          34
+        ],
+        [
+          12,
+          6,
+          29,
+          34
+        ],
+        [
+          12,
+          6,
+          29,
+          34
+        ],
+        [
+          12,
+          6,
+          29,
+          34
+        ],
+        [
+          12,
+          6,
+          29,
+          34
+        ]
+      ],
+      "subtleShadingOnly": false,
+      "maxVisibleRgbDelta": 254,
+      "maxRgbDeltaFromFrame0": [
+        0,
+        213,
+        251,
+        251,
+        254,
+        254,
+        254,
+        213,
+        209
+      ],
+      "alphaChangedFromFrame0": [
+        0,
+        0,
+        2,
+        2,
+        2,
+        2,
+        2,
+        0,
+        0
+      ],
+      "maxRgbDeltaFromPrevious": [
+        0,
+        213,
+        251,
+        23,
+        217,
+        211,
+        22,
+        254,
+        213
+      ],
+      "alphaChangedFromPrevious": [
+        0,
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0
+      ],
+      "rgbChangedPixelsFromFrame0": [
+        0,
+        334,
+        334,
+        333,
+        305,
+        340,
+        344,
+        334,
+        312
+      ]
+    },
+    "rulesRevision": "sprite-regressions-2026-10-09-v21",
+    "detachedFrames": [],
+    "propertyReview": {
+      "note": "북쪽을 향한 정지 동작과 외형은 유지되지만, 프레임 2~7에서 꼬리 말림 형태가 변해 정지 꼬리 조건을 위반합니다.",
+      "frames": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "issues": [
+        "TAIL_CARRIAGE"
+      ],
+      "passed": false,
+      "confidence": 0.84,
+      "actionVisible": true,
+      "eyesPreserved": true,
+      "paletteStable": true,
+      "limbsPlausible": true,
+      "tailConsistent": false,
+      "continuityUsable": true,
+      "identityPreserved": true,
+      "directionPreserved": true
+    },
+    "idleMotionFrames": [],
+    "silhouetteFrames": []
+  },
+  "recoveryVersion": "photo-grounded-recovery-v1",
+  "idleMotionFrames": [],
+  "motionSeedSha256": "b7cd86e300f2ff40c236845b0c15774aaebaccdf4ea8ac4b38256b2f793d1af4",
+  "silhouetteFrames": [],
+  "firstFrameUnchanged": false
+}

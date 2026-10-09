@@ -69,6 +69,7 @@ public class StyledLearningRecoveryStore {
     }
     private boolean eligible(StyledAssetStore.Step step,JsonNode policy) {
         return ACTIONS.contains(step.action()) && step.repairCount()>=2 && step.repairCount()<=(step.action().equals("IDLE")?4:3) && step.result()!=null && step.qualityReport()!=null
+            && !StyledMotionReview.unresolved(step.qualityReport())
             && !step.qualityReport().path("passed").asBoolean() && !step.qualityReport().path("issues").isEmpty()
             && step.result().path("sha256").asText().equals(step.qualityReport().path("inputSha256").asText())
             && policy.path("rulesSha256").asText().equals(step.qualityReport().path("rulesSha256").asText());

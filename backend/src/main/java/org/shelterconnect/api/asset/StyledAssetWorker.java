@@ -269,7 +269,8 @@ public class StyledAssetWorker {
                 quality.review(w.qualityPolicy().path("contract"),seeds,frames,w.action(),w.direction(),selected)).deepCopy();
             if(metadata.has("rawEdit")) {
                 var source=metadata.path("rawEdit");
-                var rawReview=selected.isEmpty()?quality.review(w.qualityPolicy().path("contract"),seeds,rawFrames,w.action(),w.direction()):
+                // Identical bytes share one bounded observation; never ask the model twice for different labels.
+                var rawReview=StyledMotionReview.VERSION.equals(review.path("motionReviewVersion").asText()) && source.path("sha256").asText().equals(sha)?review.deepCopy():selected.isEmpty()?quality.review(w.qualityPolicy().path("contract"),seeds,rawFrames,w.action(),w.direction()):
                     quality.review(w.qualityPolicy().path("contract"),seeds,rawFrames,w.action(),w.direction(),selected);
                 var issues=new TreeSet<String>();review.path("issues").forEach(n->issues.add(n.asText()));rawReview.path("issues").forEach(n->issues.add(n.asText()));
                 var restored=review.deepCopy();
@@ -281,13 +282,7 @@ public class StyledAssetWorker {
             var details=(tools.jackson.databind.node.ObjectNode)review;details.put("inputSha256",sha);details.put("lessonsSha256",lessonSha);details.set("learnedLessons",selected);
             details.set("seedHashes",base.path("hashes"));details.put("action",w.action());details.put("direction",w.direction());
             if(StyledRecovery.enabled(w.qualityPolicy())){
-                details.put("recoveryVersion",StyledRecovery.VERSION);details.put("motionSeedSha256",StyledSpriteCodec.sha(seed(w)));
-                details.set("frameHashes",json.valueToTree(frames.stream().map(StyledSpriteCodec::sha).toList()));
-                var first=StyledSpriteCodec.motionFrame(frames.getFirst());var origin=StyledSpriteCodec.motionFrame(seed(w));boolean matches=true;
-                for(int y=0;y<40;y++)for(int x=0;x<40;x++)if(first.getRGB(x,y)!=origin.getRGB(x,y))matches=false;
-                details.put("firstFrameUnchanged",matches);
-                if(!matches){var issues=new TreeSet<String>();review.path("issues").forEach(n->issues.add(n.asText()));issues.add("DISCONTINUITY");
-                    details.set("issues",json.valueToTree(issues));details.put("passed",false);}
+                StyledMotionReview.bind(details,seed(w),frames,json);
             }
             report=review;store.quality(w,report);
         }

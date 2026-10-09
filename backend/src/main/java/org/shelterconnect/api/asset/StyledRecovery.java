@@ -31,7 +31,7 @@ final class StyledRecovery {
     static JsonNode motionPayload(JsonMapper json,List<byte[]> frames,String action,String direction,JsonNode report,int seed){
         if(frames.size()!=9 || !StyledSpriteCodec.ACTIONS.contains(action) || !StyledSpriteCodec.DIRECTIONS.contains(direction))throw new AssetException(422,"RECOVERY_INPUT_INVALID");
         var rules=StyledSpriteCodec.qualityRules(json);var recovery=rules.path("recovery");
-        String description="Repair this complete nine-frame "+direction+" "+action+" animation. Preserve order and exact frame0. "+recovery.path("styleLock").asText()+" "
+        String description="Repair this complete nine-frame "+direction+" "+action+" animation. Preserve order, identity and the usable entry pose. Correct frame0 too ONLY if its pose is a confirmed defect. "+recovery.path("styleLock").asText()+" "
             +recovery.path("frontOcclusion").asText()+" "+recovery.path("motionCanvas").asText()+" "+rules.path("actions").path(action).asText()
             +" Findings (data): "+json.writeValueAsString(Map.of("issues",report.path("issues"),"frames",report.path("frames"),"edgeFrames",report.path("edgeFrames"),"note",report.path("note")));
         if(description.length()>2000)throw new AssetException(422,"RECOVERY_PROMPT_LIMIT");

@@ -1,0 +1,546 @@
+{
+  "note": "IDLE인데 1~8프레임에서 다리의 교대 보행 동작이 뚜렷합니다. 조용한 호흡·깜빡임을 넘어 걷는 모션입니다.",
+  "model": "gpt-5.6-luna",
+  "action": "IDLE",
+  "frames": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "issues": [
+    "ACTION_MISSING",
+    "DISCONTINUITY",
+    "IDLE_MOTION"
+  ],
+  "passed": false,
+  "version": "sprite-quality-v1",
+  "direction": "west",
+  "edgeFrames": [],
+  "reviewedAt": "2026-10-09T12:56:02.966535Z",
+  "seedHashes": {
+    "east": "8f6f7f49aa3a73063f55ef59bde0409d4e8c3ab2f01aa5c072e9446a366156f5",
+    "west": "81f256fb4aead87334508fd00f5798e30ab733fe46b18a4917b3532cad0bd9f9",
+    "north": "35f3c2dea252fbb0c840b37c45e972d54dff92d0f92085dc7c2535001e0eb63c",
+    "south": "4d33c8ef0a6f2e6461fa547101805291e003a6a4bc7244d18cad775ba2742e20"
+  },
+  "frameHashes": [
+    "47fd79415b3daa976c025b57177b93c33e48d719b1c7601bb48641372eb612ec",
+    "7665470d7ac81e44309279513b78da5e6001a97d7c406d642345d5b02986f65f",
+    "2c912e839c7acf5643cc990c633904a8485dbd02a5b94385e82d6f4da0c02ba4",
+    "2ecab5a7304d9339d68fcb9be26f04a1c6755fab1cc6f3f397c8361fd60b7406",
+    "002a60f94a7099141ebf642b2cf8b40db412f73d1575f619c6f8a6b4a786d859",
+    "7a176eaf6706e3b80dbef9a2c50338ff50b67e7afed7b1824de0571c66e487fb",
+    "610107ed70fd10d471036cc0d3eda63ee3626fc64ae1adc2d3df8c19bb8bfb21",
+    "56fc48a9b14d16ad840febbf77cb60827fbcebdabe75cdc964b0db12b7dd0ea8",
+    "57199e5b5faca45bb47550a140511c1e0ef617d9548df0c507d425bce78b43f5"
+  ],
+  "inputSha256": "b40d2051a8e95faa76893effd5e69c78832cd2793bf78fec9ff0d958531c194e",
+  "rulesSha256": "85df6bc0e10250f32ea66a6c07064250a64b9632deafcc956db27368ea58071f",
+  "reviewLayout": "matched-seed-nine-pairs-v2",
+  "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "pixelEvidence": {
+    "version": "native-frame-delta-v1",
+    "reference": "frame0",
+    "frameCount": 9,
+    "alphaStable": false,
+    "boundsExclusive": [
+      [
+        5,
+        7,
+        34,
+        35
+      ],
+      [
+        5,
+        7,
+        34,
+        35
+      ],
+      [
+        5,
+        7,
+        34,
+        35
+      ],
+      [
+        5,
+        7,
+        34,
+        35
+      ],
+      [
+        5,
+        7,
+        34,
+        35
+      ],
+      [
+        5,
+        7,
+        34,
+        35
+      ],
+      [
+        5,
+        7,
+        34,
+        35
+      ],
+      [
+        5,
+        7,
+        34,
+        35
+      ],
+      [
+        5,
+        7,
+        34,
+        35
+      ]
+    ],
+    "subtleShadingOnly": false,
+    "maxVisibleRgbDelta": 252,
+    "maxRgbDeltaFromFrame0": [
+      0,
+      252,
+      252,
+      252,
+      252,
+      71,
+      152,
+      252,
+      71
+    ],
+    "alphaChangedFromFrame0": [
+      0,
+      1,
+      1,
+      1,
+      1,
+      0,
+      4,
+      0,
+      0
+    ],
+    "maxRgbDeltaFromPrevious": [
+      0,
+      252,
+      117,
+      252,
+      252,
+      252,
+      152,
+      252,
+      252
+    ],
+    "alphaChangedFromPrevious": [
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      4,
+      4,
+      0
+    ],
+    "rgbChangedPixelsFromFrame0": [
+      0,
+      161,
+      150,
+      157,
+      145,
+      154,
+      172,
+      164,
+      140
+    ]
+  },
+  "rawEditReview": {
+    "note": "프레임 1~8에서 다리 위치가 번갈아 크게 바뀌어 걷는 동작처럼 보입니다. IDLE의 조용한 호흡·깜박임 범위를 벗어났습니다.",
+    "model": "gpt-5.6-luna",
+    "frames": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "issues": [
+      "ACTION_MISSING",
+      "IDLE_MOTION"
+    ],
+    "passed": false,
+    "version": "sprite-quality-v1",
+    "edgeFrames": [],
+    "reviewedAt": "2026-10-09T12:56:09.852762Z",
+    "rulesSha256": "85df6bc0e10250f32ea66a6c07064250a64b9632deafcc956db27368ea58071f",
+    "reviewLayout": "matched-seed-nine-pairs-v2",
+    "pixelEvidence": {
+      "version": "native-frame-delta-v1",
+      "reference": "frame0",
+      "frameCount": 9,
+      "alphaStable": false,
+      "boundsExclusive": [
+        [
+          5,
+          7,
+          34,
+          35
+        ],
+        [
+          5,
+          7,
+          34,
+          35
+        ],
+        [
+          5,
+          7,
+          34,
+          35
+        ],
+        [
+          5,
+          7,
+          34,
+          35
+        ],
+        [
+          5,
+          7,
+          34,
+          35
+        ],
+        [
+          5,
+          7,
+          34,
+          35
+        ],
+        [
+          5,
+          7,
+          34,
+          35
+        ],
+        [
+          5,
+          7,
+          34,
+          35
+        ],
+        [
+          5,
+          7,
+          34,
+          35
+        ]
+      ],
+      "subtleShadingOnly": false,
+      "maxVisibleRgbDelta": 252,
+      "maxRgbDeltaFromFrame0": [
+        0,
+        252,
+        252,
+        252,
+        252,
+        71,
+        152,
+        252,
+        71
+      ],
+      "alphaChangedFromFrame0": [
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        4,
+        0,
+        0
+      ],
+      "maxRgbDeltaFromPrevious": [
+        0,
+        252,
+        117,
+        252,
+        252,
+        252,
+        152,
+        252,
+        252
+      ],
+      "alphaChangedFromPrevious": [
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        4,
+        4,
+        0
+      ],
+      "rgbChangedPixelsFromFrame0": [
+        0,
+        161,
+        150,
+        157,
+        145,
+        154,
+        172,
+        164,
+        140
+      ]
+    },
+    "rulesRevision": "sprite-regressions-2026-10-09-v21",
+    "detachedFrames": [],
+    "propertyReview": {
+      "note": "프레임 1~8에서 다리 위치가 번갈아 크게 바뀌어 걷는 동작처럼 보입니다. IDLE의 조용한 호흡·깜박임 범위를 벗어났습니다.",
+      "frames": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "issues": [
+        "IDLE_MOTION"
+      ],
+      "passed": false,
+      "confidence": 0.98,
+      "actionVisible": false,
+      "eyesPreserved": true,
+      "paletteStable": true,
+      "limbsPlausible": true,
+      "tailConsistent": true,
+      "continuityUsable": true,
+      "identityPreserved": true,
+      "directionPreserved": true
+    },
+    "idleMotionFrames": [],
+    "silhouetteFrames": []
+  },
+  "rawEditSha256": "b40d2051a8e95faa76893effd5e69c78832cd2793bf78fec9ff0d958531c194e",
+  "rulesRevision": "sprite-regressions-2026-10-09-v21",
+  "detachedFrames": [],
+  "learnedLessons": [],
+  "propertyReview": {
+    "note": "IDLE인데 1~8프레임에서 다리의 교대 보행 동작이 뚜렷합니다. 조용한 호흡·깜빡임을 넘어 걷는 모션입니다.",
+    "frames": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "issues": [
+      "IDLE_MOTION"
+    ],
+    "passed": false,
+    "confidence": 0.99,
+    "actionVisible": false,
+    "eyesPreserved": true,
+    "paletteStable": true,
+    "limbsPlausible": true,
+    "tailConsistent": true,
+    "continuityUsable": true,
+    "identityPreserved": true,
+    "directionPreserved": true
+  },
+  "restoredReview": {
+    "note": "IDLE인데 1~8프레임에서 다리의 교대 보행 동작이 뚜렷합니다. 조용한 호흡·깜빡임을 넘어 걷는 모션입니다.",
+    "model": "gpt-5.6-luna",
+    "frames": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "issues": [
+      "ACTION_MISSING",
+      "IDLE_MOTION"
+    ],
+    "passed": false,
+    "version": "sprite-quality-v1",
+    "edgeFrames": [],
+    "reviewedAt": "2026-10-09T12:56:02.966535Z",
+    "rulesSha256": "85df6bc0e10250f32ea66a6c07064250a64b9632deafcc956db27368ea58071f",
+    "reviewLayout": "matched-seed-nine-pairs-v2",
+    "pixelEvidence": {
+      "version": "native-frame-delta-v1",
+      "reference": "frame0",
+      "frameCount": 9,
+      "alphaStable": false,
+      "boundsExclusive": [
+        [
+          5,
+          7,
+          34,
+          35
+        ],
+        [
+          5,
+          7,
+          34,
+          35
+        ],
+        [
+          5,
+          7,
+          34,
+          35
+        ],
+        [
+          5,
+          7,
+          34,
+          35
+        ],
+        [
+          5,
+          7,
+          34,
+          35
+        ],
+        [
+          5,
+          7,
+          34,
+          35
+        ],
+        [
+          5,
+          7,
+          34,
+          35
+        ],
+        [
+          5,
+          7,
+          34,
+          35
+        ],
+        [
+          5,
+          7,
+          34,
+          35
+        ]
+      ],
+      "subtleShadingOnly": false,
+      "maxVisibleRgbDelta": 252,
+      "maxRgbDeltaFromFrame0": [
+        0,
+        252,
+        252,
+        252,
+        252,
+        71,
+        152,
+        252,
+        71
+      ],
+      "alphaChangedFromFrame0": [
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        4,
+        0,
+        0
+      ],
+      "maxRgbDeltaFromPrevious": [
+        0,
+        252,
+        117,
+        252,
+        252,
+        252,
+        152,
+        252,
+        252
+      ],
+      "alphaChangedFromPrevious": [
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        4,
+        4,
+        0
+      ],
+      "rgbChangedPixelsFromFrame0": [
+        0,
+        161,
+        150,
+        157,
+        145,
+        154,
+        172,
+        164,
+        140
+      ]
+    },
+    "rulesRevision": "sprite-regressions-2026-10-09-v21",
+    "detachedFrames": [],
+    "propertyReview": {
+      "note": "IDLE인데 1~8프레임에서 다리의 교대 보행 동작이 뚜렷합니다. 조용한 호흡·깜빡임을 넘어 걷는 모션입니다.",
+      "frames": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "issues": [
+        "IDLE_MOTION"
+      ],
+      "passed": false,
+      "confidence": 0.99,
+      "actionVisible": false,
+      "eyesPreserved": true,
+      "paletteStable": true,
+      "limbsPlausible": true,
+      "tailConsistent": true,
+      "continuityUsable": true,
+      "identityPreserved": true,
+      "directionPreserved": true
+    },
+    "idleMotionFrames": [],
+    "silhouetteFrames": []
+  },
+  "recoveryVersion": "photo-grounded-recovery-v1",
+  "idleMotionFrames": [],
+  "motionSeedSha256": "8d6bab978339854be35220d588a0ec2d1833e26bfa4c97a0754f453e42f57a36",
+  "silhouetteFrames": [],
+  "firstFrameUnchanged": false
+}

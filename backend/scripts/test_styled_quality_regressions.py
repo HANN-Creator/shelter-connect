@@ -31,6 +31,19 @@ def decode_recorded_alpha(rows):
 
 
 class QualityRegressionTest(unittest.TestCase):
+    def test_motion_reference_and_temporal_conflict_keeps_originals_and_last_frame(self):
+        root=Path(__file__).parent/'fixtures/motion-review-v22'
+        for case in read(root/'evidence.json')['cases']:
+            for key in ('file','seed'):self.assertEqual(digest(root/case[key]),case[key+'Sha256'])
+        seed=Image.new('RGBA',(40,40));seed.paste(Image.open(root/'seeds/west.png').convert('RGBA'),(4,4))
+        im=Image.open(root/'idle-west.png').convert('RGBA');frames=[im.crop((i*40,0,(i+1)*40,40)) for i in range(9)]
+        audit=frame_audit(frames,seed,'IDLE','west','UNKNOWN')
+        self.assertFalse(audit['firstFrameUnchanged']);self.assertTrue(audit['visualReviewRequired'])
+        self.assertEqual(audit['idleMotionFrames'],[])
+        self.assertIn('ACTION_MISSING',frame_audit(frames,seed,'WALK','west','UNKNOWN')['issues'])
+        clipped=Image.open(root/'clipped-last.png').convert('RGBA');frames=[clipped.crop((i*40,0,(i+1)*40,40)) for i in range(9)]
+        self.assertEqual(frame_audit(frames,seed,'IDLE','west','UNKNOWN')['edgeFrames'],[8])
+
     def test_normal_tail_false_rejections_are_audited_not_negative_training_fixtures(self):
         root=Path(__file__).parent/'fixtures/tail-anatomy-v21'
         evidence=read(root/'evidence.json')

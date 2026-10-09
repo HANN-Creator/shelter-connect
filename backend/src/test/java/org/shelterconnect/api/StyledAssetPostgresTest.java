@@ -1670,6 +1670,9 @@ class StyledAssetPostgresTest {
         when(quality.review(any(),anyList(),anyList(),anyString(),anyString())).thenAnswer(c->{outsideTransaction();
             boolean passed=!(failSouthWalk && c.getArgument(3).equals("WALK") && c.getArgument(4).equals("south") && motionCalls.getAndIncrement()==0);
             var report=(tools.jackson.databind.node.ObjectNode)automaticMotionReport(passed);report.put("note",passed?"Synthetic valid verdict":"Frontal tail appears above the head");
+            report.put("motionReviewVersion","motion-observation-tristate-v3").put("motionDecision",passed?"PASS":"CONFIRMED_DEFECT").put("referencePoseUsable",true);
+            report.put("referenceFrameSha256",sha(c.<List<byte[]>>getArgument(1).get(List.of("south","north","west","east").indexOf(c.getArgument(4)))));
+            report.set("reviewedFrameHashes",json.valueToTree(c.<List<byte[]>>getArgument(2).stream().map(this::sha).toList()));
             if(!passed)report.set("issues",json.valueToTree(List.of("TAIL_CARRIAGE")));return report;});
         return UUID.fromString(post(subject,"/v1/shelter-admin/dogs/"+dog+"/styled-assets",automaticInput(),202).at("/data/id").asText());
     }
@@ -1688,6 +1691,18 @@ class StyledAssetPostgresTest {
         assertThat(j.path("status").asText()).isEqualTo("SEED_REVIEW");assertThat(j.path("seedReview").isNull()).isTrue();
         assertThat(j.at("/qualityPolicy/seedTailEvidenceVersion").asText()).isEqualTo("tail-anatomy-tristate-v2");
         verify(provider,never()).submit(eq(false),any());verify(provider,never()).editSeeds(any());
+    }
+    @Test void uncertainMotionStopsPaidRepairsLearningAndFinalApproval()throws Exception {
+        UUID id=recoveryRequest(0,false);
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("west"))).thenAnswer(c->{
+            var r=(tools.jackson.databind.node.ObjectNode)automaticMotionReport(false);r.put("motionDecision","UNCERTAIN");
+            r.set("issues",json.valueToTree(List.of("IDLE_MOTION")));return r;});
+        finish(id);assertThat(read(id).path("status").asText()).isEqualTo("REVIEW");
+        assertThat(step(id,"idle-west").path("repairCount").asInt()).isZero();
+        verify(provider,never()).editAnimation(any());
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=? AND label='idle-west'",Integer.class,id)).isZero();
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_lessons WHERE source_job_id=? AND source_label='idle-west'",Integer.class,id)).isZero();
+        publicStatus(404);
     }
     @Test void recoveryEditsBaseThenOnlyFailedMotionAndPublishesBoundFortyPixelBundle()throws Exception {
         UUID id=recoveryRequest(3,true);finish(id);var j=read(id);
