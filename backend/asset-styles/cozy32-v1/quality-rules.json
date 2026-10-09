@@ -1,5 +1,5 @@
 {
-  "revision": "sprite-regressions-2026-10-10-v29",
+  "revision": "sprite-regressions-2026-10-10-v30",
   "pixelEvidence": {
     "version": "native-frame-delta-v1",
     "subtleRgbChannelDelta": 24
@@ -53,6 +53,15 @@
     "EYES: compare open-eye frames with the approved seed: keep pupil shape, position and local contrast. A brief natural blink is allowed. Eyes that stay erased, become hollow rings, or merge into fur in open-eye frames are IDENTITY_DRIFT. North has no face; do not invent eyes."
   ],
   "regressions": [
+    {
+      "id": "idle-palette-uncertainty-separate-static-candidate",
+      "action": "IDLE",
+      "direction": "ALL",
+      "issue": "MOTION_OBSERVATION_UNCERTAIN",
+      "check": "fresh-approved-static-pose-without-relabeling",
+      "fixture": "native-rgba-v29/idle-west-v29-review.json",
+      "expected": "When the only ambiguous IDLE property is palette and every observation passes all other properties and structural checks, create one separate static IDLE from the approved same-direction BASE without spending a paid repair, even with budget remaining. Keep the original raw/restored uncertainty and all nine frames, receipts and counters; do not learn it as positive or publish it. A new full independent review must pass the exact nine-frame static candidate. Never use for WALK/SIT, any identity/eyes/tail/action/loop ambiguity, clipping or an already-derived static clip. This fallback is available for new jobs and explicitly resumed selected failures; ordinary audits remain byte-preserving."
+    },
     {
       "id": "native-nine-frame-rgba-preservation",
       "action": "ALL",

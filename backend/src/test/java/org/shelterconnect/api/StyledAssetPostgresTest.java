@@ -1803,6 +1803,30 @@ class StyledAssetPostgresTest {
         if(fallbackPass){var manifest=get(null,"/v1/dogs/"+dog+"/assets",200).path("data");assertThat(manifest.at("/mapDirections/UP/IDLE/frames").size()).isEqualTo(9);}
         else publicStatus(404);
     }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans={true,false})
+    void paletteAmbiguityUsesOneFreshStaticIdleWithoutSpendingRemainingPaidBudget(boolean fallbackPass)throws Exception {
+        UUID id=recoveryRequest(0,false);
+        var actual=json.readTree(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/native-rgba-v29/idle-west-v29-review.json")));
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("west"))).thenAnswer(c->{outsideTransaction();
+            boolean derived=jdbc.queryForObject("SELECT COALESCE(provider_result->'derivation'->>'strategy','') FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-west'",String.class,id).equals("approved-seed-idle-hold-v1");
+            if(derived)return b75MotionReport(c.getArgument(1),c.getArgument(2),"west",fallbackPass,fallbackPass?"PASS":"CONFIRMED_DEFECT");
+            var r=(tools.jackson.databind.node.ObjectNode)actual.deepCopy();r.put("rulesSha256",currentRules());
+            r.put("note","Synthetic state transition using archived ambiguity, not real image verification.");return r;
+        });
+        finish(id);var s=step(id,"idle-west");
+        assertThat(read(id).path("status").asText()).isEqualTo(fallbackPass?"APPROVED":"REVIEW");
+        assertThat(s.path("repairCount").asInt()).isZero();
+        assertThat(s.at("/result/derivation/strategy").asText()).isEqualTo("approved-seed-idle-hold-v1");
+        assertThat(s.at("/result/frameHashes").valueStream().map(JsonNode::asText).distinct().count()).isEqualTo(1);
+        var history=json.readTree(jdbc.queryForObject("SELECT attempt_history->-1 FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-west'",String.class,id));
+        assertThat(history.path("idleHoldFallback").asBoolean()).isTrue();assertThat(history.at("/quality/passed").asBoolean()).isFalse();
+        assertThat(history.at("/quality/rawEditReview/motionDecision").asText()).isEqualTo("UNCERTAIN");
+        verify(provider,never()).editAnimation(any());verify(provider,times(12)).submit(eq(false),any());
+        clearInvocations(provider);for(int i=0;i<3;i++)tick();verifyNoInteractions(provider);
+        if(!fallbackPass)publicStatus(404);
+    }
+
     UUID b75HeldPack()throws Exception {
         UUID id=recoveryRequest(0,false);
         when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("south"))).thenAnswer(c->b75MotionReport(c.getArgument(1),c.getArgument(2),"south",false,"UNCERTAIN"));

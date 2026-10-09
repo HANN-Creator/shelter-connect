@@ -741,6 +741,7 @@ public class StyledAssetStore {
         if(w.character() && StyledCoatReview.unresolved(report))return false;
         if(StyledMotionReview.unresolved(report) && !StyledMotionReview.confirmedTailRepair(report) && !StyledMotionReview.confirmedPaletteRepair(report))return false;
         if(w.qualityPolicy()!=null && w.qualityPolicy().path("referenceOnly").asBoolean())return false;
+        if(StyledIdleHold.derived(result))return false; // Static fallback is reviewed once, never converted into another paid edit.
         if(report.path("passed").asBoolean() || w.repairCount()>=StyledRecovery.limit(w.qualityPolicy(),w.character()))return false;
         if(w.character() && StyledSeedRepair.enabled(w.qualityPolicy()) && !"READY".equals(report.at("/seedRepairPlan/status").asText()))return false;
         // The provider finished definitively. Archive the receipt and image before buying a corrective attempt.

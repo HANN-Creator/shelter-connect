@@ -75,6 +75,26 @@ class StyledIdleHoldTest {
         assertThat(StyledIdleHold.replaceableFailure(disputed)).isFalse();
         assertThat(StyledIdleHold.replaceableFailure(json.createObjectNode())).isFalse();
     }
+    @Test void actualPaletteOnlyAmbiguityCanUseAFreshStaticAlternativeWithoutRelabelingTheOldReport()throws Exception {
+        var r=json.readTree(Files.readAllBytes(Path.of("scripts/fixtures/native-rgba-v29/idle-west-v29-review.json")));var old=r.deepCopy();
+        assertThat(StyledIdleHold.paletteOnlyConflict(r)).isTrue();assertThat(r.path("passed").asBoolean()).isFalse();
+        var p=json.createObjectNode().put("recoveryVersion",StyledRecovery.VERSION).put("idleHoldVersion",StyledIdleHold.VERSION)
+            .put("rulesSha256",StyledSpriteCodec.qualityRulesSha()).put("maxRepairsPerClip",3);
+        var previous=json.createObjectNode().put("sha256","a".repeat(64));
+        assertThat(StyledIdleHold.eligible(work("IDLE",2,"PERSISTING",p,previous),r,previous)).isTrue();
+        assertThat(StyledIdleHold.eligible(work("WALK",2,"PERSISTING",p,previous),r,previous)).isFalse();
+        assertThat(StyledIdleHold.eligible(work("IDLE",2,"CHECKING",p,previous),r,previous)).isFalse();
+        for(String field:List.of("edgeFrames","silhouetteFrames","detachedFrames","idleMotionFrames")) {
+            var bad=r.deepCopy();((tools.jackson.databind.node.ObjectNode)bad.path("rawEditReview")).putArray(field).add(8);
+            assertThat(StyledIdleHold.paletteOnlyConflict(bad)).as(field).isFalse();
+        }
+        for(String property:StyledMotionReview.PROPERTIES.keySet())if(!property.equals("palette")) {
+            var bad=r.deepCopy();((tools.jackson.databind.node.ObjectNode)StyledMotionReview.property(bad.at("/rawEditReview/initialVision"),property)).put("state","UNCERTAIN");
+            assertThat(StyledIdleHold.paletteOnlyConflict(bad)).as(property).isFalse();
+        }
+        var missing=r.deepCopy();((tools.jackson.databind.node.ObjectNode)missing.path("rawEditReview")).remove("consistencyReview");
+        assertThat(StyledIdleHold.paletteOnlyConflict(missing)).isFalse();assertThat(r).isEqualTo(old);
+    }
     @Test void realRearWalkTailDefectCanBeRepairedWhileOverlappingIdentityDisagreementStaysUncertain()throws Exception {
         var actual=json.readTree(Files.readAllBytes(root.resolve("walk-north-v26-review.json")));var original=actual.deepCopy();
         assertThat(StyledMotionReview.confirmedTailRepair(actual)).isTrue();assertThat(StyledMotionReview.unresolved(actual)).isTrue();

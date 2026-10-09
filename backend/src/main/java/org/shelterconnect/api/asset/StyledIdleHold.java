@@ -23,9 +23,33 @@ final class StyledIdleHold {
             && StyledSpriteCodec.qualityRulesSha().equals(w.qualityPolicy().path("rulesSha256").asText())
             && Set.of("WAITING","PERSISTING","CHECKING").contains(w.status())
             && (!w.status().equals("CHECKING") || StyledAssetStore.motionResumeAllowed(w))
-            && w.repairCount()==StyledRecovery.limit(w.qualityPolicy(),false)
+            && w.repairCount()<=StyledRecovery.limit(w.qualityPolicy(),false)
             && !derived(result) && !derived(w.providerResult()) && report!=null && !report.path("passed").asBoolean()
-            && replaceableFailure(report) && report.path("issues").isArray() && !report.path("issues").isEmpty();
+            && ((w.repairCount()==StyledRecovery.limit(w.qualityPolicy(),false)
+                && replaceableFailure(report) && report.path("issues").isArray() && !report.path("issues").isEmpty())
+                || paletteOnlyConflict(report));
+    }
+    /** A new exact approved pose removes color animation entirely; it does not settle the old observation. */
+    static boolean paletteOnlyConflict(JsonNode report) {
+        if(report==null || !StyledMotionReview.unresolved(report))return false;
+        var reports=new ArrayList<JsonNode>();reports.add(report);
+        for(String name:List.of("rawEditReview","restoredReview"))if(report.has(name))reports.add(report.path(name));
+        boolean conflict=false;
+        for(var r:reports) {
+            if(!StyledMotionReview.VERSION.equals(r.path("motionReviewVersion").asText()) || !r.path("referencePoseUsable").asBoolean()
+                || !r.path("uncertainProperties").isArray() || r.path("uncertainProperties").valueStream().anyMatch(n->!n.asText().equals("palette"))
+                || !r.path("confirmedProperties").isArray() || r.path("confirmedProperties").valueStream().anyMatch(n->!n.asText().equals("palette")))return false;
+            for(String field:List.of("edgeFrames","silhouetteFrames","detachedFrames","idleMotionFrames"))
+                if(!r.path(field).isArray() || !r.path(field).isEmpty())return false;
+            if(!r.path("issues").isArray() || r.path("issues").valueStream().anyMatch(n->!n.asText().equals("IDENTITY_DRIFT")))return false;
+            conflict|=r.path("uncertainProperties").valueStream().anyMatch(n->n.asText().equals("palette"));
+            int count=r.path("observationCount").asInt();if(count<1 || count>2 || r.has("consistencyReview")!=(count==2))return false;
+            for(String name:count==1?List.of("initialVision"):List.of("initialVision","consistencyReview")) {
+                var observation=r.path(name);
+                try {StyledMotionReview.validate(observation,"IDLE");}catch(AssetException invalid){return false;}
+                if(observation.path("properties").valueStream().anyMatch(p->!p.path("property").asText().equals("palette") && !p.path("state").asText().equals("PASS")))return false;
+            }
+        }return conflict;
     }
     /** Replacing a definitively moving IDLE does not resolve its uncertain loop verdict.
      * The old raw/restored reports remain rejected; the approved seed alternative is reviewed afresh.
