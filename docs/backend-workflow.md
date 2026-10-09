@@ -197,3 +197,5 @@ B-71: [보완된 기본 도트 재검수 상태 분리](repaired-seed-recheck.md
 - B-72 꼬리 좌표 방향별 확대 재검수: [노션](https://app.notion.com/p/3f45b2d1a55f802bb1e5e892c3f653b6), [실제 실패·입력·검증 범위](tail-coordinate-focus.md). 브랜치 `backend/b-72-tail-coordinate-focus`. 불확실한 방향마다 전체 원본·절대 좌표 확대본으로 1회 재관찰, 다른 방향/사진 판정·원본·호출 이력 보존. 실제 동일 강아지 EAST 좌표 재검수 통과. v20, DB/API/그림체/보완 예산 변경 없음. 전체 서버 재검수·12모션·최종 승인은 B-68에서 배포 후 검증.
 
 - B-73 꼬리 관찰 불확실성과 이미지 결함 분리: [노션](https://app.notion.com/p/3f45b2d1a55f80b1a59ceaf47465f365), [처리·비교·실제 검증](tail-anatomy-tristate.md). 브랜치 `backend/b-73-tail-review-tristate`. 코드의 픽셀 검사와 사진/도트 관찰 분리, 충돌 1회 재관찰, 미확정 유료 보완·부정 학습 차단. 공통 규칙 v21, DB 마이그레이션 없음.
+
+- B-74 [기준 도트의 남은 예산으로 보완 재개](seed-repair-resume.md): 별도 요청의 중복·권한·해시·횟수 보존, 얼굴 무늬의 실질 결함 구분과 국소 편집, 실서버 실행 파일 검증. DB V23 유지, 공통 규칙 v25.

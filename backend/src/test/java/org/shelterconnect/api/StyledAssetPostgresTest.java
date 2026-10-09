@@ -1789,6 +1789,55 @@ class StyledAssetPostgresTest {
         assertThat(objects).hasSize(saved.size());
         post(subject,path(id)+"/quality-recheck",body,200);tick();verifyNoInteractions(provider);
     }
+    Map<String,Object> seedResumeBody(UUID id) throws Exception {
+        var j=read(id);return new HashMap<>(Map.of("requestId",UUID.randomUUID().toString(),"note","Resume only with the existing unspent repair budget and preserved original sprites",
+            "expectedSeedHashes",j.at("/steps/0/result/hashes"),"expectedRulesSha256",j.at("/qualityPolicy/rulesSha256").asText()));
+    }
+    @Test void explicitSeedResumePreservesBudgetAndReplaysAfterChangedOutputWithoutBuyingAgain()throws Exception {
+        UUID id=repairedSeedHold(1);var original=step(id,"character").path("result");var body=seedResumeBody(id);
+        var limit=read(id).at("/qualityPolicy/maxSeedRepairs");var calls=new java.util.concurrent.atomic.AtomicInteger();
+        when(seedQuality.reviewRecovery(any(),anyList(),any(),any())).thenAnswer(c->{outsideTransaction();boolean pass=calls.getAndIncrement()>0;
+            var r=(tools.jackson.databind.node.ObjectNode)automaticSeedReport(c.getArgument(1),pass);
+            r.put("recoveryVersion","photo-grounded-recovery-v1").put("appearance",pass?"PASS":"FAIL").put("repairDescription","Restore only the missing facial patch in the south view.");
+            var views=json.createArrayNode();for(String d:List.of("south","north","west","east")){
+                var v=json.createObjectNode().put("direction",d).put("confidence",.95);
+                for(String f:List.of("identityMatches","eyesReadable","styleMatches","directionCorrect","tailPlausible"))v.put(f,true);
+                v.set("issues",json.valueToTree(!pass && d.equals("south")?List.of("COAT_MISMATCH"):List.of()));views.add(v);
+            }
+            r.set("propertyReview",json.valueToTree(Map.of("views",views,"tailConsistent",true)));return r;});
+        clearInvocations(provider);post(subject,path(id)+"/seed-repair-resume",body,200);post(subject,path(id)+"/seed-repair-resume",body,200);
+        finish(id);assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
+        assertThat(step(id,"character").path("repairCount").asInt()).isEqualTo(2);
+        assertThat(read(id).at("/qualityPolicy/maxSeedRepairs")).isEqualTo(limit);
+        for(String d:List.of("north","west","east"))assertThat(step(id,"character").at("/result/hashes/"+d)).isEqualTo(original.at("/hashes/"+d));
+        verify(provider,times(1)).editSeeds(any());verify(provider,times(12)).submit(eq(false),any());
+        clearInvocations(provider);post(subject,path(id)+"/seed-repair-resume",body,200);tick();verifyNoInteractions(provider);
+        var conflict=new HashMap<>(body);conflict.put("note","Changed request must not restart the same completion or spend again");post(subject,path(id)+"/seed-repair-resume",conflict,409);
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"exhausted","stale-seed","stale-rules","motion-started","unauthorized","new-request"})
+    void seedResumeRejectsUnsafeOrDuplicateContinuations(String failure)throws Exception {
+        UUID id=repairedSeedHold(failure.equals("exhausted")?3:1);var body=seedResumeBody(id);UUID who=subject;int expected=409;
+        switch(failure){
+            case "stale-seed" -> body.put("expectedSeedHashes",Map.of("south","0".repeat(64),"north","0".repeat(64),"west","0".repeat(64),"east","0".repeat(64)));
+            case "stale-rules" -> body.put("expectedRulesSha256","1".repeat(64));
+            case "motion-started" -> jdbc.update("UPDATE shelter.styled_asset_steps SET submitted_at=now() WHERE job_id=? AND label='walk-south'",id);
+            case "unauthorized" -> {who=UUID.randomUUID();expected=403;}
+            case "new-request" -> {post(subject,path(id)+"/seed-repair-resume",body,200);body.put("requestId",UUID.randomUUID().toString());}
+        }
+        clearInvocations(provider);post(who,path(id)+"/seed-repair-resume",body,expected);verifyNoInteractions(provider);
+    }
+    @Test void uncertainCoatAfterResumeDoesNotSpendLearnOrApprove()throws Exception {
+        UUID id=repairedSeedHold(1);var body=seedResumeBody(id);
+        when(seedQuality.reviewRecovery(any(),anyList(),any(),any())).thenAnswer(c->{outsideTransaction();
+            var r=(tools.jackson.databind.node.ObjectNode)automaticSeedReport(c.getArgument(1),false);r.put("recoveryVersion","photo-grounded-recovery-v1").put("appearance","UNCERTAIN");
+            r.putObject("propertyReview").putArray("views").addObject().put("direction","south").put("coatObservationUncertain",true);return r;});
+        int examples=jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=?",Integer.class,id);
+        clearInvocations(provider);post(subject,path(id)+"/seed-repair-resume",body,200);tick();
+        assertThat(read(id).path("failureCode").asText()).isEqualTo("SEED_OBSERVATION_UNCERTAIN");
+        assertThat(step(id,"character").path("repairCount").asInt()).isEqualTo(1);verifyNoInteractions(provider);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=?",Integer.class,id)).isEqualTo(examples);
+    }
     UUID failedRepairedSeedRecheck()throws Exception {
         UUID id=repairedSeedHold(1);var body=seedRecheckBody(id);
         post(subject,path(id)+"/quality-recheck",body,200);

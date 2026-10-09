@@ -55,7 +55,7 @@ public class StyledAssetWorker {
                         StyledSpriteCodec.nativeFrame(image);seeds.add(image);
                     }
                     // An explicit rule recheck only judges stored bytes; it never buys a new character.
-                    inspectSeeds(w,seeds,w.result(),false);return;
+                    inspectSeeds(w,seeds,w.result(),StyledAssetStore.seedResumeAllowed(w));return;
                 }
                 byte[] sheet=storage.asset(w.result().path("key").asText());
                 if(!StyledSpriteCodec.sha(sheet).equals(w.result().path("sha256").asText()))throw new AssetException(409,"STYLED_SHEET_CHANGED");

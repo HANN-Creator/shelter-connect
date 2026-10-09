@@ -61,6 +61,7 @@ final class StyledRecoveryReview {
         }catch(AiFailure e){throw new AssetException(502,"QUALITY_"+e.code());}
         if(!r.path("views").isArray() || r.path("views").size()!=4 || !r.path("tailConsistent").isBoolean()
             || !text(r.path("note"),600) || !text(r.path("repairDescription"),1100))throw invalid();
+        var coat=StyledCoatReview.review(client,json,photo,seeds,traits,r);r=coat.path("propertyReview");
         var issues=new TreeSet<String>();var seen=new HashSet<String>();var views=json.createArrayNode();
         for(var v:r.path("views")) {
             String d=v.path("direction").asText();if(!StyledSpriteCodec.DIRECTIONS.contains(d) || !seen.add(d) || !text(v.path("note"),400)
@@ -91,6 +92,8 @@ final class StyledRecoveryReview {
         report.set("issues",json.valueToTree(issues));report.set("edgeDirections",json.valueToTree(edges));report.set("views",views);
         report.set("propertyReview",r);report.set("learnedLessons",lessons);report.put("lessonsSha256",StyledSpriteCodec.sha(json.writeValueAsBytes(lessons)));
         var hashes=new LinkedHashMap<String,String>();images.forEach((k,v)->hashes.put(k,StyledSpriteCodec.sha(v)));report.set("reviewImageHashes",json.valueToTree(hashes));
+        report.set("coatEvidence",coat);
+        if(StyledCoatReview.unresolved(report))report.put("passed",false);
         StyledTailAnatomy.merge(json,report,StyledTailAnatomy.review(client,properties,json,photo,seeds,r));return report;
     }
     static Map<String,byte[]> seedImages(byte[] photo,List<byte[]> seeds,JsonNode traits) {
