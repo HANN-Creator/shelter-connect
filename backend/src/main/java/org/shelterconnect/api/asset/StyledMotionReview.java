@@ -32,8 +32,9 @@ final class StyledMotionReview {
         var rules=StyledSpriteCodec.qualityRules(json);var evidence=StyledQualityAgent.pixelEvidence(frames,rules,json);
         var lower=lowerBodyEvidence(frames,json);
         var color=colorEvidence(frames,json);
-        var images=images(seed,frames);var schema=schema(action);var invalidResponses=json.createArrayNode();
+        var images=images(seeds,frames,direction,rules);var schema=schema(action);var invalidResponses=json.createArrayNode();
         String task="Action="+action+", facing="+direction+", tail contract="+contract.path("tailCarriage").asText()+". "
+            +viewpoint(rules,direction)+" "
             +"REFERENCE is identity/entry-pose only, NEVER an animation frame. TEMPORAL contains only the nine actual frames, numbered 0..8. "
             +"Judge changes in motion only between TEMPORAL frames. Native measurements (not verdicts): "+json.writeValueAsString(evidence)
             +". Lower-body alpha and dark-contour measurements: "+json.writeValueAsString(lower)
@@ -88,6 +89,8 @@ final class StyledMotionReview {
             .put("rulesRevision",rules.path("revision").asText()).put("rulesSha256",StyledSpriteCodec.qualityRulesSha())
             .put("note",decision.equals("PASS")?"기준 외형과 실제 프레임 간 움직임 검수 통과":decision.equals("UNCERTAIN")?"독립 관찰 불일치 또는 관찰 불확실; 자동 보완과 학습 보류":"독립 관찰에서 동일 결함 확인");
         out.put("aestheticPolicy",StyledAestheticPolicy.VERSION);out.set("qualityWarnings",warnings);
+        out.put("viewpointProtocolVersion",rules.at("/recovery/motionViewpoint/version").asText());
+        out.put("requestedView",rules.at("/recovery/motionViewpoint/labels/"+direction).asText());
         out.set("issues",json.valueToTree(issues));out.set("frames",json.valueToTree(flagged));out.set("uncertainProperties",json.valueToTree(uncertain));
         out.set("confirmedProperties",confirmed);out.set("edgeFrames",json.valueToTree(edges));out.set("silhouetteFrames",json.valueToTree(upper));
         out.set("detachedFrames",json.valueToTree(detached));out.set("idleMotionFrames",json.valueToTree(idle));out.set("pixelEvidence",evidence);
@@ -304,6 +307,27 @@ final class StyledMotionReview {
         for(int i=0;i<9;i++){int x=i%3*240,y=i/3*264;g.drawString("ACTUAL FRAME "+i,x+8,y+20);g.drawImage(StyledSpriteCodec.motionFrame(frames.get(i)),x,y+24,240,240,null);}g.dispose();
         var images=new LinkedHashMap<String,byte[]>();images.put("REFERENCE only, never part of the timeline",StyledSpriteCodec.png(reference));
         images.put("TEMPORAL actual frames 0 through 8 only",StyledSpriteCodec.png(temporal));return images;
+    }
+    static String viewpoint(JsonNode rules,String direction) {
+        String label=rules.at("/recovery/motionViewpoint/labels/"+direction).asText();
+        if(!StyledSpriteCodec.DIRECTIONS.contains(direction) || label.isBlank())throw invalid();
+        return "Requested camera view: "+label+". "+rules.at("/recovery/motionViewpoint/instruction").asText();
+    }
+    /** Static anatomical context separates the curled rump tail from frontal eyes/muzzle.
+     * The requested labels are requirements, never evidence that actual pixels face correctly. */
+    static Map<String,byte[]> images(List<byte[]> seeds,List<byte[]> frames,String direction,JsonNode rules) {
+        int index=StyledSpriteCodec.DIRECTIONS.indexOf(direction);
+        if(index<0 || seeds.size()!=4 || frames.size()!=9)throw invalid();
+        var padded=seeds.stream().map(s->StyledSpriteCodec.motionFrame(s).getWidth()==32?StyledSpriteCodec.paddedSeed(s):s).toList();
+        var key=new BufferedImage(960,264,BufferedImage.TYPE_INT_RGB);var g=key.createGraphics();StyledRecoveryReview.paint(g,960,264);
+        for(int i=0;i<4;i++) {
+            String label=rules.at("/recovery/motionViewpoint/labels/"+StyledSpriteCodec.DIRECTIONS.get(i)).asText();
+            g.drawString(label+" reference",i*240+8,20);
+            g.drawImage(StyledSpriteCodec.motionFrame(padded.get(i)),i*240,24,240,240,null);
+        }g.dispose();
+        var result=new LinkedHashMap<String,byte[]>();
+        result.put("VIEW KEY: four approved static camera views, NOT motion frames",StyledSpriteCodec.png(key));
+        result.putAll(images(padded.get(index),frames));return result;
     }
     private static AssetException invalid(){return new AssetException(502,"QUALITY_MOTION_RESPONSE_INVALID");}
 }

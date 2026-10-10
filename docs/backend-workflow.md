@@ -210,3 +210,5 @@ B-71: [보완된 기본 도트 재검수 상태 분리](repaired-seed-recheck.md
 
 - B-79 [확정 꼬리 결함과 외형 불확실의 보완 충돌](confirmed-tail-repair.md): [노션](https://app.notion.com/p/3f55b2d1a55f807ba8a5daa70a8c574b). 브랜치 `backend/b-79-confirmed-tail-repair`. v33 정면 IDLE의 실제 9프레임과 두 관찰로 재현. 같은 프레임의 확정 꼬리 결함 보완과 중복 외형 불확실을 분리하되 원래 승인·학습 차단과 예산을 유지. v34, DB V23 유지. 새 후보의 실제 품질·최종 승인·앱 재생은 배포 후 확인한다.
 - B-80 [검수 시간 초과 복구](quality-timeout-recovery.md): [노션](https://app.notion.com/p/3f55b2d1a55f80c0b714f228b2e17ffe). 브랜치 `backend/b-80-quality-timeout-recovery`. 저장된 검수 자료의 제한적 재시도와 소속 담당자의 해시 확인 복구. 이미지·판정·보완 예산 보존, DB V23·품질 규칙 v34 유지. 실제 전체 완료는 배포 후 별도 검증.
+
+- B-81 후면을 얼굴로 오인하는 동작 검수: [노션](https://app.notion.com/p/3f55b2d1a55f80f7acdee2150340f848), [시점 맥락과 검증 경계](camera-view-motion-review.md). 브랜치 `backend/b-81-direction-aware-motion-review`. 실제 v34 후면 오인 자료 보존, 카메라 기준 4방향 정의·정적 도트 참조 연결, 최초 생성·편집 공통 후면 조건, 원본·결함/불확실성 차단 유지. v35, DB/API 변경 없음. 실제 검수·CI·병합 및 전체 서버 팩 결과는 확인 후 기록.

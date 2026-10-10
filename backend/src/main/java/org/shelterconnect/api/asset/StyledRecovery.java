@@ -34,6 +34,7 @@ final class StyledRecovery {
         var candidate=StyledMotionReview.confirmedTailRepair(report) || StyledMotionReview.confirmedPaletteRepair(report)?null:StyledMotionCandidate.plan(report,action,json);
         var findings=candidate==null?report:candidate;
         String description="Repair this complete nine-frame "+direction+" "+action+" animation. Preserve order, identity and the usable entry pose. Correct frame0 too ONLY if its pose is a confirmed defect. "+recovery.path("styleLock").asText()+" "
+            +(direction.equals("north")?rules.path("rearView").asText()+" ":"")
             +recovery.path("frontOcclusion").asText()+" "+recovery.path("motionCanvas").asText()+" "+rules.path("actions").path(action).asText()
             +" Findings (data): "+json.writeValueAsString(Map.of("issues",findings.path("issues"),"frames",findings.path("frames"),"edgeFrames",report.path("edgeFrames"),"note",
                 candidate!=null?candidate.path("note"):

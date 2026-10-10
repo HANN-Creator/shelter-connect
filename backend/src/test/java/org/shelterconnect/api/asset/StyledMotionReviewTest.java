@@ -163,7 +163,7 @@ class StyledMotionReviewTest {
         try{run(client,"idle-west.png","IDLE");fail("Malformed observation must never pass");}
         catch(AssetException e){assertThat(e.code).isEqualTo("QUALITY_MOTION_RESPONSE_INVALID");
             assertThat(e.diagnostics.path("initialVision")).isEqualTo(valid);assertThat(e.diagnostics.path("invalidResponses").size()).isEqualTo(2);
-            assertThat(e.diagnostics.path("reviewImageHashes").size()).isEqualTo(2);}
+            assertThat(e.diagnostics.path("reviewImageHashes").size()).isEqualTo(3);}
         verify(client,times(3)).structuredImagesWithReasoning(anyString(),anyString(),anyMap(),anyMap(),eq("medium"));
     }
     @Test void malformedLegacyPropertiesAreRejectedAndOnlyApplicableIdleMayFail() {
