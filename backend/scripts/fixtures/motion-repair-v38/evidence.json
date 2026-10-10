@@ -1,0 +1,25 @@
+{
+  "source": "B85 deployed v37 terminal REVIEW: three original held clips, no image modifications",
+  "rulesRevision": "sprite-regressions-2026-10-10-v37",
+  "rulesSha256": "53a28e2db480e258db72e6132ed0fa54a933906e15f856bcaeb082793898feaf",
+  "hashes": {
+    "walk-south-result.json": "8fd1ce5201ad75aca11c8378d57439fd17eccff0a75a45b7b81929e60ced6900",
+    "walk-south.png": "0c84e02d9437eb07442f32e4f8f5b4ce4f3460eed5b777fec84f46bd8a5dbe6a",
+    "walk-south-qualityReport.json": "c00b6c2b28cbef0bf854191272d36549c17674ef1a5995730fab4c8c40309544",
+    "idle-west-result.json": "ecebc32b188d69a3daee4882753c739dbf1f1fec3828e6a73cffdb3a9fa932ca",
+    "sit-south-result.json": "16fd125ad374166b14e48f967d3dac6d481a2e7d2881f11aead8f77f53ee80dc",
+    "idle-west-qualityReport.json": "0bcc62816eec4c3ee692d97a56c17abeb49d391e06ae37b880a33ed92f03f47e",
+    "sit-south.png": "6dcf48606db1b59b4d2ecbc1f04cc071528606197e6a03ff3c165f6d1af0a393",
+    "sit-south-qualityReport.json": "c4675b5a14c65dd72101c041e1fcec57947235058d4d4369efe812dd40b114d0",
+    "idle-west.png": "29cb8d98d4a878cd0edc6b3c373267309d1cafffdfdadc9426b2c2dbf63e8e66",
+    "seeds/west.png": "aef64959300b13b278832d8faef6108d4eea830264dd8edc4ae825333849b87c",
+    "seeds/north.png": "88397489a71e7a2bd24bf0f683c72e527b57f6bb6f501d32e84f77ead2e73c70",
+    "seeds/east.png": "26a23b6b58a24bb71a2908837b98644919af8f9046aa80a5275d32d288e260eb",
+    "seeds/south.png": "24a0b6f5db96ec73bef1b6dec3006b1dd958714962d19688b6a38e8acee16644"
+  },
+  "cases": [
+    "idle-west",
+    "walk-south",
+    "sit-south"
+  ]
+}

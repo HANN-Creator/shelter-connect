@@ -1,0 +1,29 @@
+{
+  "key": "110eacf2-fb82-48e7-9f5a-a32526c0d211/2896c6d7-4809-4275-9e09-43ec4c8ace9c/native-32/sheets/repair-3/idle-west.png",
+  "loop": true,
+  "sha256": "29cb8d98d4a878cd0edc6b3c373267309d1cafffdfdadc9426b2c2dbf63e8e66",
+  "rawEdit": {
+    "key": "110eacf2-fb82-48e7-9f5a-a32526c0d211/2896c6d7-4809-4275-9e09-43ec4c8ace9c/native-32/raw-edits/idle-west-3.png",
+    "sha256": "29cb8d98d4a878cd0edc6b3c373267309d1cafffdfdadc9426b2c2dbf63e8e66"
+  },
+  "frameSize": 40,
+  "durationMs": 140,
+  "frameCount": 9,
+  "frameHashes": [
+    "a415d326409272e8b47ac4199305dc6dc182cfec89e6a4e97b465fa307454ffb",
+    "daa23af270bb751cc4eca45f6937a59cbdbb14f45d41a6257a3a072e47a7c341",
+    "061017805daea8182f74260505c949098a2dfefd81c7d78536481d36a4b2795b",
+    "3929e669e2df8024fb58dc77c7490071b6d67c35cf693f9884ab8e96f9c96965",
+    "a344a61d3e65315252bfcdf5c7df9d98861751f6dc44a87f6139d00cfaf3c832",
+    "864094c84b8e7753e147936b25263c4130526a22d04183a8476d46fbc095a4ab",
+    "a0a31887b02f51682bec735c420df590710383a7deb041631f13bc2cf06cb175",
+    "b8f9bfd6ebc1fbcbd71e878f2cdb42f008b9583a5dc7c25bc379b91235bfff87",
+    "e102d17a074e2184bffa58cfe2babf6292173bae076f50f3c12fd9388ec5734d"
+  ],
+  "providerUsage": {
+    "type": "generations",
+    "generations": 10.0
+  },
+  "recoveryVersion": "photo-grounded-recovery-v1",
+  "motionSeedSha256": "c3f909a42d9efbeb8159c22fae479e47112f831fa48df23ec7786b7507bd0803"
+}

@@ -401,7 +401,7 @@ class QualityRegressionTest(unittest.TestCase):
         traits={'seed':0,'motionDescription':'dog','rearDescription':'rear'}
         p=motion_payload(traits,load_rules(),'SIT','west',{},q)
         self.assertIn(lesson['prevention'],p['description'])
-        self.assertIn('complete tail tucked by haunch INSIDE every frame',p['description'])
+        self.assertIn('Complete tail tucked INSIDE all frames',p['description'])
         self.assertNotIn('last_frame',p)
         self.assertLessEqual(len(p['description']),1000)
         for changes in [{'direction':'east'},{'action':'WALK'},{'tail':'HIGH'},{'rulesSha256':'old'},
@@ -440,7 +440,7 @@ class QualityRegressionTest(unittest.TestCase):
             payload=motion_payload({'seed':0,'motionDescription':'dog','rearDescription':'rear'},load_rules(),
                 'SIT',direction,{}, {'contract':{'tailCarriage':tail},'attempt':attempt,
                                      'issues':['CANVAS_CLIPPING'] if attempt else []})
-            self.assertIn('Keep complete tail tucked by haunch INSIDE every frame',payload['description'])
+            self.assertIn('Complete tail tucked INSIDE all frames',payload['description'])
             self.assertNotIn('last_frame',payload)
             if attempt:self.assertIn(load_quality()['corrections']['CANVAS_CLIPPING'],payload['description'])
 

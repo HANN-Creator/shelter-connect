@@ -2073,6 +2073,68 @@ class StyledAssetPostgresTest {
         }
     }
 
+    byte[] b86Padded(byte[] image) {
+        try {var source=ImageIO.read(new ByteArrayInputStream(image));var padded=new BufferedImage(40,40,BufferedImage.TYPE_INT_ARGB);
+            for(int y=0;y<32;y++)for(int x=0;x<32;x++)padded.setRGB(x+4,y+4,source.getRGB(x,y));
+            var out=new ByteArrayOutputStream();ImageIO.write(padded,"png",out);return out.toByteArray();
+        }catch(IOException e){throw new UncheckedIOException(e);}
+    }
+    JsonNode b86SavedReview(String label,JsonNode current)throws Exception {
+        var old=json.readTree(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/motion-repair-v38/"+label+"-qualityReport.json")));
+        var r=(tools.jackson.databind.node.ObjectNode)current.deepCopy();
+        for(String key:List.of("initialVision","consistencyReview","observationCount","uncertainProperties","confirmedProperties","motionDecision","motionReviewVersion","referencePoseUsable","issues","frames","edgeFrames","silhouetteFrames","detachedFrames","idleMotionFrames"))r.set(key,old.path(key));
+        r.put("passed",false);return r; // Local isolated state fixture; archived observations are not fresh QA.
+    }
+    Map<String,Object> b86ResumeBody(UUID id,String label)throws Exception {
+        return Map.of("requestId",UUID.randomUUID().toString(),"note","Resume only this saved failed motion using its original repair budget and source hashes",
+            "expectedSeedHashes",step(id,"character").at("/result/hashes"),"expectedRulesSha256",currentRules(),
+            "expectedSheetHashes",Map.of(label,step(id,label).at("/result/sha256").asText()),
+            "expectedReviewHashes",Map.of(label,sha(json.writeValueAsBytes(step(id,label).path("qualityReport")))));
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans={true,false})
+    void exhaustedMotionOnlyIdleResumesStaticWithoutPaidRequestOrUnchangedRejudgment(boolean fallbackPass)throws Exception {
+        UUID id=recoveryRequest(0,false);finish(id);var before=read(id);String label="idle-west";
+        var r=b86SavedReview(label,step(id,label).path("qualityReport"));
+        jdbc.update("UPDATE shelter.asset_jobs SET status='REVIEW',quality_approval=NULL,reviewed_at=NULL WHERE id=?",id);
+        jdbc.update("UPDATE shelter.styled_asset_steps SET quality_report=?::jsonb,repair_count=3 WHERE job_id=? AND label=?",r.toString(),id,label);
+        var body=b86ResumeBody(id,label);clearInvocations(provider,quality,seedQuality);
+        post(UUID.randomUUID(),path(id)+"/motion-candidate-repair",body,403);
+        post(subject,path(id)+"/motion-candidate-repair",body,200);post(subject,path(id)+"/motion-candidate-repair",body,200);
+        tick();verifyNoInteractions(provider,quality,seedQuality);
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("west"))).thenAnswer(c->b75MotionReport(c.getArgument(1),c.getArgument(2),"west",fallbackPass,fallbackPass?"PASS":"CONFIRMED_DEFECT"));
+        finish(id);var after=step(id,label);
+        assertThat(after.path("repairCount").asInt()).isEqualTo(3);
+        assertThat(after.at("/result/derivation/motionKind").asText()).isEqualTo("STATIC_IDLE");
+        assertThat(read(id).path("status").asText()).isEqualTo(fallbackPass?"APPROVED":"REVIEW");
+        for(var old:before.path("steps"))if(!old.path("label").asText().equals(label))assertThat(step(id,old.path("label").asText())).isEqualTo(old);
+        verifyNoInteractions(provider,seedQuality);verify(quality,times(1)).review(any(),anyList(),anyList(),eq("IDLE"),eq("west"));
+        if(!fallbackPass){assertThat(read(id).path("qualityApproval").isNull()).isTrue();publicStatus(404);}
+        clearInvocations(provider,quality);for(int i=0;i<3;i++)tick();verifyNoInteractions(provider,quality);
+    }
+    @Test void confirmedSeatedEntryRestartsMiniMaxFromApprovedStandingSeedAndSpendsOnlyOneRemainingAttempt()throws Exception {
+        UUID id=recoveryRequest(0,false);finish(id);var before=read(id);String label="sit-south";
+        var r=b86SavedReview(label,step(id,label).path("qualityReport"));
+        jdbc.update("UPDATE shelter.asset_jobs SET status='REVIEW',quality_approval=NULL,reviewed_at=NULL WHERE id=?",id);
+        jdbc.update("UPDATE shelter.styled_asset_steps SET quality_report=?::jsonb,repair_count=1 WHERE job_id=? AND label=?",r.toString(),id,label);
+        var body=b86ResumeBody(id,label);clearInvocations(provider,codec,quality,seedQuality);
+        when(provider.submit(eq(false),any())).thenAnswer(c->{outsideTransaction();UUID ticket=UUID.randomUUID();var frames=new ArrayList<String>();
+            byte[] padded=b86Padded(png);frames.add(Base64.getEncoder().encodeToString(padded));
+            var image=ImageIO.read(new ByteArrayInputStream(padded));image.setRGB(18,18,0xffaab011);var out=new ByteArrayOutputStream();ImageIO.write(image,"png",out);
+            frames.addAll(Collections.nCopies(8,Base64.getEncoder().encodeToString(out.toByteArray())));
+            doReturn(json.valueToTree(Map.of("status","COMPLETED","frames",frames))).when(provider).poll(eq(ticket),eq(false));return ticket;
+        });
+        when(quality.review(any(),anyList(),anyList(),eq("SIT"),eq("south"))).thenAnswer(c->b75MotionReport(c.getArgument(1),c.getArgument(2),"south",true,"PASS"));
+        post(subject,path(id)+"/motion-candidate-repair",body,200);tick();verifyNoInteractions(provider,quality);
+        finish(id);assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");assertThat(step(id,label).path("repairCount").asInt()).isEqualTo(2);
+        verify(provider,times(1)).submit(eq(false),argThat(payload->payload.at("/last_frame/type").asText().equals("base64")
+            && !payload.at("/last_frame/base64").asText().isBlank()));verify(provider,never()).editAnimation(any());verifyNoInteractions(seedQuality);
+        verify(codec,times(1)).motion(any(),eq("SIT"),eq("south"),argThat(bytes->Arrays.equals(bytes,b86Padded(png))),argThat(p->p.path("attempt").asInt()==0));
+        for(var old:before.path("steps"))if(!old.path("label").asText().equals(label))assertThat(step(id,old.path("label").asText())).isEqualTo(old);
+        String history=jdbc.queryForObject("SELECT attempt_history::text FROM shelter.styled_asset_steps WHERE job_id=? AND label=?",String.class,id,label);
+        assertThat(history).contains("CONFIRMED_ENTRY_RESTART","referencePose");
+    }
+
     JsonNode confirmedMotionConflict()throws Exception {
         var r=json.readTree(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/confirmed-motion-v37/review.json")));
         for(var layer:List.of(r,r.path("rawEditReview"),r.path("restoredReview")))((tools.jackson.databind.node.ObjectNode)layer).put("rulesSha256",currentRules());
