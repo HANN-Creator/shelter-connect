@@ -1,5 +1,5 @@
 {
-  "revision": "sprite-regressions-2026-10-10-v34",
+  "revision": "sprite-regressions-2026-10-10-v35",
   "pixelEvidence": {
     "version": "native-frame-delta-v1",
     "subtleRgbChannelDelta": 24
@@ -12,7 +12,7 @@
   "frontalLowTailPrompt": "Tail stays BELOW the rump: hidden or beside HIND PAWS in front view, never by shoulders/head. Still body/head.",
   "seedMargin": "Leave TWO clear pixels on all four canvas edges for animation; keep the silhouette compact and centered.",
   "commonMotion": "one clear pixel at ALL 32x32 edges. Small inward motion. Fixed camera, size, position, markings, eyes and crisp palette. No props or text.",
-  "rearView": "No visible eyes, nose, mouth or chest. Rear head only in ALL frames, including the final hold; no shoulder glance.",
+  "rearView": "NORTH means REAR, away from camera. No visible eyes, nose, mouth or chest; rear head only in ALL frames; no shoulder glance.",
   "tailCarriage": {
     "LOW": "Tail stays BELOW the rump, never over the back. Front view: hidden behind hind legs, only a low tip may show.",
     "LEVEL": "Tail stays at rump height in every view; wag laterally, never over the back.",
@@ -421,6 +421,24 @@
         "style-alias-warning",
         "original-images-budget-history-preserved"
       ]
+    },
+    {
+      "id": "rear-head-and-tail-misread-as-face-v35",
+      "fixture": "rear-motion-v35/evidence.json",
+      "issue": "IDENTITY_DRIFT",
+      "action": "IDLE",
+      "check": "camera-view-context-and-negative-front-in-rear",
+      "failure": "Deployed NORTH review described eyes and facial markings on the rear head and curled rump tail.",
+      "prevention": "Use camera-relative front/rear/profile descriptions and all four labeled approved references in each independent observation. Preserve actual frame pixels, defect/uncertainty gates and original request limits. A NORTH label must never waive an actual front-facing result.",
+      "assertions": [
+        "real-nine-frame-failure-preserved",
+        "same-context-in-initial-and-independent-review",
+        "all-view-key-pixels-preserved",
+        "rear-without-eyes-not-missing-eyes",
+        "front-in-rear-still-blocked",
+        "real-tail-and-clipping-gates-retained",
+        "generation-and-repair-share-rear-view-rule"
+      ]
     }
   ],
   "tailEdit": {
@@ -531,7 +549,17 @@
     "motionConflictPolicy": "One unprimed re-observation. Reconcile ONLY an initial WALK_RUN claim limited to action/idleStillness when a fully passing independent observation sees STILL/BREATH_BLINK, every lower-third alpha mask is exact, dark contour changes <=1px, and all other/structural checks pass. This is not semantic leg segmentation. All other conflicts remain uncertain; agreed walking claims contradicted by these measurements also remain uncertain. Never waive tail/face/coat defects. A palette-only first failure may be resolved only by an independently all-PASS observation when all18 frame0/previous pairs have median RGB delta0, p90<=the existing subtleRgbChannelDelta24 and p95<=the existing maximumRgbDelta64. Never resolve any accompanying eye/identity/tail/limb/continuity or structural finding with this color distribution.",
     "coatReview": "Judge material coat-pattern identity in native 32px cozy pixel art. Preserve the approved rounded proportions, pastel palette and simple shading. A lighter brown or softer contrast than a photograph is NOT a missing marking. Accept simplified boundaries when the same large fur patches remain recognizable in the corresponding position. FACE_PATTERN_MISSING requires an actually absent or misplaced distinguishing facial patch; stronger contrast alone is insufficient. BODY_PATTERN_MISSING requires an absent or misplaced large body patch. White muzzle, facial blaze, chest and paws are fur, not teeth. Never demand dark eye rings, angry eyebrows, photoreal fur or extra black outlines. Photo-hidden features cannot establish a defect. Return UNCERTAIN if patch presence or photograph correspondence cannot be determined. Judge each direction from its own pixels; do not copy one direction verdict to another.\nUnder aesthetic-warnings-v1, ambiguous contrast, shading and patch-boundary judgments are nonblocking warnings. Return UNCERTAIN for them. FACE_PATTERN_MISSING/BODY_PATTERN_MISSING still require a clearly absent or misplaced distinguishing patch. Do not disguise a style preference as a missing patch.\nObserve nonCoatIdentity independently: ear form, muzzle silhouette, body proportions and coat length. Do not re-label ambiguous fur color, patch contrast, shading or style as an anatomy or identity failure. PRESERVED requires concrete visual correspondence apart from coat markings; use UNCERTAIN when that cannot be assessed, and MISMATCH only for a concrete non-coat discrepancy.",
     "coatPrevention": "Preserve white/colored patch positions in the soft palette; no dark eye rings or added brows.",
-    "idleHoldVersion": "approved-seed-idle-hold-v1"
+    "idleHoldVersion": "approved-seed-idle-hold-v1",
+    "motionViewpoint": {
+      "version": "camera-view-context-v1",
+      "instruction": "Map directions describe the dog relative to the camera: SOUTH is FRONT toward the viewer; NORTH is REAR facing away; WEST is a LEFT-facing profile; EAST is a RIGHT-facing profile. VIEW KEY contains four approved static references, never timeline frames. Use their front-versus-back anatomy to distinguish the rear head, rump and curled tail from a face. A correctly rear-facing dog normally has no visible eyes, nose or muzzle: their absence is not an eyes defect. A curl on the rump is not a mouth and back markings are not eyes. Evaluate identity/palette using the anatomy actually visible in that view. The requested view is a requirement, NOT proof that the generated frames match: a front face appearing in a NORTH clip is a direction/identity defect; do not overlook it. Inspect actual motion and tail changes normally, retain uncertainty when visibility is unclear, and never infer a PASS from the view label.",
+      "labels": {
+        "south": "SOUTH FRONT",
+        "north": "NORTH REAR",
+        "west": "WEST LEFT",
+        "east": "EAST RIGHT"
+      }
+    }
   },
   "aestheticPolicy": {
     "version": "aesthetic-warnings-v1",

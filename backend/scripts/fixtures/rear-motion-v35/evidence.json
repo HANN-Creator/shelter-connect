@@ -1,0 +1,25 @@
+{
+  "source": "Actual deployed B80 same-dog continuation, 2026-10-10; no reroll or image edits for this fixture",
+  "rulesBefore": "603dbd94b26f7a5b4c443a5e7b9f2e72a53cea7f24b0af6eca297148dbc60c7e",
+  "finding": "NORTH rear head and curled tail were mislabeled as a face/eyes. The rear sheet contains no visible eyes or muzzle. Preserve all other defect checks; this finding alone does not approve the entire clip.",
+  "hashes": {
+    "actual-reviews/front-is-not-rear.json": "19ab187ba45e98ac9a11e95ffb4a193d079dd8e3e446e36a37b56264aefe91c7",
+    "actual-reviews/front-padded.json": "b89079ee5b748ed69780134062cf0cc75f5aadc865651f6b738f2a6ffe18f76d",
+    "actual-reviews/rear.json": "85d7743a353fd72f1233a32fd6d2ce36aa51a9606d4c146a57bb5146c051eee5",
+    "idle-north.png": "306bbb91ddf279100d7b91c1e8f8f353d1d6f05210b761dbc35da29615722c95",
+    "idle-south.png": "f9a029c8f6d5fb391d0ea46dec4f1ca580ab6bf214c24acdaa8489790f368336",
+    "previous-north-review.json": "936f293c9dc9f6cdd401ed5429f60b663c97cf77c98d215b6fc55ae5c2f55560",
+    "previous-south-review.json": "34840ebf75aaba79c4fb133537bb2fe349f9d9c54afe9c9fc40b135dc50ba5ca",
+    "seeds/east.png": "26a23b6b58a24bb71a2908837b98644919af8f9046aa80a5275d32d288e260eb",
+    "seeds/north.png": "88397489a71e7a2bd24bf0f683c72e527b57f6bb6f501d32e84f77ead2e73c70",
+    "seeds/south.png": "24a0b6f5db96ec73bef1b6dec3006b1dd958714962d19688b6a38e8acee16644",
+    "seeds/west.png": "aef64959300b13b278832d8faef6108d4eea830264dd8edc4ae825333849b87c"
+  },
+  "actualRulesSha256": "b38cc248d92441eb260aa5f6a6d412e0fb08240ad81a8bd61c31983475f13b54",
+  "actualResults": {
+    "rear": "Eyes/direction PASS in both observations; whole clip UNCERTAIN from other coat/action judgments, not approved",
+    "front-padded": "PASS",
+    "front-is-not-rear": "CONFIRMED_DEFECT including DIRECTION_DRIFT"
+  },
+  "runnerCorrection": "Initial front live harness used32px seed with40px clip, causing local frontalHeadGrowth validation failure after model observation. Original intent retained; corrected front-padded uses the real worker40px contract. This was not a retry of a failed quality verdict."
+}

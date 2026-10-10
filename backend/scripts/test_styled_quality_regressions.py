@@ -31,6 +31,20 @@ def decode_recorded_alpha(rows):
 
 
 class QualityRegressionTest(unittest.TestCase):
+    def test_camera_view_semantics_preserve_rear_fixture_and_first_generation(self):
+        root=Path(__file__).parent/'fixtures/rear-motion-v35'
+        evidence=read(root/'evidence.json')
+        for file,sha in evidence['hashes'].items():self.assertEqual(digest(root/file),sha)
+        rules=load_quality()
+        self.assertEqual(rules['recovery']['motionViewpoint']['labels']['north'],'NORTH REAR')
+        traits={'seed':1,'motionDescription':'dog','rearDescription':'dog seen from behind'}
+        for action in ('IDLE','WALK','SIT'):
+            for attempt in (0,1,2):
+                payload=motion_payload(traits,load_rules(),action,'north',{'type':'base64','base64':'fixture'},
+                    {'contract':{'tailCarriage':'UNKNOWN'},'attempt':attempt,'recoveryVersion':rules['recovery']['version']})
+                self.assertIn(rules['rearView'],payload['description'])
+                self.assertLessEqual(len(payload['description']),1000)
+
     def test_coat_warning_cannot_silently_restore_aggregate_identity_failure(self):
         root=Path(__file__).parent/'fixtures/coat-identity-v33'
         evidence=read(root/'evidence.json');report=read(root/'deployed-review.json')
