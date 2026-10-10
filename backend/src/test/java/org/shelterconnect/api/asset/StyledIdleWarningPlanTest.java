@@ -10,12 +10,14 @@ import static org.assertj.core.api.Assertions.*;
 class StyledIdleWarningPlanTest {
     final StyledMotionRepairEvidenceTest fixture=new StyledMotionRepairEvidenceTest();
     final Path root=StyledMotionRepairEvidenceTest.ROOT.resolve("deployed-warning");
-    ObjectNode report()throws Exception{return (ObjectNode)fixture.json.readTree(Files.readAllBytes(root.resolve("idle-west-review.json")));}
+    ObjectNode archived()throws Exception{return (ObjectNode)fixture.json.readTree(Files.readAllBytes(root.resolve("idle-west-review.json")));}
+    ObjectNode report()throws Exception{return fixture.replayCurrentRules(archived());}
     @Test void actualNonblockingPaletteWarningDoesNotBlockNewStaticCandidateOrAlterOldVerdict()throws Exception {
         var r=report();var before=r.deepCopy();
         var evidence=fixture.json.readTree(Files.readAllBytes(root.resolve("evidence.json")));
         assertThat(StyledSpriteCodec.sha(Files.readAllBytes(root.resolve("idle-west-review.json")))).isEqualTo(evidence.path("reportSha256").asText());
         assertThat(StyledSpriteCodec.sha(Files.readAllBytes(root.resolve("../idle-west.png")))).isEqualTo(evidence.path("imageSha256").asText());
+        assertThat(StyledIdleHold.motionOnlyFailure(archived())).isFalse();
         assertThat(StyledAestheticPolicy.permitsPaletteWarning(r)).isTrue();
         assertThat(StyledIdleHold.motionOnlyFailure(r)).isTrue();
         assertThat(r).isEqualTo(before);assertThat(StyledMotionReview.boundPass(r)).isFalse();

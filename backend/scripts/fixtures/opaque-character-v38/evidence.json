@@ -1,0 +1,95 @@
+{
+  "source": "B-88 fresh deployed canary, 2026-10-11 KST",
+  "animalId": "426333202601103",
+  "rulesRevision": "sprite-regressions-2026-10-11-v38",
+  "rulesSha256": "18305e689493945343289c3ee52547b602d6ae0d0aee32b9e1a7e9f37ab2e8a9",
+  "providerEndpoint": "create-character-pro",
+  "requestedNoBackground": true,
+  "jobStatus": "FAILED",
+  "failureCode": "STYLED_ALPHA_INVALID",
+  "repairCount": 0,
+  "qualityReportCreated": false,
+  "automaticRepairReached": false,
+  "lessonRecorded": false,
+  "imageBytesChanged": false,
+  "published": false,
+  "frames": [
+    {
+      "direction": "south",
+      "size": [
+        32,
+        32
+      ],
+      "sha256": "38327df8788b2af0bf2e7cce476490c37c2e0193c22731b246df4e4eaf3ec987",
+      "visiblePixels": 1024,
+      "clearPixels": 0,
+      "alphaValues": [
+        255
+      ],
+      "boundingBox": [
+        0,
+        0,
+        32,
+        32
+      ]
+    },
+    {
+      "direction": "north",
+      "size": [
+        32,
+        32
+      ],
+      "sha256": "760c8400d172406c981d6bcb6ad0f9689bb5d8937325d4436c21351686b91746",
+      "visiblePixels": 1024,
+      "clearPixels": 0,
+      "alphaValues": [
+        255
+      ],
+      "boundingBox": [
+        0,
+        0,
+        32,
+        32
+      ]
+    },
+    {
+      "direction": "west",
+      "size": [
+        32,
+        32
+      ],
+      "sha256": "ebd5394c0af02978ef6c66d89c96304368e2f00d0936a5c3724f13d1d9f4cd0e",
+      "visiblePixels": 1024,
+      "clearPixels": 0,
+      "alphaValues": [
+        255
+      ],
+      "boundingBox": [
+        0,
+        0,
+        32,
+        32
+      ]
+    },
+    {
+      "direction": "east",
+      "size": [
+        32,
+        32
+      ],
+      "sha256": "e7aa8e8dfa2bcf31da944eec929e1cbbc2af9513aa03a330242f3c1665e27533",
+      "visiblePixels": 1024,
+      "clearPixels": 0,
+      "alphaValues": [
+        255
+      ],
+      "boundingBox": [
+        0,
+        0,
+        32,
+        32
+      ]
+    }
+  ],
+  "limitation": "The provider archive fails structural validation before checkpoint and AI review. Rejection is correct, but v38 has no bounded structural repair path. This fixture does not assert that automatic recovery exists."
+}

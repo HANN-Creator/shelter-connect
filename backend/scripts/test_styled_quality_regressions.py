@@ -7,7 +7,7 @@ from pathlib import Path
 import tempfile
 import unittest
 from PIL import Image, ImageDraw
-from styled_dog.client import digest, read, write
+from styled_dog.client import digest, read, write, native_image
 from styled_dog.pipeline import load_rules, motion_payload, record_review
 from styled_dog.quality import load_quality, quality_binding, frame_audit, audit_run, idle_motion_frames, pixel_evidence, TAILS
 
@@ -31,6 +31,26 @@ def decode_recorded_alpha(rows):
 
 
 class QualityRegressionTest(unittest.TestCase):
+    def test_actual_opaque_character_is_not_an_ai_pass_or_repair(self):
+        root=Path(__file__).parent/'fixtures/opaque-character-v38'
+        evidence=read(root/'evidence.json')
+        self.assertTrue(evidence['requestedNoBackground'])
+        self.assertFalse(evidence['automaticRepairReached'])
+        self.assertFalse(evidence['qualityReportCreated'])
+        self.assertFalse(evidence['imageBytesChanged'])
+        self.assertEqual(evidence['repairCount'],0)
+        for frame in evidence['frames']:
+            path=root/(frame['direction']+'.png')
+            self.assertEqual(digest(path),frame['sha256'])
+            with Image.open(path) as image:
+                self.assertEqual(image.size,(32,32))
+                self.assertEqual(image.convert('RGBA').getchannel('A').getextrema(),(255,255))
+            with self.assertRaisesRegex(ValueError,'transparent background'):
+                native_image(path.read_bytes())
+            self.assertEqual(digest(path),frame['sha256'])
+        self.assertTrue(any(r.get('fixture')=='opaque-character-v38/evidence.json'
+                            for r in load_quality()['regressions']))
+
     def test_exhausted_idle_stillness_conflict_keeps_original_and_fixed_tail_prevention(self):
         root=Path(__file__).parent/'fixtures/idle-stillness-v36'
         receipt=read(root/'evidence.json');report=read(root/'previous-review.json')
