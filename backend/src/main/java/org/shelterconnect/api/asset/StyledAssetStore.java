@@ -412,6 +412,84 @@ public class StyledAssetStore {
               status='QUEUED',failure_code=NULL,next_run_at=now(),lease_token=NULL,lease_until=NULL WHERE id=:id
             """).param("g",json.writeValueAsString(grants)).param("id",id).update();return job(id);
     }
+    private Step failedTimeoutStep(Job j) {
+        if(!j.status().equals("FAILED") || !"QUALITY_AI_TIMEOUT".equals(j.failureCode()) || j.qualityApproval()!=null
+            || j.qualityPolicy()==null || j.qualityPolicy().path("referenceOnly").asBoolean()
+            || !StyledRecovery.enabled(j.qualityPolicy()) || !StyledAutoApproval.enabled(j.qualityPolicy()) || !historicallyApprovedSeed(j))
+            throw new AssetException(409,"QUALITY_TIMEOUT_RESUME_NOT_ALLOWED");
+        var failed=j.steps().stream().filter(s->s.status().equals("FAILED")).toList();
+        if(failed.size()!=1 || failed.getFirst().action().equals("BASE")
+            || j.steps().stream().anyMatch(s->!Set.of("SUCCEEDED","FAILED","PENDING").contains(s.status())))
+            throw new AssetException(409,"QUALITY_TIMEOUT_RESUME_NOT_ALLOWED");
+        return failed.getFirst();
+    }
+    /** Expose only hashes and progress; the cached provider image stays private on the server. */
+    @Transactional public JsonNode qualityTimeoutCheckpoint(UUID subject,UUID dog,UUID id) {
+        access.requireDogForWrite(subject,dog);properties.requireEnabled();lock(id);var j=job(id);
+        if(!j.dogId().equals(dog))throw missing();legacy.valid(id,true);var step=failedTimeoutStep(j);
+        var saved=timeoutCheckpoint(id,step.label());if(!StyledQualityTimeout.started(saved))throw new AssetException(409,"QUALITY_TIMEOUT_CHECKPOINT_MISSING");
+        var value=json.createObjectNode().put("label",step.label()).put("phase",saved.path("phase").asText())
+            .put("checkpointSha256",StyledAutoApproval.digest(saved.path("payload"),json)).put("repairCount",step.repairCount())
+            .put("retriesUsed",timeoutRetries(id,step.label())).put("retryLimit",StyledQualityTimeout.LIMIT)
+            .put("rulesSha256",j.qualityPolicy().path("rulesSha256").asText()).put("currentRulesSha256",StyledSpriteCodec.qualityRulesSha());
+        value.set("seedHashes",j.steps().getFirst().result().path("hashes"));return value;
+    }
+    /** A scoped continuation, never an operator reset or a new image submission. */
+    @Transactional public Job resumeQualityTimeout(UUID subject,UUID dog,UUID id,JsonNode body) {
+        var actor=access.requireDogForWrite(subject,dog);properties.requireEnabled();
+        AssetInput.fields(body,"requestId","note","label","expectedSeedHashes","expectedCheckpointSha256","expectedSheetHashes","expectedRulesSha256");
+        UUID request=AssetInput.id(body,"requestId");String note=AssetInput.text(body,"note",2000),label=AssetInput.text(body,"label",80);
+        String rules=AssetInput.text(body,"expectedRulesSha256",64),digest=AssetInput.text(body,"expectedCheckpointSha256",64);
+        var seeds=body.path("expectedSeedHashes");var sheets=body.path("expectedSheetHashes");
+        if(note.length()<20 || !rules.matches("[a-f0-9]{64}") || !digest.matches("[a-f0-9]{64}") || !seeds.isObject() || seeds.size()!=4
+            || StyledSpriteCodec.DIRECTIONS.stream().anyMatch(d->!seeds.path(d).asText().matches("[a-f0-9]{64}"))
+            || !sheets.isObject() || sheets.size()>32 || sheets.valueStream().anyMatch(s->!s.asText().matches("[a-f0-9]{64}")))throw AssetException.invalid();
+        lock(id);var j=job(id);if(!j.dogId().equals(dog))throw missing();legacy.valid(id,true);var policy=j.qualityPolicy();
+        var grants=json.createArrayNode();if(policy!=null && policy.path("qualityTimeoutResumes").isArray())grants.addAll((tools.jackson.databind.node.ArrayNode)policy.path("qualityTimeoutResumes"));
+        var canonical=(tools.jackson.databind.node.ObjectNode)body.deepCopy();canonical.put("requestId",request.toString());
+        for(var g:grants)if(g.at("/request/requestId").asText().equals(request.toString())) {
+            if(g.path("request").equals(canonical))return j;throw new AssetException(409,"QUALITY_TIMEOUT_RESUME_ALREADY_REQUESTED");
+        }
+        var step=failedTimeoutStep(j);var saved=timeoutCheckpoint(id,label);int used=timeoutRetries(id,label);
+        if(!step.label().equals(label) || !StyledQualityTimeout.started(saved)
+            || !digest.equals(StyledAutoApproval.digest(saved.path("payload"),json))
+            || !seeds.equals(j.steps().getFirst().result().path("hashes")) || !rules.equals(policy.path("rulesSha256").asText()))
+            throw new AssetException(409,"QUALITY_TIMEOUT_RESUME_STALE");
+        if(used>=StyledQualityTimeout.LIMIT || grants.valueStream().anyMatch(g->g.at("/request/label").asText().equals(label)))
+            throw new AssetException(409,"QUALITY_TIMEOUT_RETRIES_EXHAUSTED");
+        boolean changed=!rules.equals(StyledSpriteCodec.qualityRulesSha());
+        if(!changed && !sheets.isEmpty())throw new AssetException(409,"QUALITY_RULES_UNCHANGED");
+        var plans=json.createObjectNode();
+        for(var entry:sheets.properties()) {
+            var held=j.steps().stream().filter(s->s.label().equals(entry.getKey()) && !s.action().equals("BASE") && s.status().equals("SUCCEEDED")).findFirst().orElseThrow(AssetException::invalid);
+            if(!boundQuality(held,policy) || held.qualityReport().path("passed").asBoolean()
+                || !entry.getValue().equals(held.result().path("sha256")))throw new AssetException(409,"MOTION_REPAIR_RESUME_STALE");
+            int limit=StyledRecovery.limit(policy,false);
+            if(held.repairCount()>=limit || StyledIdleHold.derived(held.result()))throw new AssetException(409,"MOTION_REPAIR_BUDGET_EXHAUSTED");
+            plans.putObject(held.label()).put("sha256",entry.getValue().asText()).put("startingRepairCount",held.repairCount()).put("repairLimit",limit);
+        }
+        var grant=grants.addObject().put("requestedBy",actor.userId().toString()).put("requestedAt",Instant.now().toString())
+            .put("rulesSha256",StyledSpriteCodec.qualityRulesSha()).put("startingRepairCount",step.repairCount()).put("checkpointPhase",saved.path("phase").asText());
+        grant.set("request",canonical);grant.set("plans",plans);grant.set("previousSeedApproval",j.seedReview());
+        if(changed)jdbc.sql("""
+            UPDATE shelter.styled_asset_steps SET attempt_history=attempt_history || jsonb_build_array(jsonb_build_object(
+              'qualityTimeoutRulesRecheck',true,'result',result,'quality',quality_report,'repairCount',repair_count,'learnedLessons',learned_lessons)),
+              quality_report=NULL,learned_lessons='[]'::jsonb,status='CHECKING' WHERE job_id=:id AND status='SUCCEEDED'
+            """).param("id",id).update();
+        int delay=StyledQualityTimeout.delay(used);recordTimeoutRetry(id,label,saved,used,delay,true);
+        jdbc.sql("""
+            UPDATE shelter.styled_learning_recoveries SET state='QUEUED',reason='QUALITY_TIMEOUT_RESUME',updated_at=now()
+            WHERE job_id=:id AND label=:l AND state='FAILED' AND reason='QUALITY_AI_TIMEOUT'
+            """).param("id",id).param("l",label).update();
+        jdbc.sql("""
+            UPDATE shelter.asset_jobs SET quality_policy=quality_policy || jsonb_build_object('qualityTimeoutResumes',CAST(:grants AS jsonb),
+              'qualityTimeoutVersion',:version,'rulesSha256',:rules,'rulesRevision',:revision),
+              seed_review=CASE WHEN :changed THEN NULL ELSE seed_review END,status='QUEUED',failure_code=NULL,
+              next_run_at=now()+(:delay * interval '1 second'),lease_token=NULL,lease_until=NULL WHERE id=:id
+            """).param("grants",json.writeValueAsString(grants)).param("version",StyledQualityTimeout.VERSION).param("rules",StyledSpriteCodec.qualityRulesSha())
+            .param("revision",StyledSpriteCodec.qualityRules(json).path("revision").asText()).param("changed",changed).param("delay",delay).param("id",id).update();
+        return job(id);
+    }
     private boolean historicallyApprovedSeed(Job j) {
         if(j.steps().isEmpty() || j.seedReview()==null)return false;
         var base=j.steps().getFirst();var r=base.qualityReport();var approval=j.seedReview();
@@ -424,6 +502,12 @@ public class StyledAssetStore {
     }
     static boolean motionResumeAllowed(Work w) {
         if(w.character() || !w.status().equals("CHECKING") || w.qualityPolicy()==null || w.result()==null)return false;
+        for(var grant:w.qualityPolicy().path("qualityTimeoutResumes")) {
+            var plan=grant.path("plans").path(w.label());
+            if(StyledQualityTimeout.enabled(w.qualityPolicy()) && grant.path("rulesSha256").asText().equals(StyledSpriteCodec.qualityRulesSha())
+                && plan.path("sha256").equals(w.result().path("sha256")) && plan.path("startingRepairCount").asInt(-1)==w.repairCount()
+                && plan.path("repairLimit").asInt(-1)==StyledRecovery.limit(w.qualityPolicy(),false))return true;
+        }
         for(var g:w.qualityPolicy().path("motionCandidateResumes")) {
             var p=g.path("plans").path(w.label());
             if(StyledMotionCandidate.enabled(w.qualityPolicy()) && g.path("rulesSha256").asText().equals(StyledSpriteCodec.qualityRulesSha())
@@ -582,7 +666,7 @@ public class StyledAssetStore {
     private Map<String,Object> newSeedQualityPolicy(){var p=seedQualityPolicy();p.put("learningRecovery",StyledLearningRecoveryStore.VERSION);
         p.put("lessonRevision",StyledLessonStore.REVISION_VERSION);p.put("seedMotionMargin",2);p.put("seedEyeRepair",StyledSeedEyeRepair.VERSION);
         p.put("automaticApproval",StyledAutoApproval.VERSION);
-        p.put("aestheticPolicy",StyledAestheticPolicy.VERSION);
+        p.put("aestheticPolicy",StyledAestheticPolicy.VERSION);p.put("qualityTimeoutVersion",StyledQualityTimeout.VERSION);
         var recovery=StyledSpriteCodec.qualityRules(json).path("recovery");
         p.put("recoveryVersion",StyledRecovery.VERSION);p.put("seedRepairVersion",StyledSeedRepair.VERSION);p.put("seedTailEvidenceVersion",StyledTailAnatomy.VERSION);p.put("motionFrameSize",40);p.put("seedMotionMargin",1);
         p.put("maxSeedRepairs",recovery.path("maxSeedRepairs").asInt());p.put("maxRepairsPerClip",recovery.path("maxMotionRepairs").asInt());
@@ -821,6 +905,41 @@ public class StyledAssetStore {
         if(w.qualityReport()!=null && w.qualityReport().path("status").asText().equals("STARTED"))throw new AssetException(409,"QUALITY_REVIEW_INTERRUPTED");
         jdbc.sql("UPDATE shelter.styled_asset_steps SET quality_report='{\"status\":\"STARTED\"}'::jsonb WHERE job_id=:id AND label=:l")
             .param("id",w.id()).param("l",w.label()).update();return true;
+    }
+    /** Reload the durable phase: a WAITING claim may already have saved its provider response. */
+    private JsonNode timeoutCheckpoint(UUID id,String label) {
+        return jdbc.sql("""
+            SELECT jsonb_build_object('phase',CASE WHEN provider_result IS NOT NULL THEN 'PERSISTING' ELSE 'CHECKING' END,
+              'payload',COALESCE(provider_result,result),'quality',quality_report,'status',status,'repairCount',repair_count,
+              'providerJobId',provider_job_id,'requestSha256',request_sha256)::text
+            FROM shelter.styled_asset_steps WHERE job_id=:id AND label=:l
+            """).param("id",id).param("l",label).query(String.class).optional().map(json::readTree).orElse(json.createObjectNode());
+    }
+    private int timeoutRetries(UUID id,String label) {
+        return jdbc.sql("""
+            SELECT count(*) FROM shelter.styled_asset_steps s,jsonb_array_elements(s.attempt_history) a
+            WHERE s.job_id=:id AND s.label=:l AND a->>'qualityTimeoutRetry'='true'
+            """).param("id",id).param("l",label).query(Integer.class).single();
+    }
+    private void recordTimeoutRetry(UUID id,String label,JsonNode checkpoint,int used,int delay,boolean resumed) {
+        var event=json.createObjectNode().put("qualityTimeoutRetry",true).put("version",StyledQualityTimeout.VERSION)
+            .put("reason","QUALITY_AI_TIMEOUT").put("attempt",used+1).put("delaySeconds",delay).put("resumed",resumed)
+            .put("at",Instant.now().toString()).put("rulesSha256",StyledSpriteCodec.qualityRulesSha())
+            .put("payloadSha256",StyledAutoApproval.digest(checkpoint.path("payload"),json));
+        for(String field:List.of("phase","quality","repairCount","providerJobId","requestSha256"))event.set(field,checkpoint.path(field));
+        jdbc.sql("""
+            UPDATE shelter.styled_asset_steps SET attempt_history=attempt_history || jsonb_build_array(CAST(:event AS jsonb)),
+              quality_report=NULL,status=:phase WHERE job_id=:id AND label=:l
+            """).param("event",json.writeValueAsString(event)).param("phase",checkpoint.path("phase").asText()).param("id",id).param("l",label).update();
+    }
+    @Transactional public boolean retryQualityTimeout(Work w,String code) {
+        if(!"QUALITY_AI_TIMEOUT".equals(code) || !StyledQualityTimeout.enabled(w.qualityPolicy()))return false;
+        if(!authorized(w))return true;
+        var checkpoint=timeoutCheckpoint(w.id(),w.label());int used=timeoutRetries(w.id(),w.label());
+        if(!StyledQualityTimeout.started(checkpoint) || !Set.of("PERSISTING","CHECKING").contains(checkpoint.path("status").asText())
+            || used>=StyledQualityTimeout.LIMIT)return false;
+        int delay=StyledQualityTimeout.delay(used);recordTimeoutRetry(w.id(),w.label(),checkpoint,used,delay,false);
+        defer(w,delay);return true;
     }
     @Transactional public void quality(Work w,JsonNode report) {
         if(!authorized(w))return;

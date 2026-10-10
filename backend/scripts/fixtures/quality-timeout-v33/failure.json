@@ -1,0 +1,23 @@
+{
+  "source": "deployed v33 continuation, 2026-10-10",
+  "purpose": "Actual failure metadata only; no claim of new visual quality. Cached provider images stay in the private server. Tests hydrate a synthetic provider response to exercise transport state transitions.",
+  "jobStatus": "FAILED",
+  "failureCode": "QUALITY_AI_TIMEOUT",
+  "rulesSha256": "a8cc43d4e68ef37b8a938f3ca9c5ec445b3de8fc7eb807cc05a65dd784e5b882",
+  "seedApprovalActor": "SYSTEM",
+  "completedLabels": [
+    "character",
+    "idle-south",
+    "idle-north"
+  ],
+  "failedStep": {
+    "label": "idle-west",
+    "status": "FAILED",
+    "repairCount": 0,
+    "qualityReport": {
+      "status": "STARTED"
+    },
+    "result": null
+  },
+  "providerCheckpointPersisted": true
+}

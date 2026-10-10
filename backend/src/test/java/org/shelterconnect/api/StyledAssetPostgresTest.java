@@ -2430,4 +2430,148 @@ class StyledAssetPostgresTest {
         }
         clearInvocations(provider);post(actor,path(id)+"/quality-response-resume",body,expected);verifyNoInteractions(provider);
     }
+    int timeoutEvents(UUID id,String label) {
+        return jdbc.queryForObject("SELECT count(*) FROM shelter.styled_asset_steps s,jsonb_array_elements(s.attempt_history) a WHERE s.job_id=? AND s.label=? AND a->>'qualityTimeoutRetry'='true'",Integer.class,id,label);
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(ints={1,2,3})
+    void qualityTimeoutRetriesSavedMotionWithDurableCapAndDelay(int timeouts)throws Exception {
+        UUID id=recoveryRequest(0,false);var calls=new java.util.concurrent.atomic.AtomicInteger();
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("west"))).thenAnswer(c->{outsideTransaction();
+            if(calls.getAndIncrement()<timeouts)throw StyledQualityFailureFixture.failure("QUALITY_AI_TIMEOUT");
+            return b75MotionReport(c.getArgument(1),c.getArgument(2),"west",true,"PASS");});
+        for(int i=0;i<30 && timeoutEvents(id,"idle-west")==0;i++)tick();
+        assertThat(timeoutEvents(id,"idle-west")).isEqualTo(1);
+        var cached=jdbc.queryForObject("SELECT provider_result::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-west'",String.class,id);
+        assertThat(cached).contains("COMPLETED","frames");
+        assertThat(jdbc.queryForObject("SELECT next_run_at>now()+interval '10 seconds' AND lease_token IS NULL FROM shelter.asset_jobs WHERE id=?",Boolean.class,id)).isTrue();
+        worker.tick();assertThat(calls.get()).isEqualTo(1); // Backoff survives a new worker tick.
+        finish(id);assertThat(calls.get()).isEqualTo(Math.min(timeouts+1,3));
+        assertThat(timeoutEvents(id,"idle-west")).isEqualTo(Math.min(timeouts,2));
+        assertThat(step(id,"idle-west").path("repairCount").asInt()).isZero();verify(provider,never()).editAnimation(any());
+        if(timeouts<3) {
+            assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");verify(provider,times(12)).submit(eq(false),any());
+        } else {
+            assertThat(read(id).path("failureCode").asText()).isEqualTo("QUALITY_AI_TIMEOUT");
+            assertThat(jdbc.queryForObject("SELECT provider_result::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-west'",String.class,id)).isEqualTo(cached);
+            var body=timeoutResumeBody(id);post(subject,path(id)+"/quality-timeout-resume",body,409);tick();assertThat(calls.get()).isEqualTo(3);
+        }
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=? AND NOT passed",Integer.class,id)).isZero();
+    }
+    @Test void qualityTimeoutRetriesBaseWithoutResubmittingCharacter()throws Exception {
+        UUID id=recoveryRequest(0,false);var original=org.mockito.Mockito.mockingDetails(seedQuality).getStubbings().stream().filter(s->s.getInvocation().getMethod().getName().equals("reviewRecovery")).findFirst().orElseThrow();
+        var calls=new java.util.concurrent.atomic.AtomicInteger();
+        doAnswer(c->{outsideTransaction();if(calls.getAndIncrement()==0)throw StyledQualityFailureFixture.failure("QUALITY_AI_TIMEOUT");return original.answer(c);})
+            .when(seedQuality).reviewRecovery(any(),anyList(),any(),any());
+        finish(id);assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
+        assertThat(timeoutEvents(id,"character")).isEqualTo(1);verify(provider,times(1)).submit(eq(true),any());verify(provider,never()).editSeeds(any());
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"QUALITY_AI_AUTH_FAILED","QUALITY_AI_UNAVAILABLE","QUALITY_MOTION_RESPONSE_INVALID","QUALITY_REVIEW_INTERRUPTED"})
+    void qualityTimeoutDoesNotRetryOtherErrors(String code)throws Exception {
+        UUID id=recoveryRequest(0,false);
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("west"))).thenThrow(StyledQualityFailureFixture.failure(code));
+        finish(id);assertThat(read(id).path("failureCode").asText()).isEqualTo(code);assertThat(timeoutEvents(id,"idle-west")).isZero();
+        verify(quality,times(1)).review(any(),anyList(),anyList(),eq("IDLE"),eq("west"));
+    }
+    @Test void qualityTimeoutRetriesCheckingResultWithoutProviderCalls()throws Exception {
+        UUID id=recoveryRequest(0,false);finish(id);var before=step(id,"idle-west").path("result");
+        jdbc.update("UPDATE shelter.asset_jobs SET status='QUEUED',quality_approval=NULL WHERE id=?",id);
+        jdbc.update("UPDATE shelter.styled_asset_steps SET status='CHECKING',quality_report=NULL WHERE job_id=? AND label='idle-west'",id);
+        var calls=new java.util.concurrent.atomic.AtomicInteger();
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("west"))).thenAnswer(c->{
+            if(calls.getAndIncrement()==0)throw StyledQualityFailureFixture.failure("QUALITY_AI_TIMEOUT");return b75MotionReport(c.getArgument(1),c.getArgument(2),"west",true,"PASS");});
+        clearInvocations(provider);finish(id);verifyNoInteractions(provider);
+        assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");assertThat(step(id,"idle-west").path("result")).isEqualTo(before);
+        assertThat(timeoutEvents(id,"idle-west")).isEqualTo(1);
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"revoked","lease-lost","missing-checkpoint","not-started"})
+    void qualityTimeoutCannotRetryWithoutOwnedAuthorizedCheckpoint(String defect)throws Exception {
+        UUID id=recoveryRequest(0,false);
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("west"))).thenAnswer(c->{
+            switch(defect) {
+                case "revoked" -> jdbc.update("UPDATE shelter.asset_source_permissions SET revoked_at=now() WHERE id=?",permission);
+                case "lease-lost" -> jdbc.update("UPDATE shelter.asset_jobs SET lease_token=NULL WHERE id=?",id);
+                case "missing-checkpoint" -> jdbc.update("UPDATE shelter.styled_asset_steps SET provider_result=NULL,result=NULL WHERE job_id=? AND label='idle-west'",id);
+                case "not-started" -> jdbc.update("UPDATE shelter.styled_asset_steps SET quality_report=NULL WHERE job_id=? AND label='idle-west'",id);
+            }
+            throw StyledQualityFailureFixture.failure("QUALITY_AI_TIMEOUT");});
+        for(int i=0;i<15 && !step(id,"idle-west").path("status").asText().equals("FAILED") && !read(id).path("status").asText().equals("CANCELLED");i++) {
+            tick();if(defect.equals("lease-lost") && jdbc.queryForObject("SELECT provider_result IS NOT NULL FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-west'",Boolean.class,id))break;
+        }
+        assertThat(timeoutEvents(id,"idle-west")).isZero();verify(provider,never()).editAnimation(any());
+        if(defect.equals("revoked"))assertThat(read(id).path("status").asText()).isEqualTo("CANCELLED");
+    }
+    UUID timeoutLegacyFixture(boolean heldSouth)throws Exception {
+        UUID id=recoveryRequest(0,false);
+        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=quality_policy-'qualityTimeoutVersion' WHERE id=?",id);
+        if(heldSouth)when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("south"))).thenAnswer(c->b75MotionReport(c.getArgument(1),c.getArgument(2),"south",false,"UNCERTAIN"));
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("west"))).thenThrow(StyledQualityFailureFixture.failure("QUALITY_AI_TIMEOUT"));
+        finish(id);assertThat(read(id).path("status").asText()).isEqualTo("FAILED");
+        assertThat(step(id,"idle-west").path("result").isNull()).isTrue();assertThat(timeoutEvents(id,"idle-west")).isZero();return id;
+    }
+    Map<String,Object> timeoutResumeBody(UUID id)throws Exception {
+        var cp=get(subject,path(id)+"/quality-timeout-checkpoint",200).path("data");
+        assertThat(cp.toString()).doesNotContain("base64","frames","providerJobId","storage");
+        return new HashMap<>(Map.of("requestId",UUID.randomUUID().toString(),"note","Resume the exact saved timeout checkpoint without new provider submission or reset",
+            "label",cp.path("label").asText(),"expectedCheckpointSha256",cp.path("checkpointSha256").asText(),"expectedSeedHashes",cp.path("seedHashes"),
+            "expectedRulesSha256",cp.path("rulesSha256").asText(),"expectedSheetHashes",Map.of()));
+    }
+    @Test void qualityTimeoutResumeKeepsOriginalCheckpointAndIsIdempotent()throws Exception {
+        UUID id=timeoutLegacyFixture(false);var body=timeoutResumeBody(id);var before=read(id);var saved=new HashMap<>(objects);
+        var providerId=jdbc.queryForObject("SELECT provider_job_id FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-west'",UUID.class,id);
+        clearInvocations(provider);doAnswer(c->b75MotionReport(c.getArgument(1),c.getArgument(2),"west",true,"PASS")).when(quality).review(any(),anyList(),anyList(),eq("IDLE"),eq("west"));
+        body.put("requestId",body.get("requestId").toString().toUpperCase(Locale.ROOT));post(subject,path(id)+"/quality-timeout-resume",body,200);
+        body.put("requestId",body.get("requestId").toString().toLowerCase(Locale.ROOT));post(subject,path(id)+"/quality-timeout-resume",body,200);
+        finish(id);assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
+        assertThat(jdbc.queryForObject("SELECT provider_job_id FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-west'",UUID.class,id)).isEqualTo(providerId);
+        for(var s:before.path("steps"))if(s.path("status").asText().equals("SUCCEEDED"))assertThat(step(id,s.path("label").asText())).isEqualTo(s);
+        for(var e:saved.entrySet())assertThat(objects.get(e.getKey())).isEqualTo(e.getValue());
+        verify(provider,times(9)).submit(eq(false),any());verify(provider,never()).editAnimation(any());assertThat(timeoutEvents(id,"idle-west")).isEqualTo(1);
+        clearInvocations(provider);post(subject,path(id)+"/quality-timeout-resume",body,200);tick();verifyNoInteractions(provider);
+        body.put("note","Changed replay cannot authorize another attempt of this same checkpoint");post(subject,path(id)+"/quality-timeout-resume",body,409);
+    }
+    @Test void qualityTimeoutResumeNewRulesAuditsAllCompletedStepsAndUsesOnlySelectedRemainingBudget()throws Exception {
+        UUID id=timeoutLegacyFixture(true);b75ResumeBody(id);var body=timeoutResumeBody(id);var before=read(id);var calls=new java.util.concurrent.atomic.AtomicInteger();
+        body.put("expectedSheetHashes",Map.of("idle-south",step(id,"idle-south").at("/result/sha256").asText()));
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("south"))).thenAnswer(c->{boolean pass=calls.getAndIncrement()>0;return b75MotionReport(c.getArgument(1),c.getArgument(2),"south",pass,pass?"PASS":"CONFIRMED_DEFECT");});
+        doAnswer(c->b75MotionReport(c.getArgument(1),c.getArgument(2),"west",true,"PASS")).when(quality).review(any(),anyList(),anyList(),eq("IDLE"),eq("west"));
+        clearInvocations(provider,seedQuality);post(subject,path(id)+"/quality-timeout-resume",body,200);
+        assertThat(read(id).path("seedReview").isNull()).isTrue();assertThat(step(id,"character").path("status").asText()).isEqualTo("CHECKING");
+        finish(id);assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");verify(provider,times(1)).editAnimation(any());verify(provider,times(9)).submit(eq(false),any());
+        assertThat(step(id,"idle-south").path("repairCount").asInt()).isEqualTo(1);
+        assertThat(step(id,"idle-west").path("repairCount").asInt()).isZero();
+        assertThat(read(id).at("/qualityPolicy/maxRepairsPerClip")).isEqualTo(before.at("/qualityPolicy/maxRepairsPerClip"));
+        for(String label:List.of("character","idle-north")) {
+            var old=before.path("steps").valueStream().filter(s->s.path("label").asText().equals(label)).findFirst().orElseThrow();
+            assertThat(step(id,label).path("result")).isEqualTo(old.path("result"));
+            assertThat(jdbc.queryForObject("SELECT attempt_history::text FROM shelter.styled_asset_steps WHERE job_id=? AND label=?",String.class,id,label)).contains("qualityTimeoutRulesRecheck");
+        }
+        verify(seedQuality,times(1)).reviewRecovery(any(),anyList(),any(),any());
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"seed","checkpoint","rules","label","failure","status","missing","report","unauthorized","anonymous","revoked","duplicate","budget","passing","extra-field"})
+    void qualityTimeoutResumeRejectsStaleUnsafeOrDuplicateRequests(String defect)throws Exception {
+        UUID id=timeoutLegacyFixture(true);var body=timeoutResumeBody(id);UUID actor=subject;int expected=409;
+        switch(defect) {
+            case "seed" -> body.put("expectedSeedHashes",Map.of("south","1".repeat(64),"north","1".repeat(64),"west","1".repeat(64),"east","1".repeat(64)));
+            case "checkpoint" -> body.put("expectedCheckpointSha256","1".repeat(64));
+            case "rules" -> body.put("expectedRulesSha256","1".repeat(64));
+            case "label" -> body.put("label","walk-west");
+            case "failure" -> jdbc.update("UPDATE shelter.asset_jobs SET failure_code='QUALITY_AI_AUTH_FAILED' WHERE id=?",id);
+            case "status" -> jdbc.update("UPDATE shelter.asset_jobs SET status='REVIEW' WHERE id=?",id);
+            case "missing" -> jdbc.update("UPDATE shelter.styled_asset_steps SET provider_result=NULL WHERE job_id=? AND label='idle-west'",id);
+            case "report" -> jdbc.update("UPDATE shelter.styled_asset_steps SET quality_report='{\"passed\":false}'::jsonb WHERE job_id=? AND label='idle-west'",id);
+            case "unauthorized" -> {actor=UUID.randomUUID();expected=403;}
+            case "anonymous" -> {actor=null;expected=401;}
+            case "revoked" -> jdbc.update("UPDATE shelter.asset_source_permissions SET revoked_at=now() WHERE id=?",permission);
+            case "duplicate" -> {post(subject,path(id)+"/quality-timeout-resume",body,200);body.put("requestId",UUID.randomUUID().toString());}
+            case "budget" -> {b75ResumeBody(id);body=timeoutResumeBody(id);body.put("expectedSheetHashes",Map.of("idle-south",step(id,"idle-south").at("/result/sha256").asText()));jdbc.update("UPDATE shelter.styled_asset_steps SET repair_count=3 WHERE job_id=? AND label='idle-south'",id);}
+            case "passing" -> {b75ResumeBody(id);body=timeoutResumeBody(id);body.put("expectedSheetHashes",Map.of("idle-north",step(id,"idle-north").at("/result/sha256").asText()));}
+            case "extra-field" -> {body.put("resetBudget",true);expected=400;}
+        }
+        clearInvocations(provider,quality);post(actor,path(id)+"/quality-timeout-resume",body,expected);verifyNoInteractions(provider,quality);
+        if(defect.equals("unauthorized") || defect.equals("anonymous"))get(actor,path(id)+"/quality-timeout-checkpoint",expected);
+    }
 }
