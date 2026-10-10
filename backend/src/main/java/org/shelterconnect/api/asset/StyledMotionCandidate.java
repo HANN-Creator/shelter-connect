@@ -14,6 +14,7 @@ final class StyledMotionCandidate {
         var reports=new ArrayList<JsonNode>();reports.add(report);
         for(String key:List.of("rawEditReview","restoredReview"))if(report.has(key))reports.add(report.path(key));
         var issues=new TreeSet<String>();var frames=new TreeSet<Integer>();var properties=new TreeSet<String>();
+        var preserve=new TreeSet<String>();
         try {
             for(var r:reports) {
                 if(!StyledMotionReview.VERSION.equals(r.path("motionReviewVersion").asText())
@@ -30,7 +31,8 @@ final class StyledMotionCandidate {
                         && !Set.of("CANVAS_CLIPPING","DETACHED_PIXELS").contains(issue.asText()))return null;
                     issues.add(issue.asText());
                 }
-                // Pure UNKNOWN has no edit target. Every disputed property needs concrete FAIL evidence.
+                // Pure UNKNOWN has no edit target, but does not cancel a separate concrete target.
+                // Preserve that property; the one-candidate limit and full review still apply.
                 for(String property:StyledMotionReview.PROPERTIES.keySet()) {
                     boolean disputed=false,concrete=false;
                     for(var observation:observations) {
@@ -41,14 +43,16 @@ final class StyledMotionCandidate {
                             p.path("frames").forEach(f->frames.add(f.asInt()));
                         }
                     }
-                    if(disputed && !concrete)return null;
+                    if(disputed && !concrete)preserve.add(property);
                 }
             }
         } catch(AssetException invalid) {return null;}
-        if(issues.isEmpty() || frames.isEmpty())return null;
+        // Do not edit a property that has no concrete target in one of the original/restored reports.
+        if(!Collections.disjoint(properties,preserve) || issues.isEmpty() || frames.isEmpty())return null;
         var plan=json.createObjectNode().put("version",VERSION).put("assessment","UNCONFIRMED_CANDIDATE_ONLY");
         plan.set("issues",json.valueToTree(issues));plan.set("frames",json.valueToTree(frames));plan.set("properties",json.valueToTree(properties));
-        plan.put("note","Observation conflict, NOT a confirmed defect. Make one conservative alternative addressing the cited properties. Preserve the approved entry pose, anatomy, facing and style; stabilize coat markings and keep a complete connected tail within the canvas. Do not invent hidden features. The new candidate needs fresh full review.");
+        plan.set("preservedUncertainProperties",json.valueToTree(preserve));
+        plan.put("note","Observation conflict, NOT a confirmed defect. Make one conservative alternative for "+properties+" only. Preserve the approved entry pose, anatomy, facing, style and unrelated features, including "+preserve+". Do not invent hidden features. The new candidate needs fresh full review.");
         return plan;
     }
 }

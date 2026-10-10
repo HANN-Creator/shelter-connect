@@ -64,6 +64,23 @@ class StyledConfirmedMotionRepairTest {
         assertThat(plan.path("properties").valueStream().map(JsonNode::asText).toList()).containsExactly("action","identity","tail");
         assertThat(StyledMotionReview.unresolved(r)).isTrue();
     }
+    @Test void actualBoundedEditsAndSeparatelyReviewedStaticFallbackRemainAuditable()throws Exception {
+        var live=root.resolve("live-validation");var evidence=json.readTree(Files.readAllBytes(live.resolve("evidence.json")));
+        for(var e:evidence.path("hashes").properties())assertThat(StyledSpriteCodec.sha(Files.readAllBytes(live.resolve(e.getKey())))).isEqualTo(e.getValue().asText());
+        for(String name:List.of("edit-2","edit-3")) {
+            var review=json.readTree(Files.readAllBytes(live.resolve(name+"-review.json")));
+            assertThat(review.path("passed").asBoolean()).isFalse();assertThat(review.path("motionDecision").asText()).isEqualTo("CONFIRMED_DEFECT");
+            assertThat(StyledSpriteCodec.frames(Files.readAllBytes(live.resolve(name+".png")))).hasSize(9);
+        }
+        var hold=StyledSpriteCodec.frames(Files.readAllBytes(live.resolve("static.png")));
+        byte[] exact=StyledSpriteCodec.paddedSeed(Files.readAllBytes(root.resolve("seeds/north.png")));
+        for(var f:hold)assertThat(StyledSpriteCodec.motionFrame(f).getRGB(0,0,40,40,null,0,40))
+            .isEqualTo(StyledSpriteCodec.motionFrame(exact).getRGB(0,0,40,40,null,0,40));
+        var review=json.readTree(Files.readAllBytes(live.resolve("static-review.json")));
+        assertThat(review.path("passed").asBoolean()).isTrue();
+        assertThat(review.path("reviewedFrameHashes").valueStream().map(JsonNode::asText).toList()).isEqualTo(hold.stream().map(StyledSpriteCodec::sha).toList());
+        assertThat(evidence.path("automaticPackApproval").asBoolean()).isFalse();
+    }
     @Test void liveSavedTargetGetsOneEditAndFreshFullReview()throws Exception {
         org.junit.jupiter.api.Assumptions.assumeTrue("true".equals(System.getenv("CONFIRMED_MOTION_LIVE_APPROVED")));
         var out=Path.of(System.getenv("CONFIRMED_MOTION_LIVE_OUTPUT"));Files.createDirectories(out);

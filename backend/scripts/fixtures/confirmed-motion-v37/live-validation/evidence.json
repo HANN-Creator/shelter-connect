@@ -1,0 +1,19 @@
+{
+  "scope": "Local calls through production payload/client/review/fallback classes; remote job/DB unchanged; no final pack approval.",
+  "originalRemoteRepairCount": 1,
+  "localPixelLabEdits": 2,
+  "model": "gpt-5.6-luna",
+  "rulesSha256": "53a28e2db480e258db72e6132ed0fa54a933906e15f856bcaeb082793898feaf",
+  "result": "STATIC_IDLE_PASS",
+  "automaticPackApproval": false,
+  "remotePublication": false,
+  "hashes": {
+    "edit-2-review.json": "5bde7b3264f9db54fe6df4ba1e91f4edc384eacc076f9a1c250f27a22f971148",
+    "edit-2.png": "5901cc791202608a75f08a169c6ea480da5d0285957f174462b8d02b8ce39b90",
+    "edit-3-review.json": "78317a86f43761e436af2dfaeb49a77dca601fd5a7bdb9ea3d1209204415f437",
+    "edit-3.png": "d8fc8ab8ade16265880ac0107b295244f7ad91cc97fb77649d042e93f52f0fef",
+    "static-derivation.json": "0fc0058794debd43856ff7ba9429760dbda0830964ad0ebe6d1a118d2dcb8cc5",
+    "static-review.json": "0561bdf7439816bc4fb1505a782c6174cc111f7f6d4a2ef32d8cb16249e40889",
+    "static.png": "745fd583dcee52133d2d3a66b2c29619ae731b2b9ab0341d1ba68af7906e5959"
+  }
+}

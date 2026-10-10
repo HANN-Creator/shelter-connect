@@ -2135,6 +2135,23 @@ class StyledAssetPostgresTest {
         clearInvocations(provider,quality);post(subject,path(id)+"/motion-candidate-repair",body,200);tick();verifyNoInteractions(provider,quality);
     }
 
+    @Test void loopCandidatePreservesUnknownTailAndRemainsLimitedToOneUnconfirmedEdit()throws Exception {
+        UUID id=recoveryRequest(0,false);distinctMotionEdits();
+        var r=json.readTree(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/confirmed-motion-v37/walk-south-review.json")));
+        ((tools.jackson.databind.node.ObjectNode)r).put("rulesSha256",currentRules());
+        for(String key:List.of("rawEditReview","restoredReview"))if(r.has(key))((tools.jackson.databind.node.ObjectNode)r.path(key)).put("rulesSha256",currentRules());
+        when(quality.review(any(),anyList(),anyList(),eq("WALK"),eq("south"))).thenAnswer(c->{outsideTransaction();return r.deepCopy();});
+        finish(id);var job=read(id);
+        assertThat(job.path("status").asText()).isEqualTo("REVIEW");assertThat(job.path("qualityApproval").isNull()).isTrue();
+        assertThat(step(id,"walk-south").path("repairCount").asInt()).isEqualTo(1);verify(provider,times(1)).editAnimation(any());
+        var h=json.readTree(jdbc.queryForObject("SELECT attempt_history->-1 FROM shelter.styled_asset_steps WHERE job_id=? AND label='walk-south'",String.class,id));
+        assertThat(h.path("unconfirmedMotionCandidate").asBoolean()).isTrue();
+        assertThat(h.at("/candidatePlan/properties").toString()).isEqualTo("[\"loop\"]");
+        assertThat(h.at("/candidatePlan/preservedUncertainProperties").toString()).isEqualTo("[\"tail\"]");
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=? AND label='walk-south' AND NOT passed",Integer.class,id)).isZero();
+        publicStatus(404);clearInvocations(provider,quality);for(int i=0;i<3;i++)tick();verifyNoInteractions(provider,quality);
+    }
+
     JsonNode candidateConflict()throws Exception {
         var r=(tools.jackson.databind.node.ObjectNode)json.readTree(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/native-rgba-v29/sit-north-v30-review.json")));
         // Synthetic current-policy observations for the mocked worker; the stored real receipt is unchanged.
