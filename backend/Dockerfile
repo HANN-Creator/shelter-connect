@@ -2,14 +2,20 @@ FROM eclipse-temurin:21-jdk-jammy AS build
 WORKDIR /build
 COPY gradlew build.gradle settings.gradle ./
 COPY gradle ./gradle
-COPY scripts/build_with_retry.sh ./scripts/build_with_retry.sh
-# Keep downloaded plugins/dependencies in a source-independent Docker layer.
-# Source/rule changes then compile offline instead of fetching Central again.
-RUN chmod +x gradlew && bash scripts/build_with_retry.sh resolveDeploymentDependencies
+# Pinned, source-independent dependency cache. Even a cold Render builder needs
+# no requests to Maven Central or the plugin portal. Refresh via Dockerfile.dependencies.
+ADD --checksum=sha256:8c61e4ad7ab1c8e94144f40295f276f2b35a03fa2353ed9b535b29b0eaf49df9 \
+    https://github.com/HANN-Creator/shelter-connect/releases/download/deployment-gradle-cache-20261010-abc5a6f/gradle-cache.tar.gz /tmp/gradle-cache.tar.gz
+ENV GRADLE_USER_HOME=/opt/gradle-cache/gradle-home
+RUN --network=none mkdir -p /opt/gradle-cache \
+    && tar -xzf /tmp/gradle-cache.tar.gz -C /opt/gradle-cache \
+    && rm /tmp/gradle-cache.tar.gz \
+    && sha256sum -c /opt/gradle-cache/inputs.sha256 \
+    && chmod +x gradlew
 COPY src/main ./src/main
 COPY scripts/styled_dog ./scripts/styled_dog
 COPY asset-styles ./asset-styles
-RUN ./gradlew --no-daemon --max-workers=2 --offline bootJar
+RUN --network=none ./gradlew --no-daemon --max-workers=2 --offline bootJar
 
 FROM eclipse-temurin:21-jre-jammy
 RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-venv \

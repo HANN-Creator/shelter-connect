@@ -216,3 +216,5 @@ B-71: [보완된 기본 도트 재검수 상태 분리](repaired-seed-recheck.md
 - B-82 [쉬기 관찰 충돌의 정지 대안](idle-stillness-conflict.md): [노션](https://app.notion.com/p/3f55b2d1a55f80f89a27f239298ca286). 브랜치 `backend/b-82-idle-conflict-hold`. 실제 v34 3회 편집 후 idleStillness만 PASS/FAIL인 원본 보존, 원래 예산 소진 후 1회 정지 대안·새 검수, 다른 불확실성과 이전 판정·원본·비용 유지. 실제 대안 Luna PASS, 전체 실서버 팩 승인·앱 재생은 별도. v36, DB/API 변경 없음.
 
 - B-83 [배포 빌드 다운로드 제한 대응](deployment-build-reliability.md): [노션](https://app.notion.com/p/3f55b2d1a55f807e98daf0d1fd1b98e9). 브랜치 `backend/b-83-deployment-build`. 실제 Maven Central 429에 대한 의존성 캐시 레이어·제한된 지연 재시도, 오프라인 소스 빌드와 배포 JAR 품질 규칙 검증. v36·DB/API 유지. 병합과 실제 배포 결과는 확인 후 기록.
+
+B-84: [검증된 의존성 캐시로 Render 오프라인 빌드](https://app.notion.com/p/3f55b2d1a55f80e292b9fcc5672acab2). B-83의 지속 429 후속으로 최초 배포부터 검증된 의존성 캐시를 사용한다. [빌드·갱신 절차](deployment-build-reliability.md).
