@@ -2083,10 +2083,14 @@ class StyledAssetPostgresTest {
         return b86SavedReview(label,current,false);
     }
     JsonNode b86SavedReview(String label,JsonNode current,boolean fresh)throws Exception {
+        return b86SavedReview(label,current,fresh,false);
+    }
+    JsonNode b86SavedReview(String label,JsonNode current,boolean fresh,boolean warning)throws Exception {
         var old=json.readTree(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/motion-repair-v38/"+
-            (fresh?"live/current-rule-originals/"+label+"-review.json":label+"-qualityReport.json"))));
+            (warning?"deployed-warning/idle-west-review.json":fresh?"live/current-rule-originals/"+label+"-review.json":label+"-qualityReport.json"))));
         var r=(tools.jackson.databind.node.ObjectNode)current.deepCopy();
         for(String key:List.of("initialVision","consistencyReview","observationCount","uncertainProperties","confirmedProperties","motionDecision","motionReviewVersion","referencePoseUsable","issues","frames","edgeFrames","silhouetteFrames","detachedFrames","idleMotionFrames"))r.set(key,old.path(key));
+        for(String key:List.of("aestheticPolicy","qualityWarnings"))if(old.has(key))r.set(key,old.path(key));
         r.put("passed",false);return r; // Local isolated state fixture; archived observations are not fresh QA.
     }
     Map<String,Object> b86ResumeBody(UUID id,String label)throws Exception {
@@ -2096,10 +2100,10 @@ class StyledAssetPostgresTest {
             "expectedReviewHashes",Map.of(label,sha(json.writeValueAsBytes(step(id,label).path("qualityReport")))));
     }
     @org.junit.jupiter.params.ParameterizedTest
-    @org.junit.jupiter.params.provider.CsvSource({"true,false","false,false","true,true","false,true"})
-    void exhaustedMotionOnlyIdleResumesStaticWithoutPaidRequestOrUnchangedRejudgment(boolean fallbackPass,boolean fresh)throws Exception {
+    @org.junit.jupiter.params.provider.CsvSource({"true,false,false","false,false,false","true,true,false","false,true,false","true,false,true","false,false,true"})
+    void exhaustedMotionOnlyIdleResumesStaticWithoutPaidRequestOrUnchangedRejudgment(boolean fallbackPass,boolean fresh,boolean warning)throws Exception {
         UUID id=recoveryRequest(0,false);finish(id);var before=read(id);String label="idle-west";
-        var r=b86SavedReview(label,step(id,label).path("qualityReport"),fresh);
+        var r=b86SavedReview(label,step(id,label).path("qualityReport"),fresh,warning);
         jdbc.update("UPDATE shelter.asset_jobs SET status='REVIEW',quality_approval=NULL,reviewed_at=NULL WHERE id=?",id);
         jdbc.update("UPDATE shelter.styled_asset_steps SET quality_report=?::jsonb,repair_count=3 WHERE job_id=? AND label=?",r.toString(),id,label);
         var body=b86ResumeBody(id,label);clearInvocations(provider,quality,seedQuality);

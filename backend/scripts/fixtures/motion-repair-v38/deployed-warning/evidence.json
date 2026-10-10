@@ -1,0 +1,10 @@
+{
+  "source": "Actual deployed v38 GET job response, 2026-10-11 KST",
+  "rulesSha256": "18305e689493945343289c3ee52547b602d6ae0d0aee32b9e1a7e9f37ab2e8a9",
+  "image": "../idle-west.png",
+  "imageSha256": "29cb8d98d4a878cd0edc6b3c373267309d1cafffdfdadc9426b2c2dbf63e8e66",
+  "reportSha256": "ed50ab6512314946043795d9a4c5ad02e77c3b921409be3077d9282676ca2067",
+  "repairCount": 3,
+  "qualityUnchanged": true,
+  "purpose": "Control-flow regression; not a new visual quality verdict"
+}

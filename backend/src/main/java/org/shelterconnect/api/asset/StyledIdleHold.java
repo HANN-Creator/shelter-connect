@@ -55,6 +55,9 @@ final class StyledIdleHold {
                     for(String name:StyledMotionReview.PROPERTIES.keySet()) {
                         var finding=StyledMotionReview.property(o,name);
                         if(Set.of("action","idleStillness","loop").contains(name) || finding.path("state").asText().equals("PASS"))continue;
+                        // The review already classified this disagreement as cosmetic. Preserve
+                        // its warning instead of treating the raw observation as a new blocker.
+                        if(name.equals("palette") && StyledAestheticPolicy.permitsPaletteWarning(r))continue;
                         // The failed moving tail is discarded with this animation. Only non-entry
                         // frames already identified as moving may have tail disagreement; the
                         // independently approved reference becomes a NEW static candidate.

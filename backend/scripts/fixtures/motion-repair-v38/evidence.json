@@ -21,5 +21,12 @@
     "idle-west",
     "walk-south",
     "sit-south"
+  ],
+  "followUpRegressions": [
+    {
+      "fixture": "deployed-warning/evidence.json",
+      "check": "nonblocking-palette-warning-does-not-block-static-candidate",
+      "rulesChanged": false
+    }
   ]
 }
