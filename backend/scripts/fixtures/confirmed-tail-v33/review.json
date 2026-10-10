@@ -1,0 +1,656 @@
+{
+  "note": "독립 관찰 불일치 또는 관찰 불확실; 자동 보완과 학습 보류",
+  "model": "gpt-5.6-luna",
+  "action": "IDLE",
+  "frames": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "issues": [
+    "ACTION_MISSING",
+    "IDLE_MOTION",
+    "TAIL_CARRIAGE"
+  ],
+  "passed": false,
+  "version": "sprite-quality-v1",
+  "direction": "south",
+  "edgeFrames": [],
+  "reviewedAt": "2026-10-10T07:19:48.612038780Z",
+  "seedHashes": {
+    "east": "26a23b6b58a24bb71a2908837b98644919af8f9046aa80a5275d32d288e260eb",
+    "west": "aef64959300b13b278832d8faef6108d4eea830264dd8edc4ae825333849b87c",
+    "north": "88397489a71e7a2bd24bf0f683c72e527b57f6bb6f501d32e84f77ead2e73c70",
+    "south": "24a0b6f5db96ec73bef1b6dec3006b1dd958714962d19688b6a38e8acee16644"
+  },
+  "frameHashes": [
+    "394aa381f6942bbf38d29395c1c44eebebb15bae98a0a8a4132439c335cf4cb0",
+    "ace7bbf0aa49b25c94863b7d23799e3345c64b608fe3f4dada54b3c7b3f86cbd",
+    "3813509de78e9aca8fef9ff401def5d4f102e795351a85b60f93a2c63e64517d",
+    "109f60a3354ffdc630800f7c725a44072535f2f1cf4cce1c89a93a3ddc337451",
+    "e1816fa41732a85e3c29669199101fa429f15897731f5fd0955ca3ebbc499002",
+    "7128f23282b0d5d4acb51994bb5d1df4745902ab16ed232ac81abca8284fc956",
+    "41a0ffc1c41920d24e4087f18b5e9b0a98db21d2792cba29880f533129913edd",
+    "94c7f235eff577b8e5b259ee2a1ca7611333239a407727c997e07e506fd63e87",
+    "719baa51bb642c0045dd53b433ee8428d7ea410848bbab53625f43355c102216"
+  ],
+  "inputSha256": "8337b84816921f4d15d9e74f6818d8f11d6fde365a2c7009c434f4d59e10ba8d",
+  "rulesSha256": "a8cc43d4e68ef37b8a938f3ca9c5ec445b3de8fc7eb807cc05a65dd784e5b882",
+  "reviewLayout": "separate-reference-temporal-v1",
+  "colorEvidence": {
+    "pairs": [
+      {
+        "p90": 0,
+        "p95": 0,
+        "frame": 0,
+        "median": 0,
+        "reference": 0
+      },
+      {
+        "p90": 0,
+        "p95": 0,
+        "frame": 0,
+        "median": 0,
+        "reference": 8
+      },
+      {
+        "p90": 0,
+        "p95": 0,
+        "frame": 1,
+        "median": 0,
+        "reference": 0
+      },
+      {
+        "p90": 0,
+        "p95": 0,
+        "frame": 1,
+        "median": 0,
+        "reference": 0
+      },
+      {
+        "p90": 0,
+        "p95": 0,
+        "frame": 2,
+        "median": 0,
+        "reference": 0
+      },
+      {
+        "p90": 0,
+        "p95": 0,
+        "frame": 2,
+        "median": 0,
+        "reference": 1
+      },
+      {
+        "p90": 0,
+        "p95": 0,
+        "frame": 3,
+        "median": 0,
+        "reference": 0
+      },
+      {
+        "p90": 0,
+        "p95": 0,
+        "frame": 3,
+        "median": 0,
+        "reference": 2
+      },
+      {
+        "p90": 0,
+        "p95": 0,
+        "frame": 4,
+        "median": 0,
+        "reference": 0
+      },
+      {
+        "p90": 0,
+        "p95": 0,
+        "frame": 4,
+        "median": 0,
+        "reference": 3
+      },
+      {
+        "p90": 0,
+        "p95": 7,
+        "frame": 5,
+        "median": 0,
+        "reference": 0
+      },
+      {
+        "p90": 0,
+        "p95": 41,
+        "frame": 5,
+        "median": 0,
+        "reference": 4
+      },
+      {
+        "p90": 0,
+        "p95": 7,
+        "frame": 6,
+        "median": 0,
+        "reference": 0
+      },
+      {
+        "p90": 0,
+        "p95": 7,
+        "frame": 6,
+        "median": 0,
+        "reference": 5
+      },
+      {
+        "p90": 0,
+        "p95": 0,
+        "frame": 7,
+        "median": 0,
+        "reference": 0
+      },
+      {
+        "p90": 0,
+        "p95": 0,
+        "frame": 7,
+        "median": 0,
+        "reference": 6
+      },
+      {
+        "p90": 0,
+        "p95": 0,
+        "frame": 8,
+        "median": 0,
+        "reference": 0
+      },
+      {
+        "p90": 0,
+        "p95": 0,
+        "frame": 8,
+        "median": 0,
+        "reference": 7
+      }
+    ],
+    "version": "visible-rgb-distribution-v1"
+  },
+  "initialVision": {
+    "properties": [
+      {
+        "state": "FAIL",
+        "frames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "evidence": "IDLE인데 실제 프레임 1~6에서 머리 중앙 뒤쪽의 새 부속물이 나타나고 형태가 변한다.",
+        "property": "action"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "모든 실제 프레임에서 정면을 향한 남쪽 방향이 유지된다.",
+        "property": "direction"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "모든 실제 프레임에서 양쪽 눈이 읽을 수 있고 눈 모양의 깜빡임·변형이 보이지 않는다.",
+        "property": "eyes"
+      },
+      {
+        "state": "UNCERTAIN",
+        "frames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "evidence": "귀, 밝은 얼굴 중앙 무늬, 양쪽 코트 패치와 고양이형 실루엣은 유지되지만 프레임 1~6에 승인 seed와 frame 0에 없는 중앙 머리 부속물이 추가된다.",
+        "property": "identity"
+      },
+      {
+        "state": "FAIL",
+        "frames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "evidence": "하체 실루엣은 정지해 있으나 프레임 1~6에서 머리 위 부속물이 나타나고 이동·변형하여 IDLE의 정지성을 깨뜨린다.",
+        "property": "idleStillness"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "네 다리와 발은 서로 연결된 plausible한 형태로 유지되며 하체 변화 측정도 없다.",
+        "property": "limbs"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          8,
+          0
+        ],
+        "evidence": "프레임 8에서 프레임 0과 같은 부속물 없는 진입 실루엣으로 돌아오며, 8→0 연결에서도 외형 변화가 없다.",
+        "property": "loop"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "코트 패치와 얼굴 색 분포에 광범위한 flicker나 패치 소실은 보이지 않으며, 큰 RGB 변화는 주로 새 부속물 영역의 출현과 관련된다.",
+        "property": "palette"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0
+        ],
+        "evidence": "실제 frame 0은 seed와 같은 정면 자세, 귀·얼굴·사지 해부 및 native 캔버스 구성을 보인다.",
+        "property": "referencePose"
+      },
+      {
+        "state": "FAIL",
+        "frames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "evidence": "seed와 실제 frame 0에 없는 중앙 머리 부속물이 프레임 1~6에서 새로 솟아나고 이동한다. UNKNOWN tail contract라도 승인되지 않은 중앙 부속물의 부착·움직임은 결함이다.",
+        "property": "tail"
+      }
+    ],
+    "observedMotion": "OTHER_MOVEMENT"
+  },
+  "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "pixelEvidence": {
+    "version": "native-frame-delta-v1",
+    "reference": "frame0",
+    "frameCount": 9,
+    "alphaStable": false,
+    "boundsExclusive": [
+      [
+        10,
+        8,
+        30,
+        35
+      ],
+      [
+        10,
+        7,
+        30,
+        35
+      ],
+      [
+        10,
+        6,
+        30,
+        35
+      ],
+      [
+        10,
+        5,
+        30,
+        35
+      ],
+      [
+        10,
+        5,
+        30,
+        35
+      ],
+      [
+        10,
+        5,
+        30,
+        35
+      ],
+      [
+        10,
+        5,
+        30,
+        35
+      ],
+      [
+        10,
+        8,
+        30,
+        35
+      ],
+      [
+        10,
+        8,
+        30,
+        35
+      ]
+    ],
+    "subtleShadingOnly": false,
+    "maxVisibleRgbDelta": 254,
+    "maxRgbDeltaFromFrame0": [
+      0,
+      254,
+      254,
+      254,
+      254,
+      254,
+      254,
+      254,
+      20
+    ],
+    "alphaChangedFromFrame0": [
+      0,
+      16,
+      21,
+      33,
+      27,
+      28,
+      29,
+      8,
+      0
+    ],
+    "maxRgbDeltaFromPrevious": [
+      0,
+      254,
+      254,
+      254,
+      254,
+      254,
+      254,
+      254,
+      254
+    ],
+    "alphaChangedFromPrevious": [
+      0,
+      16,
+      11,
+      20,
+      26,
+      13,
+      23,
+      27,
+      8
+    ],
+    "rgbChangedPixelsFromFrame0": [
+      0,
+      26,
+      32,
+      43,
+      40,
+      51,
+      51,
+      21,
+      11
+    ]
+  },
+  "rulesRevision": "sprite-regressions-2026-10-10-v33",
+  "detachedFrames": [],
+  "learnedLessons": [],
+  "motionDecision": "UNCERTAIN",
+  "aestheticPolicy": "aesthetic-warnings-v1",
+  "qualityWarnings": [],
+  "recoveryVersion": "photo-grounded-recovery-v1",
+  "idleMotionFrames": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "invalidResponses": [],
+  "motionSeedSha256": "394aa381f6942bbf38d29395c1c44eebebb15bae98a0a8a4132439c335cf4cb0",
+  "observationCount": 2,
+  "silhouetteFrames": [
+    1,
+    3,
+    4,
+    5,
+    6
+  ],
+  "consistencyReview": {
+    "properties": [
+      {
+        "state": "FAIL",
+        "frames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "evidence": "IDLE 중 프레임 1~6에서 머리 위 중앙에 승인 시드와 프레임 0에 없던 부속물이 나타나고 형태가 변한다.",
+        "property": "action"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "모든 실제 프레임에서 정면으로 남쪽을 향한다.",
+        "property": "direction"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "모든 프레임에서 양쪽 눈이 읽을 수 있게 유지된다.",
+        "property": "eyes"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "귀 형태와 주황색·흰색 얼굴 및 몸통 무늬가 전체 프레임에서 recognizable하게 유지된다.",
+        "property": "identity"
+      },
+      {
+        "state": "FAIL",
+        "frames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "evidence": "IDLE인데 프레임 1~6에서 중앙 머리 위 부속물이 나타나고 이동하는 가시적 움직임이 있다.",
+        "property": "idleStillness"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "네 다리의 연결과 하체 실루엣이 프레임 전체에서 일관되고, 하체 알파·윤곽 변화도 없다.",
+        "property": "limbs"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          8,
+          0
+        ],
+        "evidence": "프레임 8에서 프레임 0으로 이어질 때 모두 같은 정지 실루엣으로 돌아간다.",
+        "property": "loop"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "evidence": "얼굴과 코트 패치가 유지되며, 일부 RGB 변화는 있으나 눈에 띄는 코트 패치 소실이나 광범위한 색상 깜빡임은 보이지 않는다.",
+        "property": "palette"
+      },
+      {
+        "state": "PASS",
+        "frames": [
+          0
+        ],
+        "evidence": "실제 프레임 0은 승인 시드와 같은 정면 입장 자세, 해부 구조 및 네이티브 크기를 유지한다.",
+        "property": "referencePose"
+      },
+      {
+        "state": "FAIL",
+        "frames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "evidence": "프레임 1~6에서 승인 시드와 실제 프레임 0에 없던 중앙 머리 위 부속물이 새로 나타나고 이동한다. UNKNOWN 꼬리 계약과 무관하게 승인되지 않은 연결·움직임이다.",
+        "property": "tail"
+      }
+    ],
+    "observedMotion": "OTHER_MOVEMENT"
+  },
+  "lowerBodyEvidence": {
+    "version": "lower-third-contour-v1",
+    "startRow": 26,
+    "alphaChanged": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "darkContourChanged": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "darkChannelCeilingExclusive": 100
+  },
+  "reviewImageHashes": {
+    "TEMPORAL actual frames 0 through 8 only": "bea84388e11e896e324dfd59b66fcecedfa880d5e436d60807375359af49234f",
+    "REFERENCE only, never part of the timeline": "0de4f07d70b3908b63c6de5be535f1865a17fe36437402d6b7cc7b7b07fa302f"
+  },
+  "confirmedProperties": [
+    "action",
+    "idleStillness",
+    "tail"
+  ],
+  "firstFrameUnchanged": true,
+  "motionReviewVersion": "motion-observation-tristate-v4",
+  "referencePoseUsable": true,
+  "reviewedFrameHashes": [
+    "394aa381f6942bbf38d29395c1c44eebebb15bae98a0a8a4132439c335cf4cb0",
+    "ace7bbf0aa49b25c94863b7d23799e3345c64b608fe3f4dada54b3c7b3f86cbd",
+    "3813509de78e9aca8fef9ff401def5d4f102e795351a85b60f93a2c63e64517d",
+    "109f60a3354ffdc630800f7c725a44072535f2f1cf4cce1c89a93a3ddc337451",
+    "e1816fa41732a85e3c29669199101fa429f15897731f5fd0955ca3ebbc499002",
+    "7128f23282b0d5d4acb51994bb5d1df4745902ab16ed232ac81abca8284fc956",
+    "41a0ffc1c41920d24e4087f18b5e9b0a98db21d2792cba29880f533129913edd",
+    "94c7f235eff577b8e5b259ee2a1ca7611333239a407727c997e07e506fd63e87",
+    "719baa51bb642c0045dd53b433ee8428d7ea410848bbab53625f43355c102216"
+  ],
+  "uncertainProperties": [
+    "identity"
+  ],
+  "referenceFrameSha256": "394aa381f6942bbf38d29395c1c44eebebb15bae98a0a8a4132439c335cf4cb0",
+  "subtlePaletteResolved": false,
+  "responseProtocolVersion": "named-motion-response-v1",
+  "unsupportedWalkResolved": false,
+  "frontalAppendageConfirmed": false
+}
