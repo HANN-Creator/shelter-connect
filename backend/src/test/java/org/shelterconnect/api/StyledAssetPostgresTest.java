@@ -2073,6 +2073,85 @@ class StyledAssetPostgresTest {
         }
     }
 
+    JsonNode confirmedMotionConflict()throws Exception {
+        var r=json.readTree(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/confirmed-motion-v37/review.json")));
+        for(var layer:List.of(r,r.path("rawEditReview"),r.path("restoredReview")))((tools.jackson.databind.node.ObjectNode)layer).put("rulesSha256",currentRules());
+        return r; // Recorded observations over synthetic DB fixture bytes; not a new visual verdict.
+    }
+    void distinctMotionEdits() {
+        var index=new java.util.concurrent.atomic.AtomicInteger();
+        when(provider.editAnimation(any())).thenAnswer(c->{outsideTransaction();
+            UUID ticket=UUID.randomUUID();int attempt=index.incrementAndGet();var frames=new ArrayList<String>();
+            for(var f:c.<JsonNode>getArgument(0).path("frames")) {
+                var image=ImageIO.read(new ByteArrayInputStream(Base64.getDecoder().decode(f.at("/image/base64").asText())));
+                image.setRGB(18,18,0xffaab000+attempt);var bytes=new ByteArrayOutputStream();ImageIO.write(image,"png",bytes);
+                frames.add(Base64.getEncoder().encodeToString(bytes.toByteArray()));
+            }
+            doReturn(json.valueToTree(Map.of("status","COMPLETED","frames",frames))).when(provider).poll(eq(ticket),eq(false));return ticket;
+        });
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans={true,false})
+    void confirmedDefectAfterCandidateUsesRemainingOriginalBudgetAndNeverLearnsUncertainty(boolean passes)throws Exception {
+        UUID id=recoveryRequest(0,false);distinctMotionEdits();var unconfirmed=candidateConflict();var confirmed=confirmedMotionConflict();
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("north"))).thenAnswer(c->{outsideTransaction();
+            int count=jdbc.queryForObject("SELECT repair_count FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-north'",Integer.class,id);
+            if(count==0)return unconfirmed.deepCopy();
+            if(count>=2 && passes)return b75MotionReport(c.getArgument(1),c.getArgument(2),"north",true,"PASS");
+            return confirmed.deepCopy();
+        });
+        finish(id);var job=read(id);int expected=passes?2:3;
+        assertThat(job.path("status").asText()).isEqualTo(passes?"APPROVED":"REVIEW");
+        assertThat(step(id,"idle-north").path("repairCount").asInt()).isEqualTo(expected);
+        verify(provider,times(expected)).editAnimation(any());
+        var history=json.readTree(jdbc.queryForObject("SELECT attempt_history FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-north'",String.class,id));
+        assertThat(history.get(0).path("unconfirmedMotionCandidate").asBoolean()).isTrue();
+        for(int i=1;i<history.size();i++) {
+            assertThat(history.get(i).path("unconfirmedMotionCandidate").asBoolean()).isFalse();
+            assertThat(history.get(i).at("/confirmedRepairPlan/assessment").asText()).isEqualTo("CONFIRMED_TARGET_ONLY");
+            assertThat(history.get(i).at("/quality/motionDecision").asText()).isEqualTo("UNCERTAIN");
+        }
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=? AND label='idle-north' AND NOT passed",Integer.class,id)).isZero();
+        if(!passes){assertThat(job.path("qualityApproval").isNull()).isTrue();publicStatus(404);}
+        clearInvocations(provider,quality);for(int i=0;i<3;i++)tick();verifyNoInteractions(provider,quality);
+    }
+    @Test void savedConfirmedTargetResumesAfterUsedCandidateWithoutRejudgingOtherClips()throws Exception {
+        UUID id=recoveryRequest(0,false);finish(id);var before=read(id);var r=(tools.jackson.databind.node.ObjectNode)step(id,"idle-north").path("qualityReport").deepCopy();var actual=confirmedMotionConflict();
+        for(String f:List.of("initialVision","consistencyReview","observationCount","uncertainProperties","confirmedProperties","motionDecision","motionReviewVersion","issues","frames"))r.set(f,actual.path(f));
+        r.put("passed",false);
+        // Isolated test fixture only: emulate the real used-candidate ledger without remote DB changes.
+        jdbc.update("UPDATE shelter.asset_jobs SET status='REVIEW',quality_approval=NULL,reviewed_at=NULL WHERE id=?",id);
+        jdbc.update("UPDATE shelter.styled_asset_steps SET quality_report=?::jsonb,repair_count=1,attempt_history='[{\"unconfirmedMotionCandidate\":true}]'::jsonb WHERE job_id=? AND label='idle-north'",r.toString(),id);
+        var body=new HashMap<String,Object>(Map.of("requestId",UUID.randomUUID().toString(),"note","Repair only the independently confirmed stored target within its original budget",
+            "expectedSeedHashes",step(id,"character").at("/result/hashes"),"expectedRulesSha256",currentRules(),
+            "expectedSheetHashes",Map.of("idle-north",step(id,"idle-north").at("/result/sha256").asText()),"expectedReviewHashes",Map.of("idle-north",sha(json.writeValueAsBytes(step(id,"idle-north").path("qualityReport"))))));
+        clearInvocations(provider,quality,seedQuality);
+        post(subject,path(id)+"/motion-candidate-repair",body,200);post(subject,path(id)+"/motion-candidate-repair",body,200);
+        tick();verifyNoInteractions(provider,quality,seedQuality);assertThat(step(id,"idle-north").path("repairCount").asInt()).isEqualTo(2);
+        finish(id);assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
+        for(var old:before.path("steps"))if(!old.path("label").asText().equals("idle-north"))assertThat(step(id,old.path("label").asText())).isEqualTo(old);
+        verify(provider,times(1)).editAnimation(any());verifyNoInteractions(seedQuality);
+        verify(quality,times(1)).review(any(),anyList(),anyList(),eq("IDLE"),eq("north"));
+        clearInvocations(provider,quality);post(subject,path(id)+"/motion-candidate-repair",body,200);tick();verifyNoInteractions(provider,quality);
+    }
+
+    @Test void loopCandidatePreservesUnknownTailAndRemainsLimitedToOneUnconfirmedEdit()throws Exception {
+        UUID id=recoveryRequest(0,false);distinctMotionEdits();
+        var r=json.readTree(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/confirmed-motion-v37/walk-south-review.json")));
+        ((tools.jackson.databind.node.ObjectNode)r).put("rulesSha256",currentRules());
+        for(String key:List.of("rawEditReview","restoredReview"))if(r.has(key))((tools.jackson.databind.node.ObjectNode)r.path(key)).put("rulesSha256",currentRules());
+        when(quality.review(any(),anyList(),anyList(),eq("WALK"),eq("south"))).thenAnswer(c->{outsideTransaction();return r.deepCopy();});
+        finish(id);var job=read(id);
+        assertThat(job.path("status").asText()).isEqualTo("REVIEW");assertThat(job.path("qualityApproval").isNull()).isTrue();
+        assertThat(step(id,"walk-south").path("repairCount").asInt()).isEqualTo(1);verify(provider,times(1)).editAnimation(any());
+        var h=json.readTree(jdbc.queryForObject("SELECT attempt_history->-1 FROM shelter.styled_asset_steps WHERE job_id=? AND label='walk-south'",String.class,id));
+        assertThat(h.path("unconfirmedMotionCandidate").asBoolean()).isTrue();
+        assertThat(h.at("/candidatePlan/properties").toString()).isEqualTo("[\"loop\"]");
+        assertThat(h.at("/candidatePlan/preservedUncertainProperties").toString()).isEqualTo("[\"tail\"]");
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=? AND label='walk-south' AND NOT passed",Integer.class,id)).isZero();
+        publicStatus(404);clearInvocations(provider,quality);for(int i=0;i<3;i++)tick();verifyNoInteractions(provider,quality);
+    }
+
     JsonNode candidateConflict()throws Exception {
         var r=(tools.jackson.databind.node.ObjectNode)json.readTree(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/native-rgba-v29/sit-north-v30-review.json")));
         // Synthetic current-policy observations for the mocked worker; the stored real receipt is unchanged.

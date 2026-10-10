@@ -1,5 +1,5 @@
 {
-  "revision": "sprite-regressions-2026-10-10-v36",
+  "revision": "sprite-regressions-2026-10-10-v37",
   "pixelEvidence": {
     "version": "native-frame-delta-v1",
     "subtleRgbChannelDelta": 24
@@ -21,7 +21,7 @@
     "UNKNOWN": "Keep approved tail anatomy; never invent a curl or raised tail. Hidden parts may remain hidden."
   },
   "actions": {
-    "IDLE": "Quiet breath/blink only, at most 1px. Fixed tail and planted paws; NO wag cycle. Hidden tail stays hidden.",
+    "IDLE": "Breath/blink only <=1px. Fixed tail, coat markings, planted paws; NO wag cycle. Hidden tail stays hidden.",
     "WALK": "Slow four-legged walk IN PLACE. Small alternating steps, paws lift above the planted baseline, never below.",
     "RUN": "Compact four-legged run IN PLACE, short coordinated strides above the planted paw baseline.",
     "SNIFF": "Tuck chin inward, lower nose BETWEEN front paws, sniff, lift head. Never extend muzzle forward.",
@@ -457,6 +457,26 @@
         "fresh-review-before-approval",
         "no-negative-learning-of-uncertainty",
         "no-repeated-static-alternative"
+      ]
+    },
+    {
+      "id": "confirmed-motion-blocked-by-unrelated-uncertainty-v37",
+      "fixture": "confirmed-motion-v37/evidence.json",
+      "action": "IDLE",
+      "check": "confirmed-target-repair-independent-of-approval",
+      "failure": "Two observations confirm tail/patch flicker at shared frames, but an idleStillness disagreement and a previously used candidate stop remaining confirmed-defect repairs.",
+      "prevention": "First generation and repair both keep IDLE tail and coat markings fixed. Typed targets agreed by both observations on the same frames may be edited within the original budget despite other unresolved properties. Require a usable entry pose and agreement across original/restored reports. Preserve uncertainty, forbid negative learning or approval from this evidence, require fresh full review, and retain the once-only limit for unconfirmed candidates.",
+      "assertions": [
+        "actual-nine-frame-receipt-preserved",
+        "initial-and-repair-share-prevention",
+        "confirmed-frames-and-properties-only",
+        "original-restored-agree",
+        "saved-report-no-reroll",
+        "original-budget-and-permissions",
+        "previous-candidate-does-not-block-confirmed-repair",
+        "uncertain-only-still-bounded",
+        "no-negative-learning-or-approval",
+        "passing-clips-unchanged"
       ]
     }
   ],

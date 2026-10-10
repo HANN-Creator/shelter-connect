@@ -44,7 +44,7 @@ class StyledMotionCandidateTest {
     void unsupportedOrUnboundObservationsCannotBuyACandidate(String defect)throws Exception {
         var r=(ObjectNode)replay("sit-north");
         switch(defect) {
-            case "unknown-only" -> {for(var p:r.path("initialVision").path("properties"))if(!p.path("state").asText().equals("PASS"))((ObjectNode)p).put("state","UNCERTAIN");}
+            case "unknown-only" -> {for(var layer:List.of(r,r.path("rawEditReview"),r.path("restoredReview")))for(String observer:List.of("initialVision","consistencyReview"))for(var p:layer.path(observer).path("properties"))if(!p.path("state").asText().equals("PASS"))((ObjectNode)p).put("state","UNCERTAIN");}
             case "reference" -> ((ObjectNode)StyledMotionReview.property(r.path("initialVision"),"referencePose")).put("state","UNCERTAIN");
             case "missing-observation" -> r.remove("consistencyReview");
             case "missing-frame" -> ((ObjectNode)StyledMotionReview.property(r.path("initialVision"),"palette")).putArray("frames");
@@ -54,4 +54,21 @@ class StyledMotionCandidateTest {
         }
         assertThat(StyledMotionCandidate.plan(r,"SIT",json)).isNull();
     }
+    @Test void realLoopTargetDoesNotInventUncertainTailAndNeverRelabelsEvidence()throws Exception {
+        Path root=Path.of("scripts/fixtures/confirmed-motion-v37");
+        var r=(ObjectNode)json.readTree(Files.readAllBytes(root.resolve("walk-south-review.json")));
+        byte[] sheet=Files.readAllBytes(root.resolve("walk-south.png"));
+        assertThat(StyledSpriteCodec.sha(sheet)).isEqualTo(r.path("inputSha256").asText());
+        r.put("rulesSha256",StyledSpriteCodec.qualityRulesSha());
+        for(String key:List.of("rawEditReview","restoredReview"))if(r.has(key))((ObjectNode)r.path(key)).put("rulesSha256",StyledSpriteCodec.qualityRulesSha());
+        var before=r.deepCopy();var plan=StyledMotionCandidate.plan(r,"WALK",json);
+        assertThat(plan).isNotNull();assertThat(plan.path("assessment").asText()).isEqualTo("UNCONFIRMED_CANDIDATE_ONLY");
+        assertThat(plan.path("properties").valueStream().map(JsonNode::asText).toList()).containsExactly("loop");
+        assertThat(plan.path("preservedUncertainProperties").valueStream().map(JsonNode::asText).toList()).containsExactly("tail");
+        assertThat(plan.path("issues").toString()).isEqualTo("[\"DISCONTINUITY\"]");
+        assertThat(r).isEqualTo(before);assertThat(StyledMotionReview.boundPass(r)).isFalse();
+        var payload=StyledRecovery.motionPayload(json,StyledSpriteCodec.frames(sheet),"WALK","south",r,1);
+        assertThat(payload.path("description").asText()).contains("[loop] only", "including [tail]").doesNotContain("TAIL_CARRIAGE").hasSizeLessThanOrEqualTo(2000);
+    }
+
 }
