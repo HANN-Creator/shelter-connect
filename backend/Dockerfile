@@ -2,10 +2,14 @@ FROM eclipse-temurin:21-jdk-jammy AS build
 WORKDIR /build
 COPY gradlew build.gradle settings.gradle ./
 COPY gradle ./gradle
+COPY scripts/build_with_retry.sh ./scripts/build_with_retry.sh
+# Keep downloaded plugins/dependencies in a source-independent Docker layer.
+# Source/rule changes then compile offline instead of fetching Central again.
+RUN chmod +x gradlew && bash scripts/build_with_retry.sh resolveDeploymentDependencies
 COPY src/main ./src/main
 COPY scripts/styled_dog ./scripts/styled_dog
 COPY asset-styles ./asset-styles
-RUN chmod +x gradlew && ./gradlew --no-daemon --max-workers=2 bootJar
+RUN ./gradlew --no-daemon --max-workers=2 --offline bootJar
 
 FROM eclipse-temurin:21-jre-jammy
 RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-venv \

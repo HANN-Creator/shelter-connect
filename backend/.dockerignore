@@ -19,6 +19,7 @@
 **/.env
 **/.env.*
 !scripts/
+!scripts/build_with_retry.sh
 !scripts/styled_dog/
 !scripts/styled_dog/*.py
 !asset-styles/

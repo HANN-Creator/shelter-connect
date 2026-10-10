@@ -165,6 +165,17 @@ tasks.named('bootJar') {
 	archiveFileName = 'shelter-connect-api.jar'
 }
 
+// The Docker dependency layer has no application source. Resolve artifacts (not
+// only metadata) here so subsequent source-only builds can use --offline.
+tasks.register('resolveDeploymentDependencies') {
+    group = 'build setup'
+    description = 'Downloads only the configurations needed to compile and package the deployment JAR.'
+    doLast {
+        [configurations.compileClasspath, configurations.runtimeClasspath,
+         configurations.annotationProcessor].each { it.resolve() }
+    }
+}
+
 // Resolve transitive versions actually used by the server, not only declared dependencies.
 tasks.register('exportRuntimeDependencies') {
     group = 'verification'
