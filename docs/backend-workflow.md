@@ -222,3 +222,5 @@ B-84: [검증된 의존성 캐시로 Render 오프라인 빌드](https://app.not
 - B-85 확정 결함 보완과 불확실 검수 분리: [노션](https://app.notion.com/p/3f55b2d1a55f8027a618d74c1c38b8c4), [조건·실제 검증 경계](confirmed-motion-repair.md). 브랜치 `backend/b-85-confirmed-motion-repair`. 실제 v36 북쪽 쉬기의 확정 꼬리/무늬 결함이 다른 속성 불일치와 이전 후보 사용으로 보완되지 않은 사례를 보존. 워커·선택 재개·편집 문구 공통 계획, 기존 예산·원본·승인/학습 차단 유지. v37, DB·요청 계약 변경 없음. 전체 승인과 앱 재생은 B-68 후속.
 
 - B-86 쉬기·앉기 보완 경로와 걷기 근거 검수: [노션](https://app.notion.com/p/3f55b2d1a55f80b0b130ee2662125485), [동작·검증 경계](motion-repair-evidence.md). B-85 v37 배포의 세 보류 원본을 보존한다. IDLE 소진 후 승인 자세 대체, 확정 SIT 첫 자세 실패의 기준 이미지 재시작, 정면 WALK의 한정된 인접 쌍·가림 근거 관찰. 기존 예산·권한·통과 PNG 유지. 브랜치 `backend/b-86-motion-repair-evidence`. B-68 배포 후 전체 승인·앱 재생과 구분.
+
+- B-87 [쉬기 정적 대체의 명암 경고 중복 차단](idle-warning-plan.md): [노션](https://app.notion.com/p/3f55b2d1a55f802f9964ef8886445d95). 실제 v38의 비차단 명암 경고가 대체 계획에서 다시 실패로 처리된 사례를 보존하고 기존 경고 정책을 공유한다. 새 정적 후보의 독립 검수·원래 예산·통과 시트·해부학 차단 유지. 규칙 v38·API·DB 변경 없음. 브랜치 `backend/b-87-idle-warning-plan`.
