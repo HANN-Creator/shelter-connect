@@ -11,6 +11,49 @@ import static org.assertj.core.api.Assertions.*;
 
 /** Explicit authorized local provider validation; no DB, publication or implicit paid retry. */
 class StyledMotionRepairEvidenceLiveTest {
+    @Test void disputedSeamUsesOneOriginalBudgetLoopCandidate()throws Exception {
+        org.junit.jupiter.api.Assumptions.assumeTrue("true".equals(System.getenv("MOTION_LOOP_LIVE_APPROVED")));
+        var t=new StyledMotionRepairEvidenceTest();var json=t.json;var seeds=t.seeds();
+        var base=Path.of(System.getenv("MOTION_EVIDENCE_LIVE_OUTPUT"));
+        var out=base.resolve(System.getenv().getOrDefault("MOTION_LOOP_LIVE_DIRECTORY","original-seam-edit"));Files.createDirectories(out);
+        var report=json.readTree(Files.readAllBytes(base.resolve("current-rule-originals/walk-south-review.json")));
+        assertThat(StyledMotionCandidate.plan(report,"WALK",json)).isNotNull();
+        var traits=(ObjectNode)json.readTree(Files.readAllBytes(Path.of(System.getenv("MOTION_EVIDENCE_LIVE_TRAITS"))));
+        traits.put("seed",(int)Math.floorMod(traits.path("seed").asLong()+7919L*3,2147483647L));
+        var contract=json.readTree("{\"tailCarriage\":\"UNKNOWN\"}");
+        var payload=StyledRecovery.motionPayload(json,t.frames("walk-south"),"WALK","south",report,traits.path("seed").asInt());
+        assertThat(payload.path("frames")).hasSize(9);
+        var provider=new StyledPixelLabClient(new AssetProperties(true,false,System.getenv("PIXELLAB_API_KEY"),"sb_secret_local_test","dog-photos","dog-assets"),json);
+        String hash=StyledSpriteCodec.sha(json.writeValueAsBytes(payload));var intent=out.resolve("intent.json");var ack=out.resolve("ack.json");var completed=out.resolve("provider-result.json");UUID ticket;
+        if(Files.exists(ack)){assertThat(json.readTree(Files.readAllBytes(intent)).path("requestSha256").asText()).isEqualTo(hash);ticket=UUID.fromString(json.readTree(Files.readAllBytes(ack)).path("id").asText());}
+        else {assertThat(Files.exists(intent)).as("Never resubmit unknown paid candidate").isFalse();
+            Files.write(intent,json.writeValueAsBytes(Map.of("requestSha256",hash,"rulesSha256",StyledSpriteCodec.qualityRulesSha(),"replayedRepairCount",3,"originalRepairLimit",3,"unconfirmedMotionCandidate",true,"productionChanged",false)),StandardOpenOption.CREATE_NEW);
+            Files.writeString(out.resolve("prompt.txt"),payload.path("description").asText());ticket=provider.editAnimation(payload);Files.write(ack,json.writeValueAsBytes(Map.of("id",ticket.toString())),StandardOpenOption.CREATE_NEW);}
+        JsonNode result=Files.exists(completed)?json.readTree(Files.readAllBytes(completed)):null;
+        for(int poll=0;result==null && poll<90;poll++){var r=provider.poll(ticket,false);if(r.path("status").asText().equals("COMPLETED")){result=r;Files.write(completed,json.writeValueAsBytes(r),StandardOpenOption.CREATE_NEW);}else{assertThat(r.path("status").asText()).isEqualTo("WAITING");Thread.sleep(5000);}}
+        assertThat(result).isNotNull();byte[] sheet=StyledSpriteCodec.rawSheet(result.path("frames").valueStream().map(n->Base64.getDecoder().decode(n.asText())).toList());
+        Files.write(out.resolve("walk-south.png"),sheet);var frames=StyledSpriteCodec.frames(sheet);
+        var ai=new AiProperties(true,System.getenv("OPENAI_API_KEY"),"gpt-5.6-luna",60);var qa=new StyledQualityAgent(new OpenAiResponsesClient(ai,json),ai,json);
+        var r=reviewOnce(out,"walk-south",json,()->qa.review(contract,seeds,frames,"WALK","south"));
+        Files.write(out.resolve("outcome.json"),json.writeValueAsBytes(Map.of("decision",r.path("motionDecision"),"passed",r.path("passed"),"issues",r.path("issues"),"uncertainty",r.path("uncertainProperties"),"productionChanged",false,"pixelLabRequests",1)));
+    }
+    @Test void originalHeldSheetsReceiveOneFreshCurrentRuleReview()throws Exception {
+        org.junit.jupiter.api.Assumptions.assumeTrue("true".equals(System.getenv("MOTION_ORIGINAL_REVIEW_LIVE_APPROVED")));
+        var t=new StyledMotionRepairEvidenceTest();var json=t.json;var seeds=t.seeds();
+        var out=Path.of(System.getenv("MOTION_EVIDENCE_LIVE_OUTPUT")).resolve("current-rule-originals");Files.createDirectories(out);
+        var ai=new AiProperties(true,System.getenv("OPENAI_API_KEY"),"gpt-5.6-luna",60);
+        var qa=new StyledQualityAgent(new OpenAiResponsesClient(ai,json),ai,json);
+        var summary=json.createObjectNode().put("productionChanged",false).put("rulesSha256",StyledSpriteCodec.qualityRulesSha());
+        for(String label:List.of("idle-west","walk-south","sit-south")) {
+            String[] parts=label.split("-");String action=parts[0].toUpperCase(Locale.ROOT),direction=parts[1];
+            var report=reviewOnce(out,label,json,()->qa.review(json.readTree("{\"tailCarriage\":\"UNKNOWN\"}"),seeds,t.frames(label),action,direction));
+            var route=summary.putObject(label).put("passed",report.path("passed").asBoolean()).put("decision",report.path("motionDecision").asText());
+            route.put("staticIdleEligible",action.equals("IDLE") && StyledIdleHold.motionOnlyFailure(report));
+            route.put("entryRestartEligible",StyledEntryPoseRepair.plan(report,action,json)!=null);
+            route.set("issues",report.path("issues"));route.set("uncertainty",report.path("uncertainProperties"));
+        }
+        Files.write(out.resolve("outcome.json"),json.writeValueAsBytes(summary));
+    }
     @Test void realHeldImagesUseNewInputsAndOneBoundedEvidenceRefinement()throws Exception {
         org.junit.jupiter.api.Assumptions.assumeTrue("true".equals(System.getenv("MOTION_EVIDENCE_LIVE_APPROVED")));
         var t=new StyledMotionRepairEvidenceTest();var json=t.json;

@@ -116,16 +116,28 @@ class StyledMotionRepairEvidenceTest {
         var root=ROOT.resolve("live");var receipt=json.readTree(Files.readAllBytes(root.resolve("evidence.json")));
         assertThat(receipt.path("productionChanged").asBoolean()).isFalse();
         for(var f:receipt.path("hashes").properties())assertThat(StyledSpriteCodec.sha(Files.readAllBytes(root.resolve(f.getKey())))).isEqualTo(f.getValue().asText());
-        for(String label:List.of("idle-west-static","sit-first-only","sit-first-only-edit","sit-endpoints","sit-endpoints-edit")) {
+        assertThat(receipt.path("pixelLabRequests").asInt()).isEqualTo(7);
+        assertThat(receipt.path("receipts")).hasSize(7);
+        for(String label:List.of("idle-west-static","sit-first-only","sit-first-only-edit","sit-endpoints","sit-endpoints-edit",
+            "walk-loop-hidden-caption","walk-loop-visible-caption","walk-original-seam-edit")) {
             var report=json.readTree(Files.readAllBytes(root.resolve(label+"-review.json")));
             var frames=StyledSpriteCodec.frames(Files.readAllBytes(root.resolve(label+".png")));
             assertThat(report.path("reviewedFrameHashes")).isEqualTo(json.valueToTree(frames.stream().map(StyledSpriteCodec::sha).toList()));
-            assertThat(report.path("passed").asBoolean()).as(label).isEqualTo(Set.of("idle-west-static","sit-endpoints-edit").contains(label));
+            assertThat(report.path("passed").asBoolean()).as(label).isEqualTo(Set.of("idle-west-static","sit-endpoints-edit","walk-original-seam-edit").contains(label));
         }
         var walk=json.readTree(Files.readAllBytes(root.resolve("walk-south-focused-review.json")));
         assertThat(StyledWalkEvidence.bound(walk)).isTrue();
         assertThat(walk.path("beforeWalkEvidence").path("passed").asBoolean()).isFalse();
         assertThat(json.readTree(Files.readAllBytes(root.resolve("negative-jump-focused-review.json"))).path("passed").asBoolean()).isFalse();
         // Stored real outcomes are regression evidence, not live calls or a claim that future samples always pass.
+    }
+    @Test void freshOriginalReviewConflictsUseDifferentCandidatesWithoutChangingVerdicts()throws Exception {
+        var root=ROOT.resolve("live/current-rule-originals");
+        var idle=(ObjectNode)json.readTree(Files.readAllBytes(root.resolve("idle-west-review.json")));var before=idle.deepCopy();
+        assertThat(StyledIdleHold.motionOnlyFailure(idle)).isTrue();assertThat(idle).isEqualTo(before);
+        ((ObjectNode)StyledMotionReview.property(idle.path("initialVision"),"tail")).putArray("frames").add(0);
+        assertThat(StyledIdleHold.motionOnlyFailure(idle)).isFalse();
+        var walk=(ObjectNode)json.readTree(Files.readAllBytes(root.resolve("walk-south-review.json")));before=walk.deepCopy();
+        assertThat(StyledMotionCandidate.plan(walk,"WALK",json).path("properties").toString()).contains("loop");assertThat(walk).isEqualTo(before);
     }
 }

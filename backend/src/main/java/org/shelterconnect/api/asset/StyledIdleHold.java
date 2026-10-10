@@ -30,7 +30,7 @@ final class StyledIdleHold {
                     || stillnessOnlyConflict(report) || motionOnlyFailure(report)))
                 || paletteOnlyConflict(report));
     }
-    /** An IDLE action/stillness disagreement can use a new static image only when anatomy is clear. */
+    /** Replace failed IDLE movement with an independently approved pose; never approve the old motion. */
     static boolean motionOnlyFailure(JsonNode report) {
         if(report==null || !StyledMotionReview.unresolved(report))return false;
         var layers=new ArrayList<JsonNode>();layers.add(report);
@@ -52,12 +52,18 @@ final class StyledIdleHold {
                     if(!p.path("state").asText().equals("FAIL"))return false;
                     var frames=new HashSet<Integer>();p.path("frames").forEach(f->frames.add(f.asInt()));
                     if(key.equals("initialVision"))shared.addAll(frames);else shared.retainAll(frames);
-                    for(String name:StyledMotionReview.PROPERTIES.keySet())
-                        if(!Set.of("action","idleStillness","loop").contains(name)
-                            && !StyledMotionReview.property(o,name).path("state").asText().equals("PASS"))return false;
+                    for(String name:StyledMotionReview.PROPERTIES.keySet()) {
+                        var finding=StyledMotionReview.property(o,name);
+                        if(Set.of("action","idleStillness","loop").contains(name) || finding.path("state").asText().equals("PASS"))continue;
+                        // The failed moving tail is discarded with this animation. Only non-entry
+                        // frames already identified as moving may have tail disagreement; the
+                        // independently approved reference becomes a NEW static candidate.
+                        if(!name.equals("tail") || finding.path("frames").isEmpty()
+                            || finding.path("frames").valueStream().anyMatch(f->f.asInt()==0 || !frames.contains(f.asInt())))return false;
+                    }
                 }
                 if(shared.isEmpty())return false;
-                if(r.path("issues").valueStream().anyMatch(p->!Set.of("IDLE_MOTION","ACTION_MISSING","DISCONTINUITY").contains(p.asText())))return false;
+                if(r.path("issues").valueStream().anyMatch(p->!Set.of("IDLE_MOTION","ACTION_MISSING","DISCONTINUITY","TAIL_CARRIAGE").contains(p.asText())))return false;
             }
         }catch(AssetException invalid){return false;}
         return true;

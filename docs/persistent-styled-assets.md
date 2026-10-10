@@ -80,4 +80,4 @@ B-55: 새 작업의 `qualityPolicy.marginRepair=frame-margin-edit-v1`은 일반 
 
 ### v38 모션 보완 경로
 
-확정된 SIT 시작 자세 오류는 승인된 서 있는 도트를 `first_frame`으로 사용해 다시 생성하고 원래 보완 횟수를 사용한다. 소진된 IDLE의 움직임만 문제라면 같은 규칙의 `motion-candidate-repair`로도 승인 자세의 무료 정적 대안을 새 검수할 수 있다. 정면 WALK의 tail/loop만 PASS/UNCERTAIN인 경우 원본 전체와 9개 인접 쌍을 한 번 추가 관찰하며, 구조화된 근거가 명확하지 않으면 계속 보류한다. API·DB 구조와 비공개 정책은 그대로이며 [B-86 검증 경계](motion-repair-evidence.md)를 따른다.
+확정된 SIT 시작 자세 오류는 승인된 서 있는 도트를 `first_frame`, 이전 앉은 끝 이미지를 `last_frame` 입력 제약으로 사용해 다시 생성하고 원래 보완 횟수를 사용한다. 소진된 IDLE의 움직임만 문제라면 같은 규칙의 `motion-candidate-repair`로도 승인 자세의 무료 정적 대안을 새 검수할 수 있다. 정면 WALK의 tail/loop만 PASS/UNCERTAIN인 경우 원본 전체와 9개 인접 쌍을 한 번 추가 관찰하며, 구조화된 근거가 명확하지 않으면 계속 보류한다. 움직임 프레임에 한정된 IDLE 꼬리 이견은 독립 정적 후보에서 새로 판단하고, WALK의 8→0에 FAIL 관찰이 있는 경우 기존 한 번의 미확정 후보와 남은 예산 안에서 원본 9프레임 전체를 편집한다. API·DB 구조와 비공개 정책은 그대로이며 [B-86 검증 경계](motion-repair-evidence.md)를 따른다.

@@ -2080,7 +2080,11 @@ class StyledAssetPostgresTest {
         }catch(IOException e){throw new UncheckedIOException(e);}
     }
     JsonNode b86SavedReview(String label,JsonNode current)throws Exception {
-        var old=json.readTree(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/motion-repair-v38/"+label+"-qualityReport.json")));
+        return b86SavedReview(label,current,false);
+    }
+    JsonNode b86SavedReview(String label,JsonNode current,boolean fresh)throws Exception {
+        var old=json.readTree(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/motion-repair-v38/"+
+            (fresh?"live/current-rule-originals/"+label+"-review.json":label+"-qualityReport.json"))));
         var r=(tools.jackson.databind.node.ObjectNode)current.deepCopy();
         for(String key:List.of("initialVision","consistencyReview","observationCount","uncertainProperties","confirmedProperties","motionDecision","motionReviewVersion","referencePoseUsable","issues","frames","edgeFrames","silhouetteFrames","detachedFrames","idleMotionFrames"))r.set(key,old.path(key));
         r.put("passed",false);return r; // Local isolated state fixture; archived observations are not fresh QA.
@@ -2092,10 +2096,10 @@ class StyledAssetPostgresTest {
             "expectedReviewHashes",Map.of(label,sha(json.writeValueAsBytes(step(id,label).path("qualityReport")))));
     }
     @org.junit.jupiter.params.ParameterizedTest
-    @org.junit.jupiter.params.provider.ValueSource(booleans={true,false})
-    void exhaustedMotionOnlyIdleResumesStaticWithoutPaidRequestOrUnchangedRejudgment(boolean fallbackPass)throws Exception {
+    @org.junit.jupiter.params.provider.CsvSource({"true,false","false,false","true,true","false,true"})
+    void exhaustedMotionOnlyIdleResumesStaticWithoutPaidRequestOrUnchangedRejudgment(boolean fallbackPass,boolean fresh)throws Exception {
         UUID id=recoveryRequest(0,false);finish(id);var before=read(id);String label="idle-west";
-        var r=b86SavedReview(label,step(id,label).path("qualityReport"));
+        var r=b86SavedReview(label,step(id,label).path("qualityReport"),fresh);
         jdbc.update("UPDATE shelter.asset_jobs SET status='REVIEW',quality_approval=NULL,reviewed_at=NULL WHERE id=?",id);
         jdbc.update("UPDATE shelter.styled_asset_steps SET quality_report=?::jsonb,repair_count=3 WHERE job_id=? AND label=?",r.toString(),id,label);
         var body=b86ResumeBody(id,label);clearInvocations(provider,quality,seedQuality);
@@ -2112,27 +2116,35 @@ class StyledAssetPostgresTest {
         if(!fallbackPass){assertThat(read(id).path("qualityApproval").isNull()).isTrue();publicStatus(404);}
         clearInvocations(provider,quality);for(int i=0;i<3;i++)tick();verifyNoInteractions(provider,quality);
     }
-    @Test void confirmedSeatedEntryRestartsMiniMaxFromApprovedStandingSeedAndSpendsOnlyOneRemainingAttempt()throws Exception {
-        UUID id=recoveryRequest(0,false);finish(id);var before=read(id);String label="sit-south";
-        var r=b86SavedReview(label,step(id,label).path("qualityReport"));
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({"SIT,1","WALK,2"})
+    void seatedEntryUsesApprovedEndpointsWhileDisputedWalkEditsAllOriginalFramesWithinBudget(String action,int count)throws Exception {
+        UUID id=recoveryRequest(0,false);finish(id);var before=read(id);String label=action.toLowerCase(Locale.ROOT)+"-south";
+        var r=b86SavedReview(label,step(id,label).path("qualityReport"),action.equals("WALK"));
         jdbc.update("UPDATE shelter.asset_jobs SET status='REVIEW',quality_approval=NULL,reviewed_at=NULL WHERE id=?",id);
-        jdbc.update("UPDATE shelter.styled_asset_steps SET quality_report=?::jsonb,repair_count=1 WHERE job_id=? AND label=?",r.toString(),id,label);
+        jdbc.update("UPDATE shelter.styled_asset_steps SET quality_report=?::jsonb,repair_count=? WHERE job_id=? AND label=?",r.toString(),count,id,label);
         var body=b86ResumeBody(id,label);clearInvocations(provider,codec,quality,seedQuality);
-        when(provider.submit(eq(false),any())).thenAnswer(c->{outsideTransaction();UUID ticket=UUID.randomUUID();var frames=new ArrayList<String>();
+        when(codec.motion(any(),eq(action),eq("south"),any(),any())).thenAnswer(c->{
+            var image=json.valueToTree(Map.of("type","base64","base64",Base64.getEncoder().encodeToString(c.<byte[]>getArgument(3))));
+            return json.valueToTree(Map.of("description",action,"first_frame",image,"last_frame",image));
+        });
+        org.mockito.stubbing.Answer<UUID> generated=c->{outsideTransaction();UUID ticket=UUID.randomUUID();var frames=new ArrayList<String>();
             byte[] padded=b86Padded(png);frames.add(Base64.getEncoder().encodeToString(padded));
             var image=ImageIO.read(new ByteArrayInputStream(padded));image.setRGB(18,18,0xffaab011);var out=new ByteArrayOutputStream();ImageIO.write(image,"png",out);
             frames.addAll(Collections.nCopies(8,Base64.getEncoder().encodeToString(out.toByteArray())));
             doReturn(json.valueToTree(Map.of("status","COMPLETED","frames",frames))).when(provider).poll(eq(ticket),eq(false));return ticket;
-        });
-        when(quality.review(any(),anyList(),anyList(),eq("SIT"),eq("south"))).thenAnswer(c->b75MotionReport(c.getArgument(1),c.getArgument(2),"south",true,"PASS"));
+        };
+        when(provider.submit(eq(false),any())).thenAnswer(generated);when(provider.editAnimation(any())).thenAnswer(generated);
+        when(quality.review(any(),anyList(),anyList(),eq(action),eq("south"))).thenAnswer(c->b75MotionReport(c.getArgument(1),c.getArgument(2),"south",true,"PASS"));
         post(subject,path(id)+"/motion-candidate-repair",body,200);tick();verifyNoInteractions(provider,quality);
-        finish(id);assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");assertThat(step(id,label).path("repairCount").asInt()).isEqualTo(2);
-        verify(provider,times(1)).submit(eq(false),argThat(payload->payload.at("/last_frame/type").asText().equals("base64")
+        finish(id);assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");assertThat(step(id,label).path("repairCount").asInt()).isEqualTo(count+1);
+        if(action.equals("SIT")){verify(provider,times(1)).submit(eq(false),argThat(payload->payload.at("/last_frame/type").asText().equals("base64")
             && !payload.at("/last_frame/base64").asText().isBlank()));verify(provider,never()).editAnimation(any());verifyNoInteractions(seedQuality);
-        verify(codec,times(1)).motion(any(),eq("SIT"),eq("south"),argThat(bytes->Arrays.equals(bytes,b86Padded(png))),argThat(p->p.path("attempt").asInt()==0));
+        verify(codec,times(1)).motion(any(),eq(action),eq("south"),argThat(bytes->Arrays.equals(bytes,b86Padded(png))),argThat(p->p.path("attempt").asInt()==0));}
+        else {verify(provider,times(1)).editAnimation(argThat(payload->payload.path("frames").size()==9));verify(provider,never()).submit(anyBoolean(),any());verify(codec,never()).motion(any(),eq(action),eq("south"),any(),any());}
         for(var old:before.path("steps"))if(!old.path("label").asText().equals(label))assertThat(step(id,old.path("label").asText())).isEqualTo(old);
         String history=jdbc.queryForObject("SELECT attempt_history::text FROM shelter.styled_asset_steps WHERE job_id=? AND label=?",String.class,id,label);
-        assertThat(history).contains("CONFIRMED_ENTRY_RESTART","referencePose");
+        assertThat(history).contains(action.equals("SIT")?"CONFIRMED_ENTRY_RESTART":"UNCONFIRMED_CANDIDATE_ONLY",action.equals("SIT")?"referencePose":"loop");
     }
 
     JsonNode confirmedMotionConflict()throws Exception {
