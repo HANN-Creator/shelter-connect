@@ -1,5 +1,5 @@
 {
-  "revision": "sprite-regressions-2026-10-11-v38",
+  "revision": "sprite-regressions-2026-10-11-v39",
   "pixelEvidence": {
     "version": "native-frame-delta-v1",
     "subtleRgbChannelDelta": 24
@@ -53,6 +53,14 @@
     "EYES: compare open-eye frames with the approved seed: keep pupil shape, position and local contrast. A brief natural blink is allowed. Eyes that stay erased, become hollow rings, or merge into fur in open-eye frames are IDENTITY_DRIFT. North has no face; do not invent eyes."
   ],
   "regressions": [
+    {
+      "id": "opaque-provider-character-must-not-pass-or-disappear",
+      "stage": "BASE",
+      "issue": "STYLED_ALPHA_INVALID",
+      "check": "actual-opaque-character-structural-rejection",
+      "fixture": "opaque-character-v38/evidence.json",
+      "expected": "Preserve all four exact provider PNGs and their alpha measurements. First generation and corrective requests keep no_background enabled and transparent-canvas instructions; configuration alone does not prove transparent output. Reject all-opaque native32 frames in both Java and Python without deleting white dog fur or treating a failure as a PASS. The v38 pre-checkpoint structural error does not reach automatic repair or lesson creation; record this unimplemented path explicitly rather than claiming complete automation."
+    },
     {
       "id": "confirmed-tail-with-overlapping-uncertain-identity-v34",
       "stage": "MOTION",

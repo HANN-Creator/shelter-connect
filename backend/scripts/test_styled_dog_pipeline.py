@@ -68,6 +68,15 @@ class PipelineTest(unittest.TestCase):
         self.assertLessEqual(len(body['description']),2000)
         self.assertEqual(body['image_size'],{'width':32,'height':32})
 
+    def test_initial_and_corrective_character_requests_require_real_transparency(self):
+        from styled_dog.quality import POLICY
+        for attempt in range(3):
+            payload=character_request(self.root,self.traits,load_rules(),
+                {'rulesSha256':digest(POLICY),'attempt':attempt,'issues':['SEED_IDENTITY']})
+            self.assertIs(payload['no_background'],True)
+            self.assertIn('transparent 32x32',payload['description'])
+            self.assertLessEqual(len(payload['description']),2000)
+
     def test_photo_crop_includes_body_and_face_without_overwriting_photo(self):
         with Image.open(self.root/'photo-concept.png') as concept, Image.open(self.root/'face.png') as face:
             self.assertEqual(concept.size,(1024,512))

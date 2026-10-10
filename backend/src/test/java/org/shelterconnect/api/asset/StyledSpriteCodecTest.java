@@ -8,6 +8,23 @@ import tools.jackson.databind.json.JsonMapper;
 import static org.assertj.core.api.Assertions.*;
 class StyledSpriteCodecTest {
     final JsonMapper json=JsonMapper.builder().build();
+    @Test void actualOpaqueProviderFramesStayRejectedWithoutErasingWhiteFur() throws Exception {
+        var root=java.nio.file.Path.of("scripts/fixtures/opaque-character-v38");
+        var evidence=json.readTree(java.nio.file.Files.readString(root.resolve("evidence.json")));
+        for(var frame:evidence.path("frames")) {
+            byte[] bytes=java.nio.file.Files.readAllBytes(root.resolve(frame.path("direction").asText()+".png"));
+            assertThat(StyledSpriteCodec.sha(bytes)).isEqualTo(frame.path("sha256").asText());
+            var original=ImageIO.read(new ByteArrayInputStream(bytes));
+            assertThat(original.getWidth()).isEqualTo(32);assertThat(original.getHeight()).isEqualTo(32);
+            for(int y=0;y<32;y++)for(int x=0;x<32;x++)assertThat(original.getRGB(x,y)>>>24).isEqualTo(255);
+            assertThatThrownBy(()->StyledSpriteCodec.nativeFrame(bytes)).hasMessage("STYLED_ALPHA_INVALID");
+            assertThat(StyledSpriteCodec.sha(bytes)).isEqualTo(frame.path("sha256").asText());
+        }
+        var whiteDog=new BufferedImage(32,32,BufferedImage.TYPE_INT_ARGB);
+        for(int y=5;y<28;y++)for(int x=8;x<24;x++)whiteDog.setRGB(x,y,0xffffffff);
+        var out=new ByteArrayOutputStream();ImageIO.write(whiteDog,"png",out);
+        assertThat(StyledSpriteCodec.nativeFrame(out.toByteArray()).getRGB(12,12)).isEqualTo(0xffffffff);
+    }
     byte[] image(int size) throws Exception {
         var im=new BufferedImage(size,size,BufferedImage.TYPE_INT_ARGB);for(int y=5;y<size-2;y++)for(int x=8;x<size-5;x++)im.setRGB(x,y,0xff123456);
         var out=new ByteArrayOutputStream();ImageIO.write(im,"png",out);return out.toByteArray();
