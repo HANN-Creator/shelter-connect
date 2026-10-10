@@ -127,7 +127,8 @@ jobs:
             --cap-drop=ALL --security-opt=no-new-privileges shelter-connect-api:ci)
           trap 'docker rm -f "$container" > /dev/null' EXIT
           test "$(docker exec "$container" id -u)" = 10001
-          docker exec -i "$container" /opt/motion/bin/python < scripts/check_packaged_motion.py
+          rules_sha=$(sha256sum asset-styles/cozy32-v1/quality-rules.json | cut -d ' ' -f 1)
+          docker exec -i --env EXPECTED_QUALITY_RULES_SHA256="$rules_sha" "$container" /opt/motion/bin/python < scripts/check_packaged_motion.py
           for attempt in $(seq 1 60); do
             if curl -fsS http://127.0.0.1:18080/actuator/health/readiness > /tmp/shelter-container-health.json; then
               python3 -c 'import json; assert json.load(open("/tmp/shelter-container-health.json")) == {"status": "UP"}'
