@@ -1,0 +1,23 @@
+{
+  "source": "Actual deployed v34 idle-west after original three edits, public animal 448536202600925; observation conflict retained, not a confirmed anatomical defect.",
+  "sourceSheetSha256": "29cb8d98d4a878cd0edc6b3c373267309d1cafffdfdadc9426b2c2dbf63e8e66",
+  "reviewDecision": "UNCERTAIN",
+  "repairCount": 3,
+  "manualVisualCheck": "All 9 frames viewed: intact curl changes slightly; no tail cut-off seen. A static approved-pose alternative is a separate candidate, not a PASS relabel.",
+  "hashes": {
+    "previous-review.json": "b7d38d77cd36380d43916d15cd25748a823be1a63075e524fde2c287f9ddebb4",
+    "previous-result.json": "ecebc32b188d69a3daee4882753c739dbf1f1fec3828e6a73cffdb3a9fa932ca",
+    "idle-west.png": "29cb8d98d4a878cd0edc6b3c373267309d1cafffdfdadc9426b2c2dbf63e8e66",
+    "seeds/west.png": "aef64959300b13b278832d8faef6108d4eea830264dd8edc4ae825333849b87c",
+    "seeds/north.png": "88397489a71e7a2bd24bf0f683c72e527b57f6bb6f501d32e84f77ead2e73c70",
+    "seeds/east.png": "26a23b6b58a24bb71a2908837b98644919af8f9046aa80a5275d32d288e260eb",
+    "seeds/south.png": "24a0b6f5db96ec73bef1b6dec3006b1dd958714962d19688b6a38e8acee16644",
+    "actual-static-review.json": "33a6497bcf7de4908bf70185ca01dddcf28706ed0405966d237b1899a7c0d153"
+  },
+  "staticCandidate": {
+    "source": "Nine exact 40px padded approved west frames; one real server-code Luna review. Original report remains UNCERTAIN.",
+    "passed": true,
+    "rulesSha256": "14baf16dd602c4316676b3bc6f33cfcac6e48a86fbb4a73177be35334ec26002",
+    "reviewSha256": "33a6497bcf7de4908bf70185ca01dddcf28706ed0405966d237b1899a7c0d153"
+  }
+}

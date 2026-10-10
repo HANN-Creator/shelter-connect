@@ -1875,6 +1875,51 @@ class StyledAssetPostgresTest {
         if(!fallbackPass)publicStatus(404);
     }
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans={true,false})
+    void exhaustedStillnessConflictArchivesUncertaintyAndReviewsStaticOnce(boolean fallbackPass)throws Exception {
+        UUID id=recoveryRequest(0,false);
+        var actual=json.readTree(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/idle-stillness-v36/previous-review.json")));
+        // Each simulated provider edit must return distinct bytes; unchanged bytes intentionally reuse the saved verdict.
+        var editIndex=new java.util.concurrent.atomic.AtomicInteger();
+        when(provider.editAnimation(any())).thenAnswer(c->{outsideTransaction();
+            UUID ticket=UUID.randomUUID();int attempt=editIndex.incrementAndGet();var frames=new ArrayList<String>();
+            for(var f:c.<JsonNode>getArgument(0).path("frames")) {
+                var image=ImageIO.read(new ByteArrayInputStream(Base64.getDecoder().decode(f.at("/image/base64").asText())));
+                image.setRGB(18,18,0xffaab000+attempt);var bytes=new ByteArrayOutputStream();ImageIO.write(image,"png",bytes);
+                frames.add(Base64.getEncoder().encodeToString(bytes.toByteArray()));
+            }
+            doReturn(json.valueToTree(Map.of("status","COMPLETED","frames",frames))).when(provider).poll(eq(ticket),eq(false));
+            return ticket;
+        });
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("west"))).thenAnswer(c->{outsideTransaction();
+            boolean derived=jdbc.queryForObject("SELECT COALESCE(provider_result->'derivation'->>'strategy','') FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-west'",String.class,id).equals("approved-seed-idle-hold-v1");
+            if(derived)return b75MotionReport(c.getArgument(1),c.getArgument(2),"west",fallbackPass,fallbackPass?"PASS":"CONFIRMED_DEFECT");
+            int count=jdbc.queryForObject("SELECT repair_count FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-west'",Integer.class,id);
+            if(count<3)return b75MotionReport(c.getArgument(1),c.getArgument(2),"west",false,"CONFIRMED_DEFECT");
+            var r=(tools.jackson.databind.node.ObjectNode)actual.deepCopy();r.put("rulesSha256",currentRules());
+            r.put("note","Synthetic DB state test replays archived observation conflict, not actual image quality.");return r;
+        });
+        finish(id);var s=step(id,"idle-west");
+        assertThat(read(id).path("status").asText()).isEqualTo(fallbackPass?"APPROVED":"REVIEW");
+        assertThat(s.path("repairCount").asInt()).isEqualTo(3);
+        assertThat(s.at("/result/derivation/strategy").asText()).isEqualTo("approved-seed-idle-hold-v1");
+        assertThat(s.at("/result/frameHashes").size()).isEqualTo(9);
+        assertThat(s.at("/result/frameHashes").valueStream().map(JsonNode::asText).distinct().count()).isEqualTo(1);
+        var history=json.readTree(jdbc.queryForObject("SELECT attempt_history FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-west'",String.class,id));
+        assertThat(history.size()).isEqualTo(4);var previous=history.get(3);
+        assertThat(previous.path("idleHoldFallback").asBoolean()).isTrue();assertThat(previous.path("repairCount").asInt()).isEqualTo(3);
+        assertThat(previous.at("/quality/motionDecision").asText()).isEqualTo("UNCERTAIN");
+        assertThat(previous.at("/quality/uncertainProperties").toString()).isEqualTo("[\"idleStillness\"]");
+        assertThat(previous.at("/quality/rawEditReview/initialVision")).isEqualTo(actual.path("initialVision"));
+        assertThat(previous.at("/quality/rawEditReview/consistencyReview")).isEqualTo(actual.path("consistencyReview"));
+        assertThat(objects).containsKey(previous.at("/result/key").asText()).containsKey(previous.at("/result/rawEdit/key").asText());
+        assertThat(sha(objects.get(previous.at("/result/key").asText()))).isEqualTo(previous.at("/result/sha256").asText());
+        verify(provider,times(3)).editAnimation(any());verify(provider,times(12)).submit(eq(false),any());
+        clearInvocations(provider);for(int i=0;i<3;i++)tick();verifyNoInteractions(provider);
+        if(!fallbackPass)publicStatus(404);
+    }
+
     UUID b75HeldPack()throws Exception {
         UUID id=recoveryRequest(0,false);
         when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("south"))).thenAnswer(c->b75MotionReport(c.getArgument(1),c.getArgument(2),"south",false,"UNCERTAIN"));

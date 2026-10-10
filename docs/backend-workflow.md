@@ -212,3 +212,5 @@ B-71: [보완된 기본 도트 재검수 상태 분리](repaired-seed-recheck.md
 - B-80 [검수 시간 초과 복구](quality-timeout-recovery.md): [노션](https://app.notion.com/p/3f55b2d1a55f80c0b714f228b2e17ffe). 브랜치 `backend/b-80-quality-timeout-recovery`. 저장된 검수 자료의 제한적 재시도와 소속 담당자의 해시 확인 복구. 이미지·판정·보완 예산 보존, DB V23·품질 규칙 v34 유지. 실제 전체 완료는 배포 후 별도 검증.
 
 - B-81 후면을 얼굴로 오인하는 동작 검수: [노션](https://app.notion.com/p/3f55b2d1a55f80f7acdee2150340f848), [시점 맥락과 검증 경계](camera-view-motion-review.md). 브랜치 `backend/b-81-direction-aware-motion-review`. 실제 v34 후면 오인 자료 보존, 카메라 기준 4방향 정의·정적 도트 참조 연결, 최초 생성·편집 공통 후면 조건, 원본·결함/불확실성 차단 유지. v35, DB/API 변경 없음. 실제 검수·CI·병합 및 전체 서버 팩 결과는 확인 후 기록.
+
+- B-82 [쉬기 관찰 충돌의 정지 대안](idle-stillness-conflict.md): [노션](https://app.notion.com/p/3f55b2d1a55f80f89a27f239298ca286). 브랜치 `backend/b-82-idle-conflict-hold`. 실제 v34 3회 편집 후 idleStillness만 PASS/FAIL인 원본 보존, 원래 예산 소진 후 1회 정지 대안·새 검수, 다른 불확실성과 이전 판정·원본·비용 유지. 실제 대안 Luna PASS, 전체 실서버 팩 승인·앱 재생은 별도. v36, DB/API 변경 없음.
