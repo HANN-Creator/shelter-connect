@@ -1,0 +1,12 @@
+# Refresh the deployment cache in a clean builder; never copy a developer's home.
+FROM eclipse-temurin:21-jdk-jammy AS dependencies
+WORKDIR /build
+COPY gradlew build.gradle settings.gradle ./
+COPY gradle ./gradle
+COPY scripts/build_with_retry.sh ./scripts/build_with_retry.sh
+RUN chmod +x gradlew && bash scripts/build_with_retry.sh resolveDeploymentDependencies
+COPY scripts/export_gradle_cache.sh ./scripts/export_gradle_cache.sh
+RUN bash scripts/export_gradle_cache.sh
+
+FROM scratch AS export
+COPY --from=dependencies /export/ /
