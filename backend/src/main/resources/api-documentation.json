@@ -3002,6 +3002,74 @@
         "expectedSheetHashes"
       ],
       "additionalProperties": false
+    },
+    "StyledQualityTimeoutCheckpoint": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "phase": {
+          "type": "string",
+          "enum": [
+            "PERSISTING",
+            "CHECKING"
+          ]
+        },
+        "checkpointSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "repairCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "retriesUsed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "retryLimit": {
+          "type": "integer",
+          "enum": [
+            2
+          ]
+        },
+        "rulesSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "currentRulesSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "seedHashes": {
+          "$ref": "#/components/schemas/StyledSeedHashes"
+        }
+      },
+      "required": [
+        "label",
+        "phase",
+        "checkpointSha256",
+        "repairCount",
+        "retriesUsed",
+        "retryLimit",
+        "rulesSha256",
+        "currentRulesSha256",
+        "seedHashes"
+      ],
+      "additionalProperties": false
+    },
+    "StyledQualityTimeoutCheckpointItem": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/StyledQualityTimeoutCheckpoint"
+        }
+      },
+      "required": [
+        "data"
+      ],
+      "additionalProperties": false
     }
   },
   "operations": {
@@ -4844,7 +4912,8 @@
         "404",
         "409",
         "503"
-      ]
+      ],
+      "responseSchema": "StyledQualityTimeoutCheckpointItem"
     },
     "POST /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/quality-timeout-resume": {
       "summary": "저장된 검수 시간 초과 작업을 기존 예산으로 재개",
