@@ -347,7 +347,8 @@ public class StyledAssetStore {
             int limit=StyledRecovery.limit(policy,false);
             boolean raw=step.result().has("rawEdit") && !q.at("/restoredReview/passed").asBoolean() && StyledRawMotion.genuinePass(q.path("rawEditReview"),step.action());
             if(!raw && (step.repairCount()>=limit || StyledIdleHold.derived(step.result())))throw new AssetException(409,"MOTION_REPAIR_BUDGET_EXHAUSTED");
-            if(!raw && StyledMotionReview.unresolved(q) && (StyledMotionCandidate.plan(q,step.action(),json)==null || candidateUsed(id,step.label())))
+            if(!raw && StyledMotionReview.unresolved(q) && StyledConfirmedMotionRepair.plan(q,step.action(),json)==null
+                && (StyledMotionCandidate.plan(q,step.action(),json)==null || candidateUsed(id,step.label())))
                 throw new AssetException(409,"MOTION_CANDIDATE_NO_EDIT_TARGET");
             plans.putObject(step.label()).put("sha256",e.getValue().asText()).put("reviewSha256",reviews.path(step.label()).asText())
                 .put("startingRepairCount",step.repairCount()).put("repairLimit",limit);
@@ -951,8 +952,8 @@ public class StyledAssetStore {
         // Explicit rechecks judge the stored bytes, even if a new rule finds a defect with budget left.
         if(w.status().equals("CHECKING") && !seedResumeAllowed(w) && !motionResumeAllowed(w))return false;
         if(w.character() && StyledCoatReview.unresolved(report))return false;
-        boolean candidate=!w.character() && StyledMotionReview.unresolved(report)
-            && !StyledMotionReview.confirmedTailRepair(report) && !StyledMotionReview.confirmedPaletteRepair(report);
+        var confirmedPlan=w.character()?null:StyledConfirmedMotionRepair.plan(report,w.action(),json);
+        boolean candidate=!w.character() && StyledMotionReview.unresolved(report) && confirmedPlan==null;
         var candidatePlan=candidate?StyledMotionCandidate.plan(report,w.action(),json):null;
         if(candidate && (!StyledMotionCandidate.enabled(w.qualityPolicy()) || candidatePlan==null || candidateUsed(w.id(),w.label())))return false;
         if(w.qualityPolicy()!=null && w.qualityPolicy().path("referenceOnly").asBoolean())return false;
@@ -964,11 +965,11 @@ public class StyledAssetStore {
             UPDATE shelter.styled_asset_steps SET attempt_history=attempt_history || jsonb_build_array(jsonb_build_object(
               'providerJobId',provider_job_id,'submittedAt',submitted_at,'requestSha256',request_sha256,
               'result',CAST(:r AS jsonb),'quality',CAST(:q AS jsonb),'repairCount',repair_count,
-              'unconfirmedMotionCandidate',:candidate,'candidatePlan',CAST(:plan AS jsonb))),
+              'unconfirmedMotionCandidate',:candidate,'candidatePlan',CAST(:plan AS jsonb),'confirmedRepairPlan',CAST(:confirmed AS jsonb))),
               repair_count=repair_count+1,status='PENDING',provider_job_id=NULL,submitted_at=NULL,provider_result=NULL,
               result=NULL,quality_report=CAST(:q AS jsonb) WHERE job_id=:id AND label=:l
             """).param("r",json.writeValueAsString(result)).param("q",json.writeValueAsString(report)).param("candidate",candidate)
-            .param("plan",json.writeValueAsString(candidatePlan)).param("id",w.id()).param("l",w.label()).update();
+            .param("plan",json.writeValueAsString(candidatePlan)).param("confirmed",json.writeValueAsString(confirmedPlan)).param("id",w.id()).param("l",w.label()).update();
         defer(w,0);return true;
     }
     @Transactional public void success(Work w,JsonNode result) {

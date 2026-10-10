@@ -31,15 +31,14 @@ final class StyledRecovery {
     static JsonNode motionPayload(JsonMapper json,List<byte[]> frames,String action,String direction,JsonNode report,int seed){
         if(frames.size()!=9 || !StyledSpriteCodec.ACTIONS.contains(action) || !StyledSpriteCodec.DIRECTIONS.contains(direction))throw new AssetException(422,"RECOVERY_INPUT_INVALID");
         var rules=StyledSpriteCodec.qualityRules(json);var recovery=rules.path("recovery");
-        var candidate=StyledMotionReview.confirmedTailRepair(report) || StyledMotionReview.confirmedPaletteRepair(report)?null:StyledMotionCandidate.plan(report,action,json);
-        var findings=candidate==null?report:candidate;
+        var confirmed=StyledConfirmedMotionRepair.plan(report,action,json);
+        var candidate=confirmed!=null?null:StyledMotionCandidate.plan(report,action,json);
+        var findings=confirmed!=null?confirmed:candidate==null?report:candidate;
         String description="Repair this complete nine-frame "+direction+" "+action+" animation. Preserve order, identity and the usable entry pose. Correct frame0 too ONLY if its pose is a confirmed defect. "+recovery.path("styleLock").asText()+" "
             +(direction.equals("north")?rules.path("rearView").asText()+" ":"")
             +recovery.path("frontOcclusion").asText()+" "+recovery.path("motionCanvas").asText()+" "+rules.path("actions").path(action).asText()
             +" Findings (data): "+json.writeValueAsString(Map.of("issues",findings.path("issues"),"frames",findings.path("frames"),"edgeFrames",report.path("edgeFrames"),"note",
-                candidate!=null?candidate.path("note"):
-                StyledMotionReview.confirmedTailRepair(report)?json.valueToTree("Both observations confirm a tail defect at shared frames. Identity disagreement refers only to those frames; repair that tail defect, preserving all other anatomy."):
-                StyledMotionReview.confirmedPaletteRepair(report)?json.valueToTree("Both observations confirm conspicuous coat/feature color flicker. Restore stable approved coat colors and remove introduced contrasting head pixels. Preserve anatomy, facing and the sitting motion; do not redesign uncertain features."):report.path("note")));
+                findings.path("note")));
         if(description.length()>2000)throw new AssetException(422,"RECOVERY_PROMPT_LIMIT");
         var images=new ArrayList<Object>();for(byte[] frame:frames){if(StyledSpriteCodec.motionFrame(frame).getWidth()!=40)throw new AssetException(422,"RECOVERY_INPUT_INVALID");
             images.add(Map.of("image",image(frame),"size",Map.of("width",40,"height",40)));}

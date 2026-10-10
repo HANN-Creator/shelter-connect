@@ -218,3 +218,5 @@ B-71: [보완된 기본 도트 재검수 상태 분리](repaired-seed-recheck.md
 - B-83 [배포 빌드 다운로드 제한 대응](deployment-build-reliability.md): [노션](https://app.notion.com/p/3f55b2d1a55f807e98daf0d1fd1b98e9). 브랜치 `backend/b-83-deployment-build`. 실제 Maven Central 429에 대한 의존성 캐시 레이어·제한된 지연 재시도, 오프라인 소스 빌드와 배포 JAR 품질 규칙 검증. v36·DB/API 유지. 병합과 실제 배포 결과는 확인 후 기록.
 
 B-84: [검증된 의존성 캐시로 Render 오프라인 빌드](https://app.notion.com/p/3f55b2d1a55f80e292b9fcc5672acab2). B-83의 지속 429 후속으로 최초 배포부터 검증된 의존성 캐시를 사용한다. [빌드·갱신 절차](deployment-build-reliability.md).
+
+- B-85 확정 결함 보완과 불확실 검수 분리: [노션](https://app.notion.com/p/3f55b2d1a55f8027a618d74c1c38b8c4), [조건·실제 검증 경계](confirmed-motion-repair.md). 브랜치 `backend/b-85-confirmed-motion-repair`. 실제 v36 북쪽 쉬기의 확정 꼬리/무늬 결함이 다른 속성 불일치와 이전 후보 사용으로 보완되지 않은 사례를 보존. 워커·선택 재개·편집 문구 공통 계획, 기존 예산·원본·승인/학습 차단 유지. v37, DB·요청 계약 변경 없음. 전체 승인과 앱 재생은 B-68 후속.
