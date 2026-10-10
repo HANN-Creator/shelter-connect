@@ -209,3 +209,4 @@ B-71: [보완된 기본 도트 재검수 상태 분리](repaired-seed-recheck.md
 - B-78 [무늬 경고의 중복 외형 불일치 차단 수정](coat-identity-warning.md): [노션](https://app.notion.com/p/3f45b2d1a55f809f8951d700d20ddb70). 브랜치 `backend/b-78-coat-identity-warning`. B-77 실제 배포에서 경고로 전환한 무늬가 종합 외형 false로 다시 차단되는 실패를 재현. 별도 외형 관찰·근거 보존으로 정상화하고 실제 구조 결함·불확실은 유지. v33, DB V23 유지. 같은 원본의 실제 독립 관찰과 생산 코드 재생은 통과했으며 배포 서버 승인·앱 재생은 별도 확인한다.
 
 - B-79 [확정 꼬리 결함과 외형 불확실의 보완 충돌](confirmed-tail-repair.md): [노션](https://app.notion.com/p/3f55b2d1a55f807ba8a5daa70a8c574b). 브랜치 `backend/b-79-confirmed-tail-repair`. v33 정면 IDLE의 실제 9프레임과 두 관찰로 재현. 같은 프레임의 확정 꼬리 결함 보완과 중복 외형 불확실을 분리하되 원래 승인·학습 차단과 예산을 유지. v34, DB V23 유지. 새 후보의 실제 품질·최종 승인·앱 재생은 배포 후 확인한다.
+- B-80 [검수 시간 초과 복구](quality-timeout-recovery.md): [노션](https://app.notion.com/p/3f55b2d1a55f80c0b714f228b2e17ffe). 브랜치 `backend/b-80-quality-timeout-recovery`. 저장된 검수 자료의 제한적 재시도와 소속 담당자의 해시 확인 복구. 이미지·판정·보완 예산 보존, DB V23·품질 규칙 v34 유지. 실제 전체 완료는 배포 후 별도 검증.

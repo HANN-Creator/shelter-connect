@@ -2951,6 +2951,57 @@
         "expectedReviewHashes"
       ],
       "additionalProperties": false
+    },
+    "StyledQualityTimeoutResume": {
+      "type": "object",
+      "properties": {
+        "note": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 2000
+        },
+        "expectedSeedHashes": {
+          "$ref": "#/components/schemas/StyledSeedHashes"
+        },
+        "expectedRulesSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "작업에 저장된 이전 규칙 SHA. 다르면 완료 이미지 전체를 새 규칙으로 재검수하며 승인·횟수는 초기화하지 않습니다."
+        },
+        "requestId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "같은 요청 재전송은 재사용. 동작별 복구 1회이며 자동 재시도와 공유하는 총 2회 한도를 소비합니다."
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "expectedCheckpointSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "quality-timeout-checkpoint에서 받은 서버 저장 자료 해시. 이미지 내용은 전송하지 않습니다."
+        },
+        "expectedSheetHashes": {
+          "type": "object",
+          "maxProperties": 32,
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "description": "규칙 변경 시 기존 남은 예산으로 보완을 허용할 완료·불합격 시트. 같은 규칙에서는 빈 객체."
+        }
+      },
+      "required": [
+        "note",
+        "expectedSeedHashes",
+        "expectedRulesSha256",
+        "requestId",
+        "label",
+        "expectedCheckpointSha256",
+        "expectedSheetHashes"
+      ],
+      "additionalProperties": false
     }
   },
   "operations": {
@@ -4779,6 +4830,38 @@
       ],
       "request": {
         "schema": "StyledMotionCandidateRepair"
+      }
+    },
+    "GET /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/quality-timeout-checkpoint": {
+      "summary": "시간 초과로 중단된 동작의 복구 해시 조회",
+      "description": "소속 보호소 쓰기 권한·사진 허가와 기존 SYSTEM BASE 승인이 있는 실패 작업만 조회합니다. 정확히 한 동작이 QUALITY_AI_TIMEOUT으로 중단되고 검수 전 저장 자료가 남아 있어야 합니다. label, phase, checkpointSha256, seedHashes, repairCount, retriesUsed, retryLimit, rulesSha256, currentRulesSha256만 반환합니다. 원본 자료·서명 URL·외부 영수증은 공개하지 않습니다.",
+      "tag": "32px 에셋",
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "403",
+        "404",
+        "409",
+        "503"
+      ]
+    },
+    "POST /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/quality-timeout-resume": {
+      "summary": "저장된 검수 시간 초과 작업을 기존 예산으로 재개",
+      "description": "소속 보호소 담당자 전용. 저장 자료·BASE·이전 규칙 해시가 일치하는 한 동작만 복구합니다. 새 이미지 제출 없이 검수를 다시 시도하며 기존 이미지·영수증·판정·보완 횟수를 보존합니다. 규칙이 바뀌면 완료 결과 전부를 재검수하고 선택한 실패 시트만 원래 남은 보완 예산을 사용합니다. 같은 규칙은 해당 동작만 이어갑니다. 자동·명시 복구 합계 동작당 2회, 15/60초 지연. 소진·다른 오류·사진 허가 취소·불확실 제출은 차단합니다. 새 검수 통과 없이 승인하지 않습니다.",
+      "tag": "32px 에셋",
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "403",
+        "404",
+        "409",
+        "503"
+      ],
+      "request": {
+        "schema": "StyledQualityTimeoutResume"
       }
     }
   }

@@ -181,7 +181,10 @@ public class StyledAssetWorker {
                 inspect(w,frames,metadata);
             }
         } catch(AssetProvider.Failure e) { store.fail(w,e.uncertain,e.code); }
-        catch(AssetException e) { if(e.diagnostics!=null)store.quality(w,e.diagnostics);store.fail(w,false,e.code); }
+        catch(AssetException e) {
+            if(store.retryQualityTimeout(w,e.code))return;
+            if(e.diagnostics!=null)store.quality(w,e.diagnostics);store.fail(w,false,e.code);
+        }
         catch(RuntimeException e) { store.fail(w,submitted,"STYLED_WORK_INTERRUPTED"); }
     }
     private void inspectSeeds(StyledAssetStore.Work w,List<byte[]> seeds,JsonNode metadata,boolean allowRepair) {
