@@ -19,6 +19,13 @@ class StyledMotionRepairEvidenceTest {
         for(String k:List.of("rawEditReview","restoredReview"))if(r.has(k))((ObjectNode)r.path(k)).put("rulesSha256",StyledSpriteCodec.qualityRulesSha());
         return r; // Historic observations for decision replay, never claimed as fresh visual QA.
     }
+    ObjectNode replayCurrentRules(JsonNode archived) {
+        var copy=(ObjectNode)archived.deepCopy();bindReplay(copy);return copy;
+    }
+    private void bindReplay(JsonNode node) {
+        if(node.isObject() && node.has("rulesSha256"))((ObjectNode)node).put("rulesSha256",StyledSpriteCodec.qualityRulesSha());
+        for(var child:node)if(child.isObject() || child.isArray())bindReplay(child);
+    }
     List<byte[]> seeds()throws Exception{var s=new ArrayList<byte[]>();for(String d:StyledSpriteCodec.DIRECTIONS)s.add(StyledSpriteCodec.paddedSeed(Files.readAllBytes(ROOT.resolve("seeds/"+d+".png"))));return s;}
     List<byte[]> frames(String label)throws Exception{return StyledSpriteCodec.frames(Files.readAllBytes(ROOT.resolve(label+".png")));}
     @Test void actualSourcesRemainImmutableAndPlansDoNotChangeTheirQualityVerdicts()throws Exception {
@@ -126,18 +133,25 @@ class StyledMotionRepairEvidenceTest {
             assertThat(report.path("passed").asBoolean()).as(label).isEqualTo(Set.of("idle-west-static","sit-endpoints-edit","walk-original-seam-edit").contains(label));
         }
         var walk=json.readTree(Files.readAllBytes(root.resolve("walk-south-focused-review.json")));
-        assertThat(StyledWalkEvidence.bound(walk)).isTrue();
+        // Historical QA is stale after a rule-catalogue update. Replay decisions only
+        // on a separate in-memory copy; never relabel the archived report as current QA.
+        assertThat(StyledWalkEvidence.bound(walk)).isFalse();
+        assertThat(StyledWalkEvidence.bound(replayCurrentRules(walk))).isTrue();
         assertThat(walk.path("beforeWalkEvidence").path("passed").asBoolean()).isFalse();
         assertThat(json.readTree(Files.readAllBytes(root.resolve("negative-jump-focused-review.json"))).path("passed").asBoolean()).isFalse();
         // Stored real outcomes are regression evidence, not live calls or a claim that future samples always pass.
     }
-    @Test void freshOriginalReviewConflictsUseDifferentCandidatesWithoutChangingVerdicts()throws Exception {
+    @Test void historicalOriginalReviewConflictsUseDifferentCandidatesWithoutChangingVerdicts()throws Exception {
         var root=ROOT.resolve("live/current-rule-originals");
-        var idle=(ObjectNode)json.readTree(Files.readAllBytes(root.resolve("idle-west-review.json")));var before=idle.deepCopy();
+        var archived=json.readTree(Files.readAllBytes(root.resolve("idle-west-review.json")));
+        assertThat(StyledIdleHold.motionOnlyFailure(archived)).isFalse();
+        var idle=replayCurrentRules(archived);var before=idle.deepCopy();
         assertThat(StyledIdleHold.motionOnlyFailure(idle)).isTrue();assertThat(idle).isEqualTo(before);
         ((ObjectNode)StyledMotionReview.property(idle.path("initialVision"),"tail")).putArray("frames").add(0);
         assertThat(StyledIdleHold.motionOnlyFailure(idle)).isFalse();
-        var walk=(ObjectNode)json.readTree(Files.readAllBytes(root.resolve("walk-south-review.json")));before=walk.deepCopy();
+        archived=json.readTree(Files.readAllBytes(root.resolve("walk-south-review.json")));
+        assertThat(StyledMotionCandidate.plan(archived,"WALK",json)).isNull();
+        var walk=replayCurrentRules(archived);before=walk.deepCopy();
         assertThat(StyledMotionCandidate.plan(walk,"WALK",json).path("properties").toString()).contains("loop");assertThat(walk).isEqualTo(before);
     }
 }

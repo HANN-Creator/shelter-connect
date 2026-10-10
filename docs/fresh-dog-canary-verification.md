@@ -34,6 +34,7 @@ The production failure occurs in `StyledPixelLabClient.poll()` before `StyledAss
 - Java 21: `./gradlew --offline --no-daemon --max-workers=2 test --tests org.shelterconnect.api.asset.StyledSpriteCodecTest` — 8 tests passed.
 - Registration revision: v39; only the regression catalogue changes. Generation/review prompts, thresholds and paid retry behavior are unchanged.
 - Registration SHA-256: `35a6c945fbfedc3369df6df898ec38216cd2b4e926c8cddf52825a60b474ee96`.
+- CI initially exposed three historic-fixture checks tied to v38. They now assert that archived QA is stale, then replay only an in-memory copy under current rules for decision testing. Original receipts and PNGs remain byte-identical; no production QA bypass was added.
 - The live jobs remain pinned to deployed v38. Do not deploy another rules hash while they run.
 
 ## Final outcome
