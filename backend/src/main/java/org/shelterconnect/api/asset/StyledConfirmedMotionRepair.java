@@ -10,6 +10,7 @@ final class StyledConfirmedMotionRepair {
     private StyledConfirmedMotionRepair() {}
 
     static JsonNode plan(JsonNode report,String action,JsonMapper json) {
+        var entry=StyledEntryPoseRepair.plan(report,action,json);if(entry!=null)return entry;
         if(report==null || report.path("passed").asBoolean() || !StyledMotionReview.unresolved(report))return null;
         // Retain the previously verified narrow recipes, including their historical replay fixtures.
         if(StyledMotionReview.confirmedTailRepair(report))return legacy(report,json,

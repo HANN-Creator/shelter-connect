@@ -220,3 +220,5 @@ B-71: [보완된 기본 도트 재검수 상태 분리](repaired-seed-recheck.md
 B-84: [검증된 의존성 캐시로 Render 오프라인 빌드](https://app.notion.com/p/3f55b2d1a55f80e292b9fcc5672acab2). B-83의 지속 429 후속으로 최초 배포부터 검증된 의존성 캐시를 사용한다. [빌드·갱신 절차](deployment-build-reliability.md).
 
 - B-85 확정 결함 보완과 불확실 검수 분리: [노션](https://app.notion.com/p/3f55b2d1a55f8027a618d74c1c38b8c4), [조건·실제 검증 경계](confirmed-motion-repair.md). 브랜치 `backend/b-85-confirmed-motion-repair`. 실제 v36 북쪽 쉬기의 확정 꼬리/무늬 결함이 다른 속성 불일치와 이전 후보 사용으로 보완되지 않은 사례를 보존. 워커·선택 재개·편집 문구 공통 계획, 기존 예산·원본·승인/학습 차단 유지. v37, DB·요청 계약 변경 없음. 전체 승인과 앱 재생은 B-68 후속.
+
+- B-86 쉬기·앉기 보완 경로와 걷기 근거 검수: [노션](https://app.notion.com/p/3f55b2d1a55f80b0b130ee2662125485), [동작·검증 경계](motion-repair-evidence.md). B-85 v37 배포의 세 보류 원본을 보존한다. IDLE 소진 후 승인 자세 대체, 확정 SIT 첫 자세 실패의 기준 이미지 재시작, 정면 WALK의 한정된 인접 쌍·가림 근거 관찰. 기존 예산·권한·통과 PNG 유지. 브랜치 `backend/b-86-motion-repair-evidence`. B-68 배포 후 전체 승인·앱 재생과 구분.

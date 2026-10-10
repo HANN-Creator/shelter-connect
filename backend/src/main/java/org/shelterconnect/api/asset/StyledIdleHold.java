@@ -27,8 +27,46 @@ final class StyledIdleHold {
             && !derived(result) && !derived(w.providerResult()) && report!=null && !report.path("passed").asBoolean()
             && ((w.repairCount()==StyledRecovery.limit(w.qualityPolicy(),false)
                 && ((replaceableFailure(report) && report.path("issues").isArray() && !report.path("issues").isEmpty())
-                    || stillnessOnlyConflict(report)))
+                    || stillnessOnlyConflict(report) || motionOnlyFailure(report)))
                 || paletteOnlyConflict(report));
+    }
+    /** Replace failed IDLE movement with an independently approved pose; never approve the old motion. */
+    static boolean motionOnlyFailure(JsonNode report) {
+        if(report==null || !StyledMotionReview.unresolved(report))return false;
+        var layers=new ArrayList<JsonNode>();layers.add(report);
+        for(String key:List.of("rawEditReview","restoredReview"))if(report.has(key))layers.add(report.path(key));
+        try {
+            for(var r:layers) {
+                if(!StyledMotionReview.VERSION.equals(r.path("motionReviewVersion").asText())
+                    || !StyledSpriteCodec.qualityRulesSha().equals(r.path("rulesSha256").asText())
+                    || r.path("passed").asBoolean() || !r.path("referencePoseUsable").asBoolean()
+                    || r.path("observationCount").asInt()!=2
+                    || !r.path("confirmedProperties").valueStream().anyMatch(p->p.asText().equals("idleStillness"))
+                    || !r.path("issues").valueStream().anyMatch(p->p.asText().equals("IDLE_MOTION")))return false;
+                for(String key:List.of("edgeFrames","silhouetteFrames","detachedFrames"))
+                    if(!r.path(key).isArray() || !r.path(key).isEmpty())return false;
+                var shared=new HashSet<Integer>();
+                for(String key:List.of("initialVision","consistencyReview")) {
+                    var o=r.path(key);StyledMotionReview.validate(o,"IDLE");
+                    var p=StyledMotionReview.property(o,"idleStillness");
+                    if(!p.path("state").asText().equals("FAIL"))return false;
+                    var frames=new HashSet<Integer>();p.path("frames").forEach(f->frames.add(f.asInt()));
+                    if(key.equals("initialVision"))shared.addAll(frames);else shared.retainAll(frames);
+                    for(String name:StyledMotionReview.PROPERTIES.keySet()) {
+                        var finding=StyledMotionReview.property(o,name);
+                        if(Set.of("action","idleStillness","loop").contains(name) || finding.path("state").asText().equals("PASS"))continue;
+                        // The failed moving tail is discarded with this animation. Only non-entry
+                        // frames already identified as moving may have tail disagreement; the
+                        // independently approved reference becomes a NEW static candidate.
+                        if(!name.equals("tail") || finding.path("frames").isEmpty()
+                            || finding.path("frames").valueStream().anyMatch(f->f.asInt()==0 || !frames.contains(f.asInt())))return false;
+                    }
+                }
+                if(shared.isEmpty())return false;
+                if(r.path("issues").valueStream().anyMatch(p->!Set.of("IDLE_MOTION","ACTION_MISSING","DISCONTINUITY","TAIL_CARRIAGE").contains(p.asText())))return false;
+            }
+        }catch(AssetException invalid){return false;}
+        return true;
     }
     /** Only a disputed movement observation may choose a separately reviewed static rest.
      * No old verdict changes, no anatomical uncertainty is waived and no paid edit is added. */

@@ -1,0 +1,29 @@
+{
+  "key": "110eacf2-fb82-48e7-9f5a-a32526c0d211/2896c6d7-4809-4275-9e09-43ec4c8ace9c/native-32/sheets/repair-1/sit-south.png",
+  "loop": false,
+  "sha256": "6dcf48606db1b59b4d2ecbc1f04cc071528606197e6a03ff3c165f6d1af0a393",
+  "rawEdit": {
+    "key": "110eacf2-fb82-48e7-9f5a-a32526c0d211/2896c6d7-4809-4275-9e09-43ec4c8ace9c/native-32/raw-edits/sit-south-1.png",
+    "sha256": "6dcf48606db1b59b4d2ecbc1f04cc071528606197e6a03ff3c165f6d1af0a393"
+  },
+  "frameSize": 40,
+  "durationMs": 130,
+  "frameCount": 9,
+  "frameHashes": [
+    "a26692b5223a13ae321e49f20850152f67ab0d45f8d24136ff5467e916b32d2a",
+    "41a883e3ac0795ed3b679d95ce4ca3032d8fcec367ccb63c4b90e2c59f2db4aa",
+    "673d47dfc68fdf73575bca2092b0db7d53855050c6eb06359852bc861f2f364d",
+    "40e8f3432c6aea578e200a2f4faa3ffc15a4f2bdf55474b8e838d1462b2733b3",
+    "866d2206041c2dfe269f5335f32dd3319b380178416bb8105922da46ba898e86",
+    "e84f488c21100b13bcc306746dbc2ee404d71ff95cd24189a871438249c3d71a",
+    "36e0f1f34b03a2c06db688a742592f6157f49a2b6b561dc6431903c5483775f5",
+    "4e5cbcff2ad6ea0d54cdc0dfd9822f316a7a13c67befee94613d461503641aca",
+    "cb81444a47be0a15a825c388ccaf1fd6f0ebdfd4375ad969729a8947802cf80c"
+  ],
+  "providerUsage": {
+    "type": "generations",
+    "generations": 10.0
+  },
+  "recoveryVersion": "photo-grounded-recovery-v1",
+  "motionSeedSha256": "394aa381f6942bbf38d29395c1c44eebebb15bae98a0a8a4132439c335cf4cb0"
+}

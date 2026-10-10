@@ -85,7 +85,7 @@ public class StyledAssetWorker {
                 if(recovery)((tools.jackson.databind.node.ObjectNode)policy).put("recoveryVersion",StyledRecovery.VERSION);
                 JsonNode payload=baseEdit?recoveryBasePayload(w):eyeEdit?eyes.payload(eyeSeeds(w,eyeAttempt),eyeAttempt.at("/quality/eyeRepairPlan"),
                     (int)Math.floorMod(w.traits().path("seed").asLong()+7919L*w.repairCount(),2147483647L)):
-                    learning?learnedPayload(w,policy):motionEdit(w)?motionEditPayload(w):w.character()?codec.character(w.dogId(),w.traits(),storage.photo(w.dogId(),w.bucket(),w.key()),policy):
+                    learning?learnedPayload(w,policy):entryRestart(w)?entryRestartPayload(w,policy):motionEdit(w)?motionEditPayload(w):w.character()?codec.character(w.dogId(),w.traits(),storage.photo(w.dogId(),w.bucket(),w.key()),policy):
                     codec.motion(w.traits(),w.action(),w.direction(),seed(w),policy);
                 var selected=lessons.pin(w);
                 if(!selected.isEmpty()) {
@@ -335,7 +335,20 @@ public class StyledAssetWorker {
             && w.qualityReport()!=null && w.qualityReport().path("issues").isArray()
             && w.qualityReport().path("issues").valueStream().anyMatch(i->i.asText().equals("CANVAS_CLIPPING"));
     }
-    static boolean motionEdit(StyledAssetStore.Work w) {return (StyledRecovery.enabled(w.qualityPolicy()) && !w.character() && w.repairCount()>0) || tailEdit(w) || idleEdit(w) || marginEdit(w);}
+    static boolean entryRestart(StyledAssetStore.Work w) {
+        return StyledRecovery.enabled(w.qualityPolicy()) && w.repairCount()>0
+            && StyledEntryPoseRepair.plan(w.qualityReport(),w.action(),JsonMapper.builder().build())!=null;
+    }
+    static boolean motionEdit(StyledAssetStore.Work w) {return !entryRestart(w) && ((StyledRecovery.enabled(w.qualityPolicy()) && !w.character() && w.repairCount()>0) || tailEdit(w) || idleEdit(w) || marginEdit(w));}
+    private JsonNode entryRestartPayload(StyledAssetStore.Work w,JsonNode policy) {
+        // Same original repair counter and immutable failed strip; only the generator input changes.
+        var previous=store.previousAttempt(w);byte[] old=storage.asset(previous.path("key").asText());
+        if(!StyledSpriteCodec.sha(old).equals(previous.path("sha256").asText()))throw new AssetException(409,"STYLED_SHEET_CHANGED");
+        var traits=(tools.jackson.databind.node.ObjectNode)w.traits().deepCopy();
+        traits.put("seed",(int)Math.floorMod(w.traits().path("seed").asLong()+7919L*w.repairCount(),2147483647L));
+        var fresh=(tools.jackson.databind.node.ObjectNode)policy.deepCopy();fresh.put("attempt",0);
+        return StyledEntryPoseRepair.endpoints(codec.motion(traits,w.action(),w.direction(),seed(w),fresh),StyledSpriteCodec.frames(old),json);
+    }
     private static JsonNode continuation(StyledAssetStore.Work w) {
         if(w.qualityPolicy()==null)return tools.jackson.databind.node.MissingNode.getInstance();
         var plan=w.qualityPolicy().at("/repairContinuation/plans/"+w.label());

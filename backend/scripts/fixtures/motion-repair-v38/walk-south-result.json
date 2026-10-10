@@ -1,0 +1,29 @@
+{
+  "key": "110eacf2-fb82-48e7-9f5a-a32526c0d211/2896c6d7-4809-4275-9e09-43ec4c8ace9c/native-32/sheets/repair-2/walk-south.png",
+  "loop": true,
+  "sha256": "0c84e02d9437eb07442f32e4f8f5b4ce4f3460eed5b777fec84f46bd8a5dbe6a",
+  "rawEdit": {
+    "key": "110eacf2-fb82-48e7-9f5a-a32526c0d211/2896c6d7-4809-4275-9e09-43ec4c8ace9c/native-32/raw-edits/walk-south-2.png",
+    "sha256": "0c84e02d9437eb07442f32e4f8f5b4ce4f3460eed5b777fec84f46bd8a5dbe6a"
+  },
+  "frameSize": 40,
+  "durationMs": 120,
+  "frameCount": 9,
+  "frameHashes": [
+    "6358e627b6ba4fc6a02c758a28e5e836b20057cccc3c7f983642eb2b1331b021",
+    "e8880640c381809eaee22ace61d8188be43ca6bdeace583adb877d136fd62dd3",
+    "ab9cce7a716d8dc2f8e2d9f2be12f05cf82de9400b36b8e7404739b9f4788a4d",
+    "08612c8874212e78f57e72f86532995aed38ab654ee7067390f03bceef247976",
+    "a13158d1ef7017410620b8fc667852a270e45c182e24e286c7c02d30cf324363",
+    "143548e70181d6ffac01ed71b1c2a3aa024807c068b4d2d6757462b77717cf4c",
+    "ade5a2b34179b03d72ee2ca261e6dd9af9322bc1316e130747828d3cec4c206a",
+    "1b8368814375fa4e6a5b883ae2f37ced3ffbbeba2d24433069f9bf0548d1d5b7",
+    "bd781c2a463a6d2fdde39e22079465922fc91be86440fd5f20c1f5fba4ddc412"
+  ],
+  "providerUsage": {
+    "type": "generations",
+    "generations": 10.0
+  },
+  "recoveryVersion": "photo-grounded-recovery-v1",
+  "motionSeedSha256": "394aa381f6942bbf38d29395c1c44eebebb15bae98a0a8a4132439c335cf4cb0"
+}

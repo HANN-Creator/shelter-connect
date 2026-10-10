@@ -346,8 +346,11 @@ public class StyledAssetStore {
                 && g.at("/request/expectedReviewHashes/"+step.label()).equals(reviews.path(step.label()))))throw new AssetException(409,"MOTION_CANDIDATE_ALREADY_REQUESTED");
             int limit=StyledRecovery.limit(policy,false);
             boolean raw=step.result().has("rawEdit") && !q.at("/restoredReview/passed").asBoolean() && StyledRawMotion.genuinePass(q.path("rawEditReview"),step.action());
-            if(!raw && (step.repairCount()>=limit || StyledIdleHold.derived(step.result())))throw new AssetException(409,"MOTION_REPAIR_BUDGET_EXHAUSTED");
-            if(!raw && StyledMotionReview.unresolved(q) && StyledConfirmedMotionRepair.plan(q,step.action(),json)==null
+            boolean hold=step.action().equals("IDLE") && step.repairCount()==limit && !StyledIdleHold.derived(step.result())
+                && StyledIdleHold.VERSION.equals(policy.path("idleHoldVersion").asText())
+                && (StyledIdleHold.motionOnlyFailure(q) || StyledIdleHold.stillnessOnlyConflict(q) || StyledIdleHold.paletteOnlyConflict(q) || StyledIdleHold.replaceableFailure(q));
+            if(!raw && !hold && (step.repairCount()>=limit || StyledIdleHold.derived(step.result())))throw new AssetException(409,"MOTION_REPAIR_BUDGET_EXHAUSTED");
+            if(!raw && !hold && StyledMotionReview.unresolved(q) && StyledConfirmedMotionRepair.plan(q,step.action(),json)==null
                 && (StyledMotionCandidate.plan(q,step.action(),json)==null || candidateUsed(id,step.label())))
                 throw new AssetException(409,"MOTION_CANDIDATE_NO_EDIT_TARGET");
             plans.putObject(step.label()).put("sha256",e.getValue().asText()).put("reviewSha256",reviews.path(step.label()).asText())

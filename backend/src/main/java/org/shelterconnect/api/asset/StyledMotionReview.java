@@ -101,7 +101,7 @@ final class StyledMotionReview {
         out.put("responseProtocolVersion",RESPONSE_VERSION);out.set("invalidResponses",invalidResponses);
         var hashes=out.putObject("reviewImageHashes");images.forEach((k,v)->hashes.put(k,StyledSpriteCodec.sha(v)));
         out.put("referenceFrameSha256",StyledSpriteCodec.sha(seed));out.set("reviewedFrameHashes",json.valueToTree(frames.stream().map(StyledSpriteCodec::sha).toList()));
-        return out;
+        return StyledWalkEvidence.refine(client,ai,json,out,seeds,frames,action,direction);
     }
     static boolean unresolved(JsonNode report) {
         return report!=null && (report.path("motionDecision").asText().equals("UNCERTAIN")
@@ -173,6 +173,7 @@ final class StyledMotionReview {
     }
     static boolean boundPass(JsonNode report) {
         return VERSION.equals(report.path("motionReviewVersion").asText()) && report.path("motionDecision").asText().equals("PASS")
+            && StyledWalkEvidence.bound(report)
             && report.path("referencePoseUsable").asBoolean() && report.path("referenceFrameSha256").equals(report.path("motionSeedSha256"))
             && report.path("reviewedFrameHashes").equals(report.path("frameHashes")) && report.path("reviewedFrameHashes").size()==9;
     }

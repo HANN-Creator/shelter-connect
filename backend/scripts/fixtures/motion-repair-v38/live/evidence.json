@@ -1,0 +1,111 @@
+{
+  "date": "2026-10-11",
+  "rulesSha256": "18305e689493945343289c3ee52547b602d6ae0d0aee32b9e1a7e9f37ab2e8a9",
+  "model": "gpt-5.6-luna",
+  "productionChanged": false,
+  "pixelLabRequests": 7,
+  "remotePackApproved": false,
+  "appPlayback": "NOT_VERIFIED",
+  "scope": "Authorized same held dog images. Seven local provider requests compared repair strategies; no remote budget or state reset. Selected SIT endpoint strategy replays original attempts 2 and 3. A single fresh v38 full review of each original is retained separately from historical v37 focused-WALK selection evidence. Two WALK endpoint regeneration variants were rejected. The existing full nine-frame WALK edit consumes replayed remaining attempt 3 and passed one fresh full review. No rerolls to replace failed same-input verdicts.",
+  "receipts": [
+    {
+      "source": "sit-intent.json",
+      "strategy": "approved-standing-sit-restart-v1",
+      "repairCount": 2,
+      "rulesSha256": "18305e689493945343289c3ee52547b602d6ae0d0aee32b9e1a7e9f37ab2e8a9",
+      "requestSha256": "550c2bcf6cfda27dc46ee159bd5c479f09ca131a748a1230dbd260811714b84f",
+      "originalRepairLimit": 3,
+      "firstFrameSha256": "394aa381f6942bbf38d29395c1c44eebebb15bae98a0a8a4132439c335cf4cb0"
+    },
+    {
+      "source": "sit-edit-3-intent.json",
+      "sourceSha256": "3c171bd9fd4e7cc5c715ec95005452212b551311d5672ba080c157186cd06bee",
+      "requestSha256": "a6b1f10cf5e45e5373813c6be858ea9f39b15bbaf67f57b3575cdfe9c9b2de99",
+      "repairCount": 3
+    },
+    {
+      "source": "endpoint-candidate/intent.json",
+      "rulesSha256": "18305e689493945343289c3ee52547b602d6ae0d0aee32b9e1a7e9f37ab2e8a9",
+      "replayedRepairCount": 2,
+      "strategy": "standing-seated-endpoints-restart-v1",
+      "firstFrameSha256": "394aa381f6942bbf38d29395c1c44eebebb15bae98a0a8a4132439c335cf4cb0",
+      "productionChanged": false,
+      "lastFrameSha256": "cb81444a47be0a15a825c388ccaf1fd6f0ebdfd4375ad969729a8947802cf80c",
+      "requestSha256": "e8e706b3c537a6ae2d38013e26c01572595788b28c9658f321c7bf6b7e5bde97"
+    },
+    {
+      "source": "endpoint-candidate/edit-intent.json",
+      "productionChanged": false,
+      "sourceSha256": "cf59a2e05c9765c9963002aeab56da4ea5dd262c4625ad2ad9d90eab77a5f5cc",
+      "replayedRepairCount": 3,
+      "rulesSha256": "18305e689493945343289c3ee52547b602d6ae0d0aee32b9e1a7e9f37ab2e8a9",
+      "requestSha256": "10cf06a68b7ceea8b291eacab1d5431376b73947a6895b277f224f0b564e30fc",
+      "originalRepairLimit": 3
+    },
+    {
+      "source": "loop-candidate/intent.json",
+      "replayedRepairCount": 3,
+      "rulesSha256": "18305e689493945343289c3ee52547b602d6ae0d0aee32b9e1a7e9f37ab2e8a9",
+      "requestSha256": "47e0cf2aea5888e91c96042c1cb571ce56a7f004d321da0f1c27a05d225e1641",
+      "originalRepairLimit": 3,
+      "productionChanged": false,
+      "unconfirmedMotionCandidate": true
+    },
+    {
+      "source": "reference-caption-loop/intent.json",
+      "unconfirmedMotionCandidate": true,
+      "replayedRepairCount": 3,
+      "rulesSha256": "18305e689493945343289c3ee52547b602d6ae0d0aee32b9e1a7e9f37ab2e8a9",
+      "requestSha256": "c665a61d3dfb3e9768037d7d0f226d339b74819396aad154d615128586c936c8",
+      "originalRepairLimit": 3,
+      "productionChanged": false
+    },
+    {
+      "source": "original-seam-edit/intent.json",
+      "requestSha256": "e2c1e4950d8edc7ca6d62664e0d138db47de092b1e6f464d9223fe8c40272b28",
+      "rulesSha256": "18305e689493945343289c3ee52547b602d6ae0d0aee32b9e1a7e9f37ab2e8a9",
+      "replayedRepairCount": 3,
+      "unconfirmedMotionCandidate": true,
+      "productionChanged": false,
+      "originalRepairLimit": 3
+    }
+  ],
+  "outcomes": {
+    "idle-west": "PASS new static image",
+    "walk-south": "PASS focused evidence; archived selection observations",
+    "negative-jump": "UNCERTAIN, blocked",
+    "sit-first-only": "CONFIRMED_DEFECT",
+    "sit-first-only-edit": "UNCERTAIN action; blocked",
+    "sit-endpoints": "CONFIRMED_DEFECT; action PASS/PASS",
+    "sit-endpoints-edit": "PASS fresh full nine-frame review",
+    "walk-loop-hidden-caption": "UNCERTAIN with confirmed tail appendage; action/identity disagreement. Rejected.",
+    "walk-loop-visible-caption": "CONFIRMED_DEFECT identity and tail appendage; simplified front caption did not help. Rejected.",
+    "walk-original-seam-edit": "PASS fresh full nine-frame review using original WALK frames and the existing candidate edit path; regeneration variants rejected."
+  },
+  "hashes": {
+    "current-rule-originals/idle-west-review.json": "c7b18174895e63acfca32e47535889157a8cc02478c62ae6460d3c245bd97bb3",
+    "current-rule-originals/outcome.json": "6055644aa0238e07dc74a01a3794b79b760e7dd58256b4002da46c4c573dfd04",
+    "current-rule-originals/sit-south-review.json": "23c2c565c13708e7c06660e6b59bef6ec5e13ff6a8cdec5940b813713d0bc553",
+    "current-rule-originals/walk-south-review.json": "1aedd0792f201221a467d221a6cb6a6f9e554cf56facfa7b0a96b984ed7e154e",
+    "idle-west-static-review.json": "4dc150a8fc860df80c815787a68e0d8f77c925b73bf74adb1ca5f56db575cba3",
+    "idle-west-static.png": "9f14e2a3c55aedc47b22fb1515113e205c17819fa486a9be799dce7a04cebcda",
+    "negative-jump-focused-review.json": "27ecc60537f3a762421eb25c2b7a01ed8afbb139474094a47e838e42026d290f",
+    "negative-jump.png": "c62eed218eb0646506d0e802256768d16ba672a1631396bed5b0a7fe0884f3e7",
+    "sit-endpoints-edit-review.json": "65252e06a9c6b9256946b99f842bab9155312fca6ddb62e4b44b996eb2a51c3e",
+    "sit-endpoints-edit.png": "d61aeb9ffebd6af1ed456f748d4aef25c1c4c53b621e360fa5c85607d0b70b56",
+    "sit-endpoints-review.json": "49958ecdc1666b2df5ccfdfbb8a27305cad9c41c85b31e92f65810dfcc43484f",
+    "sit-endpoints.png": "cf59a2e05c9765c9963002aeab56da4ea5dd262c4625ad2ad9d90eab77a5f5cc",
+    "sit-first-only-edit-review.json": "9c9bff676370c737fa230595c310903de46dd9f5f880fb1583800bdf565bc3e2",
+    "sit-first-only-edit.png": "4dc4e28a9e0e06fba5248c383abcf9cf605863074d13f7dda66f64cbc14ec937",
+    "sit-first-only-review.json": "e463049097abe27389e63e8a29dd7e041a1d0ddc6e3c3ccb46d72403016608de",
+    "sit-first-only.png": "3c171bd9fd4e7cc5c715ec95005452212b551311d5672ba080c157186cd06bee",
+    "walk-loop-hidden-caption-review.json": "4f253a8a8dc22ecbb5006905d2dc6f537122b26925000f11940fb3b4c7626bfe",
+    "walk-loop-hidden-caption.png": "fe87efbaf72d3096d9c87c1c3d328a614845afc72f4d62952c00516bea94fa78",
+    "walk-loop-visible-caption-review.json": "619e7130c7589fd17a2ba92be9b7bf29f77680c66e8a5f849914c8ebe8d702f1",
+    "walk-loop-visible-caption.png": "758b6d87ff8cbfa2a42b24210eb944096b5a6c56deebfe10b495b9360488ea96",
+    "walk-original-seam-edit-review.json": "436ee14d7d01a0abb22e2e38114af86a749a5c3dcaa775d32cfca6273c3b56d2",
+    "walk-original-seam-edit.png": "fc45427d7f21e5f8eec85a865138d83638bf1c683b6b1b325bf9e341816fab3c",
+    "walk-south-focused-review.json": "ec0c80c7f8f1659c6a1fe6ba076c83adf704485addc1c5abf5c086d97d3ee203"
+  },
+  "currentRuleOriginals": "One fresh v38 full review per original: IDLE moving-tail conflict; WALK seam UNCERTAIN/FAIL; SIT PASS. No same-rule reroll."
+}
