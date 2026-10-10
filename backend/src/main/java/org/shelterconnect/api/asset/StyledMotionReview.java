@@ -126,9 +126,13 @@ final class StyledMotionReview {
                 if(shared.isEmpty())return false;
                 if(r.path("uncertainProperties").valueStream().anyMatch(n->n.asText().equals("identity"))) {
                     var ia=property(a,"identity");var ib=property(b,"identity");
-                    if(!Set.of(ia.path("state").asText(),ib.path("state").asText()).equals(Set.of("PASS","FAIL")))return false;
-                    var failure=ia.path("state").asText().equals("FAIL")?ia:ib;
-                    if(failure.path("frames").isEmpty() || failure.path("frames").valueStream().anyMatch(f->!shared.contains(f.asInt())))return false;
+                    var states=Set.of(ia.path("state").asText(),ib.path("state").asText());
+                    if(!states.equals(Set.of("PASS","FAIL")) && !states.equals(Set.of("PASS","UNCERTAIN")))return false;
+                    // The identity label may be tentative even when both observations identify
+                    // the same concrete tail defect. Repair that defect, never promote this report.
+                    var concern=ia.path("state").asText().equals("PASS")?ib:ia;
+                    if(!concern.path("frames").isArray() || concern.path("frames").isEmpty()
+                        || concern.path("frames").valueStream().anyMatch(f->!f.isIntegralNumber() || f.asInt()<0 || f.asInt()>8 || !shared.contains(f.asInt())))return false;
                 }
             } catch(AssetException|IllegalArgumentException missing){return false;}
         }

@@ -1906,6 +1906,28 @@ class StyledAssetPostgresTest {
         assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=? AND label='sit-north' AND NOT passed",Integer.class,id)).isZero();
         verify(provider,times(1)).editAnimation(any());
     }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans={true,false})
+    void confirmedTailWithTentativeIdentityRepairsAutomaticallyButNeedsFreshPassingCandidate(boolean candidatePass)throws Exception {
+        UUID id=recoveryRequest(0,false);var calls=new java.util.concurrent.atomic.AtomicInteger();
+        var actual=json.readTree(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/confirmed-tail-v33/review.json")));
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("south"))).thenAnswer(c->{outsideTransaction();
+            if(calls.getAndIncrement()>0)return b75MotionReport(c.getArgument(1),c.getArgument(2),"south",candidatePass,candidatePass?"PASS":"UNCERTAIN");
+            // Real archived verdict, synthetic provider images: this checks worker behavior, not new visual quality.
+            var r=(tools.jackson.databind.node.ObjectNode)actual.deepCopy();r.put("rulesSha256",currentRules());return r;});
+        finish(id);var job=read(id);var motion=step(id,"idle-south");
+        assertThat(job.path("status").asText()).isEqualTo(candidatePass?"APPROVED":"REVIEW");
+        assertThat(motion.path("repairCount").asInt()).isEqualTo(1);
+        assertThat(job.at("/qualityPolicy/maxRepairsPerClip").asInt()).isEqualTo(3);
+        var history=json.readTree(jdbc.queryForObject("SELECT attempt_history FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-south'",String.class,id));
+        var old=history.get(0).path("quality");
+        assertThat(old.path("motionDecision").asText()).isEqualTo("UNCERTAIN");
+        assertThat(old.path("initialVision")).isEqualTo(actual.path("initialVision"));
+        assertThat(old.path("consistencyReview")).isEqualTo(actual.path("consistencyReview"));
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=? AND label='idle-south' AND NOT passed",Integer.class,id)).isZero();
+        assertThat(calls.get()).isGreaterThanOrEqualTo(2);verify(provider,times(1)).editAnimation(any());
+        if(!candidatePass){assertThat(job.path("qualityApproval").isNull()).isTrue();publicStatus(404);}
+    }
     @Test void nativeProviderEntryShadingSurvivesTheActualEditPersistencePath()throws Exception {
         UUID id=recoveryRequest(0,true);
         for(int i=0;i<10 && !step(id,"character").path("status").asText().equals("SUCCEEDED");i++)tick();

@@ -1,0 +1,14 @@
+{
+  "source": "Actual deployed v33 generated IDLE/south and two independent Luna observations; no edited labels or images.",
+  "animalId": "448536202600925",
+  "rulesSha256": "a8cc43d4e68ef37b8a938f3ca9c5ec445b3de8fc7eb807cc05a65dd784e5b882",
+  "sheetSha256": "8337b84816921f4d15d9e74f6818d8f11d6fde365a2c7009c434f4d59e10ba8d",
+  "seedHashes": {
+    "east": "26a23b6b58a24bb71a2908837b98644919af8f9046aa80a5275d32d288e260eb",
+    "west": "aef64959300b13b278832d8faef6108d4eea830264dd8edc4ae825333849b87c",
+    "north": "88397489a71e7a2bd24bf0f683c72e527b57f6bb6f501d32e84f77ead2e73c70",
+    "south": "24a0b6f5db96ec73bef1b6dec3006b1dd958714962d19688b6a38e8acee16644"
+  },
+  "repairCount": 0,
+  "expected": "Only same-frame confirmed tail repair may run. Preserve UNCERTAIN and no approval/negative training of original."
+}

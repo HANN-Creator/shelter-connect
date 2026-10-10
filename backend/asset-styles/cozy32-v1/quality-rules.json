@@ -1,5 +1,5 @@
 {
-  "revision": "sprite-regressions-2026-10-10-v33",
+  "revision": "sprite-regressions-2026-10-10-v34",
   "pixelEvidence": {
     "version": "native-frame-delta-v1",
     "subtleRgbChannelDelta": 24
@@ -53,6 +53,15 @@
     "EYES: compare open-eye frames with the approved seed: keep pupil shape, position and local contrast. A brief natural blink is allowed. Eyes that stay erased, become hollow rings, or merge into fur in open-eye frames are IDENTITY_DRIFT. North has no face; do not invent eyes."
   ],
   "regressions": [
+    {
+      "id": "confirmed-tail-with-overlapping-uncertain-identity-v34",
+      "stage": "MOTION",
+      "action": "IDLE",
+      "direction": "south",
+      "check": "confirmed-tail-repair-preserves-identity-uncertainty",
+      "fixture": "confirmed-tail-v33/evidence.json",
+      "expected": "Preserve the deployed v33 nine-frame sheet and both raw observations. Two FAIL tail observations on the same frames can authorize the existing bounded repair when identity is PASS/UNCERTAIN only on those shared frames. Never relabel the original UNCERTAIN report as PASS or train it as negative. Missing frame evidence, unrelated identity frames, other uncertain properties and unconfirmed tails remain blocked. Keep all nine original frames, receipts and repair limits; a fresh complete review of the repaired candidate is still required. First-generation and repair prompts share the existing unchanged-head/hidden-tail rules."
+    },
     {
       "id": "cosmetic-warning-must-not-stop-confirmed-repair-v32",
       "stage": "BASE/MOTION",
