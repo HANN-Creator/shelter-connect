@@ -1,5 +1,5 @@
 {
-  "revision": "sprite-regressions-2026-10-10-v35",
+  "revision": "sprite-regressions-2026-10-10-v36",
   "pixelEvidence": {
     "version": "native-frame-delta-v1",
     "subtleRgbChannelDelta": 24
@@ -439,6 +439,25 @@
         "real-tail-and-clipping-gates-retained",
         "generation-and-repair-share-rear-view-rule"
       ]
+    },
+    {
+      "id": "exhausted-idle-stillness-conflict-v36",
+      "fixture": "idle-stillness-v36/evidence.json",
+      "action": "IDLE",
+      "check": "sole-stillness-conflict-static-alternative",
+      "failure": "After three actual edits only idleStillness differs PASS/FAIL; every other property and native pixel checks pass, but the explicit static alternative is unreachable.",
+      "prevention": "After the original IDLE repair budget only, a sole idleStillness PASS/FAIL disagreement with every other property PASS and no native pixel defect may use one explicit STATIC_IDLE candidate from the exact approved padded pose. Preserve the prior uncertain report and all frames; do not negative-learn it. Review the new candidate normally; never replace WALK/SIT, uncertain anatomy or a previous static candidate. Initial generation and edits keep the existing fixed-tail IDLE instructions.",
+      "assertions": [
+        "actual-nine-frames-and-both-observations-retained",
+        "original-budget-exhausted-only",
+        "all-other-properties-pass",
+        "all-native-pixel-checks-clear",
+        "no-paid-resubmission",
+        "nine-exact-approved-frames",
+        "fresh-review-before-approval",
+        "no-negative-learning-of-uncertainty",
+        "no-repeated-static-alternative"
+      ]
     }
   ],
   "tailEdit": {
@@ -559,6 +578,10 @@
         "west": "WEST LEFT",
         "east": "EAST RIGHT"
       }
+    },
+    "idleStillnessConflict": {
+      "version": "exhausted-stillness-static-v1",
+      "instruction": "After the original IDLE repair budget only, a sole idleStillness PASS/FAIL disagreement with every other property PASS and no native pixel defect may use one explicit STATIC_IDLE candidate from the exact approved padded pose. Preserve the prior uncertain report and all frames; do not negative-learn it. Review the new candidate normally; never replace WALK/SIT, uncertain anatomy or a previous static candidate. Initial generation and edits keep the existing fixed-tail IDLE instructions."
     }
   },
   "aestheticPolicy": {

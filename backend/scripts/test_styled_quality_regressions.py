@@ -31,6 +31,22 @@ def decode_recorded_alpha(rows):
 
 
 class QualityRegressionTest(unittest.TestCase):
+    def test_exhausted_idle_stillness_conflict_keeps_original_and_fixed_tail_prevention(self):
+        root=Path(__file__).parent/'fixtures/idle-stillness-v36'
+        receipt=read(root/'evidence.json');report=read(root/'previous-review.json')
+        for file,sha in receipt['hashes'].items():self.assertEqual(digest(root/file),sha)
+        self.assertEqual(receipt['repairCount'],3)
+        self.assertEqual(report['uncertainProperties'],['idleStillness'])
+        self.assertEqual(report['motionDecision'],'UNCERTAIN')
+        with Image.open(root/'idle-west.png') as image:self.assertEqual(image.size,(360,40))
+        rules=load_quality();traits={'seed':1,'motionDescription':'dog','rearDescription':'rear dog'}
+        self.assertTrue(any(r.get('fixture')=='idle-stillness-v36/evidence.json' for r in rules['regressions']))
+        for attempt in (0,1,2):
+            payload=motion_payload(traits,load_rules(),'IDLE','west',{'type':'base64','base64':'fixture'},
+                {'contract':{'tailCarriage':'CURLED'},'attempt':attempt,'recoveryVersion':rules['recovery']['version']})
+            self.assertIn(rules['idleTailCarriage']['CURLED'],payload['description'])
+            self.assertLessEqual(len(payload['description']),1000)
+
     def test_camera_view_semantics_preserve_rear_fixture_and_first_generation(self):
         root=Path(__file__).parent/'fixtures/rear-motion-v35'
         evidence=read(root/'evidence.json')

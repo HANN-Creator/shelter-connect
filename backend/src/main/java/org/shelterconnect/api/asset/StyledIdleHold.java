@@ -26,8 +26,37 @@ final class StyledIdleHold {
             && w.repairCount()<=StyledRecovery.limit(w.qualityPolicy(),false)
             && !derived(result) && !derived(w.providerResult()) && report!=null && !report.path("passed").asBoolean()
             && ((w.repairCount()==StyledRecovery.limit(w.qualityPolicy(),false)
-                && replaceableFailure(report) && report.path("issues").isArray() && !report.path("issues").isEmpty())
+                && ((replaceableFailure(report) && report.path("issues").isArray() && !report.path("issues").isEmpty())
+                    || stillnessOnlyConflict(report)))
                 || paletteOnlyConflict(report));
+    }
+    /** Only a disputed movement observation may choose a separately reviewed static rest.
+     * No old verdict changes, no anatomical uncertainty is waived and no paid edit is added. */
+    static boolean stillnessOnlyConflict(JsonNode report) {
+        if(report==null || !StyledMotionReview.unresolved(report))return false;
+        var reports=new ArrayList<JsonNode>();reports.add(report);
+        for(String name:List.of("rawEditReview","restoredReview"))if(report.has(name))reports.add(report.path(name));
+        for(var r:reports) {
+            if(!StyledMotionReview.VERSION.equals(r.path("motionReviewVersion").asText())
+                || !r.path("motionDecision").asText().equals("UNCERTAIN") || r.path("passed").asBoolean()
+                || !r.path("referencePoseUsable").asBoolean() || r.path("observationCount").asInt()!=2
+                || !r.path("uncertainProperties").isArray() || r.path("uncertainProperties").size()!=1
+                || !r.path("uncertainProperties").get(0).asText().equals("idleStillness")
+                || !r.path("confirmedProperties").isArray() || !r.path("confirmedProperties").isEmpty())return false;
+            for(String field:List.of("issues","edgeFrames","silhouetteFrames","detachedFrames","idleMotionFrames"))
+                if(!r.path(field).isArray() || !r.path(field).isEmpty())return false;
+            var states=new HashSet<String>();
+            for(String name:List.of("initialVision","consistencyReview")) {
+                var observation=r.path(name);
+                try {StyledMotionReview.validate(observation,"IDLE");}catch(AssetException invalid){return false;}
+                for(var p:observation.path("properties")) {
+                    if(p.path("property").asText().equals("idleStillness"))states.add(p.path("state").asText());
+                    else if(!p.path("state").asText().equals("PASS"))return false;
+                }
+            }
+            if(!states.equals(Set.of("PASS","FAIL")))return false;
+        }
+        return true;
     }
     /** A new exact approved pose removes color animation entirely; it does not settle the old observation. */
     static boolean paletteOnlyConflict(JsonNode report) {
