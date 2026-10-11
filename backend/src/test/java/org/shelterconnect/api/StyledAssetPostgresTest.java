@@ -2704,8 +2704,12 @@ class StyledAssetPostgresTest {
         return new HashMap<>(Map.of("requestId",UUID.randomUUID().toString(),"note","Resume the known old compaction failure with unchanged original images and repair budget",
             "expectedSeedHashes",read(id).at("/steps/0/result/hashes"),"expectedRulesSha256",currentRules(),"label","idle-south","expectedPromptInputSha256","a".repeat(64)));
     }
-    @Test void promptResumePreservesImageAttemptHistoryApprovalRulesAndBudget()throws Exception {
-        UUID id=b75HeldPack();var body=promptResumeFixture(id);var before=read(id);var images=new HashMap<>(objects);
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"all-lessons-compact-v1","complete-prompt-compact-v2"})
+    void promptResumePreservesImageAttemptHistoryApprovalRulesAndBudget(String version)throws Exception {
+        UUID id=b75HeldPack();var body=promptResumeFixture(id);
+        jdbc.update("UPDATE shelter.styled_lesson_prompts SET input=jsonb_set(input,'{version}',to_jsonb(?::text)) WHERE job_id=?",version,id);
+        var before=read(id);var images=new HashMap<>(objects);
         String history=jdbc.queryForObject("SELECT attempt_history::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-south'",String.class,id);
         String failed=jdbc.queryForObject("SELECT row_to_json(p)::text FROM shelter.styled_lesson_prompts p WHERE job_id=?",String.class,id);
         int submissions=jdbc.queryForObject("SELECT count(*) FROM shelter.asset_submissions WHERE job_id=?",Integer.class,id);
@@ -2724,6 +2728,23 @@ class StyledAssetPostgresTest {
         // A subsequent claimed repair still reads the same completed nine-frame strip.
         var work=store.claim();assertThat(store.previousAttempt(work)).isEqualTo(json.readTree(history).get(0).path("result"));
         body.put("note","Changing an idempotent request must never schedule another correction");post(subject,path(id)+"/prompt-resume",body,409);
+    }
+    @Test void promptResumeV2NorthPreservesSouthPassAndEarlierV2Resume()throws Exception {
+        UUID id=b75HeldPack();var body=promptResumeFixture(id);
+        // Transfer only the synthetic failed attempt to north; keep south's completed image/quality.
+        jdbc.update("UPDATE shelter.styled_asset_steps n SET status='FAILED',repair_count=2,attempt_history=s.attempt_history,provider_job_id=NULL,provider_result=NULL,submitted_at=NULL,result=NULL,request_sha256=s.request_sha256 FROM shelter.styled_asset_steps s WHERE n.job_id=? AND s.job_id=n.job_id AND n.label='idle-north' AND s.label='idle-south'",id);
+        jdbc.update("UPDATE shelter.styled_asset_steps SET status='SUCCEEDED',result=attempt_history->-1->'result',quality_report=jsonb_set(quality_report,'{passed}','true'::jsonb) WHERE job_id=? AND label='idle-south'",id);
+        jdbc.update("UPDATE shelter.styled_lesson_prompts SET label='idle-north',input=jsonb_set(input,'{version}','\"complete-prompt-compact-v2\"'::jsonb) WHERE job_id=?",id);
+        var prior=json.valueToTree(Map.of("composerVersion","complete-prompt-compact-v2","request",Map.of("requestId",UUID.randomUUID().toString(),"label","idle-south")));
+        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=jsonb_set(quality_policy,'{promptResumes}',?::jsonb) WHERE id=?",json.createArrayNode().add(prior).toString(),id);
+        body.put("label","idle-north");var south=step(id,"idle-south");var before=read(id);clearInvocations(provider,promptAgent);
+        post(subject,path(id)+"/prompt-resume",body,200);
+        assertThat(step(id,"idle-south")).isEqualTo(south);
+        assertThat(step(id,"idle-north").path("repairCount").asInt()).isEqualTo(2);
+        assertThat(read(id).path("seedReview")).isEqualTo(before.path("seedReview"));
+        assertThat(read(id).at("/qualityPolicy/promptResumes/0")).isEqualTo(prior);
+        assertThat(read(id).at("/qualityPolicy/promptResumes/1/composerVersion").asText()).isEqualTo(StyledLessonPromptAgent.VERSION);
+        verifyNoInteractions(provider,promptAgent);publicStatus(404);
     }
     @org.junit.jupiter.params.ParameterizedTest
     @org.junit.jupiter.params.provider.ValueSource(strings={"seed","rules","input","label","failure","state","version","lessons","newer","provider","reservation","receipt","request","approval","reference","unauthorized","anonymous","revoked","duplicate"})

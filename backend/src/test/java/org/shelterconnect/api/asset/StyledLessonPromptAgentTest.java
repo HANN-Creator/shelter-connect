@@ -114,6 +114,52 @@ class StyledLessonPromptAgentTest {
         StyledLessonPromptAgent.checkPrompt(exact,16);
         assertThatThrownBy(()->StyledLessonPromptAgent.checkPrompt(exact,15)).hasMessage("LESSON_PROMPT_INVALID");
     }
+    @Test void actualUnderBudgetDiagnosticLabelsPassFormatWithoutChangingTheDraft() throws Exception {
+        var fixture=json.readTree(java.nio.file.Files.readString(java.nio.file.Path.of("scripts/fixtures/prompt-format-v3/evidence.json")));
+        var input=fixture.path("input");var drafts=fixture.at("/history/0/promptDraftFailures");
+        assertThat(drafts.valueStream().map(d->d.path("measuredCharacters").asInt()).toList()).containsExactly(1251,1226,1289);
+        for(var attempt:drafts) {
+            var draft=attempt.path("draft");String text=draft.path("prompt").asText();
+            assertThat(text).contains("ACTION_MISSING","IDLE_MOTION");
+            assertThat(text.replace("_","").matches("[A-Za-z0-9 ,.;:'()!?<>=/+-]+")).isTrue();
+            assertThat(StyledLessonPromptAgent.formatErrors(draft,2000)).isEmpty();
+            when(client.structured(anyString(),any(),anyMap())).thenReturn(draft);
+            assertThat(agent.compose(input.path("lessons"),input.path("basePrompt").asText(),2000)).isSameAs(draft);
+        }
+        verify(client,times(3)).structured(anyString(),any(),anyMap());
+        // Format acceptance does not waive semantic validation or claim these are good images.
+        var missing=(tools.jackson.databind.node.ObjectNode)verdict(2);missing.put("basePreserved",false);
+        assertThatThrownBy(()->StyledLessonPromptAgent.checkVerdict(missing,2)).hasMessage("LESSON_PROMPT_MEANING_LOST");
+    }
+    @Test void unsupportedPunctuationGetsExactFeedbackAndDoesNotPretendToBeOverBudget() {
+        var bad=json.valueToTree(Map.of("prompt","Keep the tail still—no wag."));
+        var good=json.valueToTree(Map.of("prompt","Keep the tail still; no wag."));
+        var inputs=new ArrayList<JsonNode>();
+        when(client.structured(anyString(),any(),anyMap())).thenAnswer(c->{inputs.add(json.valueToTree(c.getArgument(1,Object.class)));return inputs.size()==1?bad:good;});
+        assertThat(agent.compose(rules(2),"Keep tail still.",2000)).isEqualTo(good);
+        var feedback=inputs.get(1);
+        assertThat(feedback.path("formatErrors").valueStream().map(JsonNode::asText).toList()).containsExactly("UNSUPPORTED_CHARACTERS: U+2014");
+        assertThat(feedback.path("charactersOverBudget").asInt()).isZero();assertThat(feedback.path("rejectedDraft")).isEqualTo(bad);
+        assertThat(feedback.path("revisionRequired").asText()).contains("shortening is not required","never truncate");
+        assertThat(feedback.path("rules")).isEqualTo(inputs.get(0).path("rules"));
+    }
+    @Test void persistentFormatFailureRetainsEveryOriginalDraftAndPreciseReason() {
+        var bad=json.valueToTree(Map.of("prompt","Keep pixels still—without wag."));
+        when(client.structured(anyString(),any(),anyMap())).thenReturn(bad);
+        assertThatThrownBy(()->agent.compose(rules(2),"Keep still.",2000)).satisfies(e->{
+            var attempts=((AssetException)e).diagnostics.path("promptDraftFailures");assertThat(attempts.size()).isEqualTo(3);
+            for(var attempt:attempts) {
+                assertThat(attempt.path("draft")).isEqualTo(bad);
+                assertThat(attempt.path("formatErrors").toString()).contains("U+2014").doesNotContain("TOO_LONG");
+            }
+        });
+    }
+    @Test void labelSupportDoesNotAcceptStructuredOrUnboundedInstructions() {
+        for(String s:List.of("Keep a tail. https://example.com", "Keep tail still\nno wag.", "Keep ${tail} still.", "Keep `tail` still.", "Keep tail [0] still.", " Keep tail still.", "Keep tail still; no wag"))
+            assertThatThrownBy(()->StyledLessonPromptAgent.checkPrompt(json.valueToTree(Map.of("prompt",s)),2000)).hasMessage("LESSON_PROMPT_INVALID");
+        assertThat(StyledLessonPromptAgent.formatErrors(json.valueToTree(Map.of("prompt",17)),2000)).anyMatch(e->e.startsWith("SHAPE"));
+        assertThat(StyledLessonPromptAgent.formatErrors(json.valueToTree(Map.of("prompt","Keep all tail pixels still.","extra",true)),2000)).anyMatch(e->e.startsWith("SHAPE"));
+    }
     @Test void noSpaceAndDisabledAiNeverCallTheModel() {
         assertThatThrownBy(()->agent.compose(rules(4),"Base",14)).hasMessage("LESSON_PROMPT_NO_SPACE");
         var disabled=new StyledLessonPromptAgent(client,json,new AiProperties(false,"","gpt-5.6-luna",30));

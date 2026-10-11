@@ -453,7 +453,7 @@ public class StyledAssetStore {
         int known=jdbc.sql("""
             SELECT count(*) FROM shelter.styled_lesson_prompts p JOIN shelter.styled_asset_steps s ON s.job_id=p.job_id AND s.label=p.label
             WHERE p.job_id=:j AND p.label=:l AND p.input_sha256=:h AND p.state='FAILED' AND p.failure_code=:code
-              AND p.input->>'version'='all-lessons-compact-v1' AND p.input->'lessons'=s.learned_lessons
+              AND p.input->>'version' IN ('all-lessons-compact-v1','complete-prompt-compact-v2') AND p.input->'lessons'=s.learned_lessons
               AND p.input_sha256=(SELECT input_sha256 FROM shelter.styled_lesson_prompts WHERE job_id=:j AND label=:l ORDER BY created_at DESC LIMIT 1)
             """)
             .param("j",id).param("l",label).param("h",input).param("code",j.failureCode()).query(Integer.class).single();
