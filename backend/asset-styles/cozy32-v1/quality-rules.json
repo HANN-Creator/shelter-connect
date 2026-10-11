@@ -1,5 +1,5 @@
 {
-  "revision": "sprite-regressions-2026-10-11-v39",
+  "revision": "sprite-regressions-2026-10-11-v40",
   "pixelEvidence": {
     "version": "native-frame-delta-v1",
     "subtleRgbChannelDelta": 24
@@ -21,7 +21,7 @@
     "UNKNOWN": "Keep approved tail anatomy; never invent a curl or raised tail. Hidden parts may remain hidden."
   },
   "actions": {
-    "IDLE": "Breath/blink only <=1px. Fixed tail, coat markings, planted paws; NO wag cycle. Hidden tail stays hidden.",
+    "IDLE": "Chest breath <=1px, blink optional. Fixed head, outline, tail, coat markings, paws; NO wag cycle or bob.",
     "WALK": "Slow four-legged walk IN PLACE. Small alternating steps, paws lift above the planted baseline, never below.",
     "RUN": "Compact four-legged run IN PLACE, short coordinated strides above the planted paw baseline.",
     "SNIFF": "Tuck chin inward, lower nose BETWEEN front paws, sniff, lift head. Never extend muzzle forward.",
@@ -38,7 +38,7 @@
     "ACTION_MISSING": "Show requested motion inside the safe silhouette.",
     "DISCONTINUITY": "Smooth poses; no scale/position jumps.",
     "DETACHED_PIXELS": "No detached pixels; keep tail connected.",
-    "IDLE_MOTION": "IDLE: fix tail to seed; only tiny breath/blink."
+    "IDLE_MOTION": "IDLE: seed pose; chest breath only, no bob/wag."
   },
   "reviewInstructions": [
     "DIRECTION_DRIFT: a different facing direction, including a north SIT final frame showing eyes or muzzle. North hides the face through the final hold.",
@@ -59,7 +59,15 @@
       "issue": "STYLED_ALPHA_INVALID",
       "check": "actual-opaque-character-structural-rejection",
       "fixture": "opaque-character-v38/evidence.json",
-      "expected": "Preserve all four exact provider PNGs and their alpha measurements. First generation and corrective requests keep no_background enabled and transparent-canvas instructions; configuration alone does not prove transparent output. Reject all-opaque native32 frames in both Java and Python without deleting white dog fur or treating a failure as a PASS. The v38 pre-checkpoint structural error does not reach automatic repair or lesson creation; record this unimplemented path explicitly rather than claiming complete automation."
+      "expected": "Preserve all four exact provider PNGs, usage and alpha measurements before bounded recovery. Quarantine opaque or empty seeds and regenerate from the same original photo and approved style with a changed seed, using the original shared seed-repair budget. Never erase white fur or approve quarantined output. Restarted candidates must pass structural and full visual checks. Exhaustion retains the failed result; unknown provider outcomes never submit twice."
+    },
+    {
+      "id": "idle-initial-motion-cost-and-policy-lesson-retention",
+      "stage": "BASE/IDLE/LEARNING",
+      "issue": "IDLE_MOTION/POLICY_CHANGE",
+      "check": "bounded-idle-seed-restart-and-lesson-revalidation",
+      "expected": "First generation and repairs share near-still chest-breathing guidance. Only the first confirmed excessive-motion IDLE failure with tail observations in agreement and all unrelated properties passed may restart PixMiniMax from the exact approved seed; preserve the failed nine frames and original repair count. Other defects and uncertainty keep their existing gates. Replay previously active lessons against current immutable rules, preserving historic examples and candidate provenance; only independently revalidated rules enter new generation prompts.",
+      "fixture": "idle-restart-v38/idle-south-review.json"
     },
     {
       "id": "confirmed-tail-with-overlapping-uncertain-identity-v34",
@@ -644,5 +652,9 @@
       "PALETTE_UNCERTAIN"
     ],
     "behavior": "Warnings are retained in quality history, do not block approval or purchase edits, and are excluded from whole-image positive and negative learning. Clear anatomy, eyes, direction, action and material identity defects still block. Structural uncertainty is not cosmetic. Confirmed defects in another direction may be repaired independently."
+  },
+  "structuralRecovery": {
+    "version": "base-alpha-restart-v1",
+    "prevention": "Transparent alpha; no backdrop/border. Keep white fur opaque."
   }
 }

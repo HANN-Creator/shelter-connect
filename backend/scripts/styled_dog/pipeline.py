@@ -35,10 +35,9 @@ def character_request(root, traits, rules, quality=None):
             raise ValueError(key + ' must contain 1–300 characters')
     eye_rules = load_quality()['seedEyes']
     description = (
-        'Draw the photographed dog in the attached PIXEL GAME ART STYLE. '
-        'Full-body and face PHOTOS define IDENTITY: '
+        'Body/face PHOTOS define IDENTITY: '
         + identity + ' '
-        'STYLE: compact body, rounded large head, short paws, dark outline, crisp shaded pixel clusters and stepped highlights. '
+        'Copy attached PIXEL GAME ART STYLE: compact body, rounded large head, short paws, dark outline, crisp shaded clusters/highlights. '
         + eye_rules['prevention'] + ' '
         'Use photo ears, coat and markings, not the style dog identity. '
         'Closed neutral mouth, no grin. Stand on four legs, low top-down. '
@@ -47,10 +46,10 @@ def character_request(root, traits, rules, quality=None):
     attempt = 0
     if quality:
         attempt = quality.get('attempt', 0)
-        if type(attempt) is not int or not 0 <= attempt <= 2 or quality.get('rulesSha256') != digest(POLICY):
+        if type(attempt) is not int or not 0 <= attempt <= (3 if quality.get('recoveryVersion') == load_quality()['recovery']['version'] else 2) or quality.get('rulesSha256') != digest(POLICY):
             raise ValueError('Invalid or stale seed quality policy')
         issues = quality.get('issues', [])
-        if not isinstance(issues, list) or len(issues) > 6 or any(i not in ('EYE_READABILITY','EYE_STYLE','EYE_DIRECTION','SEED_IDENTITY','CANVAS_CLIPPING','SEED_MOTION_MARGIN') for i in issues):
+        if not isinstance(issues, list) or len(issues) > 6 or any(i not in ('EYE_READABILITY','EYE_STYLE','EYE_DIRECTION','SEED_IDENTITY','CANVAS_CLIPPING','SEED_MOTION_MARGIN','STYLED_ALPHA_INVALID') for i in issues):
             raise ValueError('Invalid seed defect codes')
         if attempt:
             if any(i.startswith('EYE_') or i == 'SEED_IDENTITY' for i in issues):
@@ -63,6 +62,7 @@ def character_request(root, traits, rules, quality=None):
         raise ValueError('Character prompt exceeds provider limit')
     if quality and quality.get('recoveryVersion') == load_quality()['recovery']['version']:
         description = description.replace(load_quality()['seedMargin'], load_quality()['recovery']['tailPrevention'])
+        description += ' '+load_quality()['structuralRecovery']['prevention']
         description += ' '+load_quality()['recovery']['coatPrevention']+' Front tail may be hidden; never above the head. Preserve white muzzle fur and a short neutral mouth.'
         if len(description)>2000: raise ValueError('Recovery character prompt exceeds provider limit')
     return {'description':description, 'image_size':{'width':32,'height':32},

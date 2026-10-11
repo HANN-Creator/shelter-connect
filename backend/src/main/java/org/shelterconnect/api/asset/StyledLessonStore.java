@@ -56,7 +56,28 @@ public class StyledLessonStore {
             id.ifPresent(value->event(value,"OBSERVED",Map.of("exampleId",example,"issue",issue.asText(),"status","WAITING_EVIDENCE")));
         }
     }
+    /** Clone only an independently activated candidate. Old reports and approvals remain immutable. */
+    private void queuePolicyRevalidation() {
+        var ids=jdbc.sql("""
+            INSERT INTO shelter.styled_quality_lessons(source_example_id,source_job_id,source_label,action,direction,tail,issue,
+              rules_sha256,status,candidate,candidate_sha256,revalidated_from_id)
+            SELECT DISTINCT ON (l.source_job_id,l.source_label,l.issue)
+              l.source_example_id,l.source_job_id,l.source_label,l.action,l.direction,l.tail,l.issue,
+              :r,'CANDIDATE',l.candidate,l.candidate_sha256,l.id
+            FROM shelter.styled_quality_lessons l
+            WHERE l.rules_sha256<>:r AND l.status IN ('ACTIVE','STALE') AND l.validation->>'passed'='true'
+              AND l.candidate IS NOT NULL AND l.candidate_sha256 IS NOT NULL
+              AND NOT EXISTS(SELECT 1 FROM shelter.styled_quality_lessons disabled
+                WHERE disabled.source_job_id=l.source_job_id AND disabled.source_label=l.source_label
+                  AND disabled.issue=l.issue AND disabled.status='DISABLED')
+            ORDER BY l.source_job_id,l.source_label,l.issue,l.updated_at DESC,l.id
+            ON CONFLICT(source_job_id,source_label,issue,rules_sha256) DO NOTHING RETURNING id
+            """).param("r",StyledSpriteCodec.qualityRulesSha()).query(UUID.class).list();
+        for(UUID id:ids)event(id,"POLICY_REVALIDATION_QUEUED",Map.of("rulesSha256",StyledSpriteCodec.qualityRulesSha(),
+            "sourceLessonId",lesson(id).path("revalidatedFromId").asText(),"freshGenerationVerified",false));
+    }
     @Transactional public Work claim() {
+        queuePolicyRevalidation();
         for(var id:jdbc.sql("""
             UPDATE shelter.styled_quality_lessons SET status='FAILED',lease_token=NULL,lease_until=NULL,updated_at=now()
             WHERE status IN ('PROPOSING','VALIDATING') AND lease_until<now() RETURNING id
@@ -69,7 +90,7 @@ public class StyledLessonStore {
             SELECT l.* FROM shelter.styled_quality_lessons l
             WHERE l.status IN ('WAITING_EVIDENCE','CANDIDATE') AND l.rules_sha256=:r
               AND EXISTS(SELECT 1 FROM shelter.styled_quality_examples e WHERE e.action=l.action AND e.direction=l.direction
-                AND e.tail=l.tail AND e.rules_sha256=l.rules_sha256 AND e.passed
+                AND e.tail=l.tail AND e.rules_sha256=(SELECT source.rules_sha256 FROM shelter.styled_quality_examples source WHERE source.id=l.source_example_id) AND e.passed
                 AND (e.action<>'BASE' OR EXISTS(SELECT 1 FROM shelter.asset_jobs j WHERE j.id=e.job_id
                   AND j.seed_review->'hashes'=e.seeds->'hashes' AND j.status NOT IN ('REJECTED','CANCELLED'))))
             ORDER BY l.created_at,l.id FOR UPDATE OF l SKIP LOCKED LIMIT 1
@@ -78,7 +99,7 @@ public class StyledLessonStore {
         if(row.isEmpty())return null;
         UUID id=(UUID)row.get().get("id");String issue=(String)row.get().get("issue");
         Example source=example((UUID)row.get().get("source"));
-        if(!valid(source)){terminal(id,"DISABLED","Source permission withdrawn");return null;}
+        if(!valid(source,evidenceRules(lesson(id)))){terminal(id,"DISABLED","Source permission withdrawn");return null;}
         var others=jdbc.sql("""
             SELECT e.id FROM shelter.styled_quality_examples e WHERE action=:a AND direction=:d AND tail=:t AND rules_sha256=:r
               AND (action<>'BASE' OR NOT passed OR EXISTS(SELECT 1 FROM shelter.asset_jobs j WHERE j.id=e.job_id
@@ -88,7 +109,7 @@ public class StyledLessonStore {
             """).param("a",source.action()).param("d",source.direction()).param("t",source.tail()).param("r",source.rulesSha256())
             .param("h",source.inputSha256()).param("issue",json.writeValueAsString(List.of(issue))).query(UUID.class).list();
         var examples=new ArrayList<Example>();examples.add(source);int good=0,bad=1;var hashes=new HashSet<String>();hashes.add(source.inputSha256());
-        for(UUID other:others) {var e=example(other);if(!hashes.add(e.inputSha256()) || !valid(e))continue;
+        for(UUID other:others) {var e=example(other);if(!hashes.add(e.inputSha256()) || !valid(e,evidenceRules(lesson(id))))continue;
             if(e.passed() && good<2){examples.add(e);good++;}else if(!e.passed() && bad<2){examples.add(e);bad++;}
             if(examples.size()==4)break;
         }
@@ -102,11 +123,17 @@ public class StyledLessonStore {
         event(id,status,Map.of("caseCount",examples.size()));
         var scope=json.createObjectNode().put("action",source.action()).put("direction",source.direction()).put("tail",source.tail()).put("issue",issue)
             .put("sourceExampleId",source.id().toString());
+        scope.put("rulesSha256",StyledSpriteCodec.qualityRulesSha());
+        scope.put("evidenceRulesSha256",source.rulesSha256());
+        if(lesson(id).path("revalidatedFromId").isString())scope.put("revalidatedFromId",lesson(id).path("revalidatedFromId").asText());
         if(status.equals("PROPOSING"))scope.set("revisionFeedback",lesson(id).path("revisionFeedback"));
         return new Work(id,token,status,issue,scope,candidate.map(json::readTree).orElse(null),List.copyOf(examples));
     }
     @Transactional public boolean authorized(Work w) {
-        return owned(w) && w.examples().stream().allMatch(this::valid);
+        if(!owned(w))return false;
+        var row=lesson(w.id());String rules=evidenceRules(row);
+        return row.path("rulesSha256").asText().equals(StyledSpriteCodec.qualityRulesSha())
+            && w.examples().stream().allMatch(e->valid(e,rules));
     }
     @Transactional public void proposed(Work w,JsonNode candidate) {
         if(!authorized(w))return;StyledLessonAgent.validateText(candidate);
@@ -142,12 +169,15 @@ public class StyledLessonStore {
         }
         var report=json.createObjectNode();report.put("passed",pass);report.put("version",StyledLessonAgent.VERSION);
         report.put("validatedAt",Instant.now().toString());report.put("model",ai.model());report.set("replay",verdict);
+        report.put("rulesSha256",StyledSpriteCodec.qualityRulesSha());
+        report.put("evidenceRulesSha256",w.scope().path("evidenceRulesSha256").asText());
+        if(w.scope().has("revalidatedFromId"))report.set("revalidatedFromId",w.scope().path("revalidatedFromId"));
         report.put("scopeLimited",true);report.put("freshGenerationVerified",false);
         // Record the failed candidate/verdict/bindings BEFORE replacing the candidate.
         event(w.id(),pass?"ACTIVATED":"REJECTED",Map.of("passed",pass,"candidate",w.candidate(),
             "candidateSha256",StyledSpriteCodec.sha(json.writeValueAsBytes(w.candidate())),"validation",report,
             "examples",w.examples().stream().map(e->Map.of("id",e.id(),"sha256",e.inputSha256())).toList()));
-        boolean revise=!pass && jdbc.sql("""
+        boolean revise=!pass && !w.scope().has("revalidatedFromId") && jdbc.sql("""
             SELECT count(*) FROM shelter.styled_quality_lessons l JOIN shelter.asset_jobs j ON j.id=l.source_job_id
             WHERE l.id=:id AND l.revision_count<2 AND j.quality_policy->>'lessonRevision'=:version
             """).param("id",w.id()).param("version",REVISION_VERSION).query(Integer.class).single()==1;
@@ -194,8 +224,12 @@ public class StyledLessonStore {
     }
     private boolean evidencePermitted(JsonNode row) {
         if(!row.path("validationExamples").isArray() || row.path("validationExamples").isEmpty())return false;
+        String rules=evidenceRules(row);
+        if(row.path("revalidatedFromId").isString() && (!row.at("/validation/rulesSha256").asText().equals(StyledSpriteCodec.qualityRulesSha())
+            || !row.at("/validation/passed").asBoolean()))return false;
         for(var e:row.path("validationExamples")) {
-            try {if(!valid(example(UUID.fromString(e.path("id").asText()))))return false;}
+            try {var example=example(UUID.fromString(e.path("id").asText()));
+                if(!example.inputSha256().equals(e.path("sha256").asText()) || !valid(example,rules))return false;}
             catch(org.springframework.dao.EmptyResultDataAccessException removed){return false;}
         }
         return true;
@@ -228,17 +262,32 @@ public class StyledLessonStore {
         return jdbc.sql("SELECT * FROM shelter.styled_quality_lessons WHERE id=:id").param("id",id).query((r,n)->{
             var o=json.createObjectNode();o.put("id",id.toString());for(var f:Map.of("status","status","action","action","direction","direction","tail","tail","issue","issue","rulesSha256","rules_sha256","candidateSha256","candidate_sha256").entrySet())o.put(f.getKey(),r.getString(f.getValue()));
             for(var f:Map.of("candidate","candidate","validationExamples","validation_examples","validation","validation","revisionFeedback","revision_feedback").entrySet())o.set(f.getKey(),json.readTree(Optional.ofNullable(r.getString(f.getValue())).orElse("null")));
+            o.put("revalidatedFromId",r.getString("revalidated_from_id"));
+            o.put("sourceExampleId",r.getString("source_example_id"));
             o.put("revisionCount",r.getInt("revision_count"));
             o.put("createdAt",r.getTimestamp("created_at").toInstant().toString());o.put("updatedAt",r.getTimestamp("updated_at").toInstant().toString());return (JsonNode)o;
         }).optional().orElseThrow(()->new AssetException(404,"LESSON_NOT_FOUND"));
     }
     private static String direction(StyledAssetStore.Work w){return w.character()?"all":w.direction();}
     private static String tail(StyledAssetStore.Work w){return w.character()?"UNKNOWN":w.qualityPolicy().at("/contract/tailCarriage").asText();}
-    private boolean valid(Example e) {try {
+    private String evidenceRules(JsonNode row) {
+        if(!row.path("revalidatedFromId").isString())return row.path("rulesSha256").asText();
+        if(jdbc.sql("SELECT count(*) FROM shelter.styled_quality_lessons WHERE source_example_id=:source AND issue=:issue AND status='DISABLED'")
+            .param("source",UUID.fromString(row.path("sourceExampleId").asText())).param("issue",row.path("issue").asText()).query(Integer.class).single()>0)return "";
+        UUID parent=UUID.fromString(row.path("revalidatedFromId").asText());
+        var original=lesson(parent);
+        if(!Set.of("ACTIVE","STALE").contains(original.path("status").asText()) || !original.at("/validation/passed").asBoolean()
+            || !original.path("candidateSha256").equals(row.path("candidateSha256"))
+            || !original.path("candidate").equals(row.path("candidate"))
+            || !original.path("sourceExampleId").equals(row.path("sourceExampleId")))return "";
+        return example(UUID.fromString(row.path("sourceExampleId").asText())).rulesSha256();
+    }
+    private boolean valid(Example e) {return valid(e,StyledSpriteCodec.qualityRulesSha());}
+    private boolean valid(Example e,String evidenceRules) {try {
         assets.valid(e.jobId(),false);
         if(e.action().equals("BASE") && e.passed() && jdbc.sql("SELECT count(*) FROM shelter.asset_jobs WHERE id=:id AND seed_review->'hashes'=CAST(:hashes AS jsonb) AND status NOT IN ('REJECTED','CANCELLED')")
             .param("id",e.jobId()).param("hashes",json.writeValueAsString(e.seeds().path("hashes"))).query(Integer.class).single()!=1)return false;
-        return e.rulesSha256().equals(StyledSpriteCodec.qualityRulesSha());
+        return e.rulesSha256().equals(evidenceRules);
     }catch(AssetException denied){return false;}}
     private boolean owned(Work w) {return jdbc.sql("SELECT id FROM shelter.styled_quality_lessons WHERE id=:id AND lease_token=:t AND lease_until>now() AND status=:s FOR UPDATE")
         .param("id",w.id()).param("t",w.token()).param("s",w.status()).query(UUID.class).optional().isPresent();}

@@ -138,12 +138,18 @@ public class StyledSpriteCodec {
         }
     }
     static BufferedImage nativeFrame(byte[] bytes) {
+        var image=rawNativeFrame(bytes);boolean visible=false,clear=false;
+        for(int y=0;y<32;y++)for(int x=0;x<32;x++) { int a=image.getRGB(x,y)>>>24;visible|=a!=0;clear|=a==0; }
+        if(!visible || !clear) throw new AssetException(422,"STYLED_ALPHA_INVALID");
+        return image;
+    }
+    /** Bounded decoding for quarantine only. Does not qualify an image for use as a seed. */
+    static BufferedImage rawNativeFrame(byte[] bytes) {
         if(bytes==null || bytes.length>100_000 || !Arrays.equals(SpriteNormalizer.dimensions(bytes,32),new int[]{32,32}))
             throw new AssetException(422,"STYLED_FRAME_INVALID");
         try {
-            var image=ImageIO.read(new ByteArrayInputStream(bytes));boolean visible=false,clear=false;
-            for(int y=0;y<32;y++)for(int x=0;x<32;x++) { int a=image.getRGB(x,y)>>>24;visible|=a!=0;clear|=a==0; }
-            if(!visible || !clear) throw new AssetException(422,"STYLED_ALPHA_INVALID");
+            var image=ImageIO.read(new ByteArrayInputStream(bytes));
+            if(image==null)throw new AssetException(422,"STYLED_FRAME_INVALID");
             return image;
         } catch(IOException e) { throw new AssetException(422,"STYLED_FRAME_INVALID"); }
     }

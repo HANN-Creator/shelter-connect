@@ -672,6 +672,7 @@ public class StyledAssetStore {
         p.put("automaticApproval",StyledAutoApproval.VERSION);
         p.put("aestheticPolicy",StyledAestheticPolicy.VERSION);p.put("qualityTimeoutVersion",StyledQualityTimeout.VERSION);
         var recovery=StyledSpriteCodec.qualityRules(json).path("recovery");
+        p.put("structuralRecovery",StyledStructuralRecovery.VERSION);p.put("idleSeedRestart",StyledIdleRestart.VERSION);
         p.put("recoveryVersion",StyledRecovery.VERSION);p.put("seedRepairVersion",StyledSeedRepair.VERSION);p.put("seedTailEvidenceVersion",StyledTailAnatomy.VERSION);p.put("motionFrameSize",40);p.put("seedMotionMargin",1);
         p.put("maxSeedRepairs",recovery.path("maxSeedRepairs").asInt());p.put("maxRepairsPerClip",recovery.path("maxMotionRepairs").asInt());
         p.put("motionCandidateVersion",StyledMotionCandidate.VERSION);p.put("idleHoldVersion",StyledIdleHold.VERSION);p.remove("seedEyeRepair");p.remove("learningRecovery");return p;}
@@ -950,6 +951,18 @@ public class StyledAssetStore {
         jdbc.sql("UPDATE shelter.styled_asset_steps SET quality_report=CAST(:r AS jsonb) WHERE job_id=:id AND label=:l")
             .param("r",json.writeValueAsString(report)).param("id",w.id()).param("l",w.label()).update();
     }
+    /** Preserve the definitive provider result before queuing a bounded structural retry. */
+    @Transactional public void structuralFailure(Work w,JsonNode report,JsonNode result) {
+        if(!authorized(w))return;
+        if(!w.character() || w.status().equals("CHECKING") || !StyledStructuralRecovery.report(report)
+            || !result.path("quarantined").asBoolean()
+            || !report.path("inputSha256").asText().equals(StyledSeedQualityAgent.hashBinding(result.path("hashes"))))
+            throw new AssetException(409,"STRUCTURAL_RECOVERY_INPUT_INVALID");
+        jdbc.sql("UPDATE shelter.styled_asset_steps SET result=CAST(:r AS jsonb),quality_report=CAST(:q AS jsonb) WHERE job_id=:id AND label=:l AND status='PERSISTING'")
+            .param("r",json.writeValueAsString(result)).param("q",json.writeValueAsString(report)).param("id",w.id()).param("l",w.label()).update();
+        if(StyledStructuralRecovery.enabled(w.qualityPolicy()) && retryQuality(w,report,result))return;
+        fail(w,false,"STYLED_ALPHA_INVALID");
+    }
     @Transactional public boolean retryQuality(Work w,JsonNode report,JsonNode result) {
         if(!authorized(w))return true;
         // Explicit rechecks judge the stored bytes, even if a new rule finds a defect with budget left.
@@ -962,16 +975,17 @@ public class StyledAssetStore {
         if(w.qualityPolicy()!=null && w.qualityPolicy().path("referenceOnly").asBoolean())return false;
         if(StyledIdleHold.derived(result))return false; // Static fallback is reviewed once, never converted into another paid edit.
         if(report.path("passed").asBoolean() || w.repairCount()>=StyledRecovery.limit(w.qualityPolicy(),w.character()))return false;
-        if(w.character() && StyledSeedRepair.enabled(w.qualityPolicy()) && !"READY".equals(report.at("/seedRepairPlan/status").asText()))return false;
+        if(w.character() && !StyledStructuralRecovery.report(report) && StyledSeedRepair.enabled(w.qualityPolicy()) && !"READY".equals(report.at("/seedRepairPlan/status").asText()))return false;
         // The provider finished definitively. Archive the receipt and image before buying a corrective attempt.
         jdbc.sql("""
             UPDATE shelter.styled_asset_steps SET attempt_history=attempt_history || jsonb_build_array(jsonb_build_object(
               'providerJobId',provider_job_id,'submittedAt',submitted_at,'requestSha256',request_sha256,
-              'result',CAST(:r AS jsonb),'quality',CAST(:q AS jsonb),'repairCount',repair_count,
-              'unconfirmedMotionCandidate',:candidate,'candidatePlan',CAST(:plan AS jsonb),'confirmedRepairPlan',CAST(:confirmed AS jsonb))),
+              'result',CAST(:r AS jsonb),'quality',CAST(:q AS jsonb),'repairCount',repair_count,'learnedLessons',learned_lessons,
+              'idleSeedRestart',:idleRestart,'unconfirmedMotionCandidate',:candidate,'candidatePlan',CAST(:plan AS jsonb),'confirmedRepairPlan',CAST(:confirmed AS jsonb))),
               repair_count=repair_count+1,status='PENDING',provider_job_id=NULL,submitted_at=NULL,provider_result=NULL,
               result=NULL,quality_report=CAST(:q AS jsonb) WHERE job_id=:id AND label=:l
             """).param("r",json.writeValueAsString(result)).param("q",json.writeValueAsString(report)).param("candidate",candidate)
+            .param("idleRestart",w.action().equals("IDLE") && w.repairCount()==0 && StyledIdleRestart.VERSION.equals(w.qualityPolicy().path("idleSeedRestart").asText()) && StyledIdleRestart.confirmed(report))
             .param("plan",json.writeValueAsString(candidatePlan)).param("confirmed",json.writeValueAsString(confirmedPlan)).param("id",w.id()).param("l",w.label()).update();
         defer(w,0);return true;
     }

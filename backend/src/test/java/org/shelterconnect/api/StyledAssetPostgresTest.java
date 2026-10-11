@@ -2566,6 +2566,102 @@ class StyledAssetPostgresTest {
         finish(id);assertThat(read(id).path("status").asText()).isEqualTo("OUTCOME_UNKNOWN");
         verify(provider,times(1)).editSeeds(any());clearInvocations(provider);for(int i=0;i<3;i++)tick();verifyNoInteractions(provider);publicStatus(404);
     }
+    JsonNode opaqueProviderResult()throws Exception {
+        var directions=new LinkedHashMap<String,String>();
+        for(String d:List.of("south","north","west","east"))directions.put(d,Base64.getEncoder().encodeToString(
+            java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/opaque-character-v38/"+d+".png"))));
+        return json.valueToTree(Map.of("status","COMPLETED","directions",directions,"usage",Map.of("generations",10)));
+    }
+    @Test void opaqueSeedsAutomaticallyRestartPreservingEvidenceAndRequireFreshVisualReview()throws Exception {
+        UUID id=recoveryRequest(0,false);var polls=new java.util.concurrent.atomic.AtomicInteger();
+        doAnswer(c->{outsideTransaction();if(polls.getAndIncrement()==0)return opaqueProviderResult();
+            String b=Base64.getEncoder().encodeToString(png);return json.valueToTree(Map.of("status","COMPLETED","directions",Map.of("south",b,"north",b,"west",b,"east",b)));}).when(provider).poll(any(),eq(true));
+        tick();tick();var failed=step(id,"character");
+        assertThat(failed.path("repairCount").asInt()).isEqualTo(1);assertThat(failed.path("status").asText()).isEqualTo("PENDING");
+        verifyNoInteractions(seedQuality);verify(provider,never()).submit(eq(false),any());
+        String history=jdbc.queryForObject("SELECT attempt_history::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='character'",String.class,id);
+        assertThat(history).contains("STYLED_ALPHA_INVALID","quarantined-seeds/0/","providerUsage","providerJobId","learnedLessons");
+        for(String d:List.of("south","north","west","east"))assertThat(objects.entrySet().stream().filter(e->e.getKey().contains("quarantined-seeds/0/"+d)).findFirst().orElseThrow().getValue())
+            .isEqualTo(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/opaque-character-v38/"+d+".png")));
+        finish(id);assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
+        assertThat(step(id,"character").path("repairCount").asInt()).isEqualTo(1);
+        verify(provider,times(2)).submit(eq(true),any());verify(provider,never()).editSeeds(any());verify(seedQuality,times(1)).reviewRecovery(any(),anyList(),any(),any());
+    }
+    @Test void repeatedOpaqueOutputsExhaustOriginalBudgetAndStayPrivateWithLastEvidence()throws Exception {
+        UUID id=recoveryRequest(0,false);doAnswer(c->opaqueProviderResult()).when(provider).poll(any(),eq(true));finish(id);
+        assertThat(read(id).path("status").asText()).isEqualTo("FAILED");assertThat(read(id).path("failureCode").asText()).isEqualTo("STYLED_ALPHA_INVALID");
+        assertThat(step(id,"character").path("repairCount").asInt()).isEqualTo(3);
+        assertThat(step(id,"character").at("/result/quarantined").asBoolean()).isTrue();
+        verify(provider,times(4)).submit(eq(true),any());verifyNoInteractions(seedQuality);verify(provider,never()).submit(eq(false),any());publicStatus(404);
+        clearInvocations(provider);tick();tick();verifyNoInteractions(provider);
+    }
+    @Test void interruptedStructuralRecoveryDoesNotRepeatPaidSubmission()throws Exception {
+        UUID id=recoveryRequest(0,false);doAnswer(c->opaqueProviderResult()).when(provider).poll(any(),eq(true));tick();tick();
+        when(provider.submit(eq(true),any())).thenThrow(new AssetProvider.Failure("PIXELLAB_CONNECTION",true));tick();
+        assertThat(read(id).path("status").asText()).isEqualTo("OUTCOME_UNKNOWN");
+        clearInvocations(provider);tick();tick();verifyNoInteractions(provider);
+    }
+    @Test void confirmedIdleRestartsOnceFromApprovedSeedAndRechecksAllNewFrames()throws Exception {
+        UUID id=recoveryRequest(0,false);var calls=new java.util.concurrent.atomic.AtomicInteger();
+        var motionPolls=new java.util.concurrent.atomic.AtomicInteger();
+        doAnswer(c->{
+            byte[] seed=b86Padded(png);var frames=new ArrayList<>(Collections.nCopies(9,Base64.getEncoder().encodeToString(seed)));
+            if(motionPolls.getAndIncrement()>0){var changed=ImageIO.read(new ByteArrayInputStream(seed));changed.setRGB(18,18,0xffa17946);
+                var out=new ByteArrayOutputStream();ImageIO.write(changed,"png",out);frames.set(4,Base64.getEncoder().encodeToString(out.toByteArray()));}
+            return json.valueToTree(Map.of("status","COMPLETED","frames",frames));
+        }).when(provider).poll(any(),eq(false));
+        when(quality.review(any(),anyList(),anyList(),eq("IDLE"),eq("south"))).thenAnswer(c->{
+            if(calls.getAndIncrement()>0)return b75MotionReport(c.getArgument(1),c.getArgument(2),"south",true,"PASS");
+            var r=(tools.jackson.databind.node.ObjectNode)json.readTree(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/idle-restart-v38/idle-south-review.json")));
+            r.put("rulesSha256",currentRules());return r; // Routing fixture, not real model review of synthetic frames.
+        });
+        finish(id);assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
+        assertThat(step(id,"idle-south").path("repairCount").asInt()).isEqualTo(1);
+        verify(provider,never()).editAnimation(any());verify(provider,times(13)).submit(eq(false),any());
+        var history=json.readTree(jdbc.queryForObject("SELECT attempt_history::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-south'",String.class,id));
+        assertThat(history.get(0).path("idleSeedRestart").asBoolean()).isTrue();
+        var payload=org.mockito.ArgumentCaptor.forClass(JsonNode.class);verify(codec,times(2)).motion(any(),eq("IDLE"),eq("south"),argThat(b->Arrays.equals(b,b86Padded(png))),payload.capture());
+        assertThat(payload.getAllValues()).allSatisfy(q->assertThat(q.path("attempt").asInt()).isZero());
+    }
+    UUID historicalActiveSeedLesson()throws Exception {
+        UUID first=seedLearningPair();review(first,true,"APPROVE",200);finish(first);lessonWorker.tick();lessonWorker.tick();UUID old=onlyLesson();
+        jdbc.update("UPDATE shelter.styled_quality_examples SET rules_sha256=? WHERE job_id=?","0".repeat(64),first);
+        jdbc.update("UPDATE shelter.styled_quality_lessons SET rules_sha256=? WHERE id=?","0".repeat(64),old);return old;
+    }
+    @Test void policyChangeReplaysHistoricRuleBeforeNextDogsFirstGeneration()throws Exception {
+        UUID old=historicalActiveSeedLesson();String evidence=jdbc.queryForObject("SELECT jsonb_agg(report ORDER BY id)::text FROM shelter.styled_quality_examples",String.class);
+        clearInvocations(lessonAgent);lessonWorker.tick();
+        UUID current=jdbc.queryForObject("SELECT id FROM shelter.styled_quality_lessons WHERE revalidated_from_id=?",UUID.class,old);
+        assertThat(lessonStatus(old)).isEqualTo("STALE");assertThat(lessonStatus(current)).isEqualTo("ACTIVE");
+        verify(lessonAgent,never()).proposeSeeds(any(),any());verify(lessonAgent,times(1)).replaySeeds(any(),any(),anyList());
+        assertThat(jdbc.queryForObject("SELECT jsonb_agg(report ORDER BY id)::text FROM shelter.styled_quality_examples",String.class)).isEqualTo(evidence);
+        lessonWorker.tick();verify(lessonAgent,times(1)).replaySeeds(any(),any(),anyList());
+        nextLearningDog();UUID next=request();tick();
+        String pinned=jdbc.queryForObject("SELECT learned_lessons::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='character'",String.class,next);
+        assertThat(pinned).contains(current.toString()).doesNotContain(old.toString());
+        var report=lessonStore.read(opSubject,current);assertThat(report.at("/validation/rulesSha256").asText()).isEqualTo(currentRules());
+        assertThat(report.at("/validation/freshGenerationVerified").asBoolean()).isFalse();
+    }
+    @Test void policyRevalidationFailureNeverActivatesOrRetriesAutomatically()throws Exception {
+        UUID old=historicalActiveSeedLesson();when(lessonAgent.replaySeeds(any(),any(),anyList())).thenAnswer(c->seedReplayAnswer(c.getArgument(2),true));
+        clearInvocations(lessonAgent);lessonWorker.tick();lessonWorker.tick();
+        UUID current=jdbc.queryForObject("SELECT id FROM shelter.styled_quality_lessons WHERE revalidated_from_id=?",UUID.class,old);
+        assertThat(lessonStatus(current)).isEqualTo("REJECTED");verify(lessonAgent,times(1)).replaySeeds(any(),any(),anyList());
+        nextLearningDog();UUID next=request();tick();assertThat(jdbc.queryForObject("SELECT learned_lessons::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='character'",String.class,next)).isEqualTo("[]");
+    }
+    @Test void disabledParentRuleCannotBeUsedThroughARevalidatedCopy()throws Exception {
+        UUID old=historicalActiveSeedLesson();lessonWorker.tick();
+        UUID current=jdbc.queryForObject("SELECT id FROM shelter.styled_quality_lessons WHERE revalidated_from_id=?",UUID.class,old);
+        lessonStore.disable(opSubject,old,json.valueToTree(Map.of("note","Withdraw this rule and its retained evidence lineage")));
+        nextLearningDog();UUID next=request();tick();
+        assertThat(lessonStatus(current)).isEqualTo("DISABLED");
+        assertThat(jdbc.queryForObject("SELECT learned_lessons::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='character'",String.class,next)).isEqualTo("[]");
+    }
+    @Test void revokedHistoricalEvidencePreventsRevalidationUploads()throws Exception {
+        UUID old=historicalActiveSeedLesson();jdbc.update("UPDATE shelter.asset_source_permissions SET revoked_at=now() WHERE id=?",permission);
+        clearInvocations(lessonAgent);lessonWorker.tick();verifyNoInteractions(lessonAgent);
+        assertThat(jdbc.queryForObject("SELECT status FROM shelter.styled_quality_lessons WHERE revalidated_from_id=?",String.class,old)).isEqualTo("DISABLED");
+    }
     Map<String,Object> input() {return Map.of("photoId",photo,"traits",Map.of("sourcePhotoSha256","a".repeat(64),"faceBox",List.of(.1,.1,.8,.8),"identityDescription","brown dog","motionDescription","brown dog","rearDescription","unknown markings","seed",42,"reviewNote","Reviewed full body photo and face crop for this dog"));}
     // Existing cases exercise persisted pre-B63 jobs and their explicit manual review contract.
     UUID request() throws Exception {
