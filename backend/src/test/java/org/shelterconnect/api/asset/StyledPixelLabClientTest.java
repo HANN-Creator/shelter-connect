@@ -38,6 +38,18 @@ class StyledPixelLabClientTest {
         assertThat(StyledPixelLabClient.decode(result.at("/directions/east").asText())).isEqualTo(png);
         assertThat(requestPath).isEqualTo("/characters/"+character+"/zip");
     }
+    @Test void opaqueCharacterIsReturnedForQuarantineWithReceiptInsteadOfLostBeforeCheckpoint()throws Exception {
+        body=json.writeValueAsString(Map.of("status","completed","usage",Map.of("generations",10),"last_response",Map.of("character_id",UUID.randomUUID())));
+        var out=new ByteArrayOutputStream();try(var zip=new ZipOutputStream(out)) {
+            for(String d:StyledSpriteCodec.DIRECTIONS){zip.putNextEntry(new ZipEntry("rotations/"+d+".png"));
+                zip.write(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/opaque-character-v38/"+d+".png")));zip.closeEntry();}
+        }
+        archive=out.toByteArray();var result=client.poll(UUID.randomUUID(),true);
+        assertThat(result.at("/usage/generations").asInt()).isEqualTo(10);
+        for(String d:StyledSpriteCodec.DIRECTIONS){byte[] raw=StyledPixelLabClient.decodeSeed(result.at("/directions/"+d).asText());
+            assertThat(raw).isEqualTo(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/opaque-character-v38/"+d+".png")));
+            assertThatThrownBy(()->StyledPixelLabClient.decode(result.at("/directions/"+d).asText())).hasMessage("STYLED_ALPHA_INVALID");}
+    }
     @Test void nineFramesAreRequiredAndProviderUrlsAreNeverFollowed() {
         body=json.writeValueAsString(Map.of("status","completed","last_response",Map.of("images",Collections.nCopies(9,Map.of("base64",Base64.getEncoder().encodeToString(png))))));
         assertThat(client.poll(UUID.randomUUID(),false).path("frames").size()).isEqualTo(9);

@@ -34,7 +34,7 @@ public class StyledAssetWorker {
             boolean recovery=StyledRecovery.enabled(w.qualityPolicy());
             // CHECKING audits the current stored result. Its latest archive is that result,
             // not the previous paid attempt required when submitting/polling an edit.
-            boolean baseEdit=recovery && w.character() && !w.status().equals("CHECKING") && w.repairCount()>0;
+            boolean baseEdit=recovery && w.character() && !w.status().equals("CHECKING") && w.repairCount()>0 && !StyledStructuralRecovery.report(w.qualityReport());
             boolean selectedBase=baseEdit && StyledSeedRepair.enabled(w.qualityPolicy());
             var baseAttempt=selectedBase?store.previousRecoveryBase(w):json.createObjectNode();
             boolean regionalBase=selectedBase && StyledSeedRepair.regional(baseAttempt.path("quality"));
@@ -85,7 +85,7 @@ public class StyledAssetWorker {
                 if(recovery)((tools.jackson.databind.node.ObjectNode)policy).put("recoveryVersion",StyledRecovery.VERSION);
                 JsonNode payload=baseEdit?recoveryBasePayload(w):eyeEdit?eyes.payload(eyeSeeds(w,eyeAttempt),eyeAttempt.at("/quality/eyeRepairPlan"),
                     (int)Math.floorMod(w.traits().path("seed").asLong()+7919L*w.repairCount(),2147483647L)):
-                    learning?learnedPayload(w,policy):entryRestart(w)?entryRestartPayload(w,policy):motionEdit(w)?motionEditPayload(w):w.character()?codec.character(w.dogId(),w.traits(),storage.photo(w.dogId(),w.bucket(),w.key()),policy):
+                    learning?learnedPayload(w,policy):StyledIdleRestart.eligible(w)?idleRestartPayload(w,policy):entryRestart(w)?entryRestartPayload(w,policy):motionEdit(w)?motionEditPayload(w):w.character()?codec.character(w.dogId(),w.traits(),storage.photo(w.dogId(),w.bucket(),w.key()),policy):
                     codec.motion(w.traits(),w.action(),w.direction(),seed(w),policy);
                 var selected=lessons.pin(w);
                 if(!selected.isEmpty()) {
@@ -108,6 +108,7 @@ public class StyledAssetWorker {
             }
             if(!store.authorized(w))return;
             if(w.character()) {
+                if(!eyeEdit && !regionalBase && quarantineInvalidSeeds(w,result,selectedBase?baseAttempt:null))return;
                 JsonNode eyeEvidence=null;Map<String,byte[]> editedSeeds=new LinkedHashMap<>();
                 if(selectedBase) {
                     var source=recoverySeeds(w,baseAttempt);var prior=baseAttempt.path("quality");
@@ -186,6 +187,25 @@ public class StyledAssetWorker {
             if(e.diagnostics!=null)store.quality(w,e.diagnostics);store.fail(w,false,e.code);
         }
         catch(RuntimeException e) { store.fail(w,submitted,"STYLED_WORK_INTERRUPTED"); }
+    }
+    private boolean quarantineInvalidSeeds(StyledAssetStore.Work w,JsonNode result,JsonNode previous) {
+        var images=new LinkedHashMap<String,byte[]>();
+        if(previous!=null) {
+            var source=recoverySeeds(w,previous);
+            for(int i=0;i<4;i++)images.put(StyledSpriteCodec.DIRECTIONS.get(i),source.get(i));
+        }
+        for(String direction:StyledSpriteCodec.DIRECTIONS)if(result.path("directions").has(direction))
+            images.put(direction,StyledPixelLabClient.decodeSeed(result.at("/directions/"+direction).asText()));
+        var report=StyledStructuralRecovery.inspect(images,json);if(report==null)return false;
+        var keys=new LinkedHashMap<String,String>();var hashes=new LinkedHashMap<String,String>();
+        for(var item:images.entrySet()) {
+            String key=w.prefix()+"quarantined-seeds/"+w.repairCount()+"/"+item.getKey()+".png";
+            storage.put(key,item.getValue());keys.put(item.getKey(),key);hashes.put(item.getKey(),StyledSpriteCodec.sha(item.getValue()));
+        }
+        var metadata=json.createObjectNode();metadata.set("keys",json.valueToTree(keys));metadata.set("hashes",json.valueToTree(hashes));
+        metadata.put("quarantined",true);if(result.has("usage"))metadata.set("providerUsage",result.path("usage"));
+        ((tools.jackson.databind.node.ObjectNode)report).put("inputSha256",StyledSeedQualityAgent.hashBinding(metadata.path("hashes")));
+        store.structuralFailure(w,report,metadata);return true;
     }
     private void inspectSeeds(StyledAssetStore.Work w,List<byte[]> seeds,JsonNode metadata,boolean allowRepair) {
         byte[] photo=storage.photo(w.dogId(),w.bucket(),w.key());
@@ -339,7 +359,16 @@ public class StyledAssetWorker {
         return StyledRecovery.enabled(w.qualityPolicy()) && w.repairCount()>0
             && StyledEntryPoseRepair.plan(w.qualityReport(),w.action(),JsonMapper.builder().build())!=null;
     }
-    static boolean motionEdit(StyledAssetStore.Work w) {return !entryRestart(w) && ((StyledRecovery.enabled(w.qualityPolicy()) && !w.character() && w.repairCount()>0) || tailEdit(w) || idleEdit(w) || marginEdit(w));}
+    static boolean motionEdit(StyledAssetStore.Work w) {return !StyledIdleRestart.eligible(w) && !entryRestart(w) && ((StyledRecovery.enabled(w.qualityPolicy()) && !w.character() && w.repairCount()>0) || tailEdit(w) || idleEdit(w) || marginEdit(w));}
+    private JsonNode idleRestartPayload(StyledAssetStore.Work w,JsonNode policy) {
+        var previous=store.previousAttempt(w);byte[] old=storage.asset(previous.path("key").asText());
+        if(!StyledSpriteCodec.sha(old).equals(previous.path("sha256").asText()))throw new AssetException(409,"STYLED_SHEET_CHANGED");
+        StyledSpriteCodec.frames(old); // Keep and validate all nine failed frames; never trim the evidence.
+        var traits=(tools.jackson.databind.node.ObjectNode)w.traits().deepCopy();
+        traits.put("seed",(int)Math.floorMod(w.traits().path("seed").asLong()+7919L*w.repairCount(),2147483647L));
+        var fresh=(tools.jackson.databind.node.ObjectNode)policy.deepCopy();fresh.put("attempt",0);
+        return codec.motion(traits,w.action(),w.direction(),seed(w),fresh);
+    }
     private JsonNode entryRestartPayload(StyledAssetStore.Work w,JsonNode policy) {
         // Same original repair counter and immutable failed strip; only the generator input changes.
         var previous=store.previousAttempt(w);byte[] old=storage.asset(previous.path("key").asText());

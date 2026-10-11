@@ -1,0 +1,1 @@
+B-88 actual v38 first IDLE outputs. SOUTH includes an unchanged native nine-frame sheet and archived review. WEST retains the archived uncertainty report for a negative routing test. In-memory rule-hash rebinding in tests replays routing only; it is not a new AI verdict or approval.

@@ -31,7 +31,7 @@ public class StyledPixelLabClient implements StyledAssetProvider {
         if(Set.of("processing","queued","pending").contains(state))return json.valueToTree(Map.of("status","WAITING"));
         if(state.equals("failed"))return json.valueToTree(Map.of("status","FAILED"));
         var images=response.at("/last_response/images");if(!state.equals("completed") || !images.isArray() || images.size()!=directions.size())throw new AssetException(422,"STYLED_FRAME_COUNT_INVALID");
-        var rotations=new LinkedHashMap<String,String>();for(int i=0;i<directions.size();i++){byte[] image=decode(images.get(i).path("base64").asText());StyledSpriteCodec.nativeFrame(image);
+        var rotations=new LinkedHashMap<String,String>();for(int i=0;i<directions.size();i++){byte[] image=decodeSeed(images.get(i).path("base64").asText());
             rotations.put(directions.get(i),Base64.getEncoder().encodeToString(image));}
         var out=json.createObjectNode().put("status","COMPLETED");out.set("directions",json.valueToTree(rotations));
         var usage=response.path("usage");if(usage.isMissingNode() || usage.isNull())usage=response.at("/last_response/billing_usage");
@@ -87,7 +87,7 @@ public class StyledPixelLabClient implements StyledAssetProvider {
                     var entries=zip.stream().filter(e->e.getName().equals("rotations/"+direction+".png") || e.getName().endsWith("/rotations/"+direction+".png")).toList();
                     if(entries.size()!=1 || entries.getFirst().getSize()>100_000)throw new IOException("Rotation entry");
                     try(var in=zip.getInputStream(entries.getFirst())) {
-                        byte[] bytes=in.readNBytes(100_001);StyledSpriteCodec.nativeFrame(bytes);
+                        byte[] bytes=in.readNBytes(100_001);StyledSpriteCodec.rawNativeFrame(bytes);
                         rotations.put(direction,Base64.getEncoder().encodeToString(bytes));
                     }
                 }
@@ -95,7 +95,15 @@ public class StyledPixelLabClient implements StyledAssetProvider {
         } catch(IOException e) { throw new AssetException(422,"STYLED_ARCHIVE_INVALID"); }
         finally { if(temp!=null)try { Files.deleteIfExists(temp); } catch(IOException ignored) { } }
         if(!rotations.keySet().equals(new HashSet<>(StyledSpriteCodec.DIRECTIONS))) throw new AssetException(422,"STYLED_ARCHIVE_INVALID");
-        return json.valueToTree(Map.of("status","COMPLETED","directions",rotations));
+        var completed=json.createObjectNode().put("status","COMPLETED");completed.set("directions",json.valueToTree(rotations));
+        var usage=response.path("usage");if(usage.isMissingNode() || usage.isNull())usage=response.at("/last_response/billing_usage");
+        if(!usage.isMissingNode() && !usage.isNull())completed.set("usage",usage);return completed;
+    }
+    static byte[] decodeSeed(String encoded) {
+        if(encoded.startsWith("data:image/png;base64,"))encoded=encoded.substring(22);
+        if(encoded.length()>140_000)throw new AssetException(422,"STYLED_FRAME_INVALID");
+        try {byte[] bytes=Base64.getDecoder().decode(encoded);StyledSpriteCodec.rawNativeFrame(bytes);return bytes;}
+        catch(IllegalArgumentException e){throw new AssetException(422,"STYLED_FRAME_INVALID");}
     }
     static byte[] decode(String encoded) {
         if(encoded.startsWith("data:image/png;base64,")) encoded=encoded.substring(22);

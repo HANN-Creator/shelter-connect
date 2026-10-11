@@ -58,6 +58,23 @@ class PipelineTest(unittest.TestCase):
             with self.subTest(change=change),self.assertRaises(ValueError):
                 character_request(self.root,self.traits,load_rules(),{'rulesSha256':digest(POLICY),'lessons':[bad]})
 
+    def test_opaque_recovery_retains_photo_style_and_bounded_distinct_seeds(self):
+        from styled_dog.quality import POLICY, load_quality
+        initial=character_request(self.root,self.traits,load_rules(),{'rulesSha256':digest(POLICY),'attempt':0,'recoveryVersion':load_quality()['recovery']['version']})
+        self.assertIn(load_quality()['structuralRecovery']['prevention'],initial['description'])
+        seen={initial['seed']}
+        for attempt in range(1,4):
+            q={'rulesSha256':digest(POLICY),'attempt':attempt,'issues':['STYLED_ALPHA_INVALID'],'recoveryVersion':load_quality()['recovery']['version']}
+            repaired=character_request(self.root,self.traits,load_rules(),q)
+            self.assertEqual(initial['concept_image'],repaired['concept_image'])
+            self.assertEqual(initial['reference_image'],repaired['reference_image'])
+            self.assertTrue(repaired['no_background'])
+            self.assertIn(load_quality()['structuralRecovery']['prevention'],repaired['description'])
+            self.assertLessEqual(len(repaired['description']),2000)
+            self.assertNotIn(repaired['seed'],seen);seen.add(repaired['seed'])
+        q['attempt']=4
+        with self.assertRaises(ValueError): character_request(self.root,self.traits,load_rules(),q)
+
     def test_both_images_are_transmitted_with_distinct_roles(self):
         body = character_request(self.root,self.traits,load_rules())
         self.assertEqual(body['method'],'create_from_concept')

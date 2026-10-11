@@ -224,3 +224,5 @@ B-84: [검증된 의존성 캐시로 Render 오프라인 빌드](https://app.not
 - B-86 쉬기·앉기 보완 경로와 걷기 근거 검수: [노션](https://app.notion.com/p/3f55b2d1a55f80b0b130ee2662125485), [동작·검증 경계](motion-repair-evidence.md). B-85 v37 배포의 세 보류 원본을 보존한다. IDLE 소진 후 승인 자세 대체, 확정 SIT 첫 자세 실패의 기준 이미지 재시작, 정면 WALK의 한정된 인접 쌍·가림 근거 관찰. 기존 예산·권한·통과 PNG 유지. 브랜치 `backend/b-86-motion-repair-evidence`. B-68 배포 후 전체 승인·앱 재생과 구분.
 
 - B-87 [쉬기 정적 대체의 명암 경고 중복 차단](idle-warning-plan.md): [노션](https://app.notion.com/p/3f55b2d1a55f802f9964ef8886445d95). 실제 v38의 비차단 명암 경고가 대체 계획에서 다시 실패로 처리된 사례를 보존하고 기존 경고 정책을 공유한다. 새 정적 후보의 독립 검수·원래 예산·통과 시트·해부학 차단 유지. 규칙 v38·API·DB 변경 없음. 브랜치 `backend/b-87-idle-warning-plan`.
+
+- B-89: [배경 오류 자동 복구·쉬기 생성·학습 규칙 재검증](automatic-structural-recovery.md). [노션 카드](https://app.notion.com/p/3f65b2d1a55f80c2b4cfc3b3b907c782), 브랜치 `backend/b-89-automatic-structural-recovery`. 실제 불투명 BASE의 원본/실패 보존 후 제한 재생성, 승인 시드 기반 첫 IDLE 보완, 정책 변경 후 기존 ACTIVE 규칙의 별도 재검증과 신규 생성 연결. V24는 재검증 출처만 추가하고 기존 이미지·승인·예산은 보존한다. 실제 서버 생성/재생은 배포 후 별도 검증한다.
