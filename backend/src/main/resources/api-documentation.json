@@ -3070,6 +3070,47 @@
         "data"
       ],
       "additionalProperties": false
+    },
+    "StyledPromptResume": {
+      "type": "object",
+      "properties": {
+        "note": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 2000
+        },
+        "expectedSeedHashes": {
+          "$ref": "#/components/schemas/StyledSeedHashes"
+        },
+        "expectedRulesSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "현재 서버 및 작업에 고정된 품질 규칙 SHA. 규칙 변경을 허용하지 않습니다."
+        },
+        "requestId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "동작·문구 작성기 버전별 1회 복구. 같은 본문 재전송은 재사용합니다."
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "expectedPromptInputSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "해당 동작의 가장 최근 v1 FAILED 문구 입력 해시. 현재 고정 규칙과 같은 입력만 허용합니다."
+        }
+      },
+      "required": [
+        "note",
+        "expectedSeedHashes",
+        "expectedRulesSha256",
+        "requestId",
+        "label",
+        "expectedPromptInputSha256"
+      ],
+      "additionalProperties": false
     }
   },
   "operations": {
@@ -4931,6 +4972,24 @@
       ],
       "request": {
         "schema": "StyledQualityTimeoutResume"
+      }
+    },
+    "POST /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/prompt-resume": {
+      "summary": "이미지 접수 전 실패한 이전 문구 작성 단계 재개",
+      "description": "같은 보호소 담당자 전용. 현재 규칙과 기본 도트 SYSTEM 승인·사용 허가가 유효하며, 유일한 실패 동작의 마지막 v1 문구가 LESSON_PROMPT_INVALID 또는 LESSON_PROMPT_MEANING_LOST인 경우만 허용합니다. 현재 시도의 provider ID·접수 시각·결과가 있으면 거부하며, 남아 있는 요청 해시는 완료된 직전 이력과 같아야 합니다. 해당 동작을 새 문구 작성기로 이어가되 원본·승인·전체 규칙·보완 횟수·비용 이력은 보존합니다. 새 문구도 모든 조건의 검증을 통과해야 다음 이미지 요청이 진행됩니다. 같은 동작·작성기 버전은 한 번만 재개하고 동일 본문 재전송은 멱등 처리합니다.",
+      "tag": "32px 에셋",
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "403",
+        "404",
+        "409",
+        "503"
+      ],
+      "request": {
+        "schema": "StyledPromptResume"
       }
     }
   }
