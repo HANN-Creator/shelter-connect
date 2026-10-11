@@ -1,0 +1,686 @@
+{
+  "note": "꼬리 관찰이 불확실한 방향은 원본을 보존하고 승인을 보류합니다. 불확실성 자체는 이미지 결함이나 학습 예시가 아닙니다.",
+  "model": "gpt-5.6-luna",
+  "views": [
+    {
+      "note": "정면 방향과 얼굴 구조가 사진과 일치하며 주둥이 패치도 식별 가능하다.",
+      "style": "PASS",
+      "direction": "south",
+      "readability": "PASS"
+    },
+    {
+      "note": "후면에 얼굴이 없는 것이 올바르며 사진에 없는 후면 특징은 판단하지 않았다.",
+      "style": "PASS",
+      "direction": "north",
+      "readability": "NOT_VISIBLE"
+    },
+    {
+      "note": "옆모습 방향과 귀·주둥이 형태가 자연스럽고, 숨겨진 측면 무늬는 결함으로 보지 않았다.",
+      "style": "PASS",
+      "direction": "west",
+      "readability": "PASS"
+    },
+    {
+      "note": "반대쪽 옆모습도 방향과 기본 해부 구조가 일치하며 사진에 없는 부분은 추정하지 않았다.",
+      "style": "PASS",
+      "direction": "east",
+      "readability": "PASS"
+    }
+  ],
+  "issues": [],
+  "passed": false,
+  "version": "seed-eyes-v1",
+  "identity": "UNCERTAIN",
+  "appearance": "UNCERTAIN",
+  "reviewedAt": "2026-10-11T05:29:59.249236025Z",
+  "inputSha256": "4be54223e8101d4989fcbe88e892b704e35ee657acc5279ab52ff791c7afa36b",
+  "photoSha256": "a762825d10e4f140f568177b44be6212bff8ec16fb9c71a5e7b53185ad6b8374",
+  "rulesSha256": "1c939eb780e42879dfed531dd2f27bb9424e7bbeb1458741a8b068241a861243",
+  "coatEvidence": {
+    "version": "material-coat-review-v1",
+    "reviewCalls": 0,
+    "propertyReview": {
+      "note": "네 방향 모두 스타일과 식별 가능한 얼굴·피모 특징을 유지하며, 사진에서는 꼬리가 가려져 길이를 확인할 수 없다.",
+      "views": [
+        {
+          "note": "정면 방향과 얼굴 구조가 사진과 일치하며 주둥이 패치도 식별 가능하다.",
+          "issues": [],
+          "direction": "south",
+          "confidence": 0.96,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "The visible front photo shows a pale cream/off-white forehead and coat, floppy tan-cream ears, a distinct white-gray muzzle, and pale chest and legs. The photographed tail and rear markings are hidden.",
+          "observedSpriteMarkings": "Front-facing compact cream dog with tan ear patches, a pale forehead, gray-white muzzle and cheek patches, pale chest and legs, and a small dark neutral mouth contour. Two dark eyes are visible."
+        },
+        {
+          "note": "후면에 얼굴이 없는 것이 올바르며 사진에 없는 후면 특징은 판단하지 않았다.",
+          "issues": [],
+          "direction": "north",
+          "confidence": 0.91,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "The photographs show the pale cream/off-white coat and floppy ears from the front, but the rear, hindquarter markings, and tail are hidden.",
+          "observedSpriteMarkings": "Rear-facing cream body with a pale back, small tan ear-edge patches, pale hindquarters and legs, and no facial features or visible tail."
+        },
+        {
+          "note": "옆모습 방향과 귀·주둥이 형태가 자연스럽고, 숨겨진 측면 무늬는 결함으로 보지 않았다.",
+          "issues": [],
+          "direction": "west",
+          "confidence": 0.87,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "The photo visibly supports the pale cream coat, floppy ear form, and light white-gray muzzle. The side body, profile-side markings, and tail are not visible in the photographs.",
+          "observedSpriteMarkings": "Left-facing profile with a cream head and body, gray-white muzzle and cheek area, tan ear patch, pale chest and legs, and a visible raised short tail at the rear."
+        },
+        {
+          "note": "반대쪽 옆모습도 방향과 기본 해부 구조가 일치하며 사진에 없는 부분은 추정하지 않았다.",
+          "issues": [],
+          "direction": "east",
+          "confidence": 0.87,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "The visible photographs confirm the pale cream/off-white coat, floppy ears, and light muzzle, but do not reveal the opposite profile, rear markings, or tail.",
+          "observedSpriteMarkings": "Right-facing profile with a cream head and body, gray-white muzzle and cheek area, tan ear patch, pale chest and legs, and a visible small raised tail at the rear."
+        }
+      ],
+      "photoTail": "OBSCURED",
+      "photoEvidence": "The photographed body and face views do not show the tail; it is hidden or cropped, so tail length and carriage are unknown. The visible dog has a pale cream/off-white short coat, floppy ears, and a lighter white-gray muzzle.",
+      "tailConsistent": true,
+      "repairDescription": ""
+    },
+    "originalPropertyReview": {
+      "note": "네 방향 모두 스타일과 식별 가능한 얼굴·피모 특징을 유지하며, 사진에서는 꼬리가 가려져 길이를 확인할 수 없다.",
+      "views": [
+        {
+          "note": "정면 방향과 얼굴 구조가 사진과 일치하며 주둥이 패치도 식별 가능하다.",
+          "issues": [],
+          "direction": "south",
+          "confidence": 0.96,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "The visible front photo shows a pale cream/off-white forehead and coat, floppy tan-cream ears, a distinct white-gray muzzle, and pale chest and legs. The photographed tail and rear markings are hidden.",
+          "observedSpriteMarkings": "Front-facing compact cream dog with tan ear patches, a pale forehead, gray-white muzzle and cheek patches, pale chest and legs, and a small dark neutral mouth contour. Two dark eyes are visible."
+        },
+        {
+          "note": "후면에 얼굴이 없는 것이 올바르며 사진에 없는 후면 특징은 판단하지 않았다.",
+          "issues": [],
+          "direction": "north",
+          "confidence": 0.91,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "The photographs show the pale cream/off-white coat and floppy ears from the front, but the rear, hindquarter markings, and tail are hidden.",
+          "observedSpriteMarkings": "Rear-facing cream body with a pale back, small tan ear-edge patches, pale hindquarters and legs, and no facial features or visible tail."
+        },
+        {
+          "note": "옆모습 방향과 귀·주둥이 형태가 자연스럽고, 숨겨진 측면 무늬는 결함으로 보지 않았다.",
+          "issues": [],
+          "direction": "west",
+          "confidence": 0.87,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "The photo visibly supports the pale cream coat, floppy ear form, and light white-gray muzzle. The side body, profile-side markings, and tail are not visible in the photographs.",
+          "observedSpriteMarkings": "Left-facing profile with a cream head and body, gray-white muzzle and cheek area, tan ear patch, pale chest and legs, and a visible raised short tail at the rear."
+        },
+        {
+          "note": "반대쪽 옆모습도 방향과 기본 해부 구조가 일치하며 사진에 없는 부분은 추정하지 않았다.",
+          "issues": [],
+          "direction": "east",
+          "confidence": 0.87,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "The visible photographs confirm the pale cream/off-white coat, floppy ears, and light muzzle, but do not reveal the opposite profile, rear markings, or tail.",
+          "observedSpriteMarkings": "Right-facing profile with a cream head and body, gray-white muzzle and cheek area, tan ear patch, pale chest and legs, and a visible small raised tail at the rear."
+        }
+      ],
+      "photoTail": "OBSCURED",
+      "photoEvidence": "The photographed body and face views do not show the tail; it is hidden or cropped, so tail length and carriage are unknown. The visible dog has a pale cream/off-white short coat, floppy ears, and a lighter white-gray muzzle.",
+      "tailConsistent": true,
+      "repairDescription": ""
+    }
+  },
+  "tailEvidence": {
+    "model": "gpt-5.6-luna",
+    "passed": false,
+    "version": "tail-anatomy-tristate-v2",
+    "decision": "UNCERTAIN",
+    "geometry": {
+      "east": {
+        "edgeContact": false,
+        "branchVersion": "rear-silhouette-branches-v2",
+        "opaqueComponents": 1,
+        "rearBranchSupport": true,
+        "rearBranchCandidates": [
+          [
+            {
+              "x": 5,
+              "y": 13
+            },
+            {
+              "x": 5,
+              "y": 14
+            },
+            {
+              "x": 6,
+              "y": 15
+            },
+            {
+              "x": 7,
+              "y": 16
+            },
+            {
+              "x": 8,
+              "y": 17
+            },
+            {
+              "x": 9,
+              "y": 18
+            }
+          ]
+        ],
+        "clearPixelsLeftTopRightBottom": [
+          3,
+          3,
+          3,
+          2
+        ]
+      },
+      "west": {
+        "edgeContact": false,
+        "branchVersion": "rear-silhouette-branches-v2",
+        "opaqueComponents": 1,
+        "rearBranchSupport": false,
+        "rearBranchCandidates": [],
+        "clearPixelsLeftTopRightBottom": [
+          3,
+          3,
+          3,
+          2
+        ]
+      }
+    },
+    "verdicts": {
+      "east": {
+        "issue": "",
+        "decision": "PASS"
+      },
+      "west": {
+        "issue": "",
+        "decision": "UNCERTAIN"
+      }
+    },
+    "reviewedAt": "2026-10-11T05:30:14.673667042Z",
+    "inputSha256": "4be54223e8101d4989fcbe88e892b704e35ee657acc5279ab52ff791c7afa36b",
+    "observation": {
+      "views": [
+        {
+          "tip": "VISIBLE",
+          "tail": "COMPLETE_CONNECTED",
+          "contour": "DISTINCT",
+          "direction": "west",
+          "attachment": "CONNECTED",
+          "visibleEvidence": "The tail is attached at the upper rear rump and projects upward with a distinct outlined contour; its terminal end is visibly rounded and not cropped."
+        },
+        {
+          "tip": "VISIBLE",
+          "tail": "COMPLETE_CONNECTED",
+          "contour": "DISTINCT",
+          "direction": "east",
+          "attachment": "CONNECTED",
+          "visibleEvidence": "The rump has a short lateral appendage extending left, with a distinct contour and visible end, connected to the body."
+        }
+      ],
+      "photoTail": "OBSCURED",
+      "photoEvidence": "The photographed body and face views do not show the tail; it is hidden or cropped, so tail length and carriage are unknown. The visible dog has a pale cream/off-white short coat, floppy ears, and a lighter white-gray muzzle."
+    },
+    "photoSha256": "a762825d10e4f140f568177b44be6212bff8ec16fb9c71a5e7b53185ad6b8374",
+    "reviewCalls": 2,
+    "rulesSha256": "1c939eb780e42879dfed531dd2f27bb9424e7bbeb1458741a8b068241a861243",
+    "failedDirections": [],
+    "observationHistory": [
+      {
+        "passed": false,
+        "decision": "UNCERTAIN",
+        "geometry": {
+          "east": {
+            "edgeContact": false,
+            "branchVersion": "rear-silhouette-branches-v2",
+            "opaqueComponents": 1,
+            "rearBranchSupport": true,
+            "rearBranchCandidates": [
+              [
+                {
+                  "x": 5,
+                  "y": 13
+                },
+                {
+                  "x": 5,
+                  "y": 14
+                },
+                {
+                  "x": 6,
+                  "y": 15
+                },
+                {
+                  "x": 7,
+                  "y": 16
+                },
+                {
+                  "x": 8,
+                  "y": 17
+                },
+                {
+                  "x": 9,
+                  "y": 18
+                }
+              ]
+            ],
+            "clearPixelsLeftTopRightBottom": [
+              3,
+              3,
+              3,
+              2
+            ]
+          },
+          "west": {
+            "edgeContact": false,
+            "branchVersion": "rear-silhouette-branches-v2",
+            "opaqueComponents": 1,
+            "rearBranchSupport": false,
+            "rearBranchCandidates": [],
+            "clearPixelsLeftTopRightBottom": [
+              3,
+              3,
+              3,
+              2
+            ]
+          }
+        },
+        "verdicts": {
+          "east": {
+            "issue": "",
+            "decision": "PASS"
+          },
+          "west": {
+            "issue": "",
+            "decision": "UNCERTAIN"
+          }
+        },
+        "observation": {
+          "views": [
+            {
+              "tip": "VISIBLE",
+              "tail": "COMPLETE_CONNECTED",
+              "contour": "DISTINCT",
+              "direction": "west",
+              "attachment": "CONNECTED",
+              "visibleEvidence": "The rump has a small upward-projecting appendage with a distinct outlined contour and visible terminal end, connected to the body."
+            },
+            {
+              "tip": "VISIBLE",
+              "tail": "COMPLETE_CONNECTED",
+              "contour": "DISTINCT",
+              "direction": "east",
+              "attachment": "CONNECTED",
+              "visibleEvidence": "The rump has a short lateral appendage extending left, with a distinct contour and visible end, connected to the body."
+            }
+          ],
+          "photoTail": "OBSCURED",
+          "photoEvidence": "The photographed body and face views do not show the tail; it is hidden or cropped, so tail length and carriage are unknown. The visible dog has a pale cream/off-white short coat, floppy ears, and a lighter white-gray muzzle."
+        },
+        "failedDirections": [],
+        "shortTailSupported": false,
+        "uncertainDirections": [
+          "west"
+        ],
+        "conflictingDirections": []
+      },
+      {
+        "passed": false,
+        "decision": "UNCERTAIN",
+        "geometry": {
+          "east": {
+            "edgeContact": false,
+            "branchVersion": "rear-silhouette-branches-v2",
+            "opaqueComponents": 1,
+            "rearBranchSupport": true,
+            "rearBranchCandidates": [
+              [
+                {
+                  "x": 5,
+                  "y": 13
+                },
+                {
+                  "x": 5,
+                  "y": 14
+                },
+                {
+                  "x": 6,
+                  "y": 15
+                },
+                {
+                  "x": 7,
+                  "y": 16
+                },
+                {
+                  "x": 8,
+                  "y": 17
+                },
+                {
+                  "x": 9,
+                  "y": 18
+                }
+              ]
+            ],
+            "clearPixelsLeftTopRightBottom": [
+              3,
+              3,
+              3,
+              2
+            ]
+          },
+          "west": {
+            "edgeContact": false,
+            "branchVersion": "rear-silhouette-branches-v2",
+            "opaqueComponents": 1,
+            "rearBranchSupport": false,
+            "rearBranchCandidates": [],
+            "clearPixelsLeftTopRightBottom": [
+              3,
+              3,
+              3,
+              2
+            ]
+          }
+        },
+        "verdicts": {
+          "east": {
+            "issue": "",
+            "decision": "PASS"
+          },
+          "west": {
+            "issue": "",
+            "decision": "UNCERTAIN"
+          }
+        },
+        "observation": {
+          "views": [
+            {
+              "tip": "VISIBLE",
+              "tail": "COMPLETE_CONNECTED",
+              "contour": "DISTINCT",
+              "direction": "west",
+              "attachment": "CONNECTED",
+              "visibleEvidence": "The tail is attached at the upper rear rump and projects upward with a distinct outlined contour; its terminal end is visibly rounded and not cropped."
+            },
+            {
+              "tip": "VISIBLE",
+              "tail": "COMPLETE_CONNECTED",
+              "contour": "DISTINCT",
+              "direction": "east",
+              "attachment": "CONNECTED",
+              "visibleEvidence": "The rump has a short lateral appendage extending left, with a distinct contour and visible end, connected to the body."
+            }
+          ],
+          "photoTail": "OBSCURED",
+          "photoEvidence": "The photographed body and face views do not show the tail; it is hidden or cropped, so tail length and carriage are unknown. The visible dog has a pale cream/off-white short coat, floppy ears, and a lighter white-gray muzzle."
+        },
+        "failedDirections": [],
+        "shortTailSupported": false,
+        "uncertainDirections": [
+          "west"
+        ],
+        "conflictingDirections": [],
+        "independentObservation": {
+          "views": [
+            {
+              "tip": "VISIBLE",
+              "tail": "COMPLETE_CONNECTED",
+              "contour": "DISTINCT",
+              "direction": "west",
+              "attachment": "CONNECTED",
+              "visibleEvidence": "The tail is attached at the upper rear rump and projects upward with a distinct outlined contour; its terminal end is visibly rounded and not cropped."
+            }
+          ],
+          "photoTail": "OBSCURED",
+          "photoEvidence": "The photographed body and face views do not show the tail; it is hidden or cropped, so tail length and carriage are unknown. The visible dog has a pale cream/off-white short coat, floppy ears, and a lighter white-gray muzzle."
+        }
+      }
+    ],
+    "shortTailSupported": false,
+    "uncertainDirections": [
+      "west"
+    ],
+    "conflictingDirections": [],
+    "independentObservation": {
+      "views": [
+        {
+          "tip": "VISIBLE",
+          "tail": "COMPLETE_CONNECTED",
+          "contour": "DISTINCT",
+          "direction": "west",
+          "attachment": "CONNECTED",
+          "visibleEvidence": "The tail is attached at the upper rear rump and projects upward with a distinct outlined contour; its terminal end is visibly rounded and not cropped."
+        }
+      ],
+      "photoTail": "OBSCURED",
+      "photoEvidence": "The photographed body and face views do not show the tail; it is hidden or cropped, so tail length and carriage are unknown. The visible dog has a pale cream/off-white short coat, floppy ears, and a lighter white-gray muzzle."
+    }
+  },
+  "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "reviewVersion": "photo-observed-features-review-v4",
+  "edgeDirections": [],
+  "learnedLessons": [],
+  "propertyReview": {
+    "note": "네 방향 모두 스타일과 식별 가능한 얼굴·피모 특징을 유지하며, 사진에서는 꼬리가 가려져 길이를 확인할 수 없다.",
+    "views": [
+      {
+        "note": "정면 방향과 얼굴 구조가 사진과 일치하며 주둥이 패치도 식별 가능하다.",
+        "issues": [],
+        "direction": "south",
+        "confidence": 0.96,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "confidenceAdvisory": false,
+        "observedPhotoMarkings": "The visible front photo shows a pale cream/off-white forehead and coat, floppy tan-cream ears, a distinct white-gray muzzle, and pale chest and legs. The photographed tail and rear markings are hidden.",
+        "observedSpriteMarkings": "Front-facing compact cream dog with tan ear patches, a pale forehead, gray-white muzzle and cheek patches, pale chest and legs, and a small dark neutral mouth contour. Two dark eyes are visible."
+      },
+      {
+        "note": "후면에 얼굴이 없는 것이 올바르며 사진에 없는 후면 특징은 판단하지 않았다.",
+        "issues": [],
+        "direction": "north",
+        "confidence": 0.91,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "confidenceAdvisory": false,
+        "observedPhotoMarkings": "The photographs show the pale cream/off-white coat and floppy ears from the front, but the rear, hindquarter markings, and tail are hidden.",
+        "observedSpriteMarkings": "Rear-facing cream body with a pale back, small tan ear-edge patches, pale hindquarters and legs, and no facial features or visible tail."
+      },
+      {
+        "note": "옆모습 방향과 귀·주둥이 형태가 자연스럽고, 숨겨진 측면 무늬는 결함으로 보지 않았다.",
+        "issues": [],
+        "direction": "west",
+        "confidence": 0.87,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "confidenceAdvisory": false,
+        "repairEvidenceSource": "UNRESOLVED_OBSERVATION",
+        "observedPhotoMarkings": "The photo visibly supports the pale cream coat, floppy ear form, and light white-gray muzzle. The side body, profile-side markings, and tail are not visible in the photographs.",
+        "observedSpriteMarkings": "Left-facing profile with a cream head and body, gray-white muzzle and cheek area, tan ear patch, pale chest and legs, and a visible raised short tail at the rear.",
+        "tailObservationUncertain": true
+      },
+      {
+        "note": "반대쪽 옆모습도 방향과 기본 해부 구조가 일치하며 사진에 없는 부분은 추정하지 않았다.",
+        "issues": [],
+        "direction": "east",
+        "confidence": 0.87,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "confidenceAdvisory": false,
+        "observedPhotoMarkings": "The visible photographs confirm the pale cream/off-white coat, floppy ears, and light muzzle, but do not reveal the opposite profile, rear markings, or tail.",
+        "observedSpriteMarkings": "Right-facing profile with a cream head and body, gray-white muzzle and cheek area, tan ear patch, pale chest and legs, and a visible small raised tail at the rear."
+      }
+    ],
+    "photoTail": "OBSCURED",
+    "photoEvidence": "The photographed body and face views do not show the tail; it is hidden or cropped, so tail length and carriage are unknown. The visible dog has a pale cream/off-white short coat, floppy ears, and a lighter white-gray muzzle.",
+    "tailConsistent": true,
+    "aestheticPolicy": "aesthetic-warnings-v1",
+    "qualityWarnings": [],
+    "repairDescription": ""
+  },
+  "seedRepairPlan": {
+    "method": "VIEW",
+    "status": "UNCERTAIN_VERDICT",
+    "version": "selected-seed-repair-v1",
+    "directions": [],
+    "rulesSha256": "1c939eb780e42879dfed531dd2f27bb9424e7bbeb1458741a8b068241a861243",
+    "sourceBinding": "4be54223e8101d4989fcbe88e892b704e35ee657acc5279ab52ff791c7afa36b",
+    "deferredDirections": [
+      "west"
+    ]
+  },
+  "aestheticPolicy": "aesthetic-warnings-v1",
+  "qualityDecision": "UNCERTAIN",
+  "qualityWarnings": [],
+  "recoveryVersion": "photo-grounded-recovery-v1",
+  "marginDirections": [],
+  "repairDescription": "",
+  "reviewImageHashes": {
+    "Actual body photo": "a762825d10e4f140f568177b44be6212bff8ec16fb9c71a5e7b53185ad6b8374",
+    "Actual face photo": "740716123323d2cd6bdf3291078d0453e6908da64e19d9a6a4bf1413cbd3f390",
+    "Unapproved view: east": "6fbc8a96a295ee17559fa440697fa521815ba834b10df8bf9c2feb20bd48bbc7",
+    "Unapproved view: west": "a9f055577671f226d844d80175222a40340d93d068bd7db42686583da9035161",
+    "Unapproved view: north": "af4dac53e4295afb7606c26cbb21a333d9ce446ba251daa1b0a9fad06cd11ed4",
+    "Unapproved view: south": "7c394bb72eb51221c0b6e20a9fd9a0b1c5bff80ab0a9aa4eff730ca2f9e2678d",
+    "Approved art style only; not this dog": "bf5e5641f0768a45f7a87f10bbb5bf26e987dee581b1b2cf4d08d2c4c0cd539c"
+  },
+  "minimumClearPixels": 1,
+  "generalPropertyReview": {
+    "note": "네 방향 모두 스타일과 식별 가능한 얼굴·피모 특징을 유지하며, 사진에서는 꼬리가 가려져 길이를 확인할 수 없다.",
+    "views": [
+      {
+        "note": "정면 방향과 얼굴 구조가 사진과 일치하며 주둥이 패치도 식별 가능하다.",
+        "issues": [],
+        "direction": "south",
+        "confidence": 0.96,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "confidenceAdvisory": false,
+        "observedPhotoMarkings": "The visible front photo shows a pale cream/off-white forehead and coat, floppy tan-cream ears, a distinct white-gray muzzle, and pale chest and legs. The photographed tail and rear markings are hidden.",
+        "observedSpriteMarkings": "Front-facing compact cream dog with tan ear patches, a pale forehead, gray-white muzzle and cheek patches, pale chest and legs, and a small dark neutral mouth contour. Two dark eyes are visible."
+      },
+      {
+        "note": "후면에 얼굴이 없는 것이 올바르며 사진에 없는 후면 특징은 판단하지 않았다.",
+        "issues": [],
+        "direction": "north",
+        "confidence": 0.91,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "confidenceAdvisory": false,
+        "observedPhotoMarkings": "The photographs show the pale cream/off-white coat and floppy ears from the front, but the rear, hindquarter markings, and tail are hidden.",
+        "observedSpriteMarkings": "Rear-facing cream body with a pale back, small tan ear-edge patches, pale hindquarters and legs, and no facial features or visible tail."
+      },
+      {
+        "note": "옆모습 방향과 귀·주둥이 형태가 자연스럽고, 숨겨진 측면 무늬는 결함으로 보지 않았다.",
+        "issues": [],
+        "direction": "west",
+        "confidence": 0.87,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "confidenceAdvisory": false,
+        "observedPhotoMarkings": "The photo visibly supports the pale cream coat, floppy ear form, and light white-gray muzzle. The side body, profile-side markings, and tail are not visible in the photographs.",
+        "observedSpriteMarkings": "Left-facing profile with a cream head and body, gray-white muzzle and cheek area, tan ear patch, pale chest and legs, and a visible raised short tail at the rear."
+      },
+      {
+        "note": "반대쪽 옆모습도 방향과 기본 해부 구조가 일치하며 사진에 없는 부분은 추정하지 않았다.",
+        "issues": [],
+        "direction": "east",
+        "confidence": 0.87,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "confidenceAdvisory": false,
+        "observedPhotoMarkings": "The visible photographs confirm the pale cream/off-white coat, floppy ears, and light muzzle, but do not reveal the opposite profile, rear markings, or tail.",
+        "observedSpriteMarkings": "Right-facing profile with a cream head and body, gray-white muzzle and cheek area, tan ear patch, pale chest and legs, and a visible small raised tail at the rear."
+      }
+    ],
+    "photoTail": "OBSCURED",
+    "photoEvidence": "The photographed body and face views do not show the tail; it is hidden or cropped, so tail length and carriage are unknown. The visible dog has a pale cream/off-white short coat, floppy ears, and a lighter white-gray muzzle.",
+    "tailConsistent": true,
+    "aestheticPolicy": "aesthetic-warnings-v1",
+    "qualityWarnings": [],
+    "repairDescription": ""
+  },
+  "clearPixelsLeftTopRightBottom": {
+    "east": [
+      3,
+      3,
+      3,
+      2
+    ],
+    "west": [
+      3,
+      3,
+      3,
+      2
+    ],
+    "north": [
+      6,
+      3,
+      6,
+      1
+    ],
+    "south": [
+      5,
+      4,
+      5,
+      2
+    ]
+  }
+}

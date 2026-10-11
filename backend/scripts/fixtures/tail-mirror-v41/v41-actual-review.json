@@ -1,0 +1,598 @@
+{
+  "version": "seed-eyes-v1",
+  "recoveryVersion": "photo-grounded-recovery-v1",
+  "reviewVersion": "photo-observed-features-review-v4",
+  "passed": true,
+  "inputSha256": "4be54223e8101d4989fcbe88e892b704e35ee657acc5279ab52ff791c7afa36b",
+  "photoSha256": "a762825d10e4f140f568177b44be6212bff8ec16fb9c71a5e7b53185ad6b8374",
+  "rulesSha256": "657da19999b7bb49cd099cf759b5d2de6597e3f3d0086185cde9ccd05068a4b0",
+  "model": "gpt-5.6-luna",
+  "reviewedAt": "2026-10-11T05:37:46.759865Z",
+  "identity": "PASS",
+  "appearance": "PASS",
+  "repairDescription": "",
+  "note": "네 방향 모두 귀, 주둥이, 체형과 밝은 크림색 털이 사진 속 강아지와 일치한다. 꼬리는 사진에서 가려져 있어 측면 스프라이트의 꼬리 형태를 확정할 수 없지만, 두 측면에서 자연스럽고 일관되게 표현되었다.",
+  "issues": [],
+  "edgeDirections": [],
+  "views": [
+    {
+      "note": "정면 방향과 얼굴 구조가 맞고, 주둥이의 밝은 털과 귀 형태도 잘 유지되었다.",
+      "style": "PASS",
+      "direction": "south",
+      "readability": "PASS"
+    },
+    {
+      "note": "후면에 얼굴을 넣지 않은 처리가 올바르며, 사진에 없는 뒤쪽 무늬는 판단하지 않았다.",
+      "style": "PASS",
+      "direction": "north",
+      "readability": "NOT_VISIBLE"
+    },
+    {
+      "note": "프로필 실루엣, 한쪽 눈, 짧은 털 표현이 자연스럽다.",
+      "style": "PASS",
+      "direction": "west",
+      "readability": "PASS"
+    },
+    {
+      "note": "반대쪽 프로필도 방향, 귀, 주둥이와 체형이 일관되게 표현되었다.",
+      "style": "PASS",
+      "direction": "east",
+      "readability": "PASS"
+    }
+  ],
+  "propertyReview": {
+    "photoEvidence": "실제 사진에서는 꼬리가 몸통과 의상에 가려져 보이지 않으며, 꼬리 길이나 형태는 확인할 수 없다.",
+    "photoTail": "OBSCURED",
+    "repairDescription": "",
+    "note": "네 방향 모두 귀, 주둥이, 체형과 밝은 크림색 털이 사진 속 강아지와 일치한다. 꼬리는 사진에서 가려져 있어 측면 스프라이트의 꼬리 형태를 확정할 수 없지만, 두 측면에서 자연스럽고 일관되게 표현되었다.",
+    "tailConsistent": true,
+    "views": [
+      {
+        "direction": "south",
+        "observedSpriteMarkings": "정면 스프라이트는 밝은 크림색 이마와 몸통, 양옆의 연한 갈색 귀, 회색 음영의 양쪽 볼과 주둥이, 밝은 중앙 주둥이와 가슴, 어두운 코와 작은 중립적 입을 보인다. 두 눈은 작고 어두운 픽셀로 분리되어 있다.",
+        "observedPhotoMarkings": "사진 정면에는 밝은 크림색의 짧고 복슬복슬한 털, 처진 양쪽 귀, 밝은 흰색 주둥이와 가슴, 어두운 코와 양쪽 검은 눈이 보인다. 하체 일부는 장식물에 가려져 있다.",
+        "directionCorrect": true,
+        "eyesReadable": true,
+        "identityMatches": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "confidence": 0.95,
+        "issues": [],
+        "note": "정면 방향과 얼굴 구조가 맞고, 주둥이의 밝은 털과 귀 형태도 잘 유지되었다.",
+        "confidenceAdvisory": false
+      },
+      {
+        "direction": "north",
+        "observedSpriteMarkings": "후면 스프라이트는 밝은 크림색 머리와 등, 양옆의 연한 갈색 귀 가장자리, 작은 밝은 꼬리 쪽 실루엣을 보이며 얼굴과 눈은 없다. 등 중앙의 어두운 세로 픽셀은 후면 음영으로 보인다.",
+        "observedPhotoMarkings": "사진에서는 후면의 머리와 등, 꼬리, 뒤쪽 무늬가 보이지 않는다. 확인 가능한 전체 털색은 밝은 크림색이며, 후면 세부 무늬는 알 수 없다.",
+        "directionCorrect": true,
+        "eyesReadable": true,
+        "identityMatches": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "confidence": 0.9,
+        "issues": [],
+        "note": "후면에 얼굴을 넣지 않은 처리가 올바르며, 사진에 없는 뒤쪽 무늬는 판단하지 않았다.",
+        "confidenceAdvisory": false
+      },
+      {
+        "direction": "west",
+        "observedSpriteMarkings": "왼쪽을 향한 측면 스프라이트는 밝은 크림색 머리와 몸통, 회색 음영의 주둥이, 밝은 목과 가슴, 연한 갈색 귀와 등 쪽 패치를 보인다. 한쪽 눈과 검은 코가 보이며, 등 뒤에는 위로 향한 짧은 꼬리가 있다.",
+        "observedPhotoMarkings": "사진에서 보이는 얼굴은 밝은 크림색 털과 밝은 주둥이, 처진 귀, 짧고 복슬복슬한 털이다. 측면 얼굴과 꼬리는 사진에서 확인되지 않는다.",
+        "directionCorrect": true,
+        "eyesReadable": true,
+        "identityMatches": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "confidence": 0.9,
+        "issues": [],
+        "note": "프로필 실루엣, 한쪽 눈, 짧은 털 표현이 자연스럽다.",
+        "confidenceAdvisory": false
+      },
+      {
+        "direction": "east",
+        "observedSpriteMarkings": "오른쪽을 향한 측면 스프라이트는 밝은 크림색 머리와 몸통, 회색 음영의 주둥이, 밝은 목과 가슴, 연한 갈색 귀와 얼굴 옆 패치를 보인다. 한쪽 눈과 검은 코가 보이며, 뒤쪽에는 위로 말린 짧은 꼬리가 있다.",
+        "observedPhotoMarkings": "사진에서 보이는 얼굴은 밝은 크림색의 짧고 복슬복슬한 털, 밝은 주둥이, 처진 귀와 어두운 코이다. 오른쪽 측면과 꼬리는 사진에서 가려져 있거나 보이지 않는다.",
+        "directionCorrect": true,
+        "eyesReadable": true,
+        "identityMatches": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "confidence": 0.9,
+        "issues": [],
+        "note": "반대쪽 프로필도 방향, 귀, 주둥이와 체형이 일관되게 표현되었다.",
+        "confidenceAdvisory": false
+      }
+    ],
+    "aestheticPolicy": "aesthetic-warnings-v1",
+    "qualityWarnings": []
+  },
+  "learnedLessons": [],
+  "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "reviewImageHashes": {
+    "Actual body photo": "a762825d10e4f140f568177b44be6212bff8ec16fb9c71a5e7b53185ad6b8374",
+    "Actual face photo": "740716123323d2cd6bdf3291078d0453e6908da64e19d9a6a4bf1413cbd3f390",
+    "Approved art style only; not this dog": "bf5e5641f0768a45f7a87f10bbb5bf26e987dee581b1b2cf4d08d2c4c0cd539c",
+    "Unapproved view: south": "7c394bb72eb51221c0b6e20a9fd9a0b1c5bff80ab0a9aa4eff730ca2f9e2678d",
+    "Unapproved view: north": "af4dac53e4295afb7606c26cbb21a333d9ce446ba251daa1b0a9fad06cd11ed4",
+    "Unapproved view: west": "a9f055577671f226d844d80175222a40340d93d068bd7db42686583da9035161",
+    "Unapproved view: east": "6fbc8a96a295ee17559fa440697fa521815ba834b10df8bf9c2feb20bd48bbc7"
+  },
+  "coatEvidence": {
+    "version": "material-coat-review-v1",
+    "reviewCalls": 0,
+    "originalPropertyReview": {
+      "photoEvidence": "실제 사진에서는 꼬리가 몸통과 의상에 가려져 보이지 않으며, 꼬리 길이나 형태는 확인할 수 없다.",
+      "photoTail": "OBSCURED",
+      "repairDescription": "",
+      "note": "네 방향 모두 귀, 주둥이, 체형과 밝은 크림색 털이 사진 속 강아지와 일치한다. 꼬리는 사진에서 가려져 있어 측면 스프라이트의 꼬리 형태를 확정할 수 없지만, 두 측면에서 자연스럽고 일관되게 표현되었다.",
+      "tailConsistent": true,
+      "views": [
+        {
+          "direction": "south",
+          "observedSpriteMarkings": "정면 스프라이트는 밝은 크림색 이마와 몸통, 양옆의 연한 갈색 귀, 회색 음영의 양쪽 볼과 주둥이, 밝은 중앙 주둥이와 가슴, 어두운 코와 작은 중립적 입을 보인다. 두 눈은 작고 어두운 픽셀로 분리되어 있다.",
+          "observedPhotoMarkings": "사진 정면에는 밝은 크림색의 짧고 복슬복슬한 털, 처진 양쪽 귀, 밝은 흰색 주둥이와 가슴, 어두운 코와 양쪽 검은 눈이 보인다. 하체 일부는 장식물에 가려져 있다.",
+          "directionCorrect": true,
+          "eyesReadable": true,
+          "identityMatches": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "confidence": 0.95,
+          "issues": [],
+          "note": "정면 방향과 얼굴 구조가 맞고, 주둥이의 밝은 털과 귀 형태도 잘 유지되었다."
+        },
+        {
+          "direction": "north",
+          "observedSpriteMarkings": "후면 스프라이트는 밝은 크림색 머리와 등, 양옆의 연한 갈색 귀 가장자리, 작은 밝은 꼬리 쪽 실루엣을 보이며 얼굴과 눈은 없다. 등 중앙의 어두운 세로 픽셀은 후면 음영으로 보인다.",
+          "observedPhotoMarkings": "사진에서는 후면의 머리와 등, 꼬리, 뒤쪽 무늬가 보이지 않는다. 확인 가능한 전체 털색은 밝은 크림색이며, 후면 세부 무늬는 알 수 없다.",
+          "directionCorrect": true,
+          "eyesReadable": true,
+          "identityMatches": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "confidence": 0.9,
+          "issues": [],
+          "note": "후면에 얼굴을 넣지 않은 처리가 올바르며, 사진에 없는 뒤쪽 무늬는 판단하지 않았다."
+        },
+        {
+          "direction": "west",
+          "observedSpriteMarkings": "왼쪽을 향한 측면 스프라이트는 밝은 크림색 머리와 몸통, 회색 음영의 주둥이, 밝은 목과 가슴, 연한 갈색 귀와 등 쪽 패치를 보인다. 한쪽 눈과 검은 코가 보이며, 등 뒤에는 위로 향한 짧은 꼬리가 있다.",
+          "observedPhotoMarkings": "사진에서 보이는 얼굴은 밝은 크림색 털과 밝은 주둥이, 처진 귀, 짧고 복슬복슬한 털이다. 측면 얼굴과 꼬리는 사진에서 확인되지 않는다.",
+          "directionCorrect": true,
+          "eyesReadable": true,
+          "identityMatches": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "confidence": 0.9,
+          "issues": [],
+          "note": "프로필 실루엣, 한쪽 눈, 짧은 털 표현이 자연스럽다."
+        },
+        {
+          "direction": "east",
+          "observedSpriteMarkings": "오른쪽을 향한 측면 스프라이트는 밝은 크림색 머리와 몸통, 회색 음영의 주둥이, 밝은 목과 가슴, 연한 갈색 귀와 얼굴 옆 패치를 보인다. 한쪽 눈과 검은 코가 보이며, 뒤쪽에는 위로 말린 짧은 꼬리가 있다.",
+          "observedPhotoMarkings": "사진에서 보이는 얼굴은 밝은 크림색의 짧고 복슬복슬한 털, 밝은 주둥이, 처진 귀와 어두운 코이다. 오른쪽 측면과 꼬리는 사진에서 가려져 있거나 보이지 않는다.",
+          "directionCorrect": true,
+          "eyesReadable": true,
+          "identityMatches": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "confidence": 0.9,
+          "issues": [],
+          "note": "반대쪽 프로필도 방향, 귀, 주둥이와 체형이 일관되게 표현되었다."
+        }
+      ]
+    },
+    "propertyReview": {
+      "photoEvidence": "실제 사진에서는 꼬리가 몸통과 의상에 가려져 보이지 않으며, 꼬리 길이나 형태는 확인할 수 없다.",
+      "photoTail": "OBSCURED",
+      "repairDescription": "",
+      "note": "네 방향 모두 귀, 주둥이, 체형과 밝은 크림색 털이 사진 속 강아지와 일치한다. 꼬리는 사진에서 가려져 있어 측면 스프라이트의 꼬리 형태를 확정할 수 없지만, 두 측면에서 자연스럽고 일관되게 표현되었다.",
+      "tailConsistent": true,
+      "views": [
+        {
+          "direction": "south",
+          "observedSpriteMarkings": "정면 스프라이트는 밝은 크림색 이마와 몸통, 양옆의 연한 갈색 귀, 회색 음영의 양쪽 볼과 주둥이, 밝은 중앙 주둥이와 가슴, 어두운 코와 작은 중립적 입을 보인다. 두 눈은 작고 어두운 픽셀로 분리되어 있다.",
+          "observedPhotoMarkings": "사진 정면에는 밝은 크림색의 짧고 복슬복슬한 털, 처진 양쪽 귀, 밝은 흰색 주둥이와 가슴, 어두운 코와 양쪽 검은 눈이 보인다. 하체 일부는 장식물에 가려져 있다.",
+          "directionCorrect": true,
+          "eyesReadable": true,
+          "identityMatches": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "confidence": 0.95,
+          "issues": [],
+          "note": "정면 방향과 얼굴 구조가 맞고, 주둥이의 밝은 털과 귀 형태도 잘 유지되었다."
+        },
+        {
+          "direction": "north",
+          "observedSpriteMarkings": "후면 스프라이트는 밝은 크림색 머리와 등, 양옆의 연한 갈색 귀 가장자리, 작은 밝은 꼬리 쪽 실루엣을 보이며 얼굴과 눈은 없다. 등 중앙의 어두운 세로 픽셀은 후면 음영으로 보인다.",
+          "observedPhotoMarkings": "사진에서는 후면의 머리와 등, 꼬리, 뒤쪽 무늬가 보이지 않는다. 확인 가능한 전체 털색은 밝은 크림색이며, 후면 세부 무늬는 알 수 없다.",
+          "directionCorrect": true,
+          "eyesReadable": true,
+          "identityMatches": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "confidence": 0.9,
+          "issues": [],
+          "note": "후면에 얼굴을 넣지 않은 처리가 올바르며, 사진에 없는 뒤쪽 무늬는 판단하지 않았다."
+        },
+        {
+          "direction": "west",
+          "observedSpriteMarkings": "왼쪽을 향한 측면 스프라이트는 밝은 크림색 머리와 몸통, 회색 음영의 주둥이, 밝은 목과 가슴, 연한 갈색 귀와 등 쪽 패치를 보인다. 한쪽 눈과 검은 코가 보이며, 등 뒤에는 위로 향한 짧은 꼬리가 있다.",
+          "observedPhotoMarkings": "사진에서 보이는 얼굴은 밝은 크림색 털과 밝은 주둥이, 처진 귀, 짧고 복슬복슬한 털이다. 측면 얼굴과 꼬리는 사진에서 확인되지 않는다.",
+          "directionCorrect": true,
+          "eyesReadable": true,
+          "identityMatches": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "confidence": 0.9,
+          "issues": [],
+          "note": "프로필 실루엣, 한쪽 눈, 짧은 털 표현이 자연스럽다."
+        },
+        {
+          "direction": "east",
+          "observedSpriteMarkings": "오른쪽을 향한 측면 스프라이트는 밝은 크림색 머리와 몸통, 회색 음영의 주둥이, 밝은 목과 가슴, 연한 갈색 귀와 얼굴 옆 패치를 보인다. 한쪽 눈과 검은 코가 보이며, 뒤쪽에는 위로 말린 짧은 꼬리가 있다.",
+          "observedPhotoMarkings": "사진에서 보이는 얼굴은 밝은 크림색의 짧고 복슬복슬한 털, 밝은 주둥이, 처진 귀와 어두운 코이다. 오른쪽 측면과 꼬리는 사진에서 가려져 있거나 보이지 않는다.",
+          "directionCorrect": true,
+          "eyesReadable": true,
+          "identityMatches": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "confidence": 0.9,
+          "issues": [],
+          "note": "반대쪽 프로필도 방향, 귀, 주둥이와 체형이 일관되게 표현되었다."
+        }
+      ]
+    }
+  },
+  "aestheticPolicy": "aesthetic-warnings-v1",
+  "qualityWarnings": [],
+  "generalPropertyReview": {
+    "photoEvidence": "실제 사진에서는 꼬리가 몸통과 의상에 가려져 보이지 않으며, 꼬리 길이나 형태는 확인할 수 없다.",
+    "photoTail": "OBSCURED",
+    "repairDescription": "",
+    "note": "네 방향 모두 귀, 주둥이, 체형과 밝은 크림색 털이 사진 속 강아지와 일치한다. 꼬리는 사진에서 가려져 있어 측면 스프라이트의 꼬리 형태를 확정할 수 없지만, 두 측면에서 자연스럽고 일관되게 표현되었다.",
+    "tailConsistent": true,
+    "views": [
+      {
+        "direction": "south",
+        "observedSpriteMarkings": "정면 스프라이트는 밝은 크림색 이마와 몸통, 양옆의 연한 갈색 귀, 회색 음영의 양쪽 볼과 주둥이, 밝은 중앙 주둥이와 가슴, 어두운 코와 작은 중립적 입을 보인다. 두 눈은 작고 어두운 픽셀로 분리되어 있다.",
+        "observedPhotoMarkings": "사진 정면에는 밝은 크림색의 짧고 복슬복슬한 털, 처진 양쪽 귀, 밝은 흰색 주둥이와 가슴, 어두운 코와 양쪽 검은 눈이 보인다. 하체 일부는 장식물에 가려져 있다.",
+        "directionCorrect": true,
+        "eyesReadable": true,
+        "identityMatches": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "confidence": 0.95,
+        "issues": [],
+        "note": "정면 방향과 얼굴 구조가 맞고, 주둥이의 밝은 털과 귀 형태도 잘 유지되었다.",
+        "confidenceAdvisory": false
+      },
+      {
+        "direction": "north",
+        "observedSpriteMarkings": "후면 스프라이트는 밝은 크림색 머리와 등, 양옆의 연한 갈색 귀 가장자리, 작은 밝은 꼬리 쪽 실루엣을 보이며 얼굴과 눈은 없다. 등 중앙의 어두운 세로 픽셀은 후면 음영으로 보인다.",
+        "observedPhotoMarkings": "사진에서는 후면의 머리와 등, 꼬리, 뒤쪽 무늬가 보이지 않는다. 확인 가능한 전체 털색은 밝은 크림색이며, 후면 세부 무늬는 알 수 없다.",
+        "directionCorrect": true,
+        "eyesReadable": true,
+        "identityMatches": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "confidence": 0.9,
+        "issues": [],
+        "note": "후면에 얼굴을 넣지 않은 처리가 올바르며, 사진에 없는 뒤쪽 무늬는 판단하지 않았다.",
+        "confidenceAdvisory": false
+      },
+      {
+        "direction": "west",
+        "observedSpriteMarkings": "왼쪽을 향한 측면 스프라이트는 밝은 크림색 머리와 몸통, 회색 음영의 주둥이, 밝은 목과 가슴, 연한 갈색 귀와 등 쪽 패치를 보인다. 한쪽 눈과 검은 코가 보이며, 등 뒤에는 위로 향한 짧은 꼬리가 있다.",
+        "observedPhotoMarkings": "사진에서 보이는 얼굴은 밝은 크림색 털과 밝은 주둥이, 처진 귀, 짧고 복슬복슬한 털이다. 측면 얼굴과 꼬리는 사진에서 확인되지 않는다.",
+        "directionCorrect": true,
+        "eyesReadable": true,
+        "identityMatches": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "confidence": 0.9,
+        "issues": [],
+        "note": "프로필 실루엣, 한쪽 눈, 짧은 털 표현이 자연스럽다.",
+        "confidenceAdvisory": false
+      },
+      {
+        "direction": "east",
+        "observedSpriteMarkings": "오른쪽을 향한 측면 스프라이트는 밝은 크림색 머리와 몸통, 회색 음영의 주둥이, 밝은 목과 가슴, 연한 갈색 귀와 얼굴 옆 패치를 보인다. 한쪽 눈과 검은 코가 보이며, 뒤쪽에는 위로 말린 짧은 꼬리가 있다.",
+        "observedPhotoMarkings": "사진에서 보이는 얼굴은 밝은 크림색의 짧고 복슬복슬한 털, 밝은 주둥이, 처진 귀와 어두운 코이다. 오른쪽 측면과 꼬리는 사진에서 가려져 있거나 보이지 않는다.",
+        "directionCorrect": true,
+        "eyesReadable": true,
+        "identityMatches": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "confidence": 0.9,
+        "issues": [],
+        "note": "반대쪽 프로필도 방향, 귀, 주둥이와 체형이 일관되게 표현되었다.",
+        "confidenceAdvisory": false
+      }
+    ],
+    "aestheticPolicy": "aesthetic-warnings-v1",
+    "qualityWarnings": []
+  },
+  "tailEvidence": {
+    "passed": true,
+    "decision": "PASS",
+    "shortTailSupported": false,
+    "failedDirections": [],
+    "uncertainDirections": [],
+    "verdicts": {
+      "west": {
+        "decision": "PASS",
+        "issue": ""
+      },
+      "east": {
+        "decision": "PASS",
+        "issue": ""
+      }
+    },
+    "observation": {
+      "views": [
+        {
+          "direction": "west",
+          "visibleEvidence": "The tail is attached at the rear rump on the right side. It forms a distinct projecting, raised contour with a visible squared terminal end.",
+          "tail": "COMPLETE_CONNECTED",
+          "attachment": "CONNECTED",
+          "contour": "DISTINCT",
+          "tip": "VISIBLE"
+        },
+        {
+          "direction": "east",
+          "visibleEvidence": "The tail is attached at the rear rump on the left side. It projects outward as a distinct compact appendage with a visible terminal end.",
+          "tail": "COMPLETE_CONNECTED",
+          "attachment": "CONNECTED",
+          "contour": "DISTINCT",
+          "tip": "VISIBLE"
+        }
+      ],
+      "photoTail": "OBSCURED",
+      "photoEvidence": "실제 사진에서는 꼬리가 몸통과 의상에 가려져 보이지 않으며, 꼬리 길이나 형태는 확인할 수 없다."
+    },
+    "geometry": {
+      "west": {
+        "edgeContact": false,
+        "opaqueComponents": 1,
+        "clearPixelsLeftTopRightBottom": [
+          3,
+          3,
+          3,
+          2
+        ],
+        "branchVersion": "rear-silhouette-branches-v3",
+        "rearBranchSupport": true,
+        "rearBranchCandidates": [
+          [
+            {
+              "x": 26,
+              "y": 13
+            },
+            {
+              "x": 26,
+              "y": 14
+            },
+            {
+              "x": 25,
+              "y": 15
+            },
+            {
+              "x": 24,
+              "y": 16
+            },
+            {
+              "x": 23,
+              "y": 17
+            },
+            {
+              "x": 22,
+              "y": 18
+            }
+          ]
+        ]
+      },
+      "east": {
+        "edgeContact": false,
+        "opaqueComponents": 1,
+        "clearPixelsLeftTopRightBottom": [
+          3,
+          3,
+          3,
+          2
+        ],
+        "branchVersion": "rear-silhouette-branches-v3",
+        "rearBranchSupport": true,
+        "rearBranchCandidates": [
+          [
+            {
+              "x": 5,
+              "y": 13
+            },
+            {
+              "x": 5,
+              "y": 14
+            },
+            {
+              "x": 6,
+              "y": 15
+            },
+            {
+              "x": 7,
+              "y": 16
+            },
+            {
+              "x": 8,
+              "y": 17
+            },
+            {
+              "x": 9,
+              "y": 18
+            }
+          ]
+        ]
+      }
+    },
+    "conflictingDirections": [],
+    "observationHistory": [
+      {
+        "passed": true,
+        "decision": "PASS",
+        "shortTailSupported": false,
+        "failedDirections": [],
+        "uncertainDirections": [],
+        "verdicts": {
+          "west": {
+            "decision": "PASS",
+            "issue": ""
+          },
+          "east": {
+            "decision": "PASS",
+            "issue": ""
+          }
+        },
+        "observation": {
+          "views": [
+            {
+              "direction": "west",
+              "visibleEvidence": "The tail is attached at the rear rump on the right side. It forms a distinct projecting, raised contour with a visible squared terminal end.",
+              "tail": "COMPLETE_CONNECTED",
+              "attachment": "CONNECTED",
+              "contour": "DISTINCT",
+              "tip": "VISIBLE"
+            },
+            {
+              "direction": "east",
+              "visibleEvidence": "The tail is attached at the rear rump on the left side. It projects outward as a distinct compact appendage with a visible terminal end.",
+              "tail": "COMPLETE_CONNECTED",
+              "attachment": "CONNECTED",
+              "contour": "DISTINCT",
+              "tip": "VISIBLE"
+            }
+          ],
+          "photoTail": "OBSCURED",
+          "photoEvidence": "실제 사진에서는 꼬리가 몸통과 의상에 가려져 보이지 않으며, 꼬리 길이나 형태는 확인할 수 없다."
+        },
+        "geometry": {
+          "west": {
+            "edgeContact": false,
+            "opaqueComponents": 1,
+            "clearPixelsLeftTopRightBottom": [
+              3,
+              3,
+              3,
+              2
+            ],
+            "branchVersion": "rear-silhouette-branches-v3",
+            "rearBranchSupport": true,
+            "rearBranchCandidates": [
+              [
+                {
+                  "x": 26,
+                  "y": 13
+                },
+                {
+                  "x": 26,
+                  "y": 14
+                },
+                {
+                  "x": 25,
+                  "y": 15
+                },
+                {
+                  "x": 24,
+                  "y": 16
+                },
+                {
+                  "x": 23,
+                  "y": 17
+                },
+                {
+                  "x": 22,
+                  "y": 18
+                }
+              ]
+            ]
+          },
+          "east": {
+            "edgeContact": false,
+            "opaqueComponents": 1,
+            "clearPixelsLeftTopRightBottom": [
+              3,
+              3,
+              3,
+              2
+            ],
+            "branchVersion": "rear-silhouette-branches-v3",
+            "rearBranchSupport": true,
+            "rearBranchCandidates": [
+              [
+                {
+                  "x": 5,
+                  "y": 13
+                },
+                {
+                  "x": 5,
+                  "y": 14
+                },
+                {
+                  "x": 6,
+                  "y": 15
+                },
+                {
+                  "x": 7,
+                  "y": 16
+                },
+                {
+                  "x": 8,
+                  "y": 17
+                },
+                {
+                  "x": 9,
+                  "y": 18
+                }
+              ]
+            ]
+          }
+        },
+        "conflictingDirections": []
+      }
+    ],
+    "reviewCalls": 1,
+    "version": "tail-anatomy-tristate-v2",
+    "model": "gpt-5.6-luna",
+    "reviewedAt": "2026-10-11T05:37:55.517569Z",
+    "photoSha256": "a762825d10e4f140f568177b44be6212bff8ec16fb9c71a5e7b53185ad6b8374",
+    "inputSha256": "4be54223e8101d4989fcbe88e892b704e35ee657acc5279ab52ff791c7afa36b",
+    "rulesSha256": "657da19999b7bb49cd099cf759b5d2de6597e3f3d0086185cde9ccd05068a4b0"
+  },
+  "qualityDecision": "PASS",
+  "minimumClearPixels": 1,
+  "marginDirections": [],
+  "clearPixelsLeftTopRightBottom": {
+    "south": [
+      5,
+      4,
+      5,
+      2
+    ],
+    "north": [
+      6,
+      3,
+      6,
+      1
+    ],
+    "west": [
+      3,
+      3,
+      3,
+      2
+    ],
+    "east": [
+      3,
+      3,
+      3,
+      2
+    ]
+  }
+}
