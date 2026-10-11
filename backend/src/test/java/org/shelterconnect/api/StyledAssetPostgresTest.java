@@ -1528,6 +1528,8 @@ class StyledAssetPostgresTest {
         for(String d:List.of("south","north","west","east"))views.add(json.valueToTree(Map.of("direction",d,"readability",d.equals("north")?"NOT_VISIBLE":"PASS","style","PASS")));
         var tail=json.createObjectNode().put("version","tail-anatomy-tristate-v2").put("passed",true).put("decision","PASS").put("shortTailSupported",false)
             .put("model","fixture-vision").put("reviewedAt",java.time.Instant.now().toString());tail.putArray("failedDirections");tail.putArray("uncertainDirections");
+        // Match the complete production observation receipt. Approval replays these per-view verdicts.
+        tail.set("verdicts",json.valueToTree(Map.of("west",Map.of("decision","PASS","issue",""),"east",Map.of("decision","PASS","issue",""))));
         for(String field:List.of("inputSha256","photoSha256","rulesSha256"))tail.set(field,r.path(field));
         tail.set("geometry",json.valueToTree(Map.of("west",Map.of("edgeContact",false,"opaqueComponents",1,"branchVersion","rear-silhouette-branches-v3","rearBranchSupport",true),"east",Map.of("edgeContact",false,"opaqueComponents",1,"branchVersion","rear-silhouette-branches-v3","rearBranchSupport",true))));
         tail.set("observation",json.valueToTree(Map.of("photoTail","OBSCURED","photoEvidence","Synthetic hidden photo tail",

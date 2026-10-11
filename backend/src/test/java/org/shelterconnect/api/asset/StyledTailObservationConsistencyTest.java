@@ -100,7 +100,7 @@ class StyledTailObservationConsistencyTest {
         var valid=review(false);
         var contradictoryGeneral=valid.deepCopy();view(contradictoryGeneral.path("generalPropertyReview"),"east").putArray("issues").add("TAIL_MISSING");
         assertThat(StyledTailAnatomy.boundPass(contradictoryGeneral)).isFalse();
-        for(String path:List.of("audit","source","mask","geometryBinding","reportBinding")) {
+        for(String path:List.of("audit","source","mask","geometryBinding","reportBinding","missingVerdicts")) {
             var r=valid.deepCopy();var e=(ObjectNode)r.path("tailEvidence");var proof=(ObjectNode)e.at("/geometry/shapeConsistency");
             switch(path) {
                 case "audit" -> e.remove("shapeConsistency");
@@ -108,6 +108,7 @@ class StyledTailObservationConsistencyTest {
                 case "mask" -> ((ObjectNode)proof.path("canonicalAlphaSha256")).put("west","0".repeat(64));
                 case "geometryBinding" -> proof.put("inputSha256","0".repeat(64));
                 case "reportBinding" -> {r.put("inputSha256","0".repeat(64));e.put("inputSha256","0".repeat(64));}
+                case "missingVerdicts" -> e.remove("verdicts");
             }
             assertThat(StyledTailAnatomy.boundPass(r)).as(path).isFalse();
         }
