@@ -44,6 +44,12 @@ public class StyledLessonPromptStore {
         jdbc.sql("UPDATE shelter.styled_lesson_prompts SET state='FAILED',failure_code=:c,updated_at=now() WHERE job_id=:j AND label=:l AND input_sha256=:h AND state<>'READY' AND lease_token=:t")
             .param("c",code).param("j",w.id()).param("l",w.label()).param("h",key).param("t",w.token()).update();
     }
+    @Transactional public void diagnostics(StyledAssetStore.Work w,JsonNode selected,String key,JsonNode diagnostics) {
+        require(w,selected);
+        if(jdbc.sql("UPDATE shelter.styled_lesson_prompts SET history=history || jsonb_build_array(CAST(:d AS jsonb)),updated_at=now() WHERE job_id=:j AND label=:l AND input_sha256=:h AND state<>'READY' AND lease_token=:t")
+            .param("d",json.writeValueAsString(diagnostics)).param("j",w.id()).param("l",w.label()).param("h",key).param("t",w.token()).update()!=1)
+            throw StyledLessonPromptAgent.invalid("LESSON_PROMPT_INTERRUPTED");
+    }
     private void require(StyledAssetStore.Work w,JsonNode selected){if(!lessons.authorized(w,selected))throw StyledLessonPromptAgent.invalid("LESSON_SOURCE_CHANGED");}
     private JsonNode node(String text){return text==null?null:json.readTree(text);}
 }

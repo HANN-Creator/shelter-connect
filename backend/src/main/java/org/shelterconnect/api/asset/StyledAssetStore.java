@@ -416,6 +416,58 @@ public class StyledAssetStore {
               status='QUEUED',failure_code=NULL,next_run_at=now(),lease_token=NULL,lease_until=NULL WHERE id=:id
             """).param("g",json.writeValueAsString(grants)).param("id",id).update();return job(id);
     }
+    /** Resume a known, pre-purchase legacy prompt failure once after a composer upgrade. */
+    @Transactional public Job resumePrompt(UUID subject,UUID dog,UUID id,JsonNode body) {
+        var actor=access.requireDogForWrite(subject,dog);properties.requireEnabled();
+        AssetInput.fields(body,"requestId","note","label","expectedSeedHashes","expectedRulesSha256","expectedPromptInputSha256");
+        UUID requestId=AssetInput.id(body,"requestId");String note=AssetInput.text(body,"note",2000),label=AssetInput.text(body,"label",80);
+        String rules=AssetInput.text(body,"expectedRulesSha256",64),input=AssetInput.text(body,"expectedPromptInputSha256",64);var seeds=body.path("expectedSeedHashes");
+        if(note.length()<20 || !rules.matches("[a-f0-9]{64}") || !input.matches("[a-f0-9]{64}") || !seeds.isObject() || seeds.size()!=4
+            || StyledSpriteCodec.DIRECTIONS.stream().anyMatch(d->!seeds.path(d).asText().matches("[a-f0-9]{64}")))throw AssetException.invalid();
+        lock(id);var j=job(id);if(!j.dogId().equals(dog))throw missing();legacy.valid(id,true);var policy=j.qualityPolicy();
+        if(policy==null)throw new AssetException(409,"PROMPT_RESUME_NOT_ALLOWED");
+        var grants=json.createArrayNode();if(policy.path("promptResumes").isArray())grants.addAll((tools.jackson.databind.node.ArrayNode)policy.path("promptResumes"));
+        var canonical=(tools.jackson.databind.node.ObjectNode)body.deepCopy();canonical.put("requestId",requestId.toString());
+        for(var grant:grants)if(grant.path("request").path("requestId").asText().equalsIgnoreCase(requestId.toString())) {
+            var recorded=(tools.jackson.databind.node.ObjectNode)grant.path("request").deepCopy();recorded.put("requestId",requestId.toString());
+            if(recorded.equals(canonical))return j;throw new AssetException(409,"PROMPT_RESUME_ALREADY_REQUESTED");
+        }
+        if(grants.valueStream().anyMatch(g->g.path("request").path("label").asText().equals(label)
+            && g.path("composerVersion").asText().equals(StyledLessonPromptAgent.VERSION)))throw new AssetException(409,"PROMPT_RESUME_ALREADY_REQUESTED");
+        if(!j.status().equals("FAILED") || !Set.of("LESSON_PROMPT_INVALID","LESSON_PROMPT_MEANING_LOST").contains(Objects.toString(j.failureCode(),""))
+            || j.qualityApproval()!=null || !automaticSeedPassed(j) || !historicallyApprovedSeed(j) || policy.path("referenceOnly").asBoolean()
+            || j.steps().stream().anyMatch(s->!Set.of("SUCCEEDED","FAILED","PENDING").contains(s.status())))
+            throw new AssetException(409,"PROMPT_RESUME_NOT_ALLOWED");
+        if(!rules.equals(StyledSpriteCodec.qualityRulesSha()) || !rules.equals(policy.path("rulesSha256").asText())
+            || !seeds.equals(j.steps().getFirst().result().path("hashes")))throw new AssetException(409,"QUALITY_RECHECK_STALE");
+        var failed=j.steps().stream().filter(s->s.status().equals("FAILED")).toList();
+        if(failed.size()!=1 || !failed.getFirst().label().equals(label) || failed.getFirst().action().equals("BASE"))throw new AssetException(409,"PROMPT_RESUME_NOT_ALLOWED");
+        // No provider receipt/reservation may exist for the failed current attempt. Earlier paid attempts remain archived.
+        int clean=jdbc.sql("""
+            SELECT count(*) FROM shelter.styled_asset_steps WHERE job_id=:j AND label=:l
+              AND provider_job_id IS NULL AND provider_result IS NULL AND submitted_at IS NULL AND result IS NULL
+              AND (request_sha256 IS NULL OR (request_sha256=attempt_history->-1->>'requestSha256'
+                AND attempt_history->-1->'result'->>'sha256' IS NOT NULL AND attempt_history->-1->>'providerJobId' IS NOT NULL))
+            """)
+            .param("j",id).param("l",label).query(Integer.class).single();
+        int known=jdbc.sql("""
+            SELECT count(*) FROM shelter.styled_lesson_prompts p JOIN shelter.styled_asset_steps s ON s.job_id=p.job_id AND s.label=p.label
+            WHERE p.job_id=:j AND p.label=:l AND p.input_sha256=:h AND p.state='FAILED' AND p.failure_code=:code
+              AND p.input->>'version'='all-lessons-compact-v1' AND p.input->'lessons'=s.learned_lessons
+              AND p.input_sha256=(SELECT input_sha256 FROM shelter.styled_lesson_prompts WHERE job_id=:j AND label=:l ORDER BY created_at DESC LIMIT 1)
+            """)
+            .param("j",id).param("l",label).param("h",input).param("code",j.failureCode()).query(Integer.class).single();
+        if(clean!=1 || known!=1)throw new AssetException(409,"PROMPT_RESUME_NOT_ALLOWED");
+        var grant=grants.addObject().put("requestedBy",actor.userId().toString()).put("requestedAt",Instant.now().toString())
+            .put("composerVersion",StyledLessonPromptAgent.VERSION).put("startingRepairCount",failed.getFirst().repairCount());grant.set("request",canonical);
+        // Keep the last image attempt intact: repair paths read it as their source.
+        jdbc.sql("UPDATE shelter.styled_asset_steps SET status='PENDING' WHERE job_id=:j AND label=:l AND status='FAILED'")
+            .param("j",id).param("l",label).update();
+        jdbc.sql("UPDATE shelter.styled_learning_recoveries SET state='QUEUED',reason='PROMPT_VERSION_RESUME',updated_at=now() WHERE job_id=:j AND label=:l AND state='FAILED' AND reason=:code")
+            .param("j",id).param("l",label).param("code",j.failureCode()).update();
+        jdbc.sql("UPDATE shelter.asset_jobs SET quality_policy=quality_policy || jsonb_build_object('promptResumes',CAST(:g AS jsonb)),status='QUEUED',failure_code=NULL,next_run_at=now(),lease_token=NULL,lease_until=NULL WHERE id=:j")
+            .param("g",json.writeValueAsString(grants)).param("j",id).update();return job(id);
+    }
     private Step failedTimeoutStep(Job j) {
         if(!j.status().equals("FAILED") || !"QUALITY_AI_TIMEOUT".equals(j.failureCode()) || j.qualityApproval()!=null
             || j.qualityPolicy()==null || j.qualityPolicy().path("referenceOnly").asBoolean()

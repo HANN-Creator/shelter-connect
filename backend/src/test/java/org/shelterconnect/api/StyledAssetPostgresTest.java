@@ -71,7 +71,7 @@ class StyledAssetPostgresTest {
         when(promptAgent.rewrite(any(),anyString(),anyInt(),any(),any())).thenAnswer(c->{outsideTransaction();
             return json.valueToTree(Map.of("prompt",String.join(" ",c.<JsonNode>getArgument(0).valueStream().map(n->n.path("prevention").asText()).distinct().toList())));});
         when(promptAgent.verify(any(),anyString(),any(),anyInt())).thenAnswer(c->{outsideTransaction();
-            return json.valueToTree(Map.of("preserved",Collections.nCopies(c.<JsonNode>getArgument(0).size(),true),"compatibleWithBase",true,"noNewRequirements",true));});
+            return json.valueToTree(Map.of("preserved",Collections.nCopies(c.<JsonNode>getArgument(0).size(),true),"compatibleWithBase",true,"noNewRequirements",true,"basePreserved",true));});
         permission=UUID.fromString(post(opSubject,"/v1/operations/asset-permissions",Map.of("shelterId",shelter,"sourceKey","test-"+dog,"sourceKind","SHELTER","permissionNote","disposable fixture","crawlAllowed",false,"derivativesAllowed",true,"pixellabAllowed",true,"autoGenerate",false),201).at("/data/id").asText());
         post(opSubject,"/v1/operations/asset-imports",Map.of("photoId",photo,"permissionId",permission),200);
     }
@@ -791,8 +791,8 @@ class StyledAssetPostgresTest {
     }
     @Test void meaningLossIsAutomaticallyRewrittenWithEveryRuleBeforeImagePurchase()throws Exception {
         UUID source=seedLearningPair();review(source,true,"APPROVE",200);finish(source);lessonWorker.tick();lessonWorker.tick();cloneActiveRules(onlyLesson(),3);
-        var rejected=json.valueToTree(Map.of("preserved",List.of(true,true,false,true),"compatibleWithBase",true,"noNewRequirements",true));
-        var accepted=json.valueToTree(Map.of("preserved",Collections.nCopies(4,true),"compatibleWithBase",true,"noNewRequirements",true));
+        var rejected=json.valueToTree(Map.of("preserved",List.of(true,true,false,true),"compatibleWithBase",true,"noNewRequirements",true,"basePreserved",true));
+        var accepted=json.valueToTree(Map.of("preserved",Collections.nCopies(4,true),"compatibleWithBase",true,"noNewRequirements",true,"basePreserved",true));
         doReturn(rejected,accepted).when(promptAgent).verify(any(),anyString(),any(),anyInt());
         nextLearningDog();UUID next=request();clearInvocations(provider);tick();
         var pinned=json.readTree(jdbc.queryForObject("SELECT learned_lessons::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='character'",String.class,next));
@@ -803,7 +803,7 @@ class StyledAssetPostgresTest {
     }
     @Test void failedMeaningVerificationPreservesAllRulesAndStopsBeforeImagePurchase()throws Exception {
         UUID source=seedLearningPair();review(source,true,"APPROVE",200);finish(source);lessonWorker.tick();lessonWorker.tick();cloneActiveRules(onlyLesson(),3);
-        doReturn(json.valueToTree(Map.of("preserved",List.of(true,true,false,true),"compatibleWithBase",true,"noNewRequirements",true))).when(promptAgent).verify(any(),anyString(),any(),anyInt());
+        doReturn(json.valueToTree(Map.of("preserved",List.of(true,true,false,true),"compatibleWithBase",true,"noNewRequirements",true,"basePreserved",true))).when(promptAgent).verify(any(),anyString(),any(),anyInt());
         nextLearningDog();UUID next=request();clearInvocations(provider);tick();
         assertThat(read(next).path("failureCode").asText()).isEqualTo("LESSON_PROMPT_MEANING_LOST");verifyNoInteractions(provider);
         assertThat(jdbc.queryForObject("SELECT state FROM shelter.styled_lesson_prompts WHERE job_id=?",String.class,next)).isEqualTo("FAILED");
@@ -847,6 +847,23 @@ class StyledAssetPostgresTest {
             SELECT source_example_id,source_job_id,?,action,direction,tail,issue,rules_sha256,status,candidate,candidate_sha256,validation_examples,validation
             FROM shelter.styled_quality_lessons WHERE id=?
             ""","fixture-copy-"+i,original);
+    }
+    @Test void fullPromptVersionKeepsFailedAdditiveCacheAndValidatesBaseBeforePurchase()throws Exception {
+        UUID source=seedLearningPair();review(source,true,"APPROVE",200);finish(source);lessonWorker.tick();lessonWorker.tick();cloneActiveRules(onlyLesson(),3);
+        nextLearningDog();UUID next=request();var work=store.claim();var pinned=lessonStore.pin(work);
+        var old=json.valueToTree(Map.of("version","all-lessons-compact-v1","basePrompt","Keep native pixel art.","budget",83,"lessons",pinned));
+        jdbc.update("INSERT INTO shelter.styled_lesson_prompts(job_id,label,input_sha256,input,lessons_sha256,state,lease_token,failure_code) VALUES (?,'character',?,?::jsonb,?,'FAILED',?,'LESSON_PROMPT_INVALID')",next,"a".repeat(64),json.writeValueAsString(old),"b".repeat(64),UUID.randomUUID());
+        var rejected=json.valueToTree(Map.of("preserved",Collections.nCopies(4,true),"basePreserved",false,"compatibleWithBase",true,"noNewRequirements",true));
+        var accepted=json.valueToTree(Map.of("preserved",Collections.nCopies(4,true),"basePreserved",true,"compatibleWithBase",true,"noNewRequirements",true));
+        doReturn(rejected,accepted).when(promptAgent).verify(any(),anyString(),any(),anyInt());clearInvocations(provider);
+        String description=promptComposer.describe(work,pinned,"Keep native pixel art.",2000);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_lesson_prompts WHERE job_id=?",Integer.class,next)).isEqualTo(2);
+        assertThat(jdbc.queryForObject("SELECT state FROM shelter.styled_lesson_prompts WHERE job_id=? AND input_sha256=?",String.class,next,"a".repeat(64))).isEqualTo("FAILED");
+        var current=json.readTree(jdbc.queryForObject("SELECT input::text FROM shelter.styled_lesson_prompts WHERE job_id=? AND state='READY'",String.class,next));
+        assertThat(current.path("version").asText()).isEqualTo(StyledLessonPromptAgent.VERSION);assertThat(current.path("budget").asInt()).isEqualTo(2000);
+        assertThat(current.path("lessons")).isEqualTo(pinned);
+        verify(promptAgent).rewrite(eq(pinned),eq("Keep native pixel art."),eq(2000),any(),eq(rejected));
+        assertThat(store.reserve(work,json.valueToTree(Map.of("description",description)))).isTrue();verifyNoInteractions(provider);
     }
     @Test void seedLessonsWaitForHumanPositiveThenReachNextDogGenerationAndReview()throws Exception {
         UUID first=seedLearningPair();UUID lesson=onlyLesson();
@@ -1065,7 +1082,7 @@ class StyledAssetPostgresTest {
         learningPair();UUID lesson=onlyLesson();lessonWorker.tick();lessonWorker.tick();
         nextLearningDog();UUID next=request();tick();tick();review(next,true,"APPROVE",200);
         doAnswer(c->{lessonStore.disable(opSubject,lesson,json.valueToTree(Map.of("note","Disabled during pending prompt verification")));
-            return json.valueToTree(Map.of("preserved",List.of(true),"compatibleWithBase",true,"noNewRequirements",true));
+            return json.valueToTree(Map.of("preserved",List.of(true),"compatibleWithBase",true,"noNewRequirements",true,"basePreserved",true));
         }).when(promptAgent).verify(any(),anyString(),any(),anyInt());
         clearInvocations(provider);finish(next);
         var calls=org.mockito.ArgumentCaptor.forClass(JsonNode.class);verify(provider,atLeastOnce()).submit(eq(false),calls.capture());
@@ -2678,6 +2695,63 @@ class StyledAssetPostgresTest {
     JsonNode post(UUID subject,String path,Object body,int status) throws Exception {var req=org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(path).contentType("application/json").content(json.writeValueAsBytes(body));if(subject!=null)req.header("Authorization",bearer(subject));var result=mvc.perform(req).andExpect(status().is(status)).andReturn();return json.readTree(result.getResponse().getContentAsString());}
     JsonNode get(UUID subject,String path,int status) throws Exception {var req=org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(path);if(subject!=null)req.header("Authorization",bearer(subject));var result=mvc.perform(req).andExpect(status().is(status)).andReturn();return json.readTree(result.getResponse().getContentAsString());}
     void outsideTransaction() {assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isFalse();}
+    Map<String,Object> promptResumeFixture(UUID id)throws Exception {
+        // Disposable DB fixture models the completed old request hash still retained after repair was queued.
+        jdbc.update("UPDATE shelter.styled_asset_steps SET attempt_history=attempt_history || jsonb_build_array(jsonb_build_object('providerJobId',provider_job_id,'requestSha256',request_sha256,'result',result,'quality',quality_report,'repairCount',repair_count)),status='FAILED',repair_count=1,provider_job_id=NULL,provider_result=NULL,submitted_at=NULL,result=NULL WHERE job_id=? AND label='idle-south'",id);
+        jdbc.update("UPDATE shelter.asset_jobs SET status='FAILED',failure_code='LESSON_PROMPT_INVALID',quality_approval=NULL WHERE id=?",id);
+        var input=json.valueToTree(Map.of("version","all-lessons-compact-v1","basePrompt","Old immutable long instruction.","budget",83,"lessons",List.of()));
+        jdbc.update("INSERT INTO shelter.styled_lesson_prompts(job_id,label,input_sha256,input,lessons_sha256,state,lease_token,failure_code) VALUES (?,'idle-south',?,?::jsonb,?,'FAILED',?,'LESSON_PROMPT_INVALID')",id,"a".repeat(64),json.writeValueAsString(input),"b".repeat(64),UUID.randomUUID());
+        return new HashMap<>(Map.of("requestId",UUID.randomUUID().toString(),"note","Resume the known old compaction failure with unchanged original images and repair budget",
+            "expectedSeedHashes",read(id).at("/steps/0/result/hashes"),"expectedRulesSha256",currentRules(),"label","idle-south","expectedPromptInputSha256","a".repeat(64)));
+    }
+    @Test void promptResumePreservesImageAttemptHistoryApprovalRulesAndBudget()throws Exception {
+        UUID id=b75HeldPack();var body=promptResumeFixture(id);var before=read(id);var images=new HashMap<>(objects);
+        String history=jdbc.queryForObject("SELECT attempt_history::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-south'",String.class,id);
+        String failed=jdbc.queryForObject("SELECT row_to_json(p)::text FROM shelter.styled_lesson_prompts p WHERE job_id=?",String.class,id);
+        int submissions=jdbc.queryForObject("SELECT count(*) FROM shelter.asset_submissions WHERE job_id=?",Integer.class,id);
+        clearInvocations(provider,promptAgent);post(subject,path(id)+"/prompt-resume",body,200);
+        body.put("requestId",body.get("requestId").toString().toUpperCase(Locale.ROOT));post(subject,path(id)+"/prompt-resume",body,200);
+        assertThat(read(id).path("status").asText()).isEqualTo("QUEUED");assertThat(step(id,"idle-south").path("status").asText()).isEqualTo("PENDING");
+        assertThat(step(id,"idle-south").path("repairCount").asInt()).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT attempt_history::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-south'",String.class,id)).isEqualTo(history);
+        assertThat(jdbc.queryForObject("SELECT row_to_json(p)::text FROM shelter.styled_lesson_prompts p WHERE job_id=?",String.class,id)).isEqualTo(failed);
+        assertThat(read(id).path("seedReview")).isEqualTo(before.path("seedReview"));
+        assertThat(read(id).at("/qualityPolicy/promptResumes/0/startingRepairCount").asInt()).isEqualTo(1);
+        for(var s:before.path("steps"))if(!s.path("label").asText().equals("idle-south"))assertThat(step(id,s.path("label").asText())).isEqualTo(s);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.asset_submissions WHERE job_id=?",Integer.class,id)).isEqualTo(submissions);
+        for(var e:images.entrySet())assertThat(objects.get(e.getKey())).isEqualTo(e.getValue());
+        verifyNoInteractions(provider,promptAgent);publicStatus(404);
+        // A subsequent claimed repair still reads the same completed nine-frame strip.
+        var work=store.claim();assertThat(store.previousAttempt(work)).isEqualTo(json.readTree(history).get(0).path("result"));
+        body.put("note","Changing an idempotent request must never schedule another correction");post(subject,path(id)+"/prompt-resume",body,409);
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"seed","rules","input","label","failure","state","version","lessons","newer","provider","reservation","receipt","request","approval","reference","unauthorized","anonymous","revoked","duplicate"})
+    void promptResumeRejectsUnboundOrPossiblyPaidAttempts(String defect)throws Exception {
+        UUID id=b75HeldPack();var body=promptResumeFixture(id);UUID actor=subject;int expected=409;
+        switch(defect) {
+            case "seed" -> body.put("expectedSeedHashes",Map.of("south","1".repeat(64),"north","1".repeat(64),"west","1".repeat(64),"east","1".repeat(64)));
+            case "rules" -> body.put("expectedRulesSha256","1".repeat(64));
+            case "input" -> body.put("expectedPromptInputSha256","1".repeat(64));
+            case "label" -> body.put("label","walk-south");
+            case "failure" -> jdbc.update("UPDATE shelter.asset_jobs SET failure_code='QUALITY_AI_TIMEOUT' WHERE id=?",id);
+            case "state" -> jdbc.update("UPDATE shelter.asset_jobs SET status='REVIEW' WHERE id=?",id);
+            case "version" -> jdbc.update("UPDATE shelter.styled_lesson_prompts SET input=jsonb_set(input,'{version}',to_jsonb(?::text)) WHERE job_id=?",StyledLessonPromptAgent.VERSION,id);
+            case "lessons" -> jdbc.update("UPDATE shelter.styled_lesson_prompts SET input=jsonb_set(input,'{lessons}','[{}]'::jsonb) WHERE job_id=?",id);
+            case "newer" -> jdbc.update("INSERT INTO shelter.styled_lesson_prompts(job_id,label,input_sha256,input,lessons_sha256,state,lease_token,failure_code,created_at) SELECT job_id,label,?,input,lessons_sha256,state,lease_token,failure_code,now()+interval '1 second' FROM shelter.styled_lesson_prompts WHERE job_id=?","c".repeat(64),id);
+            case "provider" -> jdbc.update("UPDATE shelter.styled_asset_steps SET provider_job_id=? WHERE job_id=? AND label='idle-south'",UUID.randomUUID(),id);
+            case "reservation" -> jdbc.update("UPDATE shelter.styled_asset_steps SET submitted_at=now() WHERE job_id=? AND label='idle-south'",id);
+            case "receipt" -> jdbc.update("UPDATE shelter.styled_asset_steps SET provider_result='{}'::jsonb WHERE job_id=? AND label='idle-south'",id);
+            case "request" -> jdbc.update("UPDATE shelter.styled_asset_steps SET request_sha256=? WHERE job_id=? AND label='idle-south'","f".repeat(64),id);
+            case "approval" -> jdbc.update("UPDATE shelter.asset_jobs SET seed_review=NULL WHERE id=?",id);
+            case "reference" -> jdbc.update("UPDATE shelter.asset_jobs SET action_plan='[\"BASE\"]'::jsonb,quality_policy=quality_policy || '{\"referenceOnly\":true}'::jsonb WHERE id=?",id);
+            case "unauthorized" -> {actor=UUID.randomUUID();expected=403;}
+            case "anonymous" -> {actor=null;expected=401;}
+            case "revoked" -> jdbc.update("UPDATE shelter.asset_source_permissions SET revoked_at=now() WHERE id=?",permission);
+            case "duplicate" -> {post(subject,path(id)+"/prompt-resume",body,200);body.put("requestId",UUID.randomUUID().toString());}
+        }
+        clearInvocations(provider,promptAgent);post(actor,path(id)+"/prompt-resume",body,expected);verifyNoInteractions(provider,promptAgent);
+    }
     Map<String,Object> responseResumeFixture(UUID id)throws Exception {
         // Synthetic legacy format-failure fixture; never rewrites any live job.
         jdbc.update("UPDATE shelter.asset_jobs SET status='FAILED',failure_code='QUALITY_MOTION_RESPONSE_INVALID',quality_approval=NULL WHERE id=?",id);

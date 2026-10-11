@@ -228,3 +228,5 @@ B-84: [검증된 의존성 캐시로 Render 오프라인 빌드](https://app.not
 - B-89: [배경 오류 자동 복구·쉬기 생성·학습 규칙 재검증](automatic-structural-recovery.md). [노션 카드](https://app.notion.com/p/3f65b2d1a55f80c2b4cfc3b3b907c782), 브랜치 `backend/b-89-automatic-structural-recovery`. 실제 불투명 BASE의 원본/실패 보존 후 제한 재생성, 승인 시드 기반 첫 IDLE 보완, 정책 변경 후 기존 ACTIVE 규칙의 별도 재검증과 신규 생성 연결. V24는 재검증 출처만 추가하고 기존 이미지·승인·예산은 보존한다. 실제 서버 생성/재생은 배포 후 별도 검증한다.
 
 - B-91: [좌우 대칭 꼬리 검사 오탐](tail-mirror-invariance.md). [노션](https://app.notion.com/p/3f65b2d1a55f8053828ddad04153c199). B-90 배포 검증의 완전 대칭 실루엣 방향별 판정 차이를 보존하고 측정 마스크 방향을 통일한다. 원본·관찰·실제 결함 차단·예산 유지. v41, DB/API 변경 없음. 같은 원본의 새 전체 AI 검수 PASS; 배포 서버의 동일 작업 재검수·12동작·앱 재생은 B-90에 남아 있다.
+
+- B-92: [전체 생성 문구 압축과 보완 재개](complete-prompt-compaction.md). [노션](https://app.notion.com/p/3f65b2d1a55f80f78770ef31792bbad2), 브랜치 `backend/b-92-complete-prompt-compaction`. B90의 907자 기본 지시와 83자 잔여 예산 실패를 보존한다. 전체 지시·규칙을 함께 압축하고 원문 의미·필수 표지를 검증하며 동일한 v1 실패만 원본·승인·보완 횟수 보존 상태로 재개한다. DB V24·이미지 규칙 v41 유지. 배포 후 보완 이미지·전체 동작·앱 재생은 B90에서 검증한다.

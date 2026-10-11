@@ -1,0 +1,82 @@
+{
+  "model": "gpt-5.6-luna",
+  "composerVersion": "complete-prompt-compact-v2",
+  "imageGenerationPerformed": false,
+  "results": {
+    "firstGeneration": {
+      "characters": 918,
+      "calls": 2,
+      "ruleCount": 4,
+      "description": "Native pixel dog idle animation, south facing in every frame including final hold; 40x40 transparent canvas, entire canvas used, >=2px clear at every edge. Same native dog size, crisp palette, eyes, coat, fixed camera, no props or text. Every frame: fixed unchanged head silhouette, outline, tail, coat markings and paws; preserve seed tail shape and position; chest breathing <=1px; blinking optional; changes limited to approved subtle breathing or blinking, with no new or moving appendages and consistent idle appendage/tail carriage. No wag cycle, bob, unexplained appendage, crown, antenna or tail above ears. If tail hidden, keep it hidden and never add one above the head; hidden front tail remains behind body; side/rear tails remain complete and connected in approved pose. All paws and tail complete; preserve native pixel size; no cropping, shrinking, blur or detached parts. Loop smoothly to initial pose.",
+      "history": [
+        {
+          "draft": {
+            "prompt": "Native pixel dog idle animation, south facing in every frame including final hold; 40x40 transparent canvas, entire canvas used, >=2px clear at every edge. Same native dog size, crisp palette, eyes, coat, fixed camera, no props or text. Every frame: fixed unchanged head silhouette, outline, tail, coat markings and paws; preserve seed tail shape and position; chest breathing <=1px; blinking optional; changes limited to approved subtle breathing or blinking, with no new or moving appendages and consistent idle appendage/tail carriage. No wag cycle, bob, unexplained appendage, crown, antenna or tail above ears. If tail hidden, keep it hidden and never add one above the head; hidden front tail remains behind body; side/rear tails remain complete and connected in approved pose. All paws and tail complete; preserve native pixel size; no cropping, shrinking, blur or detached parts. Loop smoothly to initial pose."
+          }
+        },
+        {
+          "validation": {
+            "compatibleWithBase": true,
+            "noNewRequirements": true,
+            "preserved": [
+              true,
+              true,
+              true,
+              true
+            ],
+            "basePreserved": true,
+            "missingBaseConditions": []
+          }
+        }
+      ]
+    },
+    "failed": {
+      "characters": 942,
+      "calls": 4,
+      "ruleCount": 4,
+      "description": "South-facing native dog in every frame, including final hold; 40x40 transparent canvas, entire canvas used; same native dog pixel size, coat, eyes and crisp palette; fixed camera, no props or text. Every frame: fixed head silhouette, outline, tail shape, tail position, tail height, coat markings and paws; two clear pixels at every edge; all paws and tail complete; no cropping, shrinking, blur or detached parts. Keep seed tail shape and position fixed; hidden tail stays hidden and behind body; side/rear tails stay complete and connected in approved pose; never add a tail above head or ears, crown or antenna; never wag, bob or vertically pump the tail. IDLE seed pose: chest breath <=1px only; blinking optional; idle changes limited to approved subtle breathing or blinking, with no new moving appendage and consistent appendage carriage. CORRECTION: show requested motion inside the safe silhouette. Loop smoothly to the initial pose.",
+      "history": [
+        {
+          "draft": {
+            "prompt": "South-facing native dog, 40x40 transparent canvas; same native pixel size, coat, eyes, crisp palette; fixed camera, no props/text. Every frame, including final hold: head silhouette, outline, coat markings, paws and tail fixed; two clear pixels at every edge; all paws and tail complete; no cropping, shrinking, blur or detached parts. Seed tail shape, position, height and carriage fixed; hidden tail remains hidden and behind body; side/rear tails stay complete and connected in approved pose; never add a tail above head or ears, crown or antenna; never vertically pump tail, wag or bob. IDLE seed pose: chest breath <=1px only; blinking optional; changes limited to approved subtle breathing or blinking, with no new or moving appendage. CORRECTION: requested motion stays inside the safe silhouette. Loop smoothly to initial pose."
+          }
+        },
+        {
+          "validation": {
+            "compatibleWithBase": false,
+            "noNewRequirements": true,
+            "preserved": [
+              true,
+              true,
+              true,
+              true
+            ],
+            "basePreserved": false,
+            "missingBaseConditions": [
+              "The south-facing direction must be explicitly maintained in every frame, including the final hold."
+            ]
+          }
+        },
+        {
+          "draft": {
+            "prompt": "South-facing native dog in every frame, including final hold; 40x40 transparent canvas, entire canvas used; same native dog pixel size, coat, eyes and crisp palette; fixed camera, no props or text. Every frame: fixed head silhouette, outline, tail shape, tail position, tail height, coat markings and paws; two clear pixels at every edge; all paws and tail complete; no cropping, shrinking, blur or detached parts. Keep seed tail shape and position fixed; hidden tail stays hidden and behind body; side/rear tails stay complete and connected in approved pose; never add a tail above head or ears, crown or antenna; never wag, bob or vertically pump the tail. IDLE seed pose: chest breath <=1px only; blinking optional; idle changes limited to approved subtle breathing or blinking, with no new moving appendage and consistent appendage carriage. CORRECTION: show requested motion inside the safe silhouette. Loop smoothly to the initial pose."
+          }
+        },
+        {
+          "validation": {
+            "compatibleWithBase": true,
+            "noNewRequirements": true,
+            "preserved": [
+              true,
+              true,
+              true,
+              true
+            ],
+            "basePreserved": true,
+            "missingBaseConditions": []
+          }
+        }
+      ]
+    }
+  }
+}
