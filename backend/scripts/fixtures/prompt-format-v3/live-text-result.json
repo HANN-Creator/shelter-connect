@@ -1,0 +1,58 @@
+{
+  "composerVersion": "complete-prompt-compact-v3",
+  "model": "gpt-5.6-luna",
+  "cases": {
+    "firstGeneration": {
+      "calls": 2,
+      "description": "South-facing native pixel dog on entire transparent 40x40 canvas; same native dog size, eyes, coat, crisp palette and fixed camera; no props or text. Chest breath <=1px; blinking optional. Every frame: fixed head, head silhouette, outline, tail, coat markings and paws; idle nearly still, with changes limited to subtle breathing or blinking; no new, unexplained or moving appendages and no tail-carriage changes beyond approved breathing or blinking details. No wag cycle or bob. Keep seed tail shape, position and carriage fixed; if hidden, keep hidden and never add a tail above the head, crown or antenna above ears. Hidden front tail stays behind body; side/rear tails stay complete and connected in approved pose. Remain south facing in all frames, including final hold; keep two clear pixels at every canvas edge; all paws and tail complete. Preserve native dog pixel size; no cropping, shrinking, blur or detached parts. Loop smoothly to the initial pose.",
+      "sourceRuleCount": 4,
+      "characters": 963,
+      "history": [
+        {
+          "draft": {
+            "prompt": "South-facing native pixel dog on entire transparent 40x40 canvas; same native dog size, eyes, coat, crisp palette and fixed camera; no props or text. Chest breath <=1px; blinking optional. Every frame: fixed head, head silhouette, outline, tail, coat markings and paws; idle nearly still, with changes limited to subtle breathing or blinking; no new, unexplained or moving appendages and no tail-carriage changes beyond approved breathing or blinking details. No wag cycle or bob. Keep seed tail shape, position and carriage fixed; if hidden, keep hidden and never add a tail above the head, crown or antenna above ears. Hidden front tail stays behind body; side/rear tails stay complete and connected in approved pose. Remain south facing in all frames, including final hold; keep two clear pixels at every canvas edge; all paws and tail complete. Preserve native dog pixel size; no cropping, shrinking, blur or detached parts. Loop smoothly to the initial pose."
+          }
+        },
+        {
+          "validation": {
+            "noNewRequirements": true,
+            "preserved": [
+              true,
+              true,
+              true,
+              true
+            ],
+            "basePreserved": true,
+            "missingBaseConditions": [],
+            "compatibleWithBase": true
+          }
+        }
+      ]
+    },
+    "failed": {
+      "calls": 2,
+      "description": "Repair complete nine-frame north IDLE animation in order; preserve identity, approved usable entry pose, anatomy, and compact cute puppy pixel style. NORTH means REAR, away from camera: every frame shows only the rear head, with no visible eyes, nose, mouth, or chest and no shoulder glance. Keep head silhouette unchanged; no crown, antenna, or tail above ears. Preserve individual coat patches and native dog pixel size; use dark outline, stepped shading, small solid calm eyes, neutral mouth, no flat sticker redesign, rings, exaggerated grin, blur, resampling, cropping, shrinking, or detached parts. Use entire transparent 40x40 canvas; every frame keeps at least 2 clear pixels at every edge and all paws and tail complete. Hidden front tail stays behind body; side and rear tails stay complete and connected in the approved pose. Keep idle frames visually still and the approved pose stable: allow only subtle breathing up to 1px and optional normal blinking; no clear pose, appendage, tail, or rear-silhouette displacement beyond those allowances, and no wag cycle or bob. Fixed head, outline, tail, coat markings, and paws. Correct frames 1-8 for the confirmed missing idle action and excess idle motion only; correct frame0 only if its pose is a confirmed defect. Preserve all other disputed or unconfirmed properties; do not invent hidden features. Fresh full review required.",
+      "sourceRuleCount": 2,
+      "characters": 1387,
+      "history": [
+        {
+          "draft": {
+            "prompt": "Repair complete nine-frame north IDLE animation in order; preserve identity, approved usable entry pose, anatomy, and compact cute puppy pixel style. NORTH means REAR, away from camera: every frame shows only the rear head, with no visible eyes, nose, mouth, or chest and no shoulder glance. Keep head silhouette unchanged; no crown, antenna, or tail above ears. Preserve individual coat patches and native dog pixel size; use dark outline, stepped shading, small solid calm eyes, neutral mouth, no flat sticker redesign, rings, exaggerated grin, blur, resampling, cropping, shrinking, or detached parts. Use entire transparent 40x40 canvas; every frame keeps at least 2 clear pixels at every edge and all paws and tail complete. Hidden front tail stays behind body; side and rear tails stay complete and connected in the approved pose. Keep idle frames visually still and the approved pose stable: allow only subtle breathing up to 1px and optional normal blinking; no clear pose, appendage, tail, or rear-silhouette displacement beyond those allowances, and no wag cycle or bob. Fixed head, outline, tail, coat markings, and paws. Correct frames 1-8 for the confirmed missing idle action and excess idle motion only; correct frame0 only if its pose is a confirmed defect. Preserve all other disputed or unconfirmed properties; do not invent hidden features. Fresh full review required."
+          }
+        },
+        {
+          "validation": {
+            "noNewRequirements": true,
+            "preserved": [
+              true,
+              true
+            ],
+            "basePreserved": true,
+            "missingBaseConditions": [],
+            "compatibleWithBase": true
+          }
+        }
+      ]
+    }
+  }
+}
