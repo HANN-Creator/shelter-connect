@@ -31,9 +31,16 @@ public final class OpenAiPhotoAppearance implements PhotoAppearanceProvider {
         try { return client.structuredImage(INSTRUCTIONS,photo,schema()); }
         catch(AiFailure e) { throw new AssetException(502,"APPEARANCE_"+e.code()); }
     }
+    public JsonNode analyzeStyled(byte[] photo) {
+        try { return client.structuredImage(INSTRUCTIONS.replace("120 characters","80 characters"),photo,schema(80)); }
+        catch(AiFailure e) { throw new AssetException(502,"APPEARANCE_"+e.code()); }
+    }
     static Map<String,Object> schema() {
+        return schema(120);
+    }
+    private static Map<String,Object> schema(int length) {
         var descriptions=new LinkedHashMap<String,Object>();
-        for(String key:PhotoAppearance.FEATURES) descriptions.put(key,Map.of("type","string","maxLength",120));
+        for(String key:PhotoAppearance.FEATURES) descriptions.put(key,Map.of("type","string","maxLength",length));
         var box=new LinkedHashMap<String,Object>();
         for(String key:List.of("x","y","width","height")) box.put(key,Map.of("type","number","minimum",0,"maximum",1));
         return object(Map.of("dogCount",Map.of("type","integer","minimum",0,"maximum",20),

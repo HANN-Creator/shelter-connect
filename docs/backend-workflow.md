@@ -232,3 +232,5 @@ B-84: [검증된 의존성 캐시로 Render 오프라인 빌드](https://app.not
 - B-92: [전체 생성 문구 압축과 보완 재개](complete-prompt-compaction.md). [노션](https://app.notion.com/p/3f65b2d1a55f80f78770ef31792bbad2), 브랜치 `backend/b-92-complete-prompt-compaction`. B90의 907자 기본 지시와 83자 잔여 예산 실패를 보존한다. 전체 지시·규칙을 함께 압축하고 원문 의미·필수 표지를 검증하며 동일한 v1 실패만 원본·승인·보완 횟수 보존 상태로 재개한다. DB V24·이미지 규칙 v41 유지. 배포 후 보완 이미지·전체 동작·앱 재생은 B90에서 검증한다.
 
 - B-93: [생성 문구의 결함 코드·형식 검사 충돌](prompt-format-contract.md). [노션](https://app.notion.com/p/3f65b2d1a55f801e9e95ee8818bc96c8), 브랜치 `backend/b-93-prompt-format-contract`. 실제 B90 idle-north의 한도 이내 초안 3개를 보존하고 진단 코드 밑줄과 검사 계약을 맞춘다. 정확한 형식 피드백·전체 의미 검증, v1/v2 제출 전 실패 단계의 예산/원본 보존 재개. DB V24·규칙 v41 유지, 배포 후 이미지·전체 팩 검증은 B90 별도.
+
+- B-94: [사진 자동 분석과 native32 생성 연결](automatic-styled-photo-input.md). [노션](https://app.notion.com/p/3f65b2d1a55f80979d65f2700b438a0d), 브랜치 `backend/b-94-automatic-photo-input`. 사진 ID만으로 Luna 외형 분석·얼굴 영역·입력 해시를 저장하고 기존 생성·보완·자동 승인으로 이어간다. 동일 입력 재사용, 응답 체크포인트, 권한·사진 변경·불확실 입력 차단을 검사한다. DB V24·규칙 v41 유지. 실제 3장 분석과 기존 배포 경로의 3마리 생성은 신규 자동 입력 진입점의 배포 검증과 구분한다.
