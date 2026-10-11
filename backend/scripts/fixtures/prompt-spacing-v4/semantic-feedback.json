@@ -1,0 +1,56 @@
+{
+  "description": "First real verification: format recovered, semantic gate correctly remained blocking; final rejection distinguished normal from optional blinking. Preserve exact qualifier when revising, audit all omissions together. No image submission.",
+  "receipts": [
+    {
+      "missingBaseConditions": [
+        "Crisp pixel palette must be preserved explicitly."
+      ],
+      "compatibleWithBase": false,
+      "noNewRequirements": true,
+      "preserved": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "basePreserved": false
+    },
+    {
+      "prompt": "Native pixel dog, north in every frame including final hold; north means REAR, away from camera. Rear head only, no shoulder glance, no visible eyes, nose, mouth or chest. Chest breath <=1px; blink optional. Fixed unchanged head silhouette, outline, tail, coat markings, paws, coat, eyes and native pixel size; crisp palette; fixed camera; no props or text. Every frame: approved pose stable; no appendage, attached feature, pose or rear silhouette position or shape changes beyond subtle breathing or blinking; minor breathing and blinking allowed. Idle visually still; no repeated appendage movement, wag cycle or bob. Keep seed tail shape and position fixed; if hidden, keep hidden; never add a tail above head or ears, crown or antenna. Hidden front tail stays behind body; side/rear tails stay complete and connected in approved pose. Use the entire transparent 40x40 canvas; keep two clear pixels at every edge, all paws and tail complete. No cropping, shrinking, blur or detached parts. Loop smoothly to the initial pose."
+    },
+    {
+      "prompt": "North in every frame including final hold; north means REAR, away from camera. Rear head only; no shoulder glance or visible eyes, nose, mouth or chest. Every frame: fixed unchanged head silhouette, outline, tail, coat markings, paws, coat, eyes and native pixel size; crisp pixel palette; fixed camera; no props or text; approved pose stable; attached features and rear silhouette stable; no appendage movement, reshaping, displacement, wag cycle or bob beyond subtle breathing or optional blinking; chest breath <=1px. Keep seed tail shape and position fixed. If hidden, keep hidden; never add a tail above head or ears, crown or antenna. Hidden front tail stays behind body; side and rear tails stay complete and connected in approved pose. Use entire transparent 40x40 canvas; keep 2 clear pixels at every edge; all paws and tail complete; no cropping, shrinking, blur or detached parts. Loop smoothly to initial pose."
+    },
+    {
+      "missingBaseConditions": [
+        "The head must remain fixed in position, not merely retain an unchanged head silhouette."
+      ],
+      "compatibleWithBase": false,
+      "noNewRequirements": true,
+      "preserved": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "basePreserved": false
+    },
+    {
+      "prompt": "North in every frame including final hold; north means REAR, away from camera. Every frame: rear head only, fixed head position and unchanged head silhouette, outline, tail, coat markings, paws, coat, eyes and native dog pixel size; no visible eyes, nose, mouth or chest; no shoulder glance; crisp pixel palette, fixed camera, no props or text. Idle pose and attached features remain stable, allowing only subtle breathing, chest breath <=1px, or optional blinking; no appendage movement, reshaping, displacement, visible tail or rear silhouette change, repeated movement, wag cycle or bob. Keep seed tail shape and position fixed. If hidden, keep hidden; never add a tail above head or ears, crown or antenna. Hidden front tail stays behind body; side and rear tails stay complete and connected in approved pose. Use entire transparent 40x40 canvas; keep 2 clear pixels at every edge; all paws and tail complete; no cropping, shrinking, blur or detached parts. Loop smoothly to initial pose."
+    },
+    {
+      "missingBaseConditions": [
+        "Rule 4 does not explicitly preserve the allowance for normal blinking; it only states optional blinking."
+      ],
+      "compatibleWithBase": true,
+      "noNewRequirements": true,
+      "preserved": [
+        true,
+        true,
+        true,
+        false
+      ],
+      "basePreserved": true
+    }
+  ]
+}

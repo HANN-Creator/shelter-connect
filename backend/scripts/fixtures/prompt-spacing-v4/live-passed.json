@@ -1,0 +1,124 @@
+{
+  "description": "Third bounded live run with compact clauses and targeted corrections passed all independent semantic checks. Format recovery -> original missing palette rejected -> rewritten 952 chars missing all-frame scope rejected -> rewritten 901 chars independently passed all base and all four rules.",
+  "result": {
+    "description": "Native pixel dog; north in Every frame including final hold; north means rear,away from camera;rear head only,no shoulder glance,no visible eyes,nose,mouth or chest in Every frame;chest breath <=1px,blink optional;fixed camera,no props/text;fixed head silhouette,head position,outline,tail shape and position,coat markings,paws;eyes,coat and native dog pixel size unchanged;crisp palette;no wag cycle or bob;idle visually still,approved pose,appendages,attached features and rear silhouette stable in Every frame,allowing only subtle breathing or normal blinking;hidden tail stays hidden,hidden front tail stays behind body;never add a tail above head or ears,crown or antenna;side/rear tails stay complete and connected in approved pose;entire transparent 40x40 canvas;2 clear pixels at every edge,all paws and tail complete;no cropping,shrinking,blur or detached parts;loop smoothly to initial pose.",
+    "characters": 901,
+    "version": "complete-prompt-compact-v4",
+    "calls": 5,
+    "passed": true,
+    "model": "gpt-5.6-luna",
+    "sourceRuleCount": 4
+  },
+  "history": [
+    {
+      "promptDraftFailures": [
+        {
+          "draft": {
+            "prompt": "Native pixel dog, north in every frame including final hold; north means rear, away from camera. Rear head only, no shoulder glance; no visible eyes, nose, mouth or chest. Chest breath <=1px; blink optional. Fixed unchanged head silhouette, outline, tail, coat markings, paws, coat, eyes and native pixel size; approved pose stable. Idle frames visually still: attached features, pose, rear silhouette and appendages remain stable with no repeated displacement or reshaping beyond subtle breathing or blinking; minor breathing and blinking allowed. No wag cycle or bob. Keep seed tail shape and position fixed; if hidden, keep hidden; never add a tail above head or ears, crown or antenna. Hidden front tail stays behind body; side/rear tails stay complete and connected in approved pose. Fixed camera, no props or text. Entire transparent 40x40 canvas; every frame keeps two clear pixels at every edge, all paws and tail complete. No cropping, shrinking, blur or detached parts. Loop smoothly to initial pose."
+          },
+          "budget": 1000,
+          "attempt": 1,
+          "formatErrors": [
+            "TOO_LONG: exceeds characterBudget by 10"
+          ],
+          "measuredCharacters": 1010
+        },
+        {
+          "draft": {
+            "prompt": "Native pixel dog north in every frame including final hold; north means rear, away from camera. Rear head only; no shoulder glance or visible eyes, nose, mouth or chest. Chest breath <=1px; blink optional. Fixed unchanged head silhouette, outline, tail, coat markings, paws, coat, eyes and native pixel size; approved pose stable. Every frame: no appendage, attached feature, pose or rear silhouette displacement or reshaping beyond subtle breathing or blinking; minor breathing and blinking allowed. Idle visually still; no repeated appendage movement, wag cycle or bob. Keep seed tail shape and position fixed; hidden stays hidden; never add a tail above head or ears, crown or antenna. Hidden front tail stays behind body; side/rear tails stay complete and connected in approved pose. Fixed camera; no props or text. Use entire transparent 40x40 canvas; every frame keeps two clear pixels at every edge, all paws and tail complete. No cropping, shrinking, blur or detached parts. Loop smoothly to initial pose."
+          },
+          "budget": 1000,
+          "attempt": 2,
+          "formatErrors": [
+            "TOO_LONG: exceeds characterBudget by 13"
+          ],
+          "measuredCharacters": 1013
+        },
+        {
+          "draft": {
+            "prompt": "Native pixel dog facing north in every frame including final hold; north means rear, away from camera. Rear head only; no shoulder glance or visible eyes, nose, mouth or chest. Chest breath <=1px; blink optional. Fixed unchanged head silhouette, outline, tail, coat markings, paws, coat, eyes and native pixel size; approved pose stable. Every frame: no appendage, attached feature, pose or rear silhouette position or shape changes beyond subtle breathing or blinking; minor breathing and blinking allowed. Idle visually still; no repeated appendage displacement or reshaping, wag cycle or bob. Keep seed tail shape and position fixed; hidden stays hidden; never add a tail above head or ears, crown or antenna. Hidden front tail stays behind body; side and rear tails stay complete and connected in approved pose. Fixed camera; no props or text. Use entire transparent 40x40 canvas; every frame keeps two clear pixels at every edge, all paws and tail complete. No cropping, shrinking, blur or detached parts. Loop smoothly to initial pose."
+          },
+          "budget": 1000,
+          "attempt": 3,
+          "formatErrors": [
+            "TOO_LONG: exceeds characterBudget by 41"
+          ],
+          "measuredCharacters": 1041
+        }
+      ],
+      "spacingRecovery": {
+        "version": "punctuation-spacing-v1",
+        "selectedAttempt": 2,
+        "budget": 1000,
+        "originalCharacters": 1013,
+        "characters": 974,
+        "originalSha256": "b3f0564e9063480913a1357bf303e27277736c37381a136f7d53cc4b58aaa511",
+        "sha256": "b85435213f508b9c7ab35b6951aa62f0c0de0e9c78a4861d0fefe5c3ee7640f5",
+        "draft": {
+          "prompt": "Native pixel dog north in every frame including final hold;north means rear,away from camera.Rear head only;no shoulder glance or visible eyes,nose,mouth or chest.Chest breath <=1px;blink optional.Fixed unchanged head silhouette,outline,tail,coat markings,paws,coat,eyes and native pixel size;approved pose stable.Every frame:no appendage,attached feature,pose or rear silhouette displacement or reshaping beyond subtle breathing or blinking;minor breathing and blinking allowed.Idle visually still;no repeated appendage movement,wag cycle or bob.Keep seed tail shape and position fixed;hidden stays hidden;never add a tail above head or ears,crown or antenna.Hidden front tail stays behind body;side/rear tails stay complete and connected in approved pose.Fixed camera;no props or text.Use entire transparent 40x40 canvas;every frame keeps two clear pixels at every edge,all paws and tail complete.No cropping,shrinking,blur or detached parts.Loop smoothly to initial pose."
+        }
+      }
+    },
+    {
+      "draft": {
+        "prompt": "Native pixel dog north in every frame including final hold;north means rear,away from camera.Rear head only;no shoulder glance or visible eyes,nose,mouth or chest.Chest breath <=1px;blink optional.Fixed unchanged head silhouette,outline,tail,coat markings,paws,coat,eyes and native pixel size;approved pose stable.Every frame:no appendage,attached feature,pose or rear silhouette displacement or reshaping beyond subtle breathing or blinking;minor breathing and blinking allowed.Idle visually still;no repeated appendage movement,wag cycle or bob.Keep seed tail shape and position fixed;hidden stays hidden;never add a tail above head or ears,crown or antenna.Hidden front tail stays behind body;side/rear tails stay complete and connected in approved pose.Fixed camera;no props or text.Use entire transparent 40x40 canvas;every frame keeps two clear pixels at every edge,all paws and tail complete.No cropping,shrinking,blur or detached parts.Loop smoothly to initial pose."
+      }
+    },
+    {
+      "validation": {
+        "basePreserved": false,
+        "preserved": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "noNewRequirements": true,
+        "compatibleWithBase": true,
+        "missingBaseConditions": [
+          "The base requires a crisp pixel palette, which is not explicitly preserved in the compressed prompt."
+        ]
+      }
+    },
+    {
+      "draft": {
+        "prompt": "Native pixel dog north in every frame including final hold;north means rear,away from camera;rear head only,no shoulder glance,no visible eyes,nose,mouth or chest;chest breath <=1px,blink optional and normal;fixed head and unchanged head silhouette,outline,tail shape and position,coat markings,paws,coat,eyes,native dog pixel size,crisp palette;approved pose stable;Every frame:appendages,attached features,pose and rear silhouette remain stable,with no displacement or reshaping beyond subtle breathing or normal blinking;idle visually still,no repeated movement,wag cycle or bob;hidden tail stays hidden,never add a tail above head or ears,crown or antenna;hidden front tail stays behind body;side/rear tails stay complete and connected in approved pose;fixed camera,no props or text;entire transparent 40x40 canvas,two clear pixels at every edge,all paws and tail complete;no cropping,shrinking,blur or detached parts;loop smoothly to initial pose."
+      }
+    },
+    {
+      "validation": {
+        "basePreserved": false,
+        "preserved": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "noNewRequirements": true,
+        "compatibleWithBase": false,
+        "missingBaseConditions": [
+          "The requirements for rear head only and no visible eyes, nose, mouth, or chest do not explicitly preserve their ALL-frames scope from the base prompt."
+        ]
+      }
+    },
+    {
+      "draft": {
+        "prompt": "Native pixel dog; north in Every frame including final hold; north means rear,away from camera;rear head only,no shoulder glance,no visible eyes,nose,mouth or chest in Every frame;chest breath <=1px,blink optional;fixed camera,no props/text;fixed head silhouette,head position,outline,tail shape and position,coat markings,paws;eyes,coat and native dog pixel size unchanged;crisp palette;no wag cycle or bob;idle visually still,approved pose,appendages,attached features and rear silhouette stable in Every frame,allowing only subtle breathing or normal blinking;hidden tail stays hidden,hidden front tail stays behind body;never add a tail above head or ears,crown or antenna;side/rear tails stay complete and connected in approved pose;entire transparent 40x40 canvas;2 clear pixels at every edge,all paws and tail complete;no cropping,shrinking,blur or detached parts;loop smoothly to initial pose."
+      }
+    },
+    {
+      "validation": {
+        "basePreserved": true,
+        "preserved": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "noNewRequirements": true,
+        "compatibleWithBase": true,
+        "missingBaseConditions": []
+      }
+    }
+  ]
+}

@@ -866,6 +866,46 @@ class StyledAssetPostgresTest {
         verify(promptAgent).rewrite(eq(pinned),eq("Keep native pixel art."),eq(2000),any(),eq(rejected));
         assertThat(store.reserve(work,json.valueToTree(Map.of("description",description)))).isTrue();verifyNoInteractions(provider);
     }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans={true,false})
+    void promptSpacingHistoryAndAllRuleReviewPrecedeAnyProviderPurchase(boolean accepted)throws Exception {
+        UUID source=seedLearningPair();review(source,true,"APPROVE",200);finish(source);lessonWorker.tick();lessonWorker.tick();
+        nextLearningDog();UUID next=request();var work=store.claim();var pinned=lessonStore.pin(work);
+        var fixture=json.readTree(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/prompt-spacing-v4/evidence.json")));
+        var diagnostics=fixture.at("/history/0");String base=fixture.at("/input/basePrompt").asText();
+        var client=mock(org.shelterconnect.api.chat.OpenAiResponsesClient.class);
+        when(client.structured(anyString(),any(),anyMap())).thenReturn(diagnostics.at("/promptDraftFailures/0/draft"),diagnostics.at("/promptDraftFailures/1/draft"),diagnostics.at("/promptDraftFailures/2/draft"));
+        var writer=new StyledLessonPromptAgent(client,json,new org.shelterconnect.api.chat.AiProperties(true,"test","gpt-5.6-luna",30));
+        RuntimeException rejectedWriting;
+        try {writer.compose(pinned,base,1000);throw new AssertionError("The saved over-budget drafts must fail before recovery");}
+        catch(RuntimeException completedFailure){rejectedWriting=completedFailure;}
+        doThrow(rejectedWriting).when(promptAgent).compose(any(),anyString(),anyInt());
+        doThrow(rejectedWriting).when(promptAgent).rewrite(any(),anyString(),anyInt(),any(),any());
+        var verdict=json.valueToTree(Map.of("preserved",Collections.nCopies(pinned.size(),accepted),"basePreserved",accepted,"compatibleWithBase",true,"noNewRequirements",true));
+        doReturn(verdict).when(promptAgent).verify(any(),anyString(),any(),anyInt());clearInvocations(provider,promptAgent);
+        if(accepted)assertThat(promptComposer.describe(work,pinned,base,1000)).hasSize(974);
+        else {
+            try {promptComposer.describe(work,pinned,base,1000);fail("Unpreserved meaning must block the description");}
+            catch(RuntimeException rejected){assertThat(rejected).hasMessage("LESSON_PROMPT_MEANING_LOST");}
+        }
+        var row=json.readTree(jdbc.queryForObject("SELECT row_to_json(p)::text FROM shelter.styled_lesson_prompts p WHERE job_id=?",String.class,next));
+        assertThat(row.path("state").asText()).isEqualTo(accepted?"READY":"FAILED");
+        assertThat(row.at("/input/lessons")).isEqualTo(pinned);assertThat(row.at("/input/version").asText()).isEqualTo(StyledLessonPromptAgent.VERSION);
+        assertThat(row.at("/history/0/promptDraftFailures")).isEqualTo(diagnostics.path("promptDraftFailures"));
+        assertThat(row.at("/history/0/spacingRecovery/selectedAttempt").asInt()).isEqualTo(2);
+        assertThat(row.at("/history/1/draft/prompt").asText()).hasSize(974);
+        assertThat(row.at("/history/2/validation")).isEqualTo(verdict);
+        assertThat(row.path("history").size()).isEqualTo(accepted?3:9);
+        verify(promptAgent,times(accepted?1:3)).verify(eq(pinned),eq(base),any(),eq(1000));
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.asset_submissions WHERE job_id=?",Integer.class,next)).isZero();verifyNoInteractions(provider);
+        clearInvocations(promptAgent);
+        if(accepted)assertThat(promptComposer.describe(work,pinned,base,1000)).hasSize(974);
+        else {
+            try {promptComposer.describe(work,pinned,base,1000);fail("A completed failed composition must not run again");}
+            catch(RuntimeException rejected){assertThat(rejected).hasMessage("LESSON_PROMPT_REVIEW_REQUIRED");}
+        }
+        verifyNoInteractions(promptAgent);
+    }
     @Test void seedLessonsWaitForHumanPositiveThenReachNextDogGenerationAndReview()throws Exception {
         UUID first=seedLearningPair();UUID lesson=onlyLesson();
         lessonWorker.tick();assertThat(lessonStatus(lesson)).isEqualTo("WAITING_EVIDENCE");verifyNoInteractions(lessonAgent);
@@ -2770,7 +2810,7 @@ class StyledAssetPostgresTest {
             "expectedSeedHashes",read(id).at("/steps/0/result/hashes"),"expectedRulesSha256",currentRules(),"label","idle-south","expectedPromptInputSha256","a".repeat(64)));
     }
     @org.junit.jupiter.params.ParameterizedTest
-    @org.junit.jupiter.params.provider.ValueSource(strings={"all-lessons-compact-v1","complete-prompt-compact-v2"})
+    @org.junit.jupiter.params.provider.ValueSource(strings={"all-lessons-compact-v1","complete-prompt-compact-v2","complete-prompt-compact-v3"})
     void promptResumePreservesImageAttemptHistoryApprovalRulesAndBudget(String version)throws Exception {
         UUID id=b75HeldPack();var body=promptResumeFixture(id);
         jdbc.update("UPDATE shelter.styled_lesson_prompts SET input=jsonb_set(input,'{version}',to_jsonb(?::text)) WHERE job_id=?",version,id);
