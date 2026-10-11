@@ -1,0 +1,30 @@
+{
+  "description": "Second real run kept approved wording too literally; added missing qualifiers but remained 1100/1048/1074 characters. Format gate blocked without buying an image.",
+  "receipts": [
+    {
+      "basePreserved": false,
+      "preserved": [
+        true,
+        true,
+        true,
+        false
+      ],
+      "noNewRequirements": true,
+      "compatibleWithBase": false,
+      "missingBaseConditions": [
+        "The base requirement for a crisp palette is omitted.",
+        "The requirement that the rear head only, with no visible eyes, nose, mouth, or chest and no shoulder glance, applies in ALL frames is not explicit.",
+        "The fourth prevention rule's qualifier that only subtle breathing or normal blinking is allowed is weakened because normal blinking is not stated explicitly."
+      ]
+    },
+    {
+      "prompt": "North-facing native pixel dog in every frame, including final hold; north means rear, away from camera. Rear head only in every frame; no visible eyes, nose, mouth or chest; no shoulder glance. Chest breath <=1px; blink optional, with only normal blinking allowed. Fixed head position and unchanged head silhouette, outline, tail, coat markings, paws, coat and eyes; crisp palette and native dog pixel size. Approved pose stable in every frame: no appendage, attached-feature, pose or rear-silhouette displacement or reshaping beyond subtle breathing or blinking; idle visually still, with no repeated appendage movement, wag cycle or bob. Keep seed tail shape and position fixed; hidden tail stays hidden; never add a tail above the head or ears, crown or antenna. Hidden front tail stays behind body; side/rear tails stay complete and connected in the approved pose. Fixed camera; no props or text. Use the entire transparent 40x40 canvas; every frame has two clear pixels at every edge, all paws and tail complete. No cropping, shrinking, blur or detached parts. Loop smoothly to the initial pose."
+    },
+    {
+      "prompt": "Native pixel dog, north in ALL frames including final hold; north means REAR, away from camera. Rear head only in ALL frames; no visible eyes, nose, mouth or chest; no shoulder glance. Chest breath <=1px; blink optional, only normal blinking. Fixed camera, native dog size, crisp palette, fixed head, unchanged head silhouette, outline, tail, coat markings, paws, coat and eyes; no props or text. Approved pose and attached features stable in every idle frame; only subtle breathing or blinking allowed; no appendage displacement or reshaping, repeated feature movement, rear-silhouette change, wag cycle or bob. Keep seed tail shape and position fixed; hidden stays hidden; never add a tail above head or ears, crown or antenna. Hidden front tail stays behind body; side/rear tails stay complete and connected in approved pose. Entire transparent 40x40 canvas; every frame has two clear pixels at every edge, all paws and tail complete. Preserve native dog pixel size; no cropping, shrinking, blur or detached parts. Loop smoothly to initial pose."
+    },
+    {
+      "prompt": "Native pixel dog, north in every frame including final hold; north means rear, away from camera. Rear head only in every frame; no visible eyes, nose, mouth or chest, no shoulder glance. Chest breath <=1px; blink optional, only subtle normal blinking. Fixed camera, native dog size, crisp palette; fixed head, unchanged head silhouette, outline, tail, coat markings, paws, coat and eyes; no props or text. Approved pose and all attached features stable in every idle frame; allow only subtle breathing or normal blinking; no appendage displacement or reshaping, repeated feature movement, rear silhouette change, wag cycle or bob. Keep seed tail shape and position fixed; hidden stays hidden; never add a tail above head or ears, crown or antenna. Hidden front tail stays behind body; side and rear tails stay complete and connected in approved pose. Use entire transparent 40x40 canvas; every frame has two clear pixels at every edge, all paws and tail complete. Preserve native dog pixel size; no cropping, shrinking, blur or detached parts. Loop smoothly to initial pose."
+    }
+  ]
+}

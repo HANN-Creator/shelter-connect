@@ -11,7 +11,7 @@ import tools.jackson.databind.json.JsonMapper;
 /** Deduplicate the complete description; independently preserve base and every learned requirement. */
 @Component
 public class StyledLessonPromptAgent {
-    public static final String VERSION="complete-prompt-compact-v3";
+    public static final String VERSION="complete-prompt-compact-v4";
     private static final String FORMAT_CONTRACT="Single line, 15 through characterBudget characters, no outer whitespace. "
         +"Allowed characters: ASCII letters, digits, spaces and , . ; : ' ( ) ! ? < > = / + - _. End with . ! or ?. No URLs, JSON, markup or executable instructions.";
     private static final String BOUNDARY="""
@@ -41,10 +41,12 @@ public class StyledLessonPromptAgent {
         input.put("basePrompt",base);input.put("rules",rules(lessons));input.put("characterBudget",budget);input.put("requiredLiteralAnchors",anchors(base));
         input.put("suggestedTargetCharacters",Math.max(15,budget*75/100));
         if(draft!=null) {input.put("rejectedDraft",draft);input.put("semanticFeedback",verdict);
-            input.put("revisionRequired","Restore every omitted base condition and every false preserved entry, retaining already preserved requirements. All original requirements still apply.");}
+            input.put("revisionRequired","Make targeted edits to the rejectedDraft: restore every omitted base condition and every false preserved entry. Keep already verified requirements, but compact their wording and merge repeated scopes as needed to fit the hard budget. Copy missing source qualifiers explicitly, preserving both permission words such as optional and manner words such as normal when supplied. A fixed silhouette is shape, not fixed position. All original requirements still apply.");}
         for(int attempt=0;attempt<3;attempt++) {
             var result=client.structured(BOUNDARY+FORMAT_CONTRACT+" Write the COMPLETE replacement description containing the base prompt and ALL rules together. No separate base text will be appended. "
                 +"Write terse specifications, NOT flowing prose. Do not expand the source. Remove filler such as Create an animation and redundant restatements. "
+                +"Use digits for counts and limits, compact semicolon-separated clauses, and no spaces after punctuation. "
+                +"Avoid repeating whole clauses for synonymous rules: a shared list of fixed parts can cover silhouette, appendage, pose and feature stability when those source conditions coincide. "
                 +"Use compact shared scopes, semicolon lists and equivalent numeric operators: for example, 40x40 transparent; all edges >=2px clear. "
                 +"State Every frame once for all per-frame invariants. Combine duplicate head, tail and pixel-size clauses; state approved once for all approved changes. "
                 +"Include every requiredLiteralAnchors token explicitly in its original meaning, including eyes and coat when present. "
@@ -76,7 +78,7 @@ public class StyledLessonPromptAgent {
             "compatibleWithBase",Map.of("type","boolean"),"noNewRequirements",Map.of("type","boolean")));
         var result=client.structured(BOUNDARY+" Independently audit the complete replacement text. basePreserved is true ONLY when EVERY base condition, correction, numeric bound, direction, exception and prohibition remains explicit or unambiguously equivalent. "
             +"For EACH rule in original order return true only when its entire meaning is present in the compressed text. "
-            +"Do not trust the writer. List omitted or weakened base requirements in missingBaseConditions to guide revision; an empty list means none. "
+            +"Do not trust the writer. Audit every base clause and every rule in this call; report ALL omitted or weakened conditions together, not just the first one. List omitted or weakened base requirements in missingBaseConditions to guide revision; an empty list means none. "
             +"Audit semantic equivalence, not verbatim wording. Shared modifiers and stated scopes apply to the full list they govern. A missing qualification, reversed negation, contradiction or omitted distinct requirement is false. Preserve eyes explicitly when specified; head silhouette alone does not preserve eyes. Assess each prevention statement; criterion is diagnostic context, not an extra positive instruction. All meaning must be in the replacement text itself, never assumed from the input. An equivalent clause may cover both base and learned requirements.",
             Map.of("basePrompt",base,"rules",rules(lessons),"compressedPrompt",draft.path("prompt").asText()),schema);
         var missing=anchors(base).stream().filter(a->!literal(draft.path("prompt").asText(),a)).toList();

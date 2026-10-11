@@ -18,14 +18,15 @@ public class StyledLessonPromptComposer {
         }
         if(!entry.created())throw StyledLessonPromptAgent.invalid(entry.state().equals("FAILED")?"LESSON_PROMPT_REVIEW_REQUIRED":"LESSON_PROMPT_INTERRUPTED");
         try {
-            var draft=agent.compose(lessons,base,budget);
+            var draft=write(w,lessons,entry.key(),budget,()->agent.compose(lessons,base,budget));
             for(int attempt=0;attempt<3;attempt++) {
                 StyledLessonPromptAgent.checkPrompt(draft,budget);store.draft(w,lessons,entry.key(),draft);
                 var verdict=agent.verify(lessons,base,draft,budget);store.verdict(w,lessons,entry.key(),verdict);
                 try {StyledLessonPromptAgent.checkVerdict(verdict,lessons.size());}
                 catch(AssetException rejected) {
                     if(attempt==2)throw rejected;
-                    draft=agent.rewrite(lessons,base,budget,draft,verdict);continue;
+                    var rejectedDraft=draft;
+                    draft=write(w,lessons,entry.key(),budget,()->agent.rewrite(lessons,base,budget,rejectedDraft,verdict));continue;
                 }
                 String description=draft.path("prompt").asText();
                 store.ready(w,lessons,entry.key(),verdict,description);return description;
@@ -35,6 +36,14 @@ public class StyledLessonPromptComposer {
             String code=e instanceof AssetException a?a.code:e instanceof AiFailure a?"LESSON_PROMPT_"+a.code():"LESSON_PROMPT_INTERRUPTED";
             if(e instanceof AssetException a && a.diagnostics!=null)store.diagnostics(w,lessons,entry.key(),a.diagnostics);
             store.failed(w,entry.key(),code);throw StyledLessonPromptAgent.invalid(code);
+        }
+    }
+    private JsonNode write(StyledAssetStore.Work w,JsonNode lessons,String key,int budget,java.util.function.Supplier<JsonNode> writer) {
+        try {return writer.get();}
+        catch(AssetException failure) {
+            var recovered=StyledPromptSpacingRecovery.recover(failure,budget);
+            if(recovered.isEmpty())throw failure;
+            var result=recovered.get();store.diagnostics(w,lessons,key,result.diagnostics());return result.draft();
         }
     }
 }

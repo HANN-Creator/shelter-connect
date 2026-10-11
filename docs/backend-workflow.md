@@ -234,3 +234,5 @@ B-84: [검증된 의존성 캐시로 Render 오프라인 빌드](https://app.not
 - B-93: [생성 문구의 결함 코드·형식 검사 충돌](prompt-format-contract.md). [노션](https://app.notion.com/p/3f65b2d1a55f801e9e95ee8818bc96c8), 브랜치 `backend/b-93-prompt-format-contract`. 실제 B90 idle-north의 한도 이내 초안 3개를 보존하고 진단 코드 밑줄과 검사 계약을 맞춘다. 정확한 형식 피드백·전체 의미 검증, v1/v2 제출 전 실패 단계의 예산/원본 보존 재개. DB V24·규칙 v41 유지, 배포 후 이미지·전체 팩 검증은 B90 별도.
 
 - B-94: [사진 자동 분석과 native32 생성 연결](automatic-styled-photo-input.md). [노션](https://app.notion.com/p/3f65b2d1a55f80979d65f2700b438a0d), 브랜치 `backend/b-94-automatic-photo-input`. 사진 ID만으로 Luna 외형 분석·얼굴 영역·입력 해시를 저장하고 기존 생성·보완·자동 승인으로 이어간다. 동일 입력 재사용, 응답 체크포인트, 권한·사진 변경·불확실 입력 차단을 검사한다. DB V24·규칙 v41 유지. 실제 3장 분석과 기존 배포 경로의 3마리 생성은 신규 자동 입력 진입점의 배포 검증과 구분한다.
+
+B-95: [생성 문구 공백 길이 초과 자동 복구](https://app.notion.com/p/3f65b2d1a55f805697aefc7e99160034). B94의 실제 1010·1013·1041자 응답을 보존하고, 내용 손실 없는 구분 공백 정리 후 모든 규칙의 독립 의미 검증을 유지한다. 처음 생성/보완 공통 적용, v3 사전 제출 실패의 기존 권한 재개 계약 확장. [명세](prompt-spacing-recovery.md). 품질 v41·DB V24·보완 예산은 유지한다.
