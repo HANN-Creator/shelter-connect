@@ -113,8 +113,30 @@ class QualityRegressionTest(unittest.TestCase):
                 self.assertEqual(view['contour'],'DISTINCT')
                 self.assertEqual(view['tip'],'VISIBLE')
         rules=load_quality()
-        self.assertEqual(rules['recovery']['tailSilhouetteSupport']['version'],'rear-silhouette-branches-v2')
+        self.assertEqual(rules['recovery']['tailSilhouetteSupport']['version'],'rear-silhouette-branches-v3')
         self.assertTrue(any(c.get('fixture')=='tail-spine-v31/evidence.json' for c in rules['regressions']))
+
+    def test_deployed_mirrored_silhouettes_preserve_original_failure_evidence(self):
+        from PIL import ImageOps
+        root=Path(__file__).parent/'fixtures/tail-mirror-v41'
+        evidence=read(root/'evidence.json')
+        for file,sha in evidence['sha256'].items(): self.assertEqual(digest(root/file),sha)
+        with Image.open(root/'west.png') as w, Image.open(root/'east.png') as e:
+            self.assertEqual(w.convert('RGBA').getchannel('A').tobytes(),
+                             ImageOps.mirror(e.convert('RGBA')).getchannel('A').tobytes())
+        report=read(root/'deployed-review.json')['tailEvidence']
+        self.assertFalse(report['geometry']['west']['rearBranchSupport'])
+        self.assertTrue(report['geometry']['east']['rearBranchSupport'])
+        self.assertFalse(evidence['imageBytesChanged']); self.assertFalse(evidence['approved'])
+        self.assertEqual(len(report['observationHistory']),2)
+        for history in report['observationHistory']:
+            for v in history['observation']['views']:
+                self.assertEqual((v['tail'],v['attachment'],v['contour'],v['tip']),
+                                 ('COMPLETE_CONNECTED','CONNECTED','DISTINCT','VISIBLE'))
+        rules=load_quality()
+        self.assertEqual(rules['recovery']['tailSilhouetteSupport']['version'],'rear-silhouette-branches-v3')
+        self.assertIn('canonical EAST',rules['recovery']['tailSilhouetteSupport']['measurementOrientation'])
+        self.assertTrue(any(c.get('fixture')=='tail-mirror-v41/evidence.json' for c in rules['regressions']))
 
     def test_actual_idle_failure_retains_all_nine_frames_and_shared_prevention(self):
         root=Path(__file__).parent/'fixtures/idle-hold-v26'

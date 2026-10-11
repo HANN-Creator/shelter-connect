@@ -57,7 +57,7 @@ class StyledTailGeometryTest {
         assertThat(result.path("decision").asText()).isEqualTo("UNCERTAIN");assertThat(result.path("failedDirections").isEmpty()).isTrue();
     }
     @Test void measurementsAreDeterministicAndMirrorSymmetric(){
-        for(String c:List.of("case-a","case-b","case-c","case-d","case-e","case-f","case-h","case-i","low-tail")){
+        for(String c:List.of("case-a","case-b","case-c","case-d","case-e","case-f","case-g","case-h","case-i","case-j","low-tail")){
             var pixels=StyledTailAnatomyTest.fixture(c);var before=measured(c);
             var reflected=new ArrayList<byte[]>();for(var bytes:pixels){var im=StyledSpriteCodec.nativeFrame(bytes);var flip=new java.awt.image.BufferedImage(32,32,java.awt.image.BufferedImage.TYPE_INT_ARGB);
                 for(int y=0;y<32;y++)for(int x=0;x<32;x++)flip.setRGB(31-x,y,im.getRGB(x,y));reflected.add(StyledSpriteCodec.png(flip));}

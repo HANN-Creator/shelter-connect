@@ -7,14 +7,21 @@ import tools.jackson.databind.node.ObjectNode;
 
 /** Conservative silhouette support, NOT tail segmentation. Missing support means uncertain, not defective anatomy. */
 final class StyledTailGeometry {
-    static final String VERSION="rear-silhouette-branches-v2";
+    static final String VERSION="rear-silhouette-branches-v3";
     private static final int[] DX={0,1,1,1,0,-1,-1,-1}, DY={-1,-1,0,1,1,1,0,-1};
     static JsonNode measure(JsonMapper json,List<byte[]> seeds){
         var result=(ObjectNode)StyledSeedTailEvidence.geometry(json,seeds,false);
         for(String d:StyledSeedTailEvidence.SIDES){
             var image=StyledSpriteCodec.nativeFrame(seeds.get(StyledSpriteCodec.DIRECTIONS.indexOf(d)));
+            boolean reflected=d.equals("west");
             boolean[] pixels=new boolean[1024];int left=32,right=-1,bottom=-1;
-            for(int y=0;y<32;y++)for(int x=0;x<32;x++)if((image.getRGB(x,y)>>>24)!=0){pixels[y*32+x]=true;left=Math.min(left,x);right=Math.max(right,x);bottom=Math.max(bottom,y);}
+            // Thinning's two directional phases are not reflection invariant. Measure every
+            // profile in the same EAST-facing orientation, using only a copied alpha mask.
+            // This uses the current view's pixels, never the other view as substitute evidence.
+            for(int y=0;y<32;y++)for(int x=0;x<32;x++)if((image.getRGB(x,y)>>>24)!=0){
+                int canonicalX=reflected?31-x:x;
+                pixels[y*32+canonicalX]=true;left=Math.min(left,canonicalX);right=Math.max(right,canonicalX);bottom=Math.max(bottom,y);
+            }
             // Zhang-Suen thinning is a measurement copy only. The source PNG is never changed.
             boolean changed;
             do{changed=false;for(int phase=0;phase<2;phase++){
@@ -29,7 +36,7 @@ final class StyledTailGeometry {
                 if(!remove.isEmpty()){changed=true;remove.forEach(p->pixels[p]=false);}
             }}while(changed);
             var paths=json.createArrayNode();double middle=(left+right)/2.0;int footBand=bottom-3;
-            for(int p=0;p<1024;p++)if(pixels[p] && neighbors(pixels,p).size()==1 && p/32<footBand && rear(p%32,middle,d)){
+            for(int p=0;p<1024;p++)if(pixels[p] && neighbors(pixels,p).size()==1 && p/32<footBand && p%32<=middle){
                 var path=new ArrayList<Integer>();path.add(p);int previous=-1,current=p;
                 while(true){var next=neighbors(pixels,current);next.remove(Integer.valueOf(previous));if(next.size()!=1)break;
                     previous=current;current=next.getFirst();if(path.contains(current))break;path.add(current);
@@ -43,16 +50,16 @@ final class StyledTailGeometry {
                     int point=path.get(i);
                     if(p/32+2<=point/32 && Math.abs(point%32-middle)<=(right-left)/6.0){supportEnd=i;break;}
                 }
-                if(supportEnd<0 && path.size()>=4 && rear(current%32,middle,d))supportEnd=path.size()-1;
+                if(supportEnd<0 && path.size()>=4 && current%32<=middle)supportEnd=path.size()-1;
                 if(supportEnd>=0){
-                    var points=json.createArrayNode();for(int i=0;i<=supportEnd;i++){int point=path.get(i);points.addObject().put("x",point%32).put("y",point/32);}paths.add(points);
+                    // Diagnostics remain in the original image coordinates.
+                    var points=json.createArrayNode();for(int i=0;i<=supportEnd;i++){int point=path.get(i);points.addObject().put("x",reflected?31-point%32:point%32).put("y",point/32);}paths.add(points);
                 }
             }
             var g=(ObjectNode)result.path(d);g.put("branchVersion",VERSION).put("rearBranchSupport",!paths.isEmpty());g.set("rearBranchCandidates",paths);
         }
         return result;
     }
-    private static boolean rear(int x,double middle,String d){return d.equals("west")?x>=middle:x<=middle;}
     private static boolean at(boolean[] p,int x,int y){return x>=0 && x<32 && y>=0 && y<32 && p[y*32+x];}
     private static ArrayList<Integer> neighbors(boolean[] pixels,int p){
         var result=new ArrayList<Integer>();int x=p%32,y=p/32;

@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.*;
 class StyledTailSpineLiveTest {
     @Test void unchangedDeployedBasePassesFreshFullReview() throws Exception {
         org.junit.jupiter.api.Assumptions.assumeTrue("true".equals(System.getenv("TAIL_SPINE_LIVE_APPROVED")));
-        var json=JsonMapper.builder().build();var root=Path.of("scripts/fixtures/tail-spine-v31");
+        var json=JsonMapper.builder().build();var root=Path.of(System.getenv().getOrDefault("TAIL_SPINE_LIVE_FIXTURE","scripts/fixtures/tail-spine-v31"));
         var output=Path.of(System.getenv("TAIL_SPINE_LIVE_OUTPUT"));Files.createDirectories(output);
         var evidence=json.readTree(Files.readAllBytes(root.resolve("evidence.json")));
         var photo=Files.readAllBytes(Path.of(System.getenv("TAIL_SPINE_LIVE_PHOTO")));

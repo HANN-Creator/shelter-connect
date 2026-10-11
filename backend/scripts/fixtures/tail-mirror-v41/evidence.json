@@ -1,0 +1,32 @@
+{
+  "sourceJob": "e1e0b869-8914-4f9e-8865-4e38b6a04f5d",
+  "sourceAnimal": "441553202603074",
+  "recordedRules": "1c939eb780e42879dfed531dd2f27bb9424e7bbeb1458741a8b068241a861243",
+  "inputSha256": "4be54223e8101d4989fcbe88e892b704e35ee657acc5279ab52ff791c7afa36b",
+  "status": "SEED_REVIEW",
+  "failureCode": "SEED_OBSERVATION_UNCERTAIN",
+  "imageBytesChanged": false,
+  "approved": false,
+  "pixelLabSubmissions": 1,
+  "completedGenerations": 10,
+  "repairCount": 0,
+  "horizontalReflectionAlphaEqual": true,
+  "sha256": {
+    "deployed-review.json": "3614853935caa13e98f4c6def4a45e24729b657d68ff0e664412e667ac109bed",
+    "east.png": "87e1cae293017c5c591aea6ef981b60771a19788424efbd47529d156ea21a8d0",
+    "north.png": "6c1e73d72263f370419190893a783de35fc440d3d9beb2e3f7cb06062e8b6a48",
+    "south.png": "bc8083760a140d4c0c3cba09b4542887445e61754ce3a90600fdc079e0f45f23",
+    "west.png": "d79817b69df3e4368222d039bd03bcca7f375ac87622823b6b1a88aac633a075"
+  },
+  "sourcePhotoSha256": "a762825d10e4f140f568177b44be6212bff8ec16fb9c71a5e7b53185ad6b8374",
+  "freshReview": {
+    "file": "v41-actual-review.json",
+    "sha256": "fbad6cbfdce332a81f1a9b46946d62c022d1adfa0565457b5ac13071c73ce2ec",
+    "rulesSha256": "657da19999b7bb49cd099cf759b5d2de6597e3f3d0086185cde9ccd05068a4b0",
+    "inputSha256": "4be54223e8101d4989fcbe88e892b704e35ee657acc5279ab52ff791c7afa36b",
+    "photoSha256": "a762825d10e4f140f568177b44be6212bff8ec16fb9c71a5e7b53185ad6b8374",
+    "passed": true,
+    "tailPassed": true,
+    "remoteApprovalChanged": false
+  }
+}
