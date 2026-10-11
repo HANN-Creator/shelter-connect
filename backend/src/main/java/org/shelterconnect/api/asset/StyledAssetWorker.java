@@ -14,21 +14,39 @@ public class StyledAssetWorker {
     private final StyledSeedQualityAgent seedQuality;
     private final StyledLearningRecoveryStore recovery;private final StyledLessonPromptComposer prompts;
     private final StyledSeedEyeRepair eyes;
-    public StyledAssetWorker(StyledAssetStore store,StyledAssetProvider provider,AssetStorage storage,StyledSpriteCodec codec,AssetProperties properties,JsonMapper json,StyledQualityAgent quality,StyledLessonStore lessons,StyledSeedQualityAgent seedQuality,StyledLearningRecoveryStore recovery,StyledLessonPromptComposer prompts,StyledSeedEyeRepair eyes) {
+    private final PhotoAppearanceProvider appearance;
+    public StyledAssetWorker(StyledAssetStore store,StyledAssetProvider provider,AssetStorage storage,StyledSpriteCodec codec,AssetProperties properties,JsonMapper json,StyledQualityAgent quality,StyledLessonStore lessons,StyledSeedQualityAgent seedQuality,StyledLearningRecoveryStore recovery,StyledLessonPromptComposer prompts,StyledSeedEyeRepair eyes,PhotoAppearanceProvider appearance) {
         this.store=store;this.provider=provider;this.storage=storage;this.codec=codec;this.properties=properties;this.json=json;this.quality=quality;this.lessons=lessons;this.seedQuality=seedQuality;this.recovery=recovery;this.prompts=prompts;
         this.eyes=eyes;
+        this.appearance=appearance;
     }
     public void tick() {
         if(!properties.enabled)return;
         var w=store.claim();if(w==null)return;boolean submitted=false;
         try {
             if(!store.authorized(w))return;
-            boolean learning=!store.learningRecovery(w).isEmpty();
-            boolean learnedEdit=learning && w.action().equals("IDLE");
-            boolean edit=!StyledIdleHold.derived(w.providerResult()) && (learnedEdit || (!learning && motionEdit(w)));
             if(w.qualityPolicy()!=null && w.qualityPolicy().has("rulesSha256")
                 && !StyledSpriteCodec.qualityRulesSha().equals(w.qualityPolicy().path("rulesSha256").asText()))
                 throw new AssetException(409,"QUALITY_RULES_CHANGED");
+            if(StyledPhotoInput.pending(w.traits())) {
+                byte[] photo=storage.photo(w.dogId(),w.bucket(),w.key());
+                var checkpoint=w.qualityPolicy().path("photoPreparation");
+                JsonNode analysis;
+                if(checkpoint.has("analysis")) {
+                    if(!StyledPhotoInput.VERSION.equals(checkpoint.path("version").asText())
+                        || !StyledSpriteCodec.sha(photo).equals(checkpoint.path("photoSha256").asText()))
+                        throw new AssetException(409,"PHOTO_APPEARANCE_SOURCE_CHANGED");
+                    analysis=checkpoint.path("analysis");
+                } else {
+                    if(!store.beginPhotoInput(w,appearance.model(),StyledSpriteCodec.sha(photo)))return;
+                    analysis=appearance.analyzeStyled(photo);
+                    if(!store.photoInputObserved(w,analysis))return;
+                }
+                store.photoInputReady(w,StyledPhotoInput.traits(photo,analysis,json));return;
+            }
+            boolean learning=!store.learningRecovery(w).isEmpty();
+            boolean learnedEdit=learning && w.action().equals("IDLE");
+            boolean edit=!StyledIdleHold.derived(w.providerResult()) && (learnedEdit || (!learning && motionEdit(w)));
             var eyeAttempt=w.character()?store.previousSeedEyeAttempt(w):json.createObjectNode();
             boolean eyeEdit=eyeAttempt!=null && !eyeAttempt.isEmpty();
             boolean recovery=StyledRecovery.enabled(w.qualityPolicy());

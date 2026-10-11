@@ -39,6 +39,7 @@ class StyledAssetPostgresTest {
     @MockitoBean StyledSpriteCodec codec;@MockitoBean BehaviorSuggestionProvider suggestions;
     @MockitoBean StyledQualityAgent quality;
     @MockitoBean StyledSeedQualityAgent seedQuality;
+    @MockitoBean PhotoAppearanceProvider appearance;
     @MockitoBean org.shelterconnect.api.chat.OpenAiResponsesClient eyeAi;
     UUID op,user,opSubject,subject,shelter,dog,photo,permission;byte[] png;
     Map<String,byte[]> objects=new ConcurrentHashMap<>();
@@ -2680,6 +2681,70 @@ class StyledAssetPostgresTest {
         assertThat(jdbc.queryForObject("SELECT status FROM shelter.styled_quality_lessons WHERE revalidated_from_id=?",String.class,old)).isEqualTo("DISABLED");
     }
     Map<String,Object> input() {return Map.of("photoId",photo,"traits",Map.of("sourcePhotoSha256","a".repeat(64),"faceBox",List.of(.1,.1,.8,.8),"identityDescription","brown dog","motionDescription","brown dog","rearDescription","unknown markings","seed",42,"reviewNote","Reviewed full body photo and face crop for this dog"));}
+    JsonNode photoObservation() {
+        var features=new HashMap<String,String>();for(String key:List.of("coat","markings","ears","eyes","muzzle","nose","tail","build"))features.put(key,"not clearly visible");
+        features.put("coat","brown short fur");
+        return json.valueToTree(Map.of("dogCount",1,"headVisible",true,"headBox",Map.of("x",.05,"y",.05,"width",.85,"height",.85),"features",features));
+    }
+    UUID requestPhotoOnly()throws Exception {
+        when(appearance.model()).thenReturn("test-vision");
+        return UUID.fromString(post(subject,"/v1/shelter-admin/dogs/"+dog+"/styled-assets",Map.of("photoId",photo),202).at("/data/id").asText());
+    }
+    @Test void photoOnlyRequestPersistsAnalysisOutsideTransactionAndReusesInputWithoutAnotherPaidCall()throws Exception {
+        when(appearance.analyzeStyled(any())).thenAnswer(c->{outsideTransaction();return photoObservation();});
+        UUID id=requestPhotoOnly();assertThat(requestPhotoOnly()).isEqualTo(id);tick();
+        var prep=read(id).at("/qualityPolicy/photoPreparation");
+        assertThat(prep.path("status").asText()).isEqualTo("READY");
+        assertThat(prep.path("model").asText()).isEqualTo("test-vision");
+        assertThat(prep.path("photoSha256").asText()).isEqualTo(sha(png));
+        assertThat(prep.path("analysis")).isEqualTo(photoObservation());
+        assertThat(read(id).at("/steps/0/repairCount").asInt()).isZero();verifyNoInteractions(provider);
+        assertThat(requestPhotoOnly()).isEqualTo(id);tick();
+        verify(appearance,times(1)).analyzeStyled(any());verify(provider,times(1)).submit(eq(true),any());
+        var args=org.mockito.ArgumentCaptor.forClass(JsonNode.class);verify(codec).character(eq(dog),args.capture(),eq(png),any());
+        assertThat(args.getValue().path("identityDescription").asText()).contains("brown short fur");
+        assertThat(args.getValue().path("sourcePhotoSha256").asText()).isEqualTo(sha(png));
+    }
+    @Test void invalidPhotoObservationIsRetainedAndBlocksAllSpriteSubmissions()throws Exception {
+        var observation=(tools.jackson.databind.node.ObjectNode)photoObservation();observation.put("dogCount",2);
+        when(appearance.analyzeStyled(any())).thenReturn(observation);
+        UUID id=requestPhotoOnly();tick();tick();
+        assertThat(read(id).path("failureCode").asText()).isEqualTo("PHOTO_APPEARANCE_REQUIRES_REVIEW");
+        assertThat(read(id).at("/qualityPolicy/photoPreparation/analysis/dogCount").asInt()).isEqualTo(2);
+        verifyNoInteractions(provider);verify(appearance,times(1)).analyzeStyled(any());assertThat(requestPhotoOnly()).isEqualTo(id);
+    }
+    @Test void crashedPhotoAnalysisDoesNotSilentlyChargeAgain()throws Exception {
+        UUID id=requestPhotoOnly();
+        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=quality_policy || '{\"photoPreparation\":{\"status\":\"STARTED\",\"attempts\":1}}'::jsonb WHERE id=?",id);
+        tick();assertThat(read(id).path("failureCode").asText()).isEqualTo("STYLED_PHOTO_ANALYSIS_INTERRUPTED");
+        verify(appearance,never()).analyzeStyled(any());verifyNoInteractions(provider);
+    }
+    @Test void persistedPhotoObservationResumesWithoutAnotherPaidAnalysis()throws Exception {
+        UUID id=requestPhotoOnly();
+        var checkpoint=Map.of("status","STARTED","version","styled-photo-analysis-v1","photoSha256",sha(png),"analysis",photoObservation());
+        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=quality_policy || jsonb_build_object('photoPreparation',CAST(? AS jsonb)) WHERE id=?",json.writeValueAsString(checkpoint),id);
+        tick();assertThat(read(id).at("/qualityPolicy/photoPreparation/status").asText()).isEqualTo("READY");
+        verify(appearance,never()).analyzeStyled(any());verifyNoInteractions(provider);
+        tick();verify(provider).submit(eq(true),any());
+    }
+    @Test void changedPhotoCannotReusePersistedObservation()throws Exception {
+        UUID id=requestPhotoOnly();
+        var checkpoint=Map.of("status","STARTED","version","styled-photo-analysis-v1","photoSha256","f".repeat(64),"analysis",photoObservation());
+        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=quality_policy || jsonb_build_object('photoPreparation',CAST(? AS jsonb)) WHERE id=?",json.writeValueAsString(checkpoint),id);
+        tick();assertThat(read(id).path("failureCode").asText()).isEqualTo("PHOTO_APPEARANCE_SOURCE_CHANGED");
+        verify(appearance,never()).analyzeStyled(any());verifyNoInteractions(provider);
+    }
+    @Test void photoAnalysisCannotCommitOrSubmitAfterPermissionWithdrawal()throws Exception {
+        UUID id=requestPhotoOnly();
+        when(appearance.analyzeStyled(any())).thenAnswer(c->{outsideTransaction();jdbc.update("UPDATE shelter.asset_source_permissions SET revoked_at=now() WHERE id=?",permission);return photoObservation();});
+        tick();assertThat(read(id).path("status").asText()).isEqualTo("CANCELLED");
+        verifyNoInteractions(provider);assertThat(read(id).at("/qualityPolicy/photoPreparation/status").asText()).isEqualTo("STARTED");
+    }
+    @Test void explicitInvalidTraitsCannotOptIntoAutomaticAnalysis()throws Exception {
+        for(Object traits:List.of(Map.of(),"auto"))post(subject,"/v1/shelter-admin/dogs/"+dog+"/styled-assets",Map.of("photoId",photo,"traits",traits),400);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.asset_jobs WHERE dog_id=?",Integer.class,dog)).isZero();
+        verifyNoInteractions(provider,appearance);
+    }
     // Existing cases exercise persisted pre-B63 jobs and their explicit manual review contract.
     UUID request() throws Exception {
         UUID id=UUID.fromString(post(subject,"/v1/shelter-admin/dogs/"+dog+"/styled-assets",input(),202).at("/data/id").asText());

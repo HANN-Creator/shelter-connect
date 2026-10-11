@@ -42,7 +42,8 @@ public class StyledAssetStore {
     }
     @Transactional public Job request(UUID subject,UUID dog,JsonNode body) {
         access.requireDogForWrite(subject,dog);properties.requireEnabled();AssetInput.fields(body,"photoId","traits");
-        UUID photo=AssetInput.id(body,"photoId");JsonNode traits=StyledSpriteCodec.validateTraits(body.path("traits"));
+        UUID photo=AssetInput.id(body,"photoId");JsonNode traits=body.has("traits")?
+            StyledSpriteCodec.validateTraits(body.path("traits")):StyledPhotoInput.pending(json);
         if(jdbc.sql("SELECT id FROM shelter.dog_photos WHERE id=:p AND dog_id=:d").param("p",photo).param("d",dog).query(UUID.class).optional().isEmpty()) throw missing();
         legacy.validPhoto(photo,null,true);
         // Canonical field ordering makes JSON object order irrelevant. Review prose does not buy another generation.
@@ -848,6 +849,38 @@ public class StyledAssetStore {
         return w.get();
     }
     @Transactional public boolean authorized(Work w) { return owned(w) && validOrCancel(w.id()); }
+    @Transactional public boolean beginPhotoInput(Work w,String model,String photoSha) {
+        if(!authorized(w))return false;
+        if(!w.character() || !w.status().equals("PENDING") || !StyledPhotoInput.pending(w.traits()))throw AssetException.invalid();
+        var current=job(w.id()).qualityPolicy();
+        if(current.has("photoPreparation"))throw new AssetException(409,"STYLED_PHOTO_ANALYSIS_INTERRUPTED");
+        var record=Map.of("status","STARTED","version",StyledPhotoInput.VERSION,"model",model,
+            "photoSha256",photoSha,"attempts",1,"startedAt",Instant.now().toString());
+        return jdbc.sql("UPDATE shelter.asset_jobs SET quality_policy=quality_policy || jsonb_build_object('photoPreparation',CAST(:p AS jsonb)) WHERE id=:id AND NOT jsonb_exists(quality_policy,'photoPreparation')")
+            .param("p",json.writeValueAsString(record)).param("id",w.id()).update()==1;
+    }
+    @Transactional public boolean photoInputObserved(Work w,JsonNode analysis) {
+        if(!authorized(w))return false;
+        return jdbc.sql("UPDATE shelter.asset_jobs SET quality_policy=jsonb_set(quality_policy,'{photoPreparation}',(quality_policy->'photoPreparation') || jsonb_build_object('analysis',CAST(:a AS jsonb))) WHERE id=:id AND quality_policy#>>'{photoPreparation,status}'='STARTED'")
+            .param("a",json.writeValueAsString(analysis)).param("id",w.id()).update()==1;
+    }
+    @Transactional public boolean photoInputReady(Work w,JsonNode traits) {
+        if(!authorized(w))return false;
+        StyledSpriteCodec.validateTraits(traits);
+        int changed=jdbc.sql("""
+            UPDATE shelter.asset_jobs SET styled_input=CAST(:traits AS jsonb),
+              quality_policy=jsonb_set(quality_policy,'{photoPreparation}',(quality_policy->'photoPreparation') ||
+                jsonb_build_object('status','READY','completedAt',:at,'traitsSha256',:sha))
+            WHERE id=:id AND styled_input=CAST(:pending AS jsonb)
+              AND quality_policy#>>'{photoPreparation,status}'='STARTED'
+              AND quality_policy#>>'{photoPreparation,photoSha256}'=:photo
+              AND jsonb_exists(quality_policy->'photoPreparation','analysis')
+            """).param("traits",json.writeValueAsString(traits)).param("at",Instant.now().toString())
+            .param("sha",StyledSpriteCodec.sha(json.writeValueAsBytes(traits))).param("pending",json.writeValueAsString(w.traits()))
+            .param("photo",traits.path("sourcePhotoSha256").asText()).param("id",w.id()).update();
+        if(changed!=1)throw new AssetException(409,"PHOTO_APPEARANCE_SOURCE_CHANGED");
+        defer(w,0);return true;
+    }
     @Transactional public boolean reserve(Work w,JsonNode payload) {
         if(!authorized(w))return false;
         if(w.qualityPolicy()!=null && w.qualityPolicy().path("referenceOnly").asBoolean())throw new AssetException(409,"SEED_EXAMPLE_GENERATION_FORBIDDEN");
