@@ -30,6 +30,8 @@ No approved pack is changed and no bulk generation is started. Production HTTP s
 
 - Shared policy: `sprite-regressions-2026-10-11-v40`; SHA-256 `1c939eb780e42879dfed531dd2f27bb9424e7bbeb1458741a8b068241a861243`.
 - Local targeted Java regression: 33 passed, one optional test skipped. Disposable PostgreSQL regression and schema checks: 41 passed, zero skipped. Python script tests: 111 passed.
+- The first full CI run caught the V1 bootstrap upgrade test's old V23/count expectation. It now expects the additional V24 migration, and the isolated bootstrap/upgrade/reapplication test passes locally. No migration or runtime behavior was weakened to satisfy the test.
 - The real opaque fixture remains rejected by normal validation; recovery preserves it unchanged. The real IDLE fixture exercises the narrow restart recipe after an explicit in-memory policy rebinding; its historical AI result is not relabeled as a fresh review.
 - Boundary cases include exhausted repair budgets, interrupted submissions, uncertain or unrelated IDLE defects, rejected policy replays, disabled parent lessons and revoked source permissions. The next new job uses a lesson only after its current-policy replay passes.
 - Full GitHub CI and the development V24 application are recorded with the PR. No paid generation, deployment or app playback is claimed by these local tests.
+- Development V24 was applied on 2026-10-11 with Flyway validation. Existing jobs, steps, lessons and examples retained identical content hashes (excluding the new nullable column); lesson RLS and runtime/public permissions were preserved.
