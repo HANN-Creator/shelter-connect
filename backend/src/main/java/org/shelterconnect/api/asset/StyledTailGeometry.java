@@ -58,6 +58,7 @@ final class StyledTailGeometry {
             }
             var g=(ObjectNode)result.path(d);g.put("branchVersion",VERSION).put("rearBranchSupport",!paths.isEmpty());g.set("rearBranchCandidates",paths);
         }
+        result.set("shapeConsistency",StyledTailShapeConsistency.measure(json,seeds));
         return result;
     }
     private static boolean at(boolean[] p,int x,int y){return x>=0 && x<32 && y>=0 && y<32 && p[y*32+x];}

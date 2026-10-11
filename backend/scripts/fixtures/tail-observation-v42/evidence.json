@@ -1,0 +1,17 @@
+{
+  "description": "Exact deployed v41 observations: black identical mirrored side silhouettes receive COMPLETE_CONNECTED/SHORT_STUB; cream changed rear tail remains a real negative control.",
+  "previousRulesSha256": "657da19999b7bb49cd099cf759b5d2de6597e3f3d0086185cde9ccd05068a4b0",
+  "sha256": {
+    "black/deployed-review.json": "f6e3db132a895f8fd9335508c9cbf88508b7b2ffc08dd7a11f789c6d3e2472f3",
+    "black/east.png": "535c0cd3e923a6abe66947767f4c1608e78b978767d08f138d4831e2ad57826e",
+    "black/north.png": "c44e745c602fac859dae78e12e7f0f445cf450fe7cc2d89557f69e7f5114c303",
+    "black/south.png": "615ae9d888e0295fa1334029557eb24e53cbf7f041467485cbb4d839c7aa3d9f",
+    "black/west.png": "69b079c49f625fe8acf73a09c231f06d38e75df1f162168cd33ec807c5d8f9d8",
+    "cream/deployed-review.json": "9f014ac792230ca549406fe8a9c00ad18e654e48b972412caa391df5e79f4388",
+    "cream/east.png": "33b391f017a9e5cffa8656043ef2dadb7327613c573641585dd95ca235f0896d",
+    "cream/idle-north.png": "e4607f1c3d0810aa849a99465443167e375bb2a47afdd697be3d0f9ba9badfdc",
+    "cream/north.png": "a1fff9a28fec9db4e57e5bf69de3e85628653e2ba9a4803b26c8f3814f705f39",
+    "cream/south.png": "8c30e7dadaab9a0a97de10d102fc27a15af29b528c7a20598b048d4c3f1545c5",
+    "cream/west.png": "10dd6a34bea84a9efce9cc3c06784417344c0a650a158344b3251c8db18d5c79"
+  }
+}

@@ -31,6 +31,36 @@ def decode_recorded_alpha(rows):
 
 
 class QualityRegressionTest(unittest.TestCase):
+    def test_exact_tail_shape_conflict_retains_pixels_and_does_not_waive_changed_motion(self):
+        from PIL import ImageOps
+        root=Path(__file__).parent/'fixtures/tail-observation-v42'
+        evidence=read(root/'evidence.json')
+        for file,sha in evidence['sha256'].items():self.assertEqual(digest(root/file),sha)
+        with Image.open(root/'black/west.png') as west, Image.open(root/'black/east.png') as east:
+            self.assertEqual(ImageOps.mirror(west.convert('RGBA')).getchannel('A').tobytes(),east.convert('RGBA').getchannel('A').tobytes())
+        report=read(root/'black/deployed-review.json')
+        for h in report['tailEvidence']['observationHistory']:
+            self.assertEqual({v['tail'] for v in h['observation']['views']},{'COMPLETE_CONNECTED','SHORT_STUB'})
+        cream=read(root/'cream/deployed-review.json')
+        self.assertFalse(cream['passed']);self.assertIn('TAIL_CARRIAGE',cream['issues'])
+        self.assertFalse(cream['referencePoseUsable'])
+        with Image.open(root/'cream/idle-north.png') as sheet:self.assertEqual(sheet.size,(360,40))
+        rules=load_quality()
+        self.assertTrue(any(r.get('fixture')=='tail-observation-v42/evidence.json' for r in rules['regressions']))
+        self.assertEqual(rules['recovery']['tailShapeConsistency']['version'],'exact-tail-shape-consistency-v1')
+
+    def test_real_false_pass_is_retained_before_changing_reference_comparison_inputs(self):
+        root=Path(__file__).parent/'fixtures/tail-observation-v42/live-v42'
+        evidence=read(root/'evidence.json')
+        for file,sha in evidence['sha256'].items():self.assertEqual(digest(root/file),sha)
+        outcomes=read(root/'results.json')
+        self.assertEqual(len(outcomes),10)
+        self.assertEqual([r['case'] for r in outcomes if r['actualPass']!=r['expectedPass']],['cream-motion'])
+        self.assertTrue(read(root/'cream-motion.json')['passed'])
+        rules=load_quality()
+        self.assertTrue(any(r['id']=='changed-entry-contour-overlooked-v43' for r in rules['regressions']))
+        self.assertEqual(rules['recovery']['referenceContour']['version'],'aligned-entry-contour-v1')
+
     def test_actual_opaque_character_is_not_an_ai_pass_or_repair(self):
         root=Path(__file__).parent/'fixtures/opaque-character-v38'
         evidence=read(root/'evidence.json')

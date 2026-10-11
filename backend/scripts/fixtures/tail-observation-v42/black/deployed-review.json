@@ -1,0 +1,791 @@
+{
+  "note": "꼬리 관찰이 불확실한 방향은 원본을 보존하고 승인을 보류합니다. 불확실성 자체는 이미지 결함이나 학습 예시가 아닙니다.",
+  "model": "gpt-5.6-luna",
+  "views": [
+    {
+      "note": "사진의 어두운 단색 털과 정면 구조가 잘 맞습니다.",
+      "style": "PASS",
+      "direction": "south",
+      "readability": "PASS"
+    },
+    {
+      "note": "후면에 얼굴이 없는 처리가 올바르고 보이는 털색도 일치합니다.",
+      "style": "PASS",
+      "direction": "north",
+      "readability": "NOT_VISIBLE"
+    },
+    {
+      "note": "측면 머리와 짧은 털, 어두운 단색 외형이 사진과 잘 맞습니다.",
+      "style": "PASS",
+      "direction": "west",
+      "readability": "PASS"
+    },
+    {
+      "note": "반대쪽 측면도 올바른 방향과 일관된 어두운 털색을 유지합니다.",
+      "style": "PASS",
+      "direction": "east",
+      "readability": "PASS"
+    }
+  ],
+  "issues": [],
+  "passed": false,
+  "version": "seed-eyes-v1",
+  "identity": "UNCERTAIN",
+  "appearance": "UNCERTAIN",
+  "reviewedAt": "2026-10-11T09:57:45.847054576Z",
+  "inputSha256": "c46a717d2d81b98968c17caa293ada56e835cefa5bdf942871145f743ee8a18d",
+  "photoSha256": "62fa75754e436593bf8acab9115194434114db5a7afcf50b2c8f5138a1e17c50",
+  "rulesSha256": "657da19999b7bb49cd099cf759b5d2de6597e3f3d0086185cde9ccd05068a4b0",
+  "coatEvidence": {
+    "version": "material-coat-review-v1",
+    "reviewCalls": 0,
+    "propertyReview": {
+      "note": "네 방향 모두 방향, 구조, 짧은 어두운 털과 픽셀 스타일이 사진 및 승인 스타일과 일치합니다. 사진에서 꼬리는 가려져 판단할 수 없습니다.",
+      "views": [
+        {
+          "note": "사진의 어두운 단색 털과 정면 구조가 잘 맞습니다.",
+          "issues": [],
+          "direction": "south",
+          "confidence": 0.94,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "사진에서 보이는 얼굴과 몸통은 균일한 검정~짙은 갈색입니다. 이마와 주둥이에는 뚜렷한 밝은 패치가 없고, 가슴과 다리 일부는 담요와 각도 때문에 충분히 보이지 않습니다.",
+          "observedSpriteMarkings": "정면 머리와 몸통은 균일한 짙은 갈색~검정색입니다. 이마와 가슴에 뚜렷한 별도 패치는 없고, 어두운 주둥이와 짙은 앞다리가 보입니다. 두 눈은 작은 어두운 픽셀로 구분됩니다."
+        },
+        {
+          "note": "후면에 얼굴이 없는 처리가 올바르고 보이는 털색도 일치합니다.",
+          "issues": [],
+          "direction": "north",
+          "confidence": 0.93,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "사진에서는 등과 후면 털이 담요에 가려져 거의 보이지 않습니다. 보이는 털은 어두운 단색이며 후면의 패치와 꼬리는 확인할 수 없습니다.",
+          "observedSpriteMarkings": "뒤통수와 등, 뒷다리는 균일한 짙은 갈색~검정색입니다. 후면에는 얼굴이나 눈이 없으며, 꼬리는 몸 위로 짧게 말려 보입니다."
+        },
+        {
+          "note": "측면 머리와 짧은 털, 어두운 단색 외형이 사진과 잘 맞습니다.",
+          "issues": [],
+          "direction": "west",
+          "confidence": 0.95,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "사진은 비슷한 측면 얼굴을 보여 주며, 머리·주둥이와 보이는 몸통은 균일한 검정~짙은 갈색입니다. 가슴과 다리 일부, 꼬리는 담요와 구도로 가려져 알 수 없습니다.",
+          "observedSpriteMarkings": "왼쪽을 향한 측면 머리와 몸통은 어두운 짙은 갈색~검정색입니다. 이마, 주둥이, 가슴, 다리와 몸통에 뚜렷한 밝은 패치는 없고, 한쪽 눈과 작은 위쪽 꼬리가 보입니다."
+        },
+        {
+          "note": "반대쪽 측면도 올바른 방향과 일관된 어두운 털색을 유지합니다.",
+          "issues": [],
+          "direction": "east",
+          "confidence": 0.95,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "사진에서 보이는 얼굴과 몸통은 어두운 단색입니다. 이마와 주둥이에 밝은 패치는 없고, 가슴·다리·꼬리는 담요와 촬영 각도 때문에 숨겨져 있습니다.",
+          "observedSpriteMarkings": "오른쪽을 향한 측면 머리와 몸통은 어두운 짙은 갈색~검정색입니다. 이마, 주둥이, 가슴, 다리와 몸통에 뚜렷한 별도 패치는 없으며 한쪽 눈과 위로 향한 꼬리가 보입니다."
+        }
+      ],
+      "photoTail": "OBSCURED",
+      "photoEvidence": "사진 속 강아지는 매우 어두운 검정~짙은 갈색의 짧고 매끈한 털이며, 이마·가슴·다리·몸통에 뚜렷한 흰색 또는 다른 색의 털 패치는 보이지 않습니다. 얼굴은 부분적인 측면으로 보이고 꼬리는 담요와 몸에 가려져 확인할 수 없습니다.",
+      "tailConsistent": true,
+      "repairDescription": ""
+    },
+    "originalPropertyReview": {
+      "note": "네 방향 모두 방향, 구조, 짧은 어두운 털과 픽셀 스타일이 사진 및 승인 스타일과 일치합니다. 사진에서 꼬리는 가려져 판단할 수 없습니다.",
+      "views": [
+        {
+          "note": "사진의 어두운 단색 털과 정면 구조가 잘 맞습니다.",
+          "issues": [],
+          "direction": "south",
+          "confidence": 0.94,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "사진에서 보이는 얼굴과 몸통은 균일한 검정~짙은 갈색입니다. 이마와 주둥이에는 뚜렷한 밝은 패치가 없고, 가슴과 다리 일부는 담요와 각도 때문에 충분히 보이지 않습니다.",
+          "observedSpriteMarkings": "정면 머리와 몸통은 균일한 짙은 갈색~검정색입니다. 이마와 가슴에 뚜렷한 별도 패치는 없고, 어두운 주둥이와 짙은 앞다리가 보입니다. 두 눈은 작은 어두운 픽셀로 구분됩니다."
+        },
+        {
+          "note": "후면에 얼굴이 없는 처리가 올바르고 보이는 털색도 일치합니다.",
+          "issues": [],
+          "direction": "north",
+          "confidence": 0.93,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "사진에서는 등과 후면 털이 담요에 가려져 거의 보이지 않습니다. 보이는 털은 어두운 단색이며 후면의 패치와 꼬리는 확인할 수 없습니다.",
+          "observedSpriteMarkings": "뒤통수와 등, 뒷다리는 균일한 짙은 갈색~검정색입니다. 후면에는 얼굴이나 눈이 없으며, 꼬리는 몸 위로 짧게 말려 보입니다."
+        },
+        {
+          "note": "측면 머리와 짧은 털, 어두운 단색 외형이 사진과 잘 맞습니다.",
+          "issues": [],
+          "direction": "west",
+          "confidence": 0.95,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "사진은 비슷한 측면 얼굴을 보여 주며, 머리·주둥이와 보이는 몸통은 균일한 검정~짙은 갈색입니다. 가슴과 다리 일부, 꼬리는 담요와 구도로 가려져 알 수 없습니다.",
+          "observedSpriteMarkings": "왼쪽을 향한 측면 머리와 몸통은 어두운 짙은 갈색~검정색입니다. 이마, 주둥이, 가슴, 다리와 몸통에 뚜렷한 밝은 패치는 없고, 한쪽 눈과 작은 위쪽 꼬리가 보입니다."
+        },
+        {
+          "note": "반대쪽 측면도 올바른 방향과 일관된 어두운 털색을 유지합니다.",
+          "issues": [],
+          "direction": "east",
+          "confidence": 0.95,
+          "eyesReadable": true,
+          "styleMatches": true,
+          "tailPlausible": true,
+          "identityMatches": true,
+          "directionCorrect": true,
+          "observedPhotoMarkings": "사진에서 보이는 얼굴과 몸통은 어두운 단색입니다. 이마와 주둥이에 밝은 패치는 없고, 가슴·다리·꼬리는 담요와 촬영 각도 때문에 숨겨져 있습니다.",
+          "observedSpriteMarkings": "오른쪽을 향한 측면 머리와 몸통은 어두운 짙은 갈색~검정색입니다. 이마, 주둥이, 가슴, 다리와 몸통에 뚜렷한 별도 패치는 없으며 한쪽 눈과 위로 향한 꼬리가 보입니다."
+        }
+      ],
+      "photoTail": "OBSCURED",
+      "photoEvidence": "사진 속 강아지는 매우 어두운 검정~짙은 갈색의 짧고 매끈한 털이며, 이마·가슴·다리·몸통에 뚜렷한 흰색 또는 다른 색의 털 패치는 보이지 않습니다. 얼굴은 부분적인 측면으로 보이고 꼬리는 담요와 몸에 가려져 확인할 수 없습니다.",
+      "tailConsistent": true,
+      "repairDescription": ""
+    }
+  },
+  "tailEvidence": {
+    "model": "gpt-5.6-luna",
+    "passed": false,
+    "version": "tail-anatomy-tristate-v2",
+    "decision": "UNCERTAIN",
+    "geometry": {
+      "east": {
+        "edgeContact": false,
+        "branchVersion": "rear-silhouette-branches-v3",
+        "opaqueComponents": 1,
+        "rearBranchSupport": true,
+        "rearBranchCandidates": [
+          [
+            {
+              "x": 2,
+              "y": 15
+            },
+            {
+              "x": 3,
+              "y": 15
+            },
+            {
+              "x": 4,
+              "y": 16
+            },
+            {
+              "x": 5,
+              "y": 16
+            },
+            {
+              "x": 6,
+              "y": 17
+            },
+            {
+              "x": 7,
+              "y": 18
+            },
+            {
+              "x": 8,
+              "y": 19
+            }
+          ]
+        ],
+        "clearPixelsLeftTopRightBottom": [
+          1,
+          5,
+          3,
+          1
+        ]
+      },
+      "west": {
+        "edgeContact": false,
+        "branchVersion": "rear-silhouette-branches-v3",
+        "opaqueComponents": 1,
+        "rearBranchSupport": true,
+        "rearBranchCandidates": [
+          [
+            {
+              "x": 29,
+              "y": 15
+            },
+            {
+              "x": 28,
+              "y": 15
+            },
+            {
+              "x": 27,
+              "y": 16
+            },
+            {
+              "x": 26,
+              "y": 16
+            },
+            {
+              "x": 25,
+              "y": 17
+            },
+            {
+              "x": 24,
+              "y": 18
+            },
+            {
+              "x": 23,
+              "y": 19
+            }
+          ]
+        ],
+        "clearPixelsLeftTopRightBottom": [
+          3,
+          5,
+          1,
+          1
+        ]
+      }
+    },
+    "verdicts": {
+      "east": {
+        "issue": "",
+        "decision": "UNCERTAIN"
+      },
+      "west": {
+        "issue": "",
+        "decision": "PASS"
+      }
+    },
+    "reviewedAt": "2026-10-11T09:58:01.350901004Z",
+    "inputSha256": "c46a717d2d81b98968c17caa293ada56e835cefa5bdf942871145f743ee8a18d",
+    "observation": {
+      "views": [
+        {
+          "tip": "VISIBLE",
+          "tail": "COMPLETE_CONNECTED",
+          "contour": "DISTINCT",
+          "direction": "west",
+          "attachment": "CONNECTED",
+          "visibleEvidence": "The rump attaches directly to a narrow tail rising vertically from the rear outline. Its contour is clearly separate from the body and ends in a visible squared tip."
+        },
+        {
+          "tip": "VISIBLE",
+          "tail": "SHORT_STUB",
+          "contour": "DISTINCT",
+          "direction": "east",
+          "attachment": "CONNECTED",
+          "visibleEvidence": "The rump transitions into a small, horizontal appendage projecting rearward. It is visibly attached, has a distinct compact contour, and ends at a visible blunt tip."
+        }
+      ],
+      "photoTail": "OBSCURED",
+      "photoEvidence": "사진 속 강아지는 매우 어두운 검정~짙은 갈색의 짧고 매끈한 털이며, 이마·가슴·다리·몸통에 뚜렷한 흰색 또는 다른 색의 털 패치는 보이지 않습니다. 얼굴은 부분적인 측면으로 보이고 꼬리는 담요와 몸에 가려져 확인할 수 없습니다."
+    },
+    "photoSha256": "62fa75754e436593bf8acab9115194434114db5a7afcf50b2c8f5138a1e17c50",
+    "reviewCalls": 2,
+    "rulesSha256": "657da19999b7bb49cd099cf759b5d2de6597e3f3d0086185cde9ccd05068a4b0",
+    "failedDirections": [],
+    "observationHistory": [
+      {
+        "passed": false,
+        "decision": "UNCERTAIN",
+        "geometry": {
+          "east": {
+            "edgeContact": false,
+            "branchVersion": "rear-silhouette-branches-v3",
+            "opaqueComponents": 1,
+            "rearBranchSupport": true,
+            "rearBranchCandidates": [
+              [
+                {
+                  "x": 2,
+                  "y": 15
+                },
+                {
+                  "x": 3,
+                  "y": 15
+                },
+                {
+                  "x": 4,
+                  "y": 16
+                },
+                {
+                  "x": 5,
+                  "y": 16
+                },
+                {
+                  "x": 6,
+                  "y": 17
+                },
+                {
+                  "x": 7,
+                  "y": 18
+                },
+                {
+                  "x": 8,
+                  "y": 19
+                }
+              ]
+            ],
+            "clearPixelsLeftTopRightBottom": [
+              1,
+              5,
+              3,
+              1
+            ]
+          },
+          "west": {
+            "edgeContact": false,
+            "branchVersion": "rear-silhouette-branches-v3",
+            "opaqueComponents": 1,
+            "rearBranchSupport": true,
+            "rearBranchCandidates": [
+              [
+                {
+                  "x": 29,
+                  "y": 15
+                },
+                {
+                  "x": 28,
+                  "y": 15
+                },
+                {
+                  "x": 27,
+                  "y": 16
+                },
+                {
+                  "x": 26,
+                  "y": 16
+                },
+                {
+                  "x": 25,
+                  "y": 17
+                },
+                {
+                  "x": 24,
+                  "y": 18
+                },
+                {
+                  "x": 23,
+                  "y": 19
+                }
+              ]
+            ],
+            "clearPixelsLeftTopRightBottom": [
+              3,
+              5,
+              1,
+              1
+            ]
+          }
+        },
+        "verdicts": {
+          "east": {
+            "issue": "",
+            "decision": "UNCERTAIN"
+          },
+          "west": {
+            "issue": "",
+            "decision": "PASS"
+          }
+        },
+        "observation": {
+          "views": [
+            {
+              "tip": "VISIBLE",
+              "tail": "COMPLETE_CONNECTED",
+              "contour": "DISTINCT",
+              "direction": "west",
+              "attachment": "CONNECTED",
+              "visibleEvidence": "The rump attaches directly to a narrow tail rising vertically from the rear outline. Its contour is clearly separate from the body and ends in a visible squared tip."
+            },
+            {
+              "tip": "VISIBLE",
+              "tail": "SHORT_STUB",
+              "contour": "DISTINCT",
+              "direction": "east",
+              "attachment": "CONNECTED",
+              "visibleEvidence": "A small dark nub projects from the left-side rump and remains visibly connected. It has a recognizable short appendage contour with an exposed end."
+            }
+          ],
+          "photoTail": "OBSCURED",
+          "photoEvidence": "사진 속 강아지는 매우 어두운 검정~짙은 갈색의 짧고 매끈한 털이며, 이마·가슴·다리·몸통에 뚜렷한 흰색 또는 다른 색의 털 패치는 보이지 않습니다. 얼굴은 부분적인 측면으로 보이고 꼬리는 담요와 몸에 가려져 확인할 수 없습니다."
+        },
+        "failedDirections": [],
+        "shortTailSupported": false,
+        "uncertainDirections": [
+          "east"
+        ],
+        "conflictingDirections": []
+      },
+      {
+        "passed": false,
+        "decision": "UNCERTAIN",
+        "geometry": {
+          "east": {
+            "edgeContact": false,
+            "branchVersion": "rear-silhouette-branches-v3",
+            "opaqueComponents": 1,
+            "rearBranchSupport": true,
+            "rearBranchCandidates": [
+              [
+                {
+                  "x": 2,
+                  "y": 15
+                },
+                {
+                  "x": 3,
+                  "y": 15
+                },
+                {
+                  "x": 4,
+                  "y": 16
+                },
+                {
+                  "x": 5,
+                  "y": 16
+                },
+                {
+                  "x": 6,
+                  "y": 17
+                },
+                {
+                  "x": 7,
+                  "y": 18
+                },
+                {
+                  "x": 8,
+                  "y": 19
+                }
+              ]
+            ],
+            "clearPixelsLeftTopRightBottom": [
+              1,
+              5,
+              3,
+              1
+            ]
+          },
+          "west": {
+            "edgeContact": false,
+            "branchVersion": "rear-silhouette-branches-v3",
+            "opaqueComponents": 1,
+            "rearBranchSupport": true,
+            "rearBranchCandidates": [
+              [
+                {
+                  "x": 29,
+                  "y": 15
+                },
+                {
+                  "x": 28,
+                  "y": 15
+                },
+                {
+                  "x": 27,
+                  "y": 16
+                },
+                {
+                  "x": 26,
+                  "y": 16
+                },
+                {
+                  "x": 25,
+                  "y": 17
+                },
+                {
+                  "x": 24,
+                  "y": 18
+                },
+                {
+                  "x": 23,
+                  "y": 19
+                }
+              ]
+            ],
+            "clearPixelsLeftTopRightBottom": [
+              3,
+              5,
+              1,
+              1
+            ]
+          }
+        },
+        "verdicts": {
+          "east": {
+            "issue": "",
+            "decision": "UNCERTAIN"
+          },
+          "west": {
+            "issue": "",
+            "decision": "PASS"
+          }
+        },
+        "observation": {
+          "views": [
+            {
+              "tip": "VISIBLE",
+              "tail": "COMPLETE_CONNECTED",
+              "contour": "DISTINCT",
+              "direction": "west",
+              "attachment": "CONNECTED",
+              "visibleEvidence": "The rump attaches directly to a narrow tail rising vertically from the rear outline. Its contour is clearly separate from the body and ends in a visible squared tip."
+            },
+            {
+              "tip": "VISIBLE",
+              "tail": "SHORT_STUB",
+              "contour": "DISTINCT",
+              "direction": "east",
+              "attachment": "CONNECTED",
+              "visibleEvidence": "The rump transitions into a small, horizontal appendage projecting rearward. It is visibly attached, has a distinct compact contour, and ends at a visible blunt tip."
+            }
+          ],
+          "photoTail": "OBSCURED",
+          "photoEvidence": "사진 속 강아지는 매우 어두운 검정~짙은 갈색의 짧고 매끈한 털이며, 이마·가슴·다리·몸통에 뚜렷한 흰색 또는 다른 색의 털 패치는 보이지 않습니다. 얼굴은 부분적인 측면으로 보이고 꼬리는 담요와 몸에 가려져 확인할 수 없습니다."
+        },
+        "failedDirections": [],
+        "shortTailSupported": false,
+        "uncertainDirections": [
+          "east"
+        ],
+        "conflictingDirections": [],
+        "independentObservation": {
+          "views": [
+            {
+              "tip": "VISIBLE",
+              "tail": "SHORT_STUB",
+              "contour": "DISTINCT",
+              "direction": "east",
+              "attachment": "CONNECTED",
+              "visibleEvidence": "The rump transitions into a small, horizontal appendage projecting rearward. It is visibly attached, has a distinct compact contour, and ends at a visible blunt tip."
+            }
+          ],
+          "photoTail": "OBSCURED",
+          "photoEvidence": "사진 속 강아지는 매우 어두운 검정~짙은 갈색의 짧고 매끈한 털이며, 이마·가슴·다리·몸통에 뚜렷한 흰색 또는 다른 색의 털 패치는 보이지 않습니다. 얼굴은 부분적인 측면으로 보이고 꼬리는 담요와 몸에 가려져 확인할 수 없습니다."
+        }
+      }
+    ],
+    "shortTailSupported": false,
+    "uncertainDirections": [
+      "east"
+    ],
+    "conflictingDirections": [],
+    "independentObservation": {
+      "views": [
+        {
+          "tip": "VISIBLE",
+          "tail": "SHORT_STUB",
+          "contour": "DISTINCT",
+          "direction": "east",
+          "attachment": "CONNECTED",
+          "visibleEvidence": "The rump transitions into a small, horizontal appendage projecting rearward. It is visibly attached, has a distinct compact contour, and ends at a visible blunt tip."
+        }
+      ],
+      "photoTail": "OBSCURED",
+      "photoEvidence": "사진 속 강아지는 매우 어두운 검정~짙은 갈색의 짧고 매끈한 털이며, 이마·가슴·다리·몸통에 뚜렷한 흰색 또는 다른 색의 털 패치는 보이지 않습니다. 얼굴은 부분적인 측면으로 보이고 꼬리는 담요와 몸에 가려져 확인할 수 없습니다."
+    }
+  },
+  "lessonsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "reviewVersion": "photo-observed-features-review-v4",
+  "edgeDirections": [],
+  "learnedLessons": [],
+  "propertyReview": {
+    "note": "네 방향 모두 방향, 구조, 짧은 어두운 털과 픽셀 스타일이 사진 및 승인 스타일과 일치합니다. 사진에서 꼬리는 가려져 판단할 수 없습니다.",
+    "views": [
+      {
+        "note": "사진의 어두운 단색 털과 정면 구조가 잘 맞습니다.",
+        "issues": [],
+        "direction": "south",
+        "confidence": 0.94,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "confidenceAdvisory": false,
+        "observedPhotoMarkings": "사진에서 보이는 얼굴과 몸통은 균일한 검정~짙은 갈색입니다. 이마와 주둥이에는 뚜렷한 밝은 패치가 없고, 가슴과 다리 일부는 담요와 각도 때문에 충분히 보이지 않습니다.",
+        "observedSpriteMarkings": "정면 머리와 몸통은 균일한 짙은 갈색~검정색입니다. 이마와 가슴에 뚜렷한 별도 패치는 없고, 어두운 주둥이와 짙은 앞다리가 보입니다. 두 눈은 작은 어두운 픽셀로 구분됩니다."
+      },
+      {
+        "note": "후면에 얼굴이 없는 처리가 올바르고 보이는 털색도 일치합니다.",
+        "issues": [],
+        "direction": "north",
+        "confidence": 0.93,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "confidenceAdvisory": false,
+        "observedPhotoMarkings": "사진에서는 등과 후면 털이 담요에 가려져 거의 보이지 않습니다. 보이는 털은 어두운 단색이며 후면의 패치와 꼬리는 확인할 수 없습니다.",
+        "observedSpriteMarkings": "뒤통수와 등, 뒷다리는 균일한 짙은 갈색~검정색입니다. 후면에는 얼굴이나 눈이 없으며, 꼬리는 몸 위로 짧게 말려 보입니다."
+      },
+      {
+        "note": "측면 머리와 짧은 털, 어두운 단색 외형이 사진과 잘 맞습니다.",
+        "issues": [],
+        "direction": "west",
+        "confidence": 0.95,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "confidenceAdvisory": false,
+        "observedPhotoMarkings": "사진은 비슷한 측면 얼굴을 보여 주며, 머리·주둥이와 보이는 몸통은 균일한 검정~짙은 갈색입니다. 가슴과 다리 일부, 꼬리는 담요와 구도로 가려져 알 수 없습니다.",
+        "observedSpriteMarkings": "왼쪽을 향한 측면 머리와 몸통은 어두운 짙은 갈색~검정색입니다. 이마, 주둥이, 가슴, 다리와 몸통에 뚜렷한 밝은 패치는 없고, 한쪽 눈과 작은 위쪽 꼬리가 보입니다."
+      },
+      {
+        "note": "반대쪽 측면도 올바른 방향과 일관된 어두운 털색을 유지합니다.",
+        "issues": [],
+        "direction": "east",
+        "confidence": 0.95,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "confidenceAdvisory": false,
+        "repairEvidenceSource": "UNRESOLVED_OBSERVATION",
+        "observedPhotoMarkings": "사진에서 보이는 얼굴과 몸통은 어두운 단색입니다. 이마와 주둥이에 밝은 패치는 없고, 가슴·다리·꼬리는 담요와 촬영 각도 때문에 숨겨져 있습니다.",
+        "observedSpriteMarkings": "오른쪽을 향한 측면 머리와 몸통은 어두운 짙은 갈색~검정색입니다. 이마, 주둥이, 가슴, 다리와 몸통에 뚜렷한 별도 패치는 없으며 한쪽 눈과 위로 향한 꼬리가 보입니다.",
+        "tailObservationUncertain": true
+      }
+    ],
+    "photoTail": "OBSCURED",
+    "photoEvidence": "사진 속 강아지는 매우 어두운 검정~짙은 갈색의 짧고 매끈한 털이며, 이마·가슴·다리·몸통에 뚜렷한 흰색 또는 다른 색의 털 패치는 보이지 않습니다. 얼굴은 부분적인 측면으로 보이고 꼬리는 담요와 몸에 가려져 확인할 수 없습니다.",
+    "tailConsistent": true,
+    "aestheticPolicy": "aesthetic-warnings-v1",
+    "qualityWarnings": [],
+    "repairDescription": ""
+  },
+  "seedRepairPlan": {
+    "method": "VIEW",
+    "status": "UNCERTAIN_VERDICT",
+    "version": "selected-seed-repair-v1",
+    "directions": [],
+    "rulesSha256": "657da19999b7bb49cd099cf759b5d2de6597e3f3d0086185cde9ccd05068a4b0",
+    "sourceBinding": "c46a717d2d81b98968c17caa293ada56e835cefa5bdf942871145f743ee8a18d",
+    "deferredDirections": [
+      "east"
+    ]
+  },
+  "aestheticPolicy": "aesthetic-warnings-v1",
+  "qualityDecision": "UNCERTAIN",
+  "qualityWarnings": [],
+  "recoveryVersion": "photo-grounded-recovery-v1",
+  "marginDirections": [],
+  "repairDescription": "",
+  "reviewImageHashes": {
+    "Actual body photo": "62fa75754e436593bf8acab9115194434114db5a7afcf50b2c8f5138a1e17c50",
+    "Actual face photo": "b1b067eb75aece9319142694b64c6dc2a8e99a7ebb390ebeb3f899564a14f2a6",
+    "Unapproved view: east": "9c6c5603f9b9ea79c5f70c6e8e79571d61d8c69d1017254ed15677d7caa18b7d",
+    "Unapproved view: west": "8b6242098454ea913e4293fe3a672fbcf7913f4029fb0b7c9d259eb1601cc220",
+    "Unapproved view: north": "667e3f9f28c49403f94beeec4dd196c21f9164b39d566838f386852168d6a193",
+    "Unapproved view: south": "43f28185cadf91507196352431fe79caea1dda77564110ded2b8dd8cb4e892e4",
+    "Approved art style only; not this dog": "bf5e5641f0768a45f7a87f10bbb5bf26e987dee581b1b2cf4d08d2c4c0cd539c"
+  },
+  "minimumClearPixels": 1,
+  "generalPropertyReview": {
+    "note": "네 방향 모두 방향, 구조, 짧은 어두운 털과 픽셀 스타일이 사진 및 승인 스타일과 일치합니다. 사진에서 꼬리는 가려져 판단할 수 없습니다.",
+    "views": [
+      {
+        "note": "사진의 어두운 단색 털과 정면 구조가 잘 맞습니다.",
+        "issues": [],
+        "direction": "south",
+        "confidence": 0.94,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "confidenceAdvisory": false,
+        "observedPhotoMarkings": "사진에서 보이는 얼굴과 몸통은 균일한 검정~짙은 갈색입니다. 이마와 주둥이에는 뚜렷한 밝은 패치가 없고, 가슴과 다리 일부는 담요와 각도 때문에 충분히 보이지 않습니다.",
+        "observedSpriteMarkings": "정면 머리와 몸통은 균일한 짙은 갈색~검정색입니다. 이마와 가슴에 뚜렷한 별도 패치는 없고, 어두운 주둥이와 짙은 앞다리가 보입니다. 두 눈은 작은 어두운 픽셀로 구분됩니다."
+      },
+      {
+        "note": "후면에 얼굴이 없는 처리가 올바르고 보이는 털색도 일치합니다.",
+        "issues": [],
+        "direction": "north",
+        "confidence": 0.93,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "confidenceAdvisory": false,
+        "observedPhotoMarkings": "사진에서는 등과 후면 털이 담요에 가려져 거의 보이지 않습니다. 보이는 털은 어두운 단색이며 후면의 패치와 꼬리는 확인할 수 없습니다.",
+        "observedSpriteMarkings": "뒤통수와 등, 뒷다리는 균일한 짙은 갈색~검정색입니다. 후면에는 얼굴이나 눈이 없으며, 꼬리는 몸 위로 짧게 말려 보입니다."
+      },
+      {
+        "note": "측면 머리와 짧은 털, 어두운 단색 외형이 사진과 잘 맞습니다.",
+        "issues": [],
+        "direction": "west",
+        "confidence": 0.95,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "confidenceAdvisory": false,
+        "observedPhotoMarkings": "사진은 비슷한 측면 얼굴을 보여 주며, 머리·주둥이와 보이는 몸통은 균일한 검정~짙은 갈색입니다. 가슴과 다리 일부, 꼬리는 담요와 구도로 가려져 알 수 없습니다.",
+        "observedSpriteMarkings": "왼쪽을 향한 측면 머리와 몸통은 어두운 짙은 갈색~검정색입니다. 이마, 주둥이, 가슴, 다리와 몸통에 뚜렷한 밝은 패치는 없고, 한쪽 눈과 작은 위쪽 꼬리가 보입니다."
+      },
+      {
+        "note": "반대쪽 측면도 올바른 방향과 일관된 어두운 털색을 유지합니다.",
+        "issues": [],
+        "direction": "east",
+        "confidence": 0.95,
+        "eyesReadable": true,
+        "styleMatches": true,
+        "tailPlausible": true,
+        "identityMatches": true,
+        "directionCorrect": true,
+        "confidenceAdvisory": false,
+        "observedPhotoMarkings": "사진에서 보이는 얼굴과 몸통은 어두운 단색입니다. 이마와 주둥이에 밝은 패치는 없고, 가슴·다리·꼬리는 담요와 촬영 각도 때문에 숨겨져 있습니다.",
+        "observedSpriteMarkings": "오른쪽을 향한 측면 머리와 몸통은 어두운 짙은 갈색~검정색입니다. 이마, 주둥이, 가슴, 다리와 몸통에 뚜렷한 별도 패치는 없으며 한쪽 눈과 위로 향한 꼬리가 보입니다."
+      }
+    ],
+    "photoTail": "OBSCURED",
+    "photoEvidence": "사진 속 강아지는 매우 어두운 검정~짙은 갈색의 짧고 매끈한 털이며, 이마·가슴·다리·몸통에 뚜렷한 흰색 또는 다른 색의 털 패치는 보이지 않습니다. 얼굴은 부분적인 측면으로 보이고 꼬리는 담요와 몸에 가려져 확인할 수 없습니다.",
+    "tailConsistent": true,
+    "aestheticPolicy": "aesthetic-warnings-v1",
+    "qualityWarnings": [],
+    "repairDescription": ""
+  },
+  "clearPixelsLeftTopRightBottom": {
+    "east": [
+      1,
+      5,
+      3,
+      1
+    ],
+    "west": [
+      3,
+      5,
+      1,
+      1
+    ],
+    "north": [
+      7,
+      3,
+      7,
+      1
+    ],
+    "south": [
+      7,
+      4,
+      6,
+      1
+    ]
+  }
+}
