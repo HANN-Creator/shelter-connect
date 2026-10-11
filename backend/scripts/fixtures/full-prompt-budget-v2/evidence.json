@@ -1,0 +1,154 @@
+{
+  "jobId": "e1e0b869-8914-4f9e-8865-4e38b6a04f5d",
+  "label": "idle-south",
+  "rulesSha256": "657da19999b7bb49cd099cf759b5d2de6597e3f3d0086185cde9ccd05068a4b0",
+  "providerLimit": 1000,
+  "failed": {
+    "label": "idle-south",
+    "input_sha256": "db2bd51265032a874f543b8209da81762de584ff2790008e4b81f1aaf6f118bf",
+    "input": {
+      "budget": 83,
+      "lessons": [
+        {
+          "id": "48da1a56-8433-4638-878f-f8829cdf808e",
+          "tail": "UNKNOWN",
+          "issue": "TAIL_CARRIAGE",
+          "action": "IDLE",
+          "sha256": "7eff92e7e02df712d9e83eef0fea6039def9f7e49ce34498d065b7fd5133325a",
+          "criterion": "Flag any unexplained appendage appearing or changing across idle frames while allowing blinking and subtle breathing.",
+          "direction": "south",
+          "prevention": "Keep tail carriage consistent across idle frames and change only approved breathing or blinking details.",
+          "rulesSha256": "657da19999b7bb49cd099cf759b5d2de6597e3f3d0086185cde9ccd05068a4b0"
+        },
+        {
+          "id": "5f675873-2512-471c-b148-e71e9c274343",
+          "tail": "UNKNOWN",
+          "issue": "TAIL_CARRIAGE",
+          "action": "IDLE",
+          "sha256": "31845f0e53c1d1ed4ed4f15be350431bdaed239708f2f47f472667ec819fe75c",
+          "criterion": "In idle animation, reject any new moving appendage or tail carriage across frames beyond subtle breathing or blinking.",
+          "direction": "south",
+          "prevention": "Keep idle appendage carriage consistent across frames while allowing only subtle breathing and blinking changes.",
+          "rulesSha256": "657da19999b7bb49cd099cf759b5d2de6597e3f3d0086185cde9ccd05068a4b0"
+        },
+        {
+          "id": "7a739533-891e-413f-b162-b4ec258475c4",
+          "tail": "UNKNOWN",
+          "issue": "ACTION_MISSING",
+          "action": "IDLE",
+          "sha256": "db09a98d45293712b2035a8d5c1a1726114889c5aa670b716011d5d01979acac",
+          "criterion": "Reject idle animation when frames add or move a visible appendage; allow only blinking or subtle breathing.",
+          "direction": "south",
+          "prevention": "Keep idle changes limited to blinking or subtle breathing, with no new moving appendages.",
+          "rulesSha256": "657da19999b7bb49cd099cf759b5d2de6597e3f3d0086185cde9ccd05068a4b0"
+        },
+        {
+          "id": "8bb2cd0b-903a-4fd6-b779-8a1bbc5b880c",
+          "tail": "UNKNOWN",
+          "issue": "ACTION_MISSING",
+          "action": "IDLE",
+          "sha256": "4b64459a52dc2f34feca7573fb39ec7da645701986c4176517afbb6efd34ded5",
+          "criterion": "Flag idle animation when changes exceed subtle breathing or blinking and create a new moving appendage.",
+          "direction": "south",
+          "prevention": "Keep idle frames nearly still, allowing only subtle breathing or blinking without adding motion.",
+          "rulesSha256": "657da19999b7bb49cd099cf759b5d2de6597e3f3d0086185cde9ccd05068a4b0"
+        }
+      ],
+      "version": "all-lessons-compact-v1",
+      "basePrompt": "Chest breath <=1px, blink optional. Fixed head, outline, tail, coat markings, paws; NO wag cycle or bob. Keep seed tail shape and position fixed. If hidden, keep hidden; never add a tail above the head. Remain south facing in ALL frames including the final hold. CORRECTION: Show requested motion inside the safe silhouette. IDLE: seed pose; chest breath only, no bob/wag. Restore shared tail height; never pump it vertically. Same native dog size, coat, eyes, crisp palette; fixed camera, no props/text. Keep the head silhouette unchanged; never create a crown, antenna or tail above ears. Hidden front tail stays behind body. Side/rear tails stay complete, connected in approved pose. Use the entire transparent 40x40 canvas. Keep two clear pixels at every edge, all paws and tail complete. Preserve native dog pixel size; no cropping, shrinking, blur or detached parts. Loop smoothly to the initial pose."
+    },
+    "lessons_sha256": "8c675f36eb7c0933226376c600e9754435cd721c3bec1060c44072c0645f8e91",
+    "state": "FAILED",
+    "draft": {
+      "prompt": "Idle: keep appendages and tail carriage fixed; only subtle breathing or blinking."
+    },
+    "validation": {
+      "preserved": [
+        false,
+        true,
+        true,
+        true
+      ],
+      "noNewRequirements": true,
+      "compatibleWithBase": true
+    },
+    "description_sha256": null,
+    "created_at": "2026-10-11T06:11:58.296437+00:00",
+    "updated_at": "2026-10-11T06:13:11.581776+00:00",
+    "failure_code": "LESSON_PROMPT_INVALID"
+  },
+  "firstGeneration": {
+    "label": "idle-south",
+    "input_sha256": "542d0f0376c5cd1b602bb17a8c77f46ba11f3f1a8acae5aa0ef893e53b5fcc3a",
+    "input": {
+      "budget": 247,
+      "lessons": [
+        {
+          "id": "48da1a56-8433-4638-878f-f8829cdf808e",
+          "tail": "UNKNOWN",
+          "issue": "TAIL_CARRIAGE",
+          "action": "IDLE",
+          "sha256": "7eff92e7e02df712d9e83eef0fea6039def9f7e49ce34498d065b7fd5133325a",
+          "criterion": "Flag any unexplained appendage appearing or changing across idle frames while allowing blinking and subtle breathing.",
+          "direction": "south",
+          "prevention": "Keep tail carriage consistent across idle frames and change only approved breathing or blinking details.",
+          "rulesSha256": "657da19999b7bb49cd099cf759b5d2de6597e3f3d0086185cde9ccd05068a4b0"
+        },
+        {
+          "id": "5f675873-2512-471c-b148-e71e9c274343",
+          "tail": "UNKNOWN",
+          "issue": "TAIL_CARRIAGE",
+          "action": "IDLE",
+          "sha256": "31845f0e53c1d1ed4ed4f15be350431bdaed239708f2f47f472667ec819fe75c",
+          "criterion": "In idle animation, reject any new moving appendage or tail carriage across frames beyond subtle breathing or blinking.",
+          "direction": "south",
+          "prevention": "Keep idle appendage carriage consistent across frames while allowing only subtle breathing and blinking changes.",
+          "rulesSha256": "657da19999b7bb49cd099cf759b5d2de6597e3f3d0086185cde9ccd05068a4b0"
+        },
+        {
+          "id": "7a739533-891e-413f-b162-b4ec258475c4",
+          "tail": "UNKNOWN",
+          "issue": "ACTION_MISSING",
+          "action": "IDLE",
+          "sha256": "db09a98d45293712b2035a8d5c1a1726114889c5aa670b716011d5d01979acac",
+          "criterion": "Reject idle animation when frames add or move a visible appendage; allow only blinking or subtle breathing.",
+          "direction": "south",
+          "prevention": "Keep idle changes limited to blinking or subtle breathing, with no new moving appendages.",
+          "rulesSha256": "657da19999b7bb49cd099cf759b5d2de6597e3f3d0086185cde9ccd05068a4b0"
+        },
+        {
+          "id": "8bb2cd0b-903a-4fd6-b779-8a1bbc5b880c",
+          "tail": "UNKNOWN",
+          "issue": "ACTION_MISSING",
+          "action": "IDLE",
+          "sha256": "4b64459a52dc2f34feca7573fb39ec7da645701986c4176517afbb6efd34ded5",
+          "criterion": "Flag idle animation when changes exceed subtle breathing or blinking and create a new moving appendage.",
+          "direction": "south",
+          "prevention": "Keep idle frames nearly still, allowing only subtle breathing or blinking without adding motion.",
+          "rulesSha256": "657da19999b7bb49cd099cf759b5d2de6597e3f3d0086185cde9ccd05068a4b0"
+        }
+      ],
+      "version": "all-lessons-compact-v1",
+      "basePrompt": "Chest breath <=1px, blink optional. Fixed head, outline, tail, coat markings, paws; NO wag cycle or bob. Keep seed tail shape and position fixed. If hidden, keep hidden; never add a tail above the head. Remain south facing in ALL frames including the final hold. Same native dog size, coat, eyes, crisp palette; fixed camera, no props/text. Keep the head silhouette unchanged; never create a crown, antenna or tail above ears. Hidden front tail stays behind body. Side/rear tails stay complete, connected in approved pose. Use the entire transparent 40x40 canvas. Keep two clear pixels at every edge, all paws and tail complete. Preserve native dog pixel size; no cropping, shrinking, blur or detached parts. Loop smoothly to the initial pose."
+    },
+    "lessons_sha256": "8c675f36eb7c0933226376c600e9754435cd721c3bec1060c44072c0645f8e91",
+    "state": "READY",
+    "draft": {
+      "prompt": "Every idle frame: keep tail and appendage carriage consistent; keep changes limited to approved subtle breathing or blinking; add no new visible or moving appendages; keep the animation nearly still."
+    },
+    "validation": {
+      "preserved": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "noNewRequirements": true,
+      "compatibleWithBase": true
+    },
+    "description_sha256": "58f8f56d5e9024a3edb2978156d76e60ecca5107464a29312972f1e28c825fff",
+    "created_at": "2026-10-11T06:07:03.336024+00:00",
+    "updated_at": "2026-10-11T06:07:48.888597+00:00",
+    "failure_code": null
+  }
+}

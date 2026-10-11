@@ -18,7 +18,20 @@ class StyledLessonPromptAgentTest {
             "action","SIT","direction","west","tail","LOW","prevention","Keep the seated tail inside the canvas.","criterion","The tail tip touches a canvas boundary.")));
         return list;
     }
-    JsonNode verdict(int count){return json.valueToTree(Map.of("preserved",Collections.nCopies(count,true),"compatibleWithBase",true,"noNewRequirements",true));}
+    JsonNode verdict(int count){return json.valueToTree(Map.of("preserved",Collections.nCopies(count,true),"compatibleWithBase",true,"noNewRequirements",true,"basePreserved",true));}
+    @Test void actualRepairWithOnlyEightyThreeAdditiveCharactersUsesWholeProviderBudget() throws Exception {
+        var fixture=json.readTree(java.nio.file.Files.readString(java.nio.file.Path.of("scripts/fixtures/full-prompt-budget-v2/evidence.json")));
+        var input=fixture.at("/failed/input");var sources=input.path("lessons");String base=input.path("basePrompt").asText();
+        assertThat(1000-base.length()-10).isEqualTo(83);
+        var store=mock(StyledLessonPromptStore.class);var writer=mock(StyledLessonPromptAgent.class);
+        when(store.start(isNull(),eq(sources),eq(base),eq(1000))).thenReturn(new StyledLessonPromptStore.Entry("key","COMPOSING",null,null,true));
+        var draft=json.valueToTree(Map.of("prompt","Preserve every base requirement and every approved subtle idle requirement."));
+        when(writer.compose(eq(sources),eq(base),eq(1000))).thenReturn(draft);
+        var accepted=(tools.jackson.databind.node.ObjectNode)verdict(4);accepted.put("basePreserved",true);
+        when(writer.verify(eq(sources),eq(base),eq(draft),eq(1000))).thenReturn(accepted);
+        assertThat(new StyledLessonPromptComposer(store,writer).describe(null,sources,base,1000)).isEqualTo(draft.path("prompt").asText());
+        verify(store).ready(isNull(),eq(sources),eq("key"),eq(accepted),eq(draft.path("prompt").asText()));
+    }
     @Test void allSourcesIncludingSameIssueDuplicatesReachSeparateCompressionAndVerificationCalls() {
         var rules=rules(25);var draft=json.valueToTree(Map.of("prompt","Keep the entire seated tail inside the canvas."));
         when(client.structured(anyString(),any(),anyMap())).thenReturn(draft,verdict(25));
@@ -45,14 +58,48 @@ class StyledLessonPromptAgentTest {
     @Test void invalidWritingStopsAfterThreeCompletedResponsesWithoutTruncation() {
         var draft=json.valueToTree(Map.of("prompt","This sentence cannot fit into the supplied tiny character budget."));
         when(client.structured(anyString(),any(),anyMap())).thenReturn(draft);
-        assertThatThrownBy(()->agent.compose(rules(8),"Base",15)).hasMessage("LESSON_PROMPT_INVALID");
+        assertThatThrownBy(()->agent.compose(rules(8),"Base",15)).hasMessage("LESSON_PROMPT_INVALID").satisfies(error->{
+            var diagnostics=((AssetException)error).diagnostics.path("promptDraftFailures");assertThat(diagnostics.size()).isEqualTo(3);
+            assertThat(diagnostics.get(2).path("draft")).isEqualTo(draft);
+            assertThat(diagnostics.get(2).path("measuredCharacters").asInt()).isEqualTo(draft.path("prompt").asText().length());
+        });
         verify(client,times(3)).structured(anyString(),any(),anyMap());
+    }
+    @Test void missingBaseCoverageAndLostNumericOrDirectionalConditionsBlockPurchase() {
+        var missing=(tools.jackson.databind.node.ObjectNode)verdict(4);missing.remove("basePreserved");
+        assertThatThrownBy(()->StyledLessonPromptAgent.checkVerdict(missing,4)).hasMessage("LESSON_PROMPT_MEANING_LOST");
+        var draft=json.valueToTree(Map.of("prompt","Every frame: south; 40x40 transparent, edges >=2px clear; chest breath <=1px; no wag."));
+        StyledLessonPromptAgent.checkPrompt(draft,1000);
+        var rejected=(tools.jackson.databind.node.ObjectNode)verdict(4);rejected.put("basePreserved",false);
+        var store=mock(StyledLessonPromptStore.class);var writer=mock(StyledLessonPromptAgent.class);var sources=rules(4);
+        when(store.start(isNull(),eq(sources),anyString(),eq(1000))).thenReturn(new StyledLessonPromptStore.Entry("key","COMPOSING",null,null,true));
+        when(writer.compose(any(),anyString(),anyInt())).thenReturn(draft);when(writer.rewrite(any(),anyString(),anyInt(),any(),any())).thenReturn(draft);
+        when(writer.verify(any(),anyString(),any(),anyInt())).thenReturn(rejected);
+        assertThatThrownBy(()->new StyledLessonPromptComposer(store,writer).describe(null,sources,"Preserve numeric and direction conditions.",1000)).hasMessage("LESSON_PROMPT_MEANING_LOST");
+        verify(store,never()).ready(any(),any(),anyString(),any(),anyString());verify(store).failed(isNull(),eq("key"),eq("LESSON_PROMPT_MEANING_LOST"));
+    }
+    @Test void optimisticModelVerdictCannotOmitEyesCoatDirectionOrCanvas() {
+        var draft=json.valueToTree(Map.of("prompt","Keep the head silhouette unchanged."));
+        when(client.structured(anyString(),any(),anyMap())).thenReturn(verdict(4));
+        var checked=agent.verify(rules(4),"Same coat, eyes; south facing on 40x40 canvas.",draft,1000);
+        assertThat(checked.path("modelBasePreserved").asBoolean()).isTrue();assertThat(checked.path("basePreserved").asBoolean()).isFalse();
+        assertThat(checked.path("missingLiteralAnchors").valueStream().map(JsonNode::asText).toList()).containsExactly("eyes","coat","south","40x40");
+        assertThatThrownBy(()->StyledLessonPromptAgent.checkVerdict(checked,4)).hasMessage("LESSON_PROMPT_MEANING_LOST");
+    }
+    @Test void terminalFormatDiagnosticsAreSavedBeforeFailureWithoutLeakingIntoImageQuality() {
+        var store=mock(StyledLessonPromptStore.class);var writer=mock(StyledLessonPromptAgent.class);var sources=rules(4);
+        var diagnostics=json.valueToTree(Map.of("promptDraftFailures",List.of(Map.of("draft","overlong","measuredCharacters",1100))));
+        when(store.start(isNull(),eq(sources),anyString(),anyInt())).thenReturn(new StyledLessonPromptStore.Entry("key","COMPOSING",null,null,true));
+        when(writer.compose(any(),anyString(),anyInt())).thenThrow(new AssetException(409,"LESSON_PROMPT_INVALID",diagnostics));
+        assertThatThrownBy(()->new StyledLessonPromptComposer(store,writer).describe(null,sources,"Base",1000)).satisfies(e->assertThat(((AssetException)e).diagnostics).isNull());
+        var order=inOrder(store);order.verify(store).start(isNull(),eq(sources),eq("Base"),eq(1000));
+        order.verify(store).diagnostics(isNull(),eq(sources),eq("key"),eq(diagnostics));order.verify(store).failed(isNull(),eq("key"),eq("LESSON_PROMPT_INVALID"));
     }
     @Test void missingWeakenedExtraOrNonBooleanCoverageCannotPass() {
         for(JsonNode result:List.of(verdict(2),verdict(4),json.readTree("{\"preserved\":[true,false,true],\"compatibleWithBase\":true,\"noNewRequirements\":true}"),
             json.readTree("{\"preserved\":[true,\"true\",true],\"compatibleWithBase\":true,\"noNewRequirements\":true}")))
             assertThatThrownBy(()->StyledLessonPromptAgent.checkVerdict(result,3)).hasMessage("LESSON_PROMPT_MEANING_LOST");
-        for(String field:List.of("compatibleWithBase","noNewRequirements")) {
+        for(String field:List.of("basePreserved","compatibleWithBase","noNewRequirements")) {
             var result=(tools.jackson.databind.node.ObjectNode)verdict(3);result.put(field,false);
             assertThatThrownBy(()->StyledLessonPromptAgent.checkVerdict(result,3)).hasMessage("LESSON_PROMPT_MEANING_LOST");
         }
@@ -72,12 +119,12 @@ class StyledLessonPromptAgentTest {
         var disabled=new StyledLessonPromptAgent(client,json,new AiProperties(false,"","gpt-5.6-luna",30));
         assertThatThrownBy(()->disabled.compose(rules(4),"Base",100)).hasMessage("AI_UNAVAILABLE");verifyNoInteractions(client);
     }
-    @Test void cachedReadyPromptKeepsBaseUnchangedAndDoesNotCallTheAgent() {
+    @Test void cachedReadyCompletePromptDoesNotCallTheAgent() {
         var store=mock(StyledLessonPromptStore.class);var writer=mock(StyledLessonPromptAgent.class);
         var composer=new StyledLessonPromptComposer(store,writer);var rules=rules(4);
         var draft=json.valueToTree(Map.of("prompt","Keep every tail pixel inside the canvas."));
         when(store.start(isNull(),eq(rules),eq("Base unchanged."),anyInt())).thenReturn(new StyledLessonPromptStore.Entry("key","READY",draft,verdict(4),false));
-        assertThat(composer.describe(null,rules,"Base unchanged.",100)).isEqualTo("Base unchanged. Lessons: Keep every tail pixel inside the canvas.");
+        assertThat(composer.describe(null,rules,"Base unchanged.",100)).isEqualTo("Keep every tail pixel inside the canvas.");
         verifyNoInteractions(writer);
     }
     @Test void interruptedOrFailedCompositionCannotCallTheModelAgain() {
