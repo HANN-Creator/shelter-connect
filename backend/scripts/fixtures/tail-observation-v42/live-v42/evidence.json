@@ -1,0 +1,16 @@
+{
+  "description": "First actual v42 evaluation: 9/10 matched; cream-motion was a real false pass. Retained before changing the review inputs, never relabeled. Eight case-* reports are tail-anatomy-only with archived photo facts; their photoSha256 is a fixture sentinel, not publication approval. Black-production uses the exact deployed source photo and seeds.",
+  "sha256": {
+    "case-g.json": "52205e354eefec5866bb561afbf0504a068abebe331c41947bfda7bbef8eab13",
+    "case-j.json": "1135f17fe54ebb79d7d5f1a77bd29d330bd7759d08f48c6f2c40ea55f6a93b76",
+    "case-f.json": "8f6dcbe418677162159635d5ec0da841093fc3651d7d4cf47ab45383534e5756",
+    "case-a.json": "41a2fff50742de2e05cac196c7939d8b36a1a89c39aa728eab6fa3a397e4b1f6",
+    "results.json": "75872c89dc99e36a4c63b79ab03e9ed121f1fd6febbf221be1af31c7942db57d",
+    "cream-motion.json": "5e5f9cb1ef3b15660f197a06ed390d404aa16f79f2ee8d788b9eb5a735edf7b3",
+    "case-c.json": "28ede50a2d6b77220163d58575749603a0841a7ae8c28fe20a3722ffa2b64236",
+    "case-b.json": "2a8d099e374b13ed9cc3fe49f6495d4c08de9b945947f72b7eb04d6c66aa1c29",
+    "black-production.json": "e9a006f0dc77b4848fb193015e7377a2b41e7b2716d387d805ebedac6d1de785",
+    "case-i.json": "088c2735bbd9d2d8ef46968fcbcef1ad2006bf027c71c5b778b62abc9358b68c",
+    "case-d.json": "c089a092eb8a2b32d165812e930c4d7b88782a73ca73e46da62ee3af1acdf177"
+  }
+}

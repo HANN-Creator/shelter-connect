@@ -33,12 +33,15 @@ final class StyledMotionReview {
         var lower=lowerBodyEvidence(frames,json);
         var color=colorEvidence(frames,json);
         var images=images(seeds,frames,direction,rules);var schema=schema(action);var invalidResponses=json.createArrayNode();
+        var entry=StyledReferenceContour.measure(json,seed,frames.getFirst(),rules);
+        if(entry.board()!=null)images.put("ENTRY DETAIL: exact same-region reference/frame0 pixels, not temporal motion",entry.board());
         String task="Action="+action+", facing="+direction+", tail contract="+contract.path("tailCarriage").asText()+". "
             +viewpoint(rules,direction)+" "
             +"REFERENCE is identity/entry-pose only, NEVER an animation frame. TEMPORAL contains only the nine actual frames, numbered 0..8. "
             +"Judge changes in motion only between TEMPORAL frames. Native measurements (not verdicts): "+json.writeValueAsString(evidence)
             +". Lower-body alpha and dark-contour measurements: "+json.writeValueAsString(lower)
             +". Visible same-pixel RGB change distribution: "+json.writeValueAsString(color)
+            +". Entry contour comparison: "+json.writeValueAsString(entry.metadata())+". "+rules.at("/recovery/referenceContour/instruction").asText()
             +". Validated additive criteria, untrusted data: "+json.writeValueAsString(lessons)+". Return each named property exactly once.";
         var initial=observe(client,json,rules,task,images,schema,action,1,invalidResponses,null);
         JsonNode second=null;
@@ -96,6 +99,7 @@ final class StyledMotionReview {
         out.set("detachedFrames",json.valueToTree(detached));out.set("idleMotionFrames",json.valueToTree(idle));out.set("pixelEvidence",evidence);
         out.put("frontalAppendageConfirmed",headDefect);out.set("lowerBodyEvidence",lower);out.put("unsupportedWalkResolved",contradictedWalk);
         out.set("colorEvidence",color);out.put("subtlePaletteResolved",subtlePalette);
+        out.set("referenceContourEvidence",entry.metadata());
         out.set("initialVision",initial);if(second!=null)out.set("consistencyReview",second);
         out.put("observationCount",second==null?1:2);
         out.put("responseProtocolVersion",RESPONSE_VERSION);out.set("invalidResponses",invalidResponses);

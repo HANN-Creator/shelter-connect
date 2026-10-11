@@ -118,7 +118,8 @@ final class StyledTailAnatomy {
         var out=json.createObjectNode().put("passed",failed.isEmpty() && unknown.isEmpty())
             .put("decision",!failed.isEmpty()?DEFECT:!unknown.isEmpty()?UNKNOWN:PASS).put("shortTailSupported",shortSupported);
         out.set("failedDirections",json.valueToTree(failed));out.set("uncertainDirections",json.valueToTree(unknown));
-        out.set("verdicts",verdicts);out.set("observation",raw);out.set("geometry",geometry);return out;
+        out.set("verdicts",verdicts);out.set("observation",raw);out.set("geometry",geometry);
+        StyledTailShapeConsistency.reconcile(json,out,directions);return out;
     }
     /** Existing general review is independent evidence. Disagreement is uncertainty, never permission to redraw. */
     private static void reconcile(JsonMapper json,ObjectNode evidence,JsonNode general){
@@ -193,7 +194,16 @@ final class StyledTailAnatomy {
             || !e.path("failedDirections").isArray() || !e.path("failedDirections").isEmpty() || !e.path("uncertainDirections").isArray() || !e.path("uncertainDirections").isEmpty())return false;
         for(String f:List.of("inputSha256","photoSha256","rulesSha256"))if(!report.path(f).asText().matches("[a-f0-9]{64}") || !report.path(f).equals(e.path(f)))return false;
         if(!StyledSpriteCodec.qualityRulesSha().equals(e.path("rulesSha256").asText()) || e.path("model").asText().isBlank() || !report.path("model").equals(e.path("model")))return false;
-        try{Instant.parse(e.path("reviewedAt").asText());return assess(JsonMapper.builder().build(),e.path("observation"),e.path("geometry"),SIDES).path("passed").asBoolean();}
+        try{
+            Instant.parse(e.path("reviewedAt").asText());var mapper=JsonMapper.builder().build();
+            var replay=assess(mapper,e.path("observation"),e.path("geometry"),SIDES);
+            reconcile(mapper,replay,report.has("generalPropertyReview")?report.path("generalPropertyReview"):report.path("propertyReview"));
+            if(replay.has("shapeConsistency") || e.has("shapeConsistency")) {
+                if(!replay.path("shapeConsistency").equals(e.path("shapeConsistency"))
+                    || !e.at("/geometry/shapeConsistency/inputSha256").equals(e.path("inputSha256")))return false;
+            }
+            return replay.path("passed").asBoolean() && replay.path("verdicts").equals(e.path("verdicts"));
+        }
         catch(RuntimeException ex){return false;}
     }
     private static boolean description(JsonNode n){return StyledRecoveryReview.text(n,450) && !n.asText().isBlank();}

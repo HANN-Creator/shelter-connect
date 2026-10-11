@@ -1,0 +1,16 @@
+{
+  "description": "Fresh current-policy evaluation after adding aligned entry contour details. Fixed labels and inputs retained from v42; no new PixelLab images or reroll of a completed current-policy result. Black uses full production photo/seed review; cream uses production motion review; case-* reports isolate tail anatomy with archived photo facts and a nonpublication fixture photo binding.",
+  "sha256": {
+    "case-g.json": "9d6f46dd406784e63a3965a8941602a58b09e5e5b4ec5f3fb29cc45823fe818e",
+    "case-j.json": "c5a0091485f8b714084792dcd5ff3f23aeab74e4d48649cbd6a50e1eb8e886e7",
+    "case-f.json": "679578d76557c4ce7bb39c5cec9a45eb1b7274df2bde85fc8eba789cea200de3",
+    "case-a.json": "5d6a4ed549b0f5c275f23b670b19d0399e7df6b45a305f33c39baf28b33272a6",
+    "results.json": "1037a52c9d31718cfe74de66a00fd2c8794bb2aa1a2ade92050f89c4237660dc",
+    "cream-motion.json": "bf0f56d73e3a312e85e74636fb80a1857f254f91947151eca5200ce36ee96433",
+    "case-c.json": "4c5c71364ec7384ba9e532b2215eabef5483c5ed3534d84f61d707026bc745e7",
+    "case-b.json": "2bc8bbd21a81617c12171eddf597449db94999bdbd8d4b30ef0d9aa6a2c7e91b",
+    "black-production.json": "9290c85b3e5453100ececc5f224adf12f6b722f7621c957b16b8e3e4d61ce30d",
+    "case-i.json": "24f8eebf59d8c4d5b0d35e57c6be84ad9f2c008dd866899dda74b0e563df6539",
+    "case-d.json": "6930ed3f519e8fb2a75d8763a1e8079be06776ca41c60198433464509bdf40f1"
+  }
+}

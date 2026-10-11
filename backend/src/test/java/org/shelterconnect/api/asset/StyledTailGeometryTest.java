@@ -39,11 +39,15 @@ class StyledTailGeometryTest {
         assertThat(StyledSeedRepair.plan(org.mockito.Mockito.mock(org.shelterconnect.api.chat.OpenAiResponsesClient.class),json,StyledTailAnatomyTest.fixture("case-f"),current).path("status").asText()).isEqualTo("UNCERTAIN_VERDICT");
         assertThat(StyledTailAnatomy.boundPass(merged)).isFalse();
     }
-    @Test void supportDisagreesWithActualMissingTailHallucinationInsteadOfRedrawingNormalDog()throws Exception{
+    @Test void exactMirroredShapeResolvesHistoricalContradictoryLengthLabelsWithoutRedrawing()throws Exception{
         var old=recorded("case-d","observed-r4.json");assertThat(old.path("decision").asText()).isEqualTo("CONFIRMED_DEFECT");
         var result=assess("case-d",old.path("observation"));
-        assertThat(result.path("decision").asText()).isEqualTo("UNCERTAIN");assertThat(result.path("failedDirections").isEmpty()).isTrue();
-        // Same image was actually judged complete in a different paid observation. Support alone never proves anatomy.
+        assertThat(old.at("/observation/views/0/tail").asText()).isEqualTo("SHORT_STUB");
+        assertThat(old.at("/observation/views/1/tail").asText()).isEqualTo("COMPLETE_CONNECTED");
+        assertThat(result.at("/geometry/shapeConsistency/exactMirroredAlpha").asBoolean()).isTrue();
+        assertThat(result.at("/shapeConsistency/applied").asBoolean()).isTrue();
+        assertThat(result.path("decision").asText()).isEqualTo("PASS");assertThat(result.path("failedDirections").isEmpty()).isTrue();
+        // Resolution uses identical pixels and a complete observation, never branch support alone.
         assertThat(assess("case-d",recorded("case-d","production-consensus.json").at("/tailEvidence/observation")).path("passed").asBoolean()).isTrue();
     }
     @Test void realNoTailAndClippedCasesStillFailAndDisconnectedFragmentNeverPasses()throws Exception{
