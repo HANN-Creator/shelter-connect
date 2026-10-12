@@ -14,7 +14,7 @@ public class StyledLessonPromptStore {
     public StyledLessonPromptStore(JdbcClient jdbc,JsonMapper json,StyledLessonStore lessons){this.jdbc=jdbc;this.json=json;this.lessons=lessons;}
     @Transactional public Entry start(StyledAssetStore.Work w,JsonNode selected,String base,int budget) {
         require(w,selected);
-        var input=json.createObjectNode().put("version",StyledLessonPromptAgent.VERSION).put("basePrompt",base).put("budget",budget);
+        var input=json.createObjectNode().put("version",StyledLessonPromptAgent.VERSION+(StyledVisualWarnings.enabled(w.qualityPolicy())?"/"+StyledVisualWarnings.VERSION:"")).put("basePrompt",base).put("budget",budget);
         input.set("lessons",selected);String key=StyledSpriteCodec.sha(json.writeValueAsBytes(input));
         int inserted=jdbc.sql("""
             INSERT INTO shelter.styled_lesson_prompts(job_id,label,input_sha256,input,lessons_sha256,state,lease_token)
@@ -49,6 +49,13 @@ public class StyledLessonPromptStore {
         if(jdbc.sql("UPDATE shelter.styled_lesson_prompts SET history=history || jsonb_build_array(CAST(:d AS jsonb)),updated_at=now() WHERE job_id=:j AND label=:l AND input_sha256=:h AND state<>'READY' AND lease_token=:t")
             .param("d",json.writeValueAsString(diagnostics)).param("j",w.id()).param("l",w.label()).param("h",key).param("t",w.token()).update()!=1)
             throw StyledLessonPromptAgent.invalid("LESSON_PROMPT_INTERRUPTED");
+    }
+    @Transactional(readOnly=true) public JsonNode warnings(StyledAssetStore.Work w) {
+        var result=json.createArrayNode();
+        var rows=jdbc.sql("SELECT validation::text FROM shelter.styled_lesson_prompts WHERE job_id=:j AND label=:l AND state='READY' AND input->>'version'=:v")
+            .param("j",w.id()).param("l",w.label()).param("v",StyledLessonPromptAgent.VERSION+"/"+StyledVisualWarnings.VERSION).query(String.class).list();
+        for(String row:rows){var v=node(row);if(v!=null && v.has("warning"))result.addObject().put("code",v.path("warning").asText()).put("note","생성 지시문 의미 검사에서 확인이 필요한 결과가 기록됐습니다.").set("observation",v);}
+        return result;
     }
     private void require(StyledAssetStore.Work w,JsonNode selected){if(!lessons.authorized(w,selected))throw StyledLessonPromptAgent.invalid("LESSON_SOURCE_CHANGED");}
     private JsonNode node(String text){return text==null?null:json.readTree(text);}

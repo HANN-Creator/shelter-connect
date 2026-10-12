@@ -15,6 +15,7 @@ final class StyledAutoApproval {
             && !policy.path("referenceOnly").asBoolean();
     }
     static boolean seed(StyledAssetStore.Job job,JsonMapper json) {
+        if(StyledVisualWarnings.enabled(job.qualityPolicy()))return enabled(job.qualityPolicy()) && StyledVisualWarnings.seed(job,json);
         if(!enabled(job.qualityPolicy()) || job.steps().isEmpty()
             || !StyledSpriteCodec.qualityRulesSha().equals(job.qualityPolicy().path("rulesSha256").asText()))return false;
         var step=job.steps().getFirst();var report=step.qualityReport();
@@ -36,6 +37,7 @@ final class StyledAutoApproval {
         return true;
     }
     static boolean pack(StyledAssetStore.Job job,JsonMapper json) {
+        if(StyledVisualWarnings.enabled(job.qualityPolicy()))return enabled(job.qualityPolicy()) && StyledVisualWarnings.pack(job,json);
         if(!job.complete() || !seed(job,json) || job.seedReview()==null
             || !job.seedReview().path("hashes").equals(job.steps().getFirst().result().path("hashes")))return false;
         if(VERSION.equals(job.seedReview().path("version").asText())
@@ -85,10 +87,11 @@ final class StyledAutoApproval {
     static String digest(JsonNode value,JsonMapper json) {return StyledSpriteCodec.sha(json.writeValueAsBytes(value));}
     static JsonNode seedEvidence(StyledAssetStore.Job job,JsonMapper json) {
         var step=job.steps().getFirst();
-        return json.valueToTree(Map.of("version",VERSION,"actor","SYSTEM","decision","APPROVE","stage","BASE",
+        var evidence=(tools.jackson.databind.node.ObjectNode)json.valueToTree(Map.of("version",VERSION,"actor","SYSTEM","decision","APPROVE","stage","BASE",
             "hashes",step.result().path("hashes"),"reportSha256",digest(step.qualityReport(),json),
             "model",step.qualityReport().path("model").asText(),"reviewedAt",Instant.now().toString(),
             "rulesSha256",job.qualityPolicy().path("rulesSha256").asText(),"photoSha256",step.qualityReport().path("photoSha256").asText()));
+        if(StyledVisualWarnings.enabled(job.qualityPolicy()))StyledVisualWarnings.evidence(evidence);return evidence;
     }
     static JsonNode packEvidence(StyledAssetStore.Job job,JsonMapper json) {
         var evidence=json.createObjectNode().put("version",VERSION).put("actor","SYSTEM").put("decision","APPROVE")
@@ -99,6 +102,7 @@ final class StyledAutoApproval {
         for(var step:job.steps())steps.add(json.valueToTree(Map.of("label",step.label(),"resultSha256",digest(step.result(),json),
             "reportSha256",digest(step.qualityReport(),json),"model",step.qualityReport().path("model").asText(),
             "reviewedAt",step.qualityReport().path("reviewedAt").asText())));
+        if(StyledVisualWarnings.enabled(job.qualityPolicy()))StyledVisualWarnings.evidence(evidence);
         return evidence;
     }
 }

@@ -25,7 +25,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@Tag("postgres") @SpringBootTest(properties={"app.ai.enabled=true","app.ai.api-key=test-key", "app.assets.enabled=true","app.assets.api-key=test-key","app.assets.storage-secret=sb_secret_testing"})
+@Tag("postgres") @SpringBootTest(properties={"app.assets.visual-warnings-only=false","app.ai.enabled=true","app.ai.api-key=test-key", "app.assets.enabled=true","app.assets.api-key=test-key","app.assets.storage-secret=sb_secret_testing"})
 @AutoConfigureMockMvc @ActiveProfiles("test") @Import(JwtTestConfiguration.class)
 class StyledAssetPostgresTest {
     @Autowired JdbcTemplate jdbc;@Autowired MockMvc mvc;@Autowired JsonMapper json;@Autowired JwtTestSupport tokens;
@@ -38,6 +38,7 @@ class StyledAssetPostgresTest {
     @MockitoBean StyledAssetProvider provider;@MockitoBean AssetStorage storage;
     @MockitoBean StyledSpriteCodec codec;@MockitoBean BehaviorSuggestionProvider suggestions;
     @MockitoBean StyledQualityAgent quality;
+    @MockitoBean StyledVisualWarningAgent warningAgent;
     @MockitoBean StyledSeedQualityAgent seedQuality;
     @MockitoBean PhotoAppearanceProvider appearance;
     @MockitoBean org.shelterconnect.api.chat.OpenAiResponsesClient eyeAi;
@@ -3093,4 +3094,103 @@ class StyledAssetPostgresTest {
         clearInvocations(provider,quality);post(actor,path(id)+"/quality-timeout-resume",body,expected);verifyNoInteractions(provider,quality);
         if(defect.equals("unauthorized") || defect.equals("anonymous"))get(actor,path(id)+"/quality-timeout-checkpoint",expected);
     }
+    UUID warningRequest()throws Exception {
+        org.springframework.test.util.ReflectionTestUtils.setField(store,"visualWarningsOnly",true);
+        try {return recoveryRequest(0,false);}finally{org.springframework.test.util.ReflectionTestUtils.setField(store,"visualWarningsOnly",false);}
+    }
+    void warningObservation() {
+        when(warningAgent.observe(anyList(),anyList(),anyString(),nullable(String.class))).thenAnswer(c->{outsideTransaction();
+            return json.valueToTree(Map.of("model","test-warning","warnings",List.of(Map.of("code","TAIL","note","꼬리 모양이 불확실합니다. 직접 확인해 주세요.",
+                "direction",Objects.toString(c.getArgument(3),"west"),"observation",Map.of("privateAudit","internal prompt validation details"),"frames",c.getArgument(2).equals("BASE")?List.of():List.of(2,8)))));});
+    }
+    @Test void visualWarningsCompleteAllDirectionsWithoutRepairOrFakePass()throws Exception {
+        warningObservation();UUID id=warningRequest();finish(id);var result=read(id);
+        assertThat(result.path("status").asText()).isEqualTo("APPROVED");
+        assertThat(result.at("/qualityApproval/visualReviewMode").asText()).isEqualTo("WARN_ONLY");
+        for(var s:result.path("steps")){assertThat(s.at("/qualityReport/passed").asBoolean()).isFalse();assertThat(s.path("repairCount").asInt()).isZero();}
+        verify(provider,times(1)).submit(eq(true),any());verify(provider,times(12)).submit(eq(false),any());verify(provider,never()).editAnimation(any());verify(provider,never()).editSeeds(any());
+        verify(seedQuality,never()).reviewRecovery(any(),anyList(),any(),any());verify(quality,never()).review(any(),anyList(),anyList(),anyString(),anyString());
+        verify(warningAgent,times(13)).observe(anyList(),anyList(),anyString(),nullable(String.class));
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_lessons WHERE source_job_id=?",Integer.class,id)).isZero();
+        var manifest=get(null,"/v1/dogs/"+dog+"/assets",200).path("data");
+        assertThat(manifest.at("/quality/mode").asText()).isEqualTo("WARN_ONLY");assertThat(manifest.at("/quality/passed").asBoolean()).isFalse();
+        assertThat(manifest.at("/quality/warnings").size()).isEqualTo(13);
+        assertThat(manifest.toString()).doesNotContain("privateAudit","internal prompt validation details");
+        for(String d:List.of("UP","DOWN","LEFT","RIGHT"))for(String action:List.of("IDLE","WALK","SIT"))assertThat(manifest.at("/mapDirections/"+d+"/"+action+"/frames").size()).isEqualTo(9);
+        var warningPage=get(subject,path(id)+"/warnings",200).path("data");assertThat(warningPage.path("images").size()).isEqualTo(13);
+        assertThat(warningPage.at("/images/1/warnings/0/frames")).isEqualTo(json.valueToTree(List.of(2,8)));
+        assertThat(warningPage.at("/images/1/spritesheetUrl").asText()).contains("/sheets/idle-south.png");
+        get(null,path(id)+"/warnings",401);get(UUID.randomUUID(),path(id)+"/warnings",403);
+    }
+    @Test void visualWarningsUnavailableDoesNotHoldThePackOrRetryObservation()throws Exception {
+        when(warningAgent.observe(anyList(),anyList(),anyString(),nullable(String.class))).thenThrow(new org.shelterconnect.api.chat.AiFailure("AI_UNAVAILABLE"));
+        when(quality.contract(any(),any())).thenThrow(new org.shelterconnect.api.chat.AiFailure("AI_UNAVAILABLE"));
+        UUID id=warningRequest();finish(id);assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
+        var manifest=get(null,"/v1/dogs/"+dog+"/assets",200).path("data");
+        assertThat(manifest.at("/quality/reviewStatus").asText()).isEqualTo("UNAVAILABLE");assertThat(manifest.at("/quality/passed").asBoolean()).isFalse();
+        assertThat(manifest.at("/quality/warnings").size()).isEqualTo(14);
+        verify(warningAgent,times(13)).observe(anyList(),anyList(),anyString(),nullable(String.class));verify(provider,times(12)).submit(eq(false),any());
+    }
+    @Test void visualWarningsStillRejectUnusableImageAndNeverPayToRepairIt()throws Exception {
+        warningObservation();UUID id=warningRequest();doAnswer(c->opaqueProviderResult()).when(provider).poll(any(),eq(true));finish(id);
+        assertThat(read(id).path("failureCode").asText()).isEqualTo("STYLED_ALPHA_INVALID");
+        verify(provider,times(1)).submit(eq(true),any());verify(provider,never()).submit(eq(false),any());verifyNoInteractions(warningAgent);
+    }
+    Map<String,Object> warningTransitionBody(UUID id)throws Exception {
+        return new HashMap<>(Map.of("requestId",UUID.randomUUID().toString(),"note","Use saved images and record visual concerns only; do not purchase corrective generations.",
+            "expectedSeedHashes",read(id).at("/steps/0/result/hashes"),"expectedRulesSha256",currentRules()));
+    }
+    @Test void visualWarningsReuseArchivedPrePurchaseFailureAndPreservePassedClips()throws Exception {
+        UUID id=b75HeldPack();promptResumeFixture(id);var before=read(id);var saved=new HashMap<>(objects);
+        var archived=json.readTree(jdbc.queryForObject("SELECT attempt_history::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-south'",String.class,id)).get(0);
+        var body=warningTransitionBody(id);warningObservation();clearInvocations(provider);
+        jdbc.update("UPDATE shelter.shelter_memberships SET role='STAFF' WHERE user_id=? AND shelter_id=?",user,shelter);
+        post(subject,path(id)+"/visual-warnings",body,200);post(subject,path(id)+"/visual-warnings",body,200);
+        assertThat(step(id,"idle-south").path("status").asText()).isEqualTo("CHECKING");
+        assertThat(step(id,"idle-south").path("result")).isEqualTo(archived.path("result"));
+        finish(id);assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
+        assertThat(step(id,"idle-south").path("repairCount").asInt()).isEqualTo(1);
+        assertThat(read(id).path("seedReview")).isEqualTo(before.path("seedReview"));
+        for(var s:before.path("steps"))if(!s.path("label").asText().equals("idle-south"))assertThat(step(id,s.path("label").asText())).isEqualTo(s);
+        for(var e:saved.entrySet())assertThat(objects.get(e.getKey())).isEqualTo(e.getValue());verifyNoInteractions(provider);
+        body.put("requestId",UUID.randomUUID().toString());post(subject,path(id)+"/visual-warnings",body,409);
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"paid","rules","hashes","rights","outsider","unknown","report-tamper","frame-tamper"})
+    void visualWarningsRejectUnsafeTransitionOrChangedStoredFrames(String defect)throws Exception {
+        UUID id=b75HeldPack();promptResumeFixture(id);var body=warningTransitionBody(id);UUID actor=subject;int status=409;
+        switch(defect) {
+            case "paid" -> jdbc.update("UPDATE shelter.styled_asset_steps SET provider_job_id=? WHERE job_id=? AND label='idle-south'",UUID.randomUUID(),id);
+            case "rules" -> body.put("expectedRulesSha256","0".repeat(64));
+            case "hashes" -> body.put("expectedSeedHashes",Map.of());
+            case "rights" -> {jdbc.update("UPDATE shelter.asset_source_permissions SET revoked_at=now() WHERE id=?",permission);status=409;}
+            case "outsider" -> {actor=UUID.randomUUID();status=403;}
+            case "unknown" -> jdbc.update("UPDATE shelter.asset_jobs SET status='OUTCOME_UNKNOWN' WHERE id=?",id);
+            case "report-tamper" -> jdbc.update("UPDATE shelter.styled_asset_steps SET attempt_history=jsonb_set(attempt_history,'{0,quality,inputSha256}',to_jsonb(?::text)) WHERE job_id=? AND label='idle-south'","0".repeat(64),id);
+            case "frame-tamper" -> {jdbc.update("UPDATE shelter.styled_asset_steps SET attempt_history=jsonb_set(attempt_history,'{0,result,frameHashes,0}',to_jsonb(?::text)) WHERE job_id=? AND label='idle-south'","0".repeat(64),id);status=200;}
+        }
+        clearInvocations(provider);post(actor,path(id)+"/visual-warnings",body,status);
+        if(defect.equals("frame-tamper")){finish(id);assertThat(read(id).path("failureCode").asText()).isEqualTo("STYLED_FRAME_CHANGED");}
+        verifyNoInteractions(provider);
+    }
+    @Test void visualWarningsDoNotAlterAnAlreadyApprovedPack()throws Exception {
+        UUID id=recoveryRequest(0,false);finish(id);var before=read(id);post(subject,path(id)+"/visual-warnings",warningTransitionBody(id),409);
+        assertThat(read(id)).isEqualTo(before);
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest @org.junit.jupiter.params.provider.ValueSource(booleans={false,true})
+    void visualWarningsResumeSavedOrInterruptedObservationWithoutCallingItTwice(boolean interrupted)throws Exception {
+        warningObservation();UUID id=warningRequest();tick();tick();
+        var report=step(id,"character").path("qualityReport");
+        var partial=get(subject,path(id)+"/warnings",200).path("data");assertThat(partial.path("images").size()).isEqualTo(1);
+        jdbc.update("UPDATE shelter.asset_jobs SET status='QUEUED',seed_review=NULL,lease_token=NULL,lease_until=NULL WHERE id=?",id);
+        jdbc.update("UPDATE shelter.styled_asset_steps SET status='CHECKING',quality_report=?::jsonb WHERE job_id=? AND action='BASE'",interrupted?"{\"status\":\"STARTED\"}":report.toString(),id);
+        clearInvocations(provider,warningAgent);tick();verifyNoInteractions(provider,warningAgent);
+        assertThat(read(id).path("status").asText()).isEqualTo("QUEUED");
+        if(interrupted)assertThat(step(id,"character").at("/qualityReport/reviewStatus").asText()).isEqualTo("UNAVAILABLE");
+        else assertThat(step(id,"character").path("qualityReport")).isEqualTo(report);
+        finish(id);assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
+        verify(warningAgent,times(12)).observe(anyList(),anyList(),anyString(),nullable(String.class));
+    }
+
 }
