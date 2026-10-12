@@ -54,7 +54,9 @@ public class StyledAssetManifest {
     private Map<String,Object> quality(StyledAssetStore.Job job) {
         var mapper=new tools.jackson.databind.json.JsonMapper();var warnings=mapper.createArrayNode();
         for(var step:job.steps())for(var warning:StyledVisualWarnings.warnings(step,mapper)) {
-            var item=(tools.jackson.databind.node.ObjectNode)warning.deepCopy();item.put("label",step.label()).put("action",step.action());
+            // Public playback carries actionable findings, never the full prompt/observation audit.
+            var item=mapper.createObjectNode().put("label",step.label()).put("action",step.action());
+            for(String field:List.of("code","note","frames","direction"))if(warning.has(field))item.set(field,warning.path(field));
             if(!item.has("direction"))item.put("direction",Objects.toString(step.direction(),"all"));warnings.add(item);
         }
         if(job.qualityPolicy().at("/contract/warning").isString())warnings.addObject().put("code",job.qualityPolicy().at("/contract/warning").asText())

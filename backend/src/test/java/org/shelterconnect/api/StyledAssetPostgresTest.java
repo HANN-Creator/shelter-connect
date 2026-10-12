@@ -3101,7 +3101,7 @@ class StyledAssetPostgresTest {
     void warningObservation() {
         when(warningAgent.observe(anyList(),anyList(),anyString(),nullable(String.class))).thenAnswer(c->{outsideTransaction();
             return json.valueToTree(Map.of("model","test-warning","warnings",List.of(Map.of("code","TAIL","note","꼬리 모양이 불확실합니다. 직접 확인해 주세요.",
-                "direction",Objects.toString(c.getArgument(3),"west"),"frames",c.getArgument(2).equals("BASE")?List.of():List.of(2,8)))));});
+                "direction",Objects.toString(c.getArgument(3),"west"),"observation",Map.of("privateAudit","internal prompt validation details"),"frames",c.getArgument(2).equals("BASE")?List.of():List.of(2,8)))));});
     }
     @Test void visualWarningsCompleteAllDirectionsWithoutRepairOrFakePass()throws Exception {
         warningObservation();UUID id=warningRequest();finish(id);var result=read(id);
@@ -3115,6 +3115,7 @@ class StyledAssetPostgresTest {
         var manifest=get(null,"/v1/dogs/"+dog+"/assets",200).path("data");
         assertThat(manifest.at("/quality/mode").asText()).isEqualTo("WARN_ONLY");assertThat(manifest.at("/quality/passed").asBoolean()).isFalse();
         assertThat(manifest.at("/quality/warnings").size()).isEqualTo(13);
+        assertThat(manifest.toString()).doesNotContain("privateAudit","internal prompt validation details");
         for(String d:List.of("UP","DOWN","LEFT","RIGHT"))for(String action:List.of("IDLE","WALK","SIT"))assertThat(manifest.at("/mapDirections/"+d+"/"+action+"/frames").size()).isEqualTo(9);
         var warningPage=get(subject,path(id)+"/warnings",200).path("data");assertThat(warningPage.path("images").size()).isEqualTo(13);
         assertThat(warningPage.at("/images/1/warnings/0/frames")).isEqualTo(json.valueToTree(List.of(2,8)));
