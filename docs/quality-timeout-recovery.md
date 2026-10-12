@@ -1,5 +1,7 @@
 # B-80 저장된 이미지의 검수 시간 초과 복구
 
+> **과거 변경·검증 기록.** 현재 일반 작업은 [서버 에셋 기준](asset-pipeline-current.md)의 경고 정책을 따른다. 아래 차단·보완 설명은 당시 정책 또는 기존 작업의 호환 경로에 해당한다.
+
 B-79 이후 같은 강아지를 다시 만들지 않고 v33 실패 지점에서 이어가기 위한 변경이다. 실제 실패 메타데이터는 `backend/scripts/fixtures/quality-timeout-v33/failure.json`에 보존했다. BASE SYSTEM 승인, 정면·뒤 IDLE 완료 후 `idle-west`에서 생성 응답은 DB에 저장됐지만 이미지 검수의 `QUALITY_AI_TIMEOUT` 때문에 FAILED가 됐다. 이때 `result`는 아직 없고 `provider_result`와 STARTED 표시가 남는다.
 
 ## 자동 처리

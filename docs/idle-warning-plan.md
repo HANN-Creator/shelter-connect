@@ -1,5 +1,7 @@
 # B-87 쉬기 정적 대체의 명암 경고 중복 차단
 
+> **과거 변경·검증 기록.** 현재 일반 작업은 [서버 에셋 기준](asset-pipeline-current.md)의 경고 정책을 따른다. 아래 차단·보완 설명은 당시 정책 또는 기존 작업의 호환 경로에 해당한다.
+
 B-86을 배포한 실제 v38 작업의 `idle-west`는 두 관찰 모두 꼬리 움직임을 확인했지만 action 판정은 갈렸다. palette의 PASS/FAIL은 기존 미관 정책에 따라 `PALETTE_UNCERTAIN`, `blocking=false`로 기록됐다. 그런데 정적 대체 계획이 원시 palette FAIL을 다시 읽어 새 후보 생성을 막았다.
 
 `StyledIdleHold.motionOnlyFailure`도 기존 `StyledAestheticPolicy.permitsPaletteWarning`을 사용한다. 올바른 정책과 비차단 경고가 있고 두 관찰이 모두 색상 결함을 확정하지 않은 경우만 적용한다. 원래 불합격 판정을 바꾸지 않고, 이미 승인된 같은 방향 기준 자세로 별도 정적 IDLE을 만들어 새 전체 검수를 받게 한다. 같은 규칙 선택 재개와 일반 워커가 같은 계획을 사용한다.

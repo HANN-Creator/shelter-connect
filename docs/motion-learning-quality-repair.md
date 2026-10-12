@@ -1,5 +1,7 @@
 # B-64 스프라이트 품질과 걷기·앉기 학습 복구
 
+> **과거 변경·검증 기록.** 현재 일반 작업은 [서버 에셋 기준](asset-pipeline-current.md)의 경고 정책을 따른다. 아래 차단·보완 설명은 당시 정책 또는 기존 작업의 호환 경로에 해당한다.
+
 노션: [B-64](https://app.notion.com/p/3f35b2d1a55f800b9befe8f8a1f21e59). 브랜치 `backend/b-64-motion-learning-repair`.
 
 ## 문제와 변경

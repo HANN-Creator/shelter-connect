@@ -63,9 +63,11 @@ PNG 이미지들은 이미 넣어뒀어. 이미지를 다시 만들고 싶을 �
 
 ## 백엔드 작업
 
-`backend/`에 Spring Boot와 Supabase PostgreSQL을 쓰는 서버 구성을 넣었어. Java 21로 실행하고, 자세한 설정은 [백엔드 실행 안내](backend/README.md)를 보면 돼. 서버 상태 확인과 [데이터 구조·마이그레이션](docs/data-model.md), [가상 보호소 2곳·강아지 5마리 샘플](backend/sample-data/README.md), [보호소·강아지 조회 API](docs/read-api.md), [Supabase 인증·보호소 권한](docs/auth-and-permissions.md), [강아지·관찰 관리 API](docs/dog-management-api.md), [대화방·메시지 저장](docs/chat-storage-api.md), [기록 기반 AI 답변](docs/grounded-chat-api.md)이 들어 있어. 지정 개발 DB는 V3까지 적용했고 AI는 서버 키 설정 뒤 켜야 해. 실제 응답 검증과 시안 연결은 아직이야.
+`backend/`에 Spring Boot·Java 21·Supabase PostgreSQL 서버가 있어. [서버 실행 안내](backend/README.md), [현재 에셋 생성·경고·저장 기준](docs/asset-pipeline-current.md), [프론트 행동 재생 명세](docs/dog-action-playback-spec.md)를 먼저 확인해.
 
-[구현 순서와 브랜치 규칙](docs/backend-workflow.md)에 따라 작업별 PR을 만들고, 노션 카드에 진행 상태와 병합 결과를 같이 남겨.
+누적 작업은 [전체 PR 대조표](docs/pr-consolidation-2026-10-12.md)에 정리했어. 과거 조사 문서의 재생성·검수 차단 안내와 현재 경고 정책을 구분해뒀고, 현재 코드의 DB 마이그레이션은 V24까지 있어. 실제 배포 적용과 앱 재생 검증은 PR 결과에 별도로 기록해.
+
+[구현 순서와 브랜치 규칙](docs/backend-workflow.md)에 따라 작업별 PR을 만들고, 노션 연결이 가능할 때 같은 결과를 동기화해.
 
 ## 움직임을 수정했다면 확인해봐
 
@@ -81,14 +83,4 @@ node work/mobile-concept/check-ball-play.cjs
 
 이미지 출처랑 수정 내역은 [CREDITS.md](CREDITS.md)에 따로 적어뒀으니까, 에셋 쪽을 만질 때 같이 보면 돼.
 
-사진 조회 API와 프론트 연결 방법은 [사진 조회 문서](docs/photo-read-api.md)에 정리했어. [비공개 Supabase Storage 연결](docs/photo-storage-connection.md)과 테스트 이미지 다운로드는 확인했어. 실제 보호소 사진과 사용 허가 등록은 별도로 준비해야 해.
-
-강아지 움직임은 [8종 행동 설정 API](docs/dog-behavior-api.md)로 연결해. 설정을 저장하고 보호소가 확인하면 앱에서 조회할 수 있어. 지정 개발 DB에는 V3까지 적용했어. RN의 실제 동작 재생은 프론트가 준비된 뒤 연결해.
-
-프론트가 행동 코드를 고정 규칙에 연결할 때는 [강아지 행동별 재생 명세서](docs/dog-action-playback-spec.md)를 먼저 보면 돼. 강아지마다 다른 행동 목록, 이동·종료 조건, 앉았다 일어나기, 공놀이 대체 행동과 오류 처리를 정리했어. API 계약과 RN 구현 초안을 구분해서 적어뒀어.
-
-Spring Boot 서버와 Supabase 개발 DB의 [실제 연결 확인](docs/supabase-server-connection.md)도 마쳤어. 로컬 서버에서 보호소·강아지 조회와 미인증 차단을 확인했고, 사진 저장소도 연결했어. 실제 로그인 저장·AI 호출·보호소 사진 등록과 외부 배포는 다음 단계야.
-
-사진에서 도트와 움직임을 만드는 서버는 [에셋 생성 API](docs/dog-asset-generation.md)와 [특성별 모션 하네스](docs/motion-harness-pipeline.md)를 보면 돼. 공통 대기·걷기에 대표 행동을 최대 두 개 더 만들고, 체형과 최종 결과를 확인한 뒤 앱에 보여주는 흐름이야.
-
-- [사진·특징 입력 명세서](docs/asset-input-workflow.md): 보호소 직접 업로드부터 행동 초안 확인, 생성·승인·앱 조회까지.
+백엔드 기능별 계약은 [사진 조회](docs/photo-read-api.md), [강아지 행동 설정](docs/dog-behavior-api.md), [사진·특징 입력](docs/asset-input-workflow.md), [행동별 재생 명세](docs/dog-action-playback-spec.md)에서 확인해. 초기 도구와 과거 검수 실험은 [현재 서버 경로 안내](docs/asset-pipeline-current.md)에서 용도를 구분해뒀어.

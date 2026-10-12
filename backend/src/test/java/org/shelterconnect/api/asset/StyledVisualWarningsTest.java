@@ -41,6 +41,31 @@ class StyledVisualWarningsTest {
         assertThatThrownBy(()->new StyledLessonPromptComposer(store,agent).describe(w,lessons,"Walk west.",1000)).isInstanceOf(AssetException.class);
         verify(store,never()).ready(any(),any(),anyString(),any(),anyString());verify(agent,never()).verify(any(),anyString(),any(),anyInt());
     }
+    @Test void cachedAdvisoryWarningIsReusableWithoutAnotherAiCall() {
+        var store=mock(StyledLessonPromptStore.class);var agent=mock(StyledLessonPromptAgent.class);var w=work();var lessons=json.createArrayNode();
+        var draft=json.createObjectNode().put("prompt","Preserve every native pixel and walk west.");
+        var audit=json.createObjectNode().put("enforcement","WARN_ONLY").put("warning","PROMPT_REVIEW_UNAVAILABLE");
+        when(store.start(w,lessons,"Walk west.",1000)).thenReturn(new StyledLessonPromptStore.Entry("key","READY",draft,audit,false));
+        assertThat(new StyledLessonPromptComposer(store,agent).describe(w,lessons,"Walk west.",1000)).isEqualTo(draft.path("prompt").asText());
+        verifyNoInteractions(agent);verify(store,never()).ready(any(),any(),anyString(),any(),anyString());
+    }
+    @Test void unavailableSemanticObserverStoresWarningWithoutRewritingValidPrompt() {
+        var store=mock(StyledLessonPromptStore.class);var agent=mock(StyledLessonPromptAgent.class);var w=work();var lessons=json.createArrayNode();
+        var draft=json.createObjectNode().put("prompt","Preserve every native pixel and walk west.");
+        when(store.start(w,lessons,"Walk west.",1000)).thenReturn(new StyledLessonPromptStore.Entry("key","COMPOSING",null,null,true));
+        when(agent.compose(lessons,"Walk west.",1000)).thenReturn(draft);
+        when(agent.verify(lessons,"Walk west.",draft,1000)).thenThrow(new AiFailure("AI_TIMEOUT"));
+        assertThat(new StyledLessonPromptComposer(store,agent).describe(w,lessons,"Walk west.",1000)).isEqualTo(draft.path("prompt").asText());
+        var audit=ArgumentCaptor.forClass(JsonNode.class);verify(store).ready(eq(w),eq(lessons),eq("key"),audit.capture(),eq(draft.path("prompt").asText()));
+        assertThat(audit.getValue().path("warning").asText()).isEqualTo("PROMPT_REVIEW_UNAVAILABLE");
+        verify(agent,never()).rewrite(any(),anyString(),anyInt(),any(),any());verify(store,never()).failed(any(),anyString(),anyString());
+    }
+    @Test void interruptedAdvisoryEntryDoesNotPurchaseAnotherPrompt() {
+        var store=mock(StyledLessonPromptStore.class);var agent=mock(StyledLessonPromptAgent.class);var w=work();var lessons=json.createArrayNode();
+        when(store.start(w,lessons,"Walk west.",1000)).thenReturn(new StyledLessonPromptStore.Entry("key","COMPOSING",null,null,false));
+        assertThatThrownBy(()->new StyledLessonPromptComposer(store,agent).describe(w,lessons,"Walk west.",1000)).hasMessage("LESSON_PROMPT_REVIEW_REQUIRED");
+        verifyNoInteractions(agent);
+    }
     @ParameterizedTest @ValueSource(strings={"code","frame","direction","base-frame","note"})
     void malformedWarningNeverBecomesAGenuineClearObservation(String defect) {
         var client=mock(OpenAiResponsesClient.class);var props=new AiProperties(true,"fake-key","test-model",30);
