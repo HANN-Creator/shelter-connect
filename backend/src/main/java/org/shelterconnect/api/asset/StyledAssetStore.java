@@ -35,6 +35,7 @@ public class StyledAssetStore {
         boolean character() { return action.equals("BASE"); }
         String prefix() { return dogId+"/"+id+"/native-32/"; }
     }
+    @org.springframework.beans.factory.annotation.Value("${app.assets.visual-warnings-only:true}") private boolean visualWarningsOnly;
     private final JdbcClient jdbc;private final JsonMapper json;private final ShelterAccessService access;
     private final AccountService accounts;private final AssetProperties properties;private final AssetStore legacy;private final BehaviorService behaviors;private final StyledLessonStore lessons;
     public StyledAssetStore(JdbcClient jdbc,JsonMapper json,ShelterAccessService access,AccountService accounts,AssetProperties properties,AssetStore legacy,BehaviorService behaviors,StyledLessonStore lessons) {
@@ -114,6 +115,7 @@ public class StyledAssetStore {
         return jdbc.sql("SELECT count(*) FROM shelter.asset_jobs WHERE id=:id AND pipeline_version=:v").param("id",id).param("v",StyledSpriteCodec.VERSION).query(Integer.class).single()==1;
     }
     @Transactional(readOnly=true) public Job forManifest(UUID id) { legacy.valid(id,false);return job(id); }
+    @Transactional(readOnly=true) public Job warningImages(UUID subject,UUID dog,UUID id) {var j=read(subject,dog,id);legacy.valid(id,false);return j;}
     @Transactional(readOnly=true) public Job preview(UUID subject,UUID dog,UUID id) {
         var j=read(subject,dog,id);legacy.valid(id,false);
         if(!Set.of("SEED_REVIEW","REVIEW","APPROVED","REJECTED").contains(j.status()))throw new AssetException(409,"ASSET_NOT_READY");return j;
@@ -197,7 +199,7 @@ public class StyledAssetStore {
               jsonb_build_object('recheckFromRulesSha256',:previous,'recheckNote',:note,'recheckedAt',now()),
               seed_review=CASE WHEN :recheckSeed THEN NULL ELSE seed_review END,
               status='QUEUED',failure_code=NULL,next_run_at=now(),lease_token=NULL,lease_until=NULL WHERE id=:id
-            """).param("policy",json.writeValueAsString(StyledRecovery.enabled(j.qualityPolicy())?newSeedQualityPolicy():recheckSeed?seedQualityPolicy():qualityPolicy()))
+            """).param("policy",json.writeValueAsString(StyledRecovery.enabled(j.qualityPolicy())?newSeedQualityPolicy(StyledVisualWarnings.enabled(j.qualityPolicy())):recheckSeed?seedQualityPolicy():qualityPolicy()))
                 .param("recheckSeed",recheckSeed).param("previous",expected).param("note",note).param("id",id).update();
         return job(id);
     }
@@ -469,6 +471,69 @@ public class StyledAssetStore {
         jdbc.sql("UPDATE shelter.asset_jobs SET quality_policy=quality_policy || jsonb_build_object('promptResumes',CAST(:g AS jsonb)),status='QUEUED',failure_code=NULL,next_run_at=now(),lease_token=NULL,lease_until=NULL WHERE id=:j")
             .param("g",json.writeValueAsString(grants)).param("j",id).update();return job(id);
     }
+    /** Explicit per-job product-policy change. Existing approved packs and paid receipts stay immutable. */
+    @Transactional public Job visualWarnings(UUID subject,UUID dog,UUID id,JsonNode body) {
+        var actor=access.requireDogForWrite(subject,dog);properties.requireEnabled();
+        AssetInput.fields(body,"requestId","note","expectedSeedHashes","expectedRulesSha256");
+        UUID request=AssetInput.id(body,"requestId");String note=AssetInput.text(body,"note",2000),rules=AssetInput.text(body,"expectedRulesSha256",64);
+        if(note.length()<20 || !rules.matches("[a-f0-9]{64}"))throw AssetException.invalid();
+        lock(id);var j=job(id);if(!j.dogId().equals(dog))throw missing();legacy.valid(id,true);
+        var policy=j.qualityPolicy();var canonical=(tools.jackson.databind.node.ObjectNode)body.deepCopy();canonical.put("requestId",request.toString());
+        if(policy==null)throw new AssetException(409,"VISUAL_WARNING_TRANSITION_NOT_ALLOWED");
+        if(policy.has("visualWarningTransition")) {
+            if(policy.at("/visualWarningTransition/request").equals(canonical))return j;
+            throw new AssetException(409,"VISUAL_WARNING_TRANSITION_CONFLICT");
+        }
+        if(StyledVisualWarnings.enabled(policy) || policy.path("referenceOnly").asBoolean() || !StyledRecovery.enabled(policy)
+            || !StyledAutoApproval.enabled(policy) || j.qualityApproval()!=null
+            || !Set.of("SEED_REVIEW","REVIEW","FAILED").contains(j.status())
+            || j.steps().isEmpty() || j.steps().getFirst().result()==null
+            || j.steps().stream().anyMatch(s->!Set.of("SUCCEEDED","FAILED","PENDING").contains(s.status())))
+            throw new AssetException(409,"VISUAL_WARNING_TRANSITION_NOT_ALLOWED");
+        if(!rules.equals(StyledSpriteCodec.qualityRulesSha()) || !rules.equals(policy.path("rulesSha256").asText())
+            || !body.path("expectedSeedHashes").equals(j.steps().getFirst().result().path("hashes")))throw new AssetException(409,"QUALITY_RECHECK_STALE");
+        if(j.status().equals("FAILED") && !Set.of("LESSON_PROMPT_INVALID","LESSON_PROMPT_MEANING_LOST").contains(Objects.toString(j.failureCode(),"")))
+            throw new AssetException(409,"VISUAL_WARNING_TRANSITION_NOT_ALLOWED");
+        for(var s:j.steps()) {
+            if(s.status().equals("SUCCEEDED"))continue;
+            if(s.action().equals("BASE"))throw new AssetException(409,"VISUAL_WARNING_TRANSITION_NOT_ALLOWED");
+            var row=jdbc.sql("""
+                SELECT jsonb_build_object('provider',provider_job_id,'request',request_sha256,'submitted',submitted_at,
+                  'providerResult',provider_result,'result',result,'history',attempt_history)::text
+                FROM shelter.styled_asset_steps WHERE job_id=:j AND label=:l
+                """).param("j",id).param("l",s.label()).query(String.class).single();var saved=json.readTree(row);
+            if(!saved.path("provider").isNull() || !saved.path("submitted").isNull() || !saved.path("providerResult").isNull() || !saved.path("result").isNull())
+                throw new AssetException(409,"VISUAL_WARNING_TRANSITION_NOT_ALLOWED");
+            if(s.status().equals("PENDING") && s.repairCount()==0 && saved.path("request").isNull())continue;
+            // Only a proven pre-purchase prompt failure can reuse the last definitively completed image.
+            var history=saved.path("history");var last=history.isEmpty()?json.createObjectNode():history.get(history.size()-1);
+            var image=last.path("result");var report=last.path("quality");
+            int known=jdbc.sql("""
+                SELECT count(*) FROM shelter.styled_lesson_prompts p JOIN shelter.styled_asset_steps s ON s.job_id=p.job_id AND s.label=p.label
+                WHERE p.job_id=:j AND p.label=:l AND p.state='FAILED' AND p.failure_code=:code AND p.input->'lessons'=s.learned_lessons
+                  AND p.input_sha256=(SELECT input_sha256 FROM shelter.styled_lesson_prompts WHERE job_id=:j AND label=:l ORDER BY created_at DESC LIMIT 1)
+                """).param("j",id).param("l",s.label()).param("code",j.failureCode(),java.sql.Types.VARCHAR).query(Integer.class).single();
+            if(!s.status().equals("FAILED") || known!=1 || !last.path("providerJobId").asText().matches("[a-fA-F0-9-]{36}")
+                || (!saved.path("request").isNull() && !saved.path("request").equals(last.path("requestSha256")))
+                || image.path("frameSize").asInt()!=40 || image.path("frameCount").asInt()!=9
+                || !image.path("sha256").asText().matches("[a-f0-9]{64}") || !image.path("sha256").equals(report.path("inputSha256"))
+                || !image.path("key").asText().startsWith(dog+"/"+id+"/native-32/sheets/"))throw new AssetException(409,"VISUAL_WARNING_TRANSITION_NOT_ALLOWED");
+            jdbc.sql("""
+                UPDATE shelter.styled_asset_steps SET result=CAST(:r AS jsonb),quality_report=NULL,status='CHECKING',request_sha256=NULL,
+                  attempt_history=attempt_history || jsonb_build_array(jsonb_build_object('visualWarningReuse',true,'requestId',:request,'priorQuality',quality_report,'at',now()))
+                WHERE job_id=:j AND label=:l
+                """).param("r",json.writeValueAsString(image)).param("request",request.toString()).param("j",id).param("l",s.label()).update();
+        }
+        var next=(tools.jackson.databind.node.ObjectNode)policy.deepCopy();next.put("visualWarnings",StyledVisualWarnings.VERSION);
+        next.putObject("visualWarningTransition").put("requestedBy",actor.userId().toString()).put("at",Instant.now().toString()).set("request",canonical);
+        // Retain valid strict reports unchanged. An unresolved seed gets one advisory observation of its saved bytes.
+        if(!StyledVisualWarnings.seed(new Job(j.id(),j.dogId(),j.status(),j.failureCode(),j.pipelineVersion(),j.steps(),j.seedReview(),j.actionPlan(),j.generationPlan(),next,j.qualityApproval()),json))
+            jdbc.sql("UPDATE shelter.styled_asset_steps SET status='CHECKING',attempt_history=attempt_history || jsonb_build_array(jsonb_build_object('visualWarningSeedReview',true,'quality',quality_report,'result',result)),quality_report=NULL WHERE job_id=:j AND action='BASE'").param("j",id).update();
+        jdbc.sql("""
+            UPDATE shelter.asset_jobs SET quality_policy=CAST(:p AS jsonb),status='QUEUED',failure_code=NULL,
+              next_run_at=now(),lease_token=NULL,lease_until=NULL WHERE id=:j
+            """).param("p",json.writeValueAsString(next)).param("j",id).update();return job(id);
+    }
     private Step failedTimeoutStep(Job j) {
         if(!j.status().equals("FAILED") || !"QUALITY_AI_TIMEOUT".equals(j.failureCode()) || j.qualityApproval()!=null
             || j.qualityPolicy()==null || j.qualityPolicy().path("referenceOnly").asBoolean()
@@ -720,7 +785,8 @@ public class StyledAssetStore {
         "lowTailRepair", "REGENERATE_THEN_EDIT_ONCE", "idleRepair",StyledSpriteCodec.IDLE_EDIT_VERSION,
         "marginRepair",StyledSpriteCodec.MARGIN_EDIT_VERSION,"seedIdleRepair",StyledSpriteCodec.SEED_IDLE_VERSION);}
     private Map<String,Object> seedQualityPolicy(){var p=new HashMap<String,Object>(qualityPolicy());p.put("seedQualityVersion",StyledSeedQualityAgent.VERSION);return p;}
-    private Map<String,Object> newSeedQualityPolicy(){var p=seedQualityPolicy();p.put("learningRecovery",StyledLearningRecoveryStore.VERSION);
+    private Map<String,Object> newSeedQualityPolicy(){return newSeedQualityPolicy(visualWarningsOnly);}
+    private Map<String,Object> newSeedQualityPolicy(boolean advisory){var p=seedQualityPolicy();p.put("learningRecovery",StyledLearningRecoveryStore.VERSION);
         p.put("lessonRevision",StyledLessonStore.REVISION_VERSION);p.put("seedMotionMargin",2);p.put("seedEyeRepair",StyledSeedEyeRepair.VERSION);
         p.put("automaticApproval",StyledAutoApproval.VERSION);
         p.put("aestheticPolicy",StyledAestheticPolicy.VERSION);p.put("qualityTimeoutVersion",StyledQualityTimeout.VERSION);
@@ -728,11 +794,12 @@ public class StyledAssetStore {
         p.put("structuralRecovery",StyledStructuralRecovery.VERSION);p.put("idleSeedRestart",StyledIdleRestart.VERSION);
         p.put("recoveryVersion",StyledRecovery.VERSION);p.put("seedRepairVersion",StyledSeedRepair.VERSION);p.put("seedTailEvidenceVersion",StyledTailAnatomy.VERSION);p.put("motionFrameSize",40);p.put("seedMotionMargin",1);
         p.put("maxSeedRepairs",recovery.path("maxSeedRepairs").asInt());p.put("maxRepairsPerClip",recovery.path("maxMotionRepairs").asInt());
-        p.put("motionCandidateVersion",StyledMotionCandidate.VERSION);p.put("idleHoldVersion",StyledIdleHold.VERSION);p.remove("seedEyeRepair");p.remove("learningRecovery");return p;}
+        p.put("motionCandidateVersion",StyledMotionCandidate.VERSION);p.put("idleHoldVersion",StyledIdleHold.VERSION);p.remove("seedEyeRepair");p.remove("learningRecovery");if(advisory)p.put("visualWarnings",StyledVisualWarnings.VERSION);return p;}
     private boolean seedQualityPassed(Job j) {
+        if(StyledVisualWarnings.enabled(j.qualityPolicy()))return StyledVisualWarnings.seed(j,json);
         var step=j.steps().getFirst();return StyledSeedQualityAgent.passed(step.qualityReport(),step.result()==null?json.createObjectNode():step.result().path("hashes"),j.qualityPolicy());
     }
-    private boolean qualityPassed(Job j) {return seedQualityPassed(j) && (j.qualityPolicy()==null || j.steps().stream().skip(1).allMatch(s->s.qualityReport()!=null && s.qualityReport().path("passed").asBoolean()));}
+    private boolean qualityPassed(Job j) {if(StyledVisualWarnings.enabled(j.qualityPolicy()))return StyledVisualWarnings.pack(j,json);return seedQualityPassed(j) && (j.qualityPolicy()==null || j.steps().stream().skip(1).allMatch(s->s.qualityReport()!=null && s.qualityReport().path("passed").asBoolean()));}
     private boolean automaticSeedPassed(Job j) {
         if(!StyledAutoApproval.seed(j,json) || !lessonsBound(j.id(),true))return false;
         String expected=jdbc.sql("SELECT styled_input->>'sourcePhotoSha256' FROM shelter.asset_jobs WHERE id=:id")
@@ -770,7 +837,7 @@ public class StyledAssetStore {
         return job(j.id());
     }
     private void finishPack(Job j) {
-        if(automaticSeedPassed(j) && j.complete() && qualityPassed(j))j=normalizeRawEvidence(j);
+        if(!StyledVisualWarnings.enabled(j.qualityPolicy()) && automaticSeedPassed(j) && j.complete() && qualityPassed(j))j=normalizeRawEvidence(j);
         if(automaticSeedPassed(j) && StyledAutoApproval.pack(j,json) && lessonsBound(j.id(),false)) {
             jdbc.sql("""
                 UPDATE shelter.asset_jobs SET status='APPROVED',quality_approval=CAST(:a AS jsonb),
@@ -1050,6 +1117,7 @@ public class StyledAssetStore {
     }
     @Transactional public boolean retryQuality(Work w,JsonNode report,JsonNode result) {
         if(!authorized(w))return true;
+        if(StyledVisualWarnings.enabled(w.qualityPolicy()))return false;
         // Explicit rechecks judge the stored bytes, even if a new rule finds a defect with budget left.
         if(w.status().equals("CHECKING") && !seedResumeAllowed(w) && !motionResumeAllowed(w))return false;
         if(w.character() && StyledCoatReview.unresolved(report))return false;

@@ -46,5 +46,9 @@ public class StyledAssetController {
     public Item<StyledAssetStore.Job> learningRepair(@AuthenticationPrincipal Jwt jwt,@PathVariable String dogId,@PathVariable String jobId,@RequestBody JsonNode body) {
         return new Item<>(learning.arm(subject(jwt),AssetInput.id(dogId),AssetInput.id(jobId),body));
     }
+    @PostMapping("/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/visual-warnings")
+    public Item<StyledAssetStore.Job> visualWarnings(@AuthenticationPrincipal Jwt jwt,@PathVariable String dogId,@PathVariable String jobId,@RequestBody JsonNode body) {return new Item<>(store.visualWarnings(subject(jwt),AssetInput.id(dogId),AssetInput.id(jobId),body));}
+    @GetMapping("/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/warnings")
+    public Item<Map<String,Object>> warnings(@AuthenticationPrincipal Jwt jwt,@PathVariable String dogId,@PathVariable String jobId) {return new Item<>(manifests.warnings(subject(jwt),AssetInput.id(dogId),AssetInput.id(jobId)));}
     private UUID subject(Jwt jwt) { return UUID.fromString(jwt.getSubject()); }
 }

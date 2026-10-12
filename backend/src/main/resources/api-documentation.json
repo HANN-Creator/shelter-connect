@@ -1035,6 +1035,9 @@
         },
         "behavior": {
           "$ref": "#/components/schemas/BehaviorPlayback"
+        },
+        "quality": {
+          "$ref": "#/components/schemas/VisualAssetQuality"
         }
       },
       "required": [
@@ -3111,6 +3114,97 @@
         "expectedPromptInputSha256"
       ],
       "additionalProperties": false
+    },
+    "StyledVisualWarningTransition": {
+      "type": "object",
+      "properties": {
+        "note": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 2000
+        },
+        "expectedSeedHashes": {
+          "$ref": "#/components/schemas/StyledSeedHashes"
+        },
+        "expectedRulesSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "현재 서버 및 작업에 고정된 품질 규칙 SHA. 규칙 변경을 허용하지 않습니다."
+        },
+        "requestId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "작업별 경고 전환 1회 식별자. 같은 본문 재전송은 동일 작업을 반환합니다."
+        }
+      },
+      "required": [
+        "requestId",
+        "note",
+        "expectedSeedHashes",
+        "expectedRulesSha256"
+      ],
+      "additionalProperties": false
+    },
+    "VisualAssetQuality": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "WARN_ONLY",
+            "BLOCKING"
+          ]
+        },
+        "passed": {
+          "type": "boolean",
+          "description": "전체 관찰이 완료되고 경고가 없을 때만 true. 승인/재생 가능 여부와 구분."
+        },
+        "reviewStatus": {
+          "type": "string",
+          "enum": [
+            "CLEAR",
+            "WARNING",
+            "UNAVAILABLE",
+            "PENDING"
+          ]
+        },
+        "repairCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "policyVersion": {
+          "type": "string"
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "note": {
+                "type": "string"
+              },
+              "action": {
+                "type": "string"
+              },
+              "direction": {
+                "type": "string"
+              },
+              "frames": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 8
+                }
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      }
     }
   },
   "operations": {
@@ -3779,7 +3873,7 @@
     "GET /v1/dogs/{dogId}/assets": {
       "summary": "승인된 강아지 에셋 조회",
       "tag": "08. 도트와 애니메이션",
-      "description": "서명 URL 60초. availableActions에 있는 행동만 재생. 행동 설정 API와 함께 사용.",
+      "description": "완성·승인된 팩을 조회하며 서명 URL은 60초입니다. availableActions에 있는 행동만 재생합니다. WARN_ONLY 정책에서는 quality.passed=false여도 승인된 시트를 정상 재생합니다. quality.reviewStatus와 warnings는 사람이 확인할 관찰 결과이며 재생 차단/자동 재생성 신호가 아닙니다. 동작·방향·프레임과 경고를 함께 표시하세요. 서버 상태 APPROVED는 시각적으로 무결하다는 보증이 아닙니다.",
       "success": [
         200
       ],
@@ -4631,7 +4725,7 @@
     },
     "POST /v1/shelter-admin/dogs/{dogId}/styled-assets": {
       "summary": "32px 4방향 생성 작업 접수",
-      "description": "허가된 사진만 처리. 동일 사진·스타일·입력·확인된 행동 버전 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 기본3개+양수 비중 선택 행동만 각각 4방향 생성(총13~33단계), REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수. actionPlan/generationPlan은 작업 접수 당시 고정. 기존 33단계는 변경 없이 재개. 공개 assets.behavior는 현재 유효한 행동과 실제 시트의 교집합. 새 작업은 sprite-quality-v1 자동 검수 적용: 사진 기준 공통 꼬리 자세, 프레임 잘림과 Luna 시각 검사, 불합격 시트별 최대2회 수정 생성. qualityPolicy·steps.qualityReport·repairCount 제공. 최종 승인은 전 시트 품질 통과가 필요. 기존 작업은 repair 명시 호출로 적용. 생성 단계 수는 최초 계획이며 보완 제출 수와 Generations는 별도.",
+      "description": "허가된 사진만 처리하며 동일 사진·입력·행동 버전 요청은 기존 작업을 반환합니다. 기본 IDLE/WALK/SIT와 특성에 맞는 선택 행동을 4방향으로 생성해 저장합니다. 새 일반 작업은 기본적으로 WARN_ONLY 정책: 시각 관찰을 한 번 기록하고 경고 때문에 재생성·보완·승인을 반복하지 않습니다. 필요한 파일·프레임·해시·사용 허가가 유효하면 SYSTEM 승인합니다. 관찰의 passed=false는 유지하며 경고 목록으로 확인합니다. ASSET_VISUAL_WARNINGS_ONLY=false는 새 작업에 이전 차단 정책을 적용합니다. 기존 작업 정책은 자동 변경하지 않으며 담당자 visual-warnings 호출로 명시적으로 전환합니다. 조회는 생성 요청을 하지 않습니다. 원본 입력 분석·공급자 오류·파일 손상·접수 결과 미확정은 기술 실패로 처리합니다. 13~33단계의 최초 계획과 공급자 Generations 사용량은 다릅니다.",
       "tag": "32px 에셋",
       "success": [
         "202"
@@ -4991,6 +5085,38 @@
       "request": {
         "schema": "StyledPromptResume"
       }
+    },
+    "POST /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/visual-warnings": {
+      "summary": "기존 미승인 에셋을 시각 경고 방식으로 전환",
+      "description": "같은 보호소의 담당자가 미승인 SEED_REVIEW/REVIEW 또는 접수 전 문구 실패 작업을 명시적으로 전환합니다. 원본 사진 허가, 현재 규칙·기본 도트 해시, 저장 이미지 연결은 유지합니다. 기존 통과 기록과 보완 횟수는 보존하고, 확인된 문구 실패의 마지막 완료 이미지를 다시 생성하지 않고 사용합니다. 이미지 관찰은 경고만 기록하며 추가 보완·자동 규칙 학습을 하지 않습니다. APPROVED/진행 중/접수 결과 미확정 작업은 거부합니다. 같은 요청의 재전송은 멱등입니다.",
+      "tag": "32px 에셋",
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "404",
+        "409",
+        "503"
+      ],
+      "request": {
+        "schema": "StyledVisualWarningTransition"
+      }
+    },
+    "GET /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/warnings": {
+      "summary": "미완료 결과도 포함한 경고·원본 이미지 조회",
+      "description": "소속 및 원본 사진 허가를 확인한 뒤 현재 저장된 방향별 PNG·9프레임 시트의 60초 서명 URL, 행동·방향·문제 프레임(0~8), 원본 관찰 보고서를 반환합니다. 공개 앱 엔드포인트가 아닙니다. WARN_ONLY는 경고가 완료·공개를 막지 않는 정책이며 quality.passed=true와 다릅니다. 미완료/AI 관찰 불가도 CLEAR로 표시하지 않습니다.",
+      "tag": "32px 에셋",
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "404",
+        "409",
+        "502",
+        "503",
+        "504"
+      ]
     }
   }
 }

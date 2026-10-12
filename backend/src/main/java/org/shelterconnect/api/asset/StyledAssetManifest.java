@@ -30,6 +30,41 @@ public class StyledAssetManifest {
         var j=store.preview(subject,dog,id);var result=manifest(j,j.status().equals("SEED_REVIEW") || (j.qualityPolicy()!=null && j.qualityPolicy().path("referenceOnly").asBoolean()));
         if(!store.preview(subject,dog,id).status().equals(j.status()))throw new AssetException(409,"ASSET_CHANGED");return result;
     }
+    public Map<String,Object> warnings(UUID subject,UUID dog,UUID id) {
+        var job=store.warningImages(subject,dog,id);var keys=new ArrayList<String>();
+        String prefix=dog+"/"+id+"/native-32/";
+        for(var step:job.steps())if(step.result()!=null) {
+            if(step.action().equals("BASE"))for(String d:StyledSpriteCodec.DIRECTIONS)addKey(keys,step.result().at("/keys/"+d).asText(),prefix+"directions/");
+            else addKey(keys,step.result().path("key").asText(),prefix+"sheets/");
+        }
+        var urls=storage.sign(keys);var images=new ArrayList<Map<String,Object>>();
+        for(var step:job.steps())if(step.result()!=null) {
+            var row=new LinkedHashMap<String,Object>();row.put("label",step.label());row.put("action",step.action());
+            row.put("direction",Objects.toString(step.direction(),"all"));row.put("report",step.qualityReport());
+            row.put("warnings",StyledVisualWarnings.warnings(step,new tools.jackson.databind.json.JsonMapper()));
+            row.put("metadata",step.result());
+            if(step.action().equals("BASE")){var views=new LinkedHashMap<String,String>();for(String d:StyledSpriteCodec.DIRECTIONS)views.put(d,url(urls,step.result().at("/keys/"+d).asText()));row.put("images",views);}
+            else row.put("spritesheetUrl",url(urls,step.result().path("key").asText()));images.add(row);
+        }
+        store.warningImages(subject,dog,id); // Revalidate source rights after signing.
+        var result=new LinkedHashMap<String,Object>();result.put("id",id);result.put("status",job.status());result.put("failureCode",job.failureCode());
+        if(job.qualityPolicy()!=null)result.put("quality",quality(job));result.put("images",images);result.put("expiresAt",Instant.now().plusSeconds(60));return result;
+    }
+    private static void addKey(List<String> keys,String key,String prefix) {if(!key.startsWith(prefix) || key.contains(".."))throw new AssetException(409,"STYLED_ASSET_KEY_INVALID");keys.add(key);}
+    private Map<String,Object> quality(StyledAssetStore.Job job) {
+        var mapper=new tools.jackson.databind.json.JsonMapper();var warnings=mapper.createArrayNode();
+        for(var step:job.steps())for(var warning:StyledVisualWarnings.warnings(step,mapper)) {
+            var item=(tools.jackson.databind.node.ObjectNode)warning.deepCopy();item.put("label",step.label()).put("action",step.action());
+            if(!item.has("direction"))item.put("direction",Objects.toString(step.direction(),"all"));warnings.add(item);
+        }
+        if(job.qualityPolicy().at("/contract/warning").isString())warnings.addObject().put("code",job.qualityPolicy().at("/contract/warning").asText())
+            .put("note","원본 사진에서 꼬리 자세를 확인하지 못했습니다.").put("action","BASE").put("direction","all");
+        boolean unavailable=job.steps().stream().anyMatch(s->s.qualityReport()!=null && s.qualityReport().path("reviewStatus").asText().equals("UNAVAILABLE"));
+        boolean clear=job.complete() && warnings.isEmpty() && job.steps().stream().allMatch(s->s.qualityReport()!=null && s.qualityReport().path("passed").asBoolean());
+        return Map.of("policyVersion",job.qualityPolicy().path("version"),"mode",StyledVisualWarnings.enabled(job.qualityPolicy())?"WARN_ONLY":"BLOCKING",
+            "passed",clear,"reviewStatus",unavailable?"UNAVAILABLE":!warnings.isEmpty()?"WARNING":clear?"CLEAR":"PENDING",
+            "warnings",warnings,"repairCount",job.steps().stream().mapToInt(StyledAssetStore.Step::repairCount).sum());
+    }
     private Map<String,Object> manifest(StyledAssetStore.Job job,boolean seedsOnly) {
         if(job.steps().isEmpty() || (!seedsOnly && !job.complete()))
             throw new AssetException(409,"ASSET_NOT_READY");
@@ -50,9 +85,7 @@ public class StyledAssetManifest {
         if(job.qualityPolicy()!=null && job.qualityPolicy().path("referenceOnly").asBoolean()) {
             result.put("referenceOnly",true);result.put("provider","Imported seed reference");
         }
-        if(job.qualityPolicy()!=null)result.put("quality",Map.of("policyVersion",job.qualityPolicy().path("version"),
-            "passed",job.complete() && job.steps().stream().skip(1).allMatch(s->s.qualityReport()!=null && s.qualityReport().path("passed").asBoolean()),
-            "repairCount",job.steps().stream().mapToInt(StyledAssetStore.Step::repairCount).sum()));
+        if(job.qualityPolicy()!=null)result.put("quality",quality(job));
         if(seedsOnly) { result.put("directions",directions);result.put("seedHashes",base.path("hashes"));return result; }
         var clips=new LinkedHashMap<String,Map<String,Object>>();
         var names=Map.of("south","DOWN","north","UP","west","LEFT","east","RIGHT");
