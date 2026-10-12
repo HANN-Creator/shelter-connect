@@ -69,7 +69,7 @@ public class StyledAssetStore {
             ON CONFLICT(photo_id,pipeline_version,selection_key) DO UPDATE SET photo_id=EXCLUDED.photo_id RETURNING id
             """).param("p",photo).param("v",StyledSpriteCodec.VERSION).param("s",selection).param("plan",json.writeValueAsString(plan))
             .param("input",json.writeValueAsString(traits)).param("revision",selected.revision(),java.sql.Types.INTEGER)
-            .param("behavior",json.writeValueAsString(selected.generationPlan())).param("quality",json.writeValueAsString(newSeedQualityPolicy())).query(UUID.class).single();
+            .param("behavior",json.writeValueAsString(selected.generationPlan())).param("quality",json.writeValueAsString(StyledAssetPolicy.current(json,visualWarningsOnly))).query(UUID.class).single();
         insert(id,0,"character","BASE",null);int ordinal=1;
         for(String action:selected.generationPlan().selectedActions()) for(String direction:StyledSpriteCodec.DIRECTIONS)
             insert(id,ordinal++,action.toLowerCase(Locale.ROOT)+"-"+direction,action,direction);
@@ -95,7 +95,7 @@ public class StyledAssetStore {
     }
     @Transactional public Job referenceInsert(UUID subject,UUID dog,UUID photo,UUID id,String selection,JsonNode body,JsonNode result) {
         var actor=access.requireDogForWrite(subject,dog);referencePhoto(subject,dog,photo);
-        var policy=new HashMap<String,Object>(newSeedQualityPolicy());policy.remove("automaticApproval");policy.remove("seedMotionMargin");policy.remove("seedTailEvidenceVersion");policy.put("referenceOnly",true);policy.put("referenceInput",body);
+        var policy=new HashMap<String,Object>(StyledAssetPolicy.current(json,visualWarningsOnly));policy.remove("automaticApproval");policy.remove("seedMotionMargin");policy.remove("seedTailEvidenceVersion");policy.put("referenceOnly",true);policy.put("referenceInput",body);
         policy.put("referenceRecordedBy",actor.userId().toString());policy.put("referenceRecordedAt",Instant.now().toString());
         var inserted=jdbc.sql("""
             INSERT INTO shelter.asset_jobs(id,photo_id,dog_id,shelter_id,permission_id,pipeline_version,selection_key,action_plan,styled_input,quality_policy)
@@ -151,7 +151,7 @@ public class StyledAssetStore {
         if(j.qualityPolicy()!=null)return j; // Replay never resets the paid repair budget.
         if(!j.status().equals("REVIEW") || !j.complete())throw new AssetException(409,"ASSET_REPAIR_NOT_ALLOWED");
         jdbc.sql("UPDATE shelter.asset_jobs SET quality_policy=CAST(:q AS jsonb),status='QUEUED',failure_code=NULL,next_run_at=now() WHERE id=:id")
-            .param("q",json.writeValueAsString(qualityPolicy())).param("id",id).update();
+            .param("q",json.writeValueAsString(StyledAssetPolicy.legacyMotion(json))).param("id",id).update();
         jdbc.sql("UPDATE shelter.styled_asset_steps SET status='CHECKING' WHERE job_id=:id AND action<>'BASE'").param("id",id).update();
         return job(id);
     }
@@ -199,7 +199,7 @@ public class StyledAssetStore {
               jsonb_build_object('recheckFromRulesSha256',:previous,'recheckNote',:note,'recheckedAt',now()),
               seed_review=CASE WHEN :recheckSeed THEN NULL ELSE seed_review END,
               status='QUEUED',failure_code=NULL,next_run_at=now(),lease_token=NULL,lease_until=NULL WHERE id=:id
-            """).param("policy",json.writeValueAsString(StyledRecovery.enabled(j.qualityPolicy())?newSeedQualityPolicy(StyledVisualWarnings.enabled(j.qualityPolicy())):recheckSeed?seedQualityPolicy():qualityPolicy()))
+            """).param("policy",json.writeValueAsString(StyledRecovery.enabled(j.qualityPolicy())?StyledAssetPolicy.current(json,StyledVisualWarnings.enabled(j.qualityPolicy())):recheckSeed?StyledAssetPolicy.legacySeed(json):StyledAssetPolicy.legacyMotion(json)))
                 .param("recheckSeed",recheckSeed).param("previous",expected).param("note",note).param("id",id).update();
         return job(id);
     }
@@ -780,21 +780,6 @@ public class StyledAssetStore {
             && step.result().path("sha256").asText().equals(step.qualityReport().path("inputSha256").asText())
             && policy.path("rulesSha256").asText().equals(step.qualityReport().path("rulesSha256").asText());
     }
-    private Map<String,Object> qualityPolicy(){return Map.of("version",StyledQualityAgent.VERSION,"maxRepairsPerClip",2,
-        "rulesRevision",StyledSpriteCodec.qualityRules(json).path("revision").asText(),"rulesSha256",StyledSpriteCodec.qualityRulesSha(),
-        "lowTailRepair", "REGENERATE_THEN_EDIT_ONCE", "idleRepair",StyledSpriteCodec.IDLE_EDIT_VERSION,
-        "marginRepair",StyledSpriteCodec.MARGIN_EDIT_VERSION,"seedIdleRepair",StyledSpriteCodec.SEED_IDLE_VERSION);}
-    private Map<String,Object> seedQualityPolicy(){var p=new HashMap<String,Object>(qualityPolicy());p.put("seedQualityVersion",StyledSeedQualityAgent.VERSION);return p;}
-    private Map<String,Object> newSeedQualityPolicy(){return newSeedQualityPolicy(visualWarningsOnly);}
-    private Map<String,Object> newSeedQualityPolicy(boolean advisory){var p=seedQualityPolicy();p.put("learningRecovery",StyledLearningRecoveryStore.VERSION);
-        p.put("lessonRevision",StyledLessonStore.REVISION_VERSION);p.put("seedMotionMargin",2);p.put("seedEyeRepair",StyledSeedEyeRepair.VERSION);
-        p.put("automaticApproval",StyledAutoApproval.VERSION);
-        p.put("aestheticPolicy",StyledAestheticPolicy.VERSION);p.put("qualityTimeoutVersion",StyledQualityTimeout.VERSION);
-        var recovery=StyledSpriteCodec.qualityRules(json).path("recovery");
-        p.put("structuralRecovery",StyledStructuralRecovery.VERSION);p.put("idleSeedRestart",StyledIdleRestart.VERSION);
-        p.put("recoveryVersion",StyledRecovery.VERSION);p.put("seedRepairVersion",StyledSeedRepair.VERSION);p.put("seedTailEvidenceVersion",StyledTailAnatomy.VERSION);p.put("motionFrameSize",40);p.put("seedMotionMargin",1);
-        p.put("maxSeedRepairs",recovery.path("maxSeedRepairs").asInt());p.put("maxRepairsPerClip",recovery.path("maxMotionRepairs").asInt());
-        p.put("motionCandidateVersion",StyledMotionCandidate.VERSION);p.put("idleHoldVersion",StyledIdleHold.VERSION);p.remove("seedEyeRepair");p.remove("learningRecovery");if(advisory)p.put("visualWarnings",StyledVisualWarnings.VERSION);return p;}
     private boolean seedQualityPassed(Job j) {
         if(StyledVisualWarnings.enabled(j.qualityPolicy()))return StyledVisualWarnings.seed(j,json);
         var step=j.steps().getFirst();return StyledSeedQualityAgent.passed(step.qualityReport(),step.result()==null?json.createObjectNode():step.result().path("hashes"),j.qualityPolicy());

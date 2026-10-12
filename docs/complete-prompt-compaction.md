@@ -1,5 +1,7 @@
 # B-92 전체 생성 문구 압축과 보완 재개
 
+> **과거 변경·검증 기록.** 현재 일반 작업은 [서버 에셋 기준](asset-pipeline-current.md)의 경고 정책을 따른다. 아래 차단·보완 설명은 당시 정책 또는 기존 작업의 호환 경로에 해당한다.
+
 - 노션: https://app.notion.com/p/3f65b2d1a55f80f78770ef31792bbad2
 - 브랜치: `backend/b-92-complete-prompt-compaction`
 - 선행: B-91 / PR #103 / `0e484067c340988f9a13e08ede2a338225a3b50e`

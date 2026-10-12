@@ -1,5 +1,7 @@
 # B-89: structural recovery, quiet IDLE and policy revalidation
 
+> **과거 변경·검증 기록.** 현재 일반 작업은 [서버 에셋 기준](asset-pipeline-current.md)의 경고 정책을 따른다. 아래 차단·보완 설명은 당시 정책 또는 기존 작업의 호환 경로에 해당한다.
+
 - Card: https://app.notion.com/p/3f65b2d1a55f80c2b4cfc3b3b907c782
 - Branch: `backend/b-89-automatic-structural-recovery`
 - Baseline: B-88 / PR101 / `663441d728af6e870b22ddecca497133c6fbcf3c`.

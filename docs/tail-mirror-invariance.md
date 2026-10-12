@@ -1,5 +1,7 @@
 # B-91: direction-invariant tail measurements
 
+> **과거 변경·검증 기록.** 현재 일반 작업은 [서버 에셋 기준](asset-pipeline-current.md)의 경고 정책을 따른다. 아래 차단·보완 설명은 당시 정책 또는 기존 작업의 호환 경로에 해당한다.
+
 - Notion: https://app.notion.com/p/3f65b2d1a55f8053828ddad04153c199
 - Branch: `backend/b-91-tail-mirror-invariance`
 - Prerequisite: B-89 / PR102 / main `e2865f9`; found during the B-90 deployed verification.

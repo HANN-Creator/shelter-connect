@@ -1,5 +1,7 @@
 # B-96: consistent tail observations from exact shape evidence
 
+> **과거 변경·검증 기록.** 현재 일반 작업은 [서버 에셋 기준](asset-pipeline-current.md)의 경고 정책을 따른다. 아래 차단·보완 설명은 당시 정책 또는 기존 작업의 호환 경로에 해당한다.
+
 Branch: `backend/b-96-tail-observation-consistency`, based on main `d46259e`.
 
 Notion synchronization is pending: this session exposes no Notion connector or browser interaction tool. Existing B94 criteria and B95 results were read from the repository. This document records the new scoped work without claiming an external card update.

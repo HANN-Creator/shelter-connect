@@ -1,5 +1,7 @@
 # B93 생성 문구의 결함 코드·형식 검사 충돌
 
+> **과거 변경·검증 기록.** 현재 일반 작업은 [서버 에셋 기준](asset-pipeline-current.md)의 경고 정책을 따른다. 아래 차단·보완 설명은 당시 정책 또는 기존 작업의 호환 경로에 해당한다.
+
 - 노션: https://app.notion.com/p/3f65b2d1a55f801e9e95ee8818bc96c8
 - 브랜치: `backend/b-93-prompt-format-contract`
 - 선행: B92 / PR104 / main `d95a6138bc59795aec6b4d38330c46b2b06c17eb`

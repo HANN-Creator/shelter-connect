@@ -19,6 +19,25 @@ class StyledLessonPromptAgentTest {
         return list;
     }
     JsonNode verdict(int count){return json.valueToTree(Map.of("preserved",Collections.nCopies(count,true),"compatibleWithBase",true,"noNewRequirements",true,"basePreserved",true));}
+    @Test void strictCacheCannotReuseAnUnresolvedSemanticVerdict() {
+        var store=mock(StyledLessonPromptStore.class);var writer=mock(StyledLessonPromptAgent.class);var sources=rules(1);
+        var draft=json.createObjectNode().put("prompt","Keep every original rule and native pixel intact.");
+        var invalid=(tools.jackson.databind.node.ObjectNode)verdict(1);invalid.put("basePreserved",false);
+        when(store.start(isNull(),eq(sources),eq("Walk west."),eq(1000)))
+            .thenReturn(new StyledLessonPromptStore.Entry("key","READY",draft,invalid,false));
+        assertThatThrownBy(()->new StyledLessonPromptComposer(store,writer).describe(null,sources,"Walk west.",1000)).hasMessage("LESSON_PROMPT_MEANING_LOST");
+        verifyNoInteractions(writer);
+    }
+    @Test void strictObserverTimeoutRemainsATechnicalFailureWithoutExtraCompose() {
+        var store=mock(StyledLessonPromptStore.class);var writer=mock(StyledLessonPromptAgent.class);var sources=rules(1);
+        var draft=json.createObjectNode().put("prompt","Keep every original rule and native pixel intact.");
+        when(store.start(isNull(),eq(sources),eq("Walk west."),eq(1000)))
+            .thenReturn(new StyledLessonPromptStore.Entry("key","COMPOSING",null,null,true));
+        when(writer.compose(sources,"Walk west.",1000)).thenReturn(draft);
+        when(writer.verify(sources,"Walk west.",draft,1000)).thenThrow(new AiFailure("AI_TIMEOUT"));
+        assertThatThrownBy(()->new StyledLessonPromptComposer(store,writer).describe(null,sources,"Walk west.",1000)).hasMessage("LESSON_PROMPT_AI_TIMEOUT");
+        verify(store).failed(null,"key","LESSON_PROMPT_AI_TIMEOUT");verify(writer,never()).rewrite(any(),anyString(),anyInt(),any(),any());
+    }
     @Test void actualRepairWithOnlyEightyThreeAdditiveCharactersUsesWholeProviderBudget() throws Exception {
         var fixture=json.readTree(java.nio.file.Files.readString(java.nio.file.Path.of("scripts/fixtures/full-prompt-budget-v2/evidence.json")));
         var input=fixture.at("/failed/input");var sources=input.path("lessons");String base=input.path("basePrompt").asText();
