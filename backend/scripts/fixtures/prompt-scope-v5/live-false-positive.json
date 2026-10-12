@@ -1,0 +1,25 @@
+{
+  "input": "evidence.json#/input",
+  "draft": {
+    "prompt": "Native west-facing pixel dog, same native dog size,eyes,coat,crisp palette,fixed camera,no props or text;transparent 40x40 canvas,entire canvas used,Every frame all edges >=2px clear;fixed head,unchanged head silhouette,outline,tail,coat markings,paws;seed tail shape and position fixed;no wag cycle,bob or vertical tail pumping;chest breath <=1px,blink optional;idle seed pose,still except subtle breathing or normal occasional blinking;approved silhouette and tail silhouette stable in idle;show requested motion inside safe silhouette;hidden tail stays hidden,hidden front tail stays behind body;never add a tail above head or ears,crown or antenna;side/rear tails complete and connected in approved pose;all paws and tail complete;preserve native dog pixel size,no cropping,shrinking,blur or detached parts;remain west facing in all frames including final hold;loop smoothly to initial pose."
+  },
+  "validation": {
+    "conflictingRequirements": [],
+    "addedRequirements": [],
+    "preserved": [
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "missingBaseConditions": [],
+    "noNewRequirements": true,
+    "compatibleWithBase": true,
+    "basePreserved": true
+  },
+  "manualSourceAudit": {
+    "accepted": false,
+    "reason": "Restore shared tail height is absent; model PASS alone is insufficient."
+  }
+}

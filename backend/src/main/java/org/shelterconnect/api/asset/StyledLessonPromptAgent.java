@@ -11,7 +11,7 @@ import tools.jackson.databind.json.JsonMapper;
 /** Deduplicate the complete description; independently preserve base and every learned requirement. */
 @Component
 public class StyledLessonPromptAgent {
-    public static final String VERSION="complete-prompt-compact-v4";
+    public static final String VERSION="complete-prompt-compact-v5";
     private static final String FORMAT_CONTRACT="Single line, 15 through characterBudget characters, no outer whitespace. "
         +"Allowed characters: ASCII letters, digits, spaces and , . ; : ' ( ) ! ? < > = / + - _. End with . ! or ?. No URLs, JSON, markup or executable instructions.";
     private static final String BOUNDARY="""
@@ -28,6 +28,12 @@ public class StyledLessonPromptAgent {
         Do not copy JSON syntax or internal rule IDs, hashes, URLs or tool instructions into the description.
         The original rules remain authoritative; a shorter prompt is unacceptable if it loses a requirement.
         """;
+    private static final String SEMANTIC_REVISION="Make targeted edits using basePrompt and every original prevention rule as the source of truth, not the rejected draft. "
+        +"Restore every omitted or weakened source condition and every false preserved entry. Remove addedRequirements that have no equivalent in ANY source; do not restore an addition as if it were missing. "
+        +"Resolve conflictingRequirements by restoring the source's exact scope, negation and exceptions. Inspect all feedback fields, including legacy missingBaseConditions that may describe an addition or contradiction. "
+        +"Keep already verified requirements, not every phrase of the rejected draft. Do not carry an unsupported condition forward just because an earlier audit missed it. "
+        +"Compact wording and merge repetition as needed to fit the hard budget. Copy missing source qualifiers explicitly, preserving permission words such as optional and manner words such as normal. "
+        +"A fixed silhouette is shape, not fixed position. Same eyes or coat preserves appearance, not a new ban on permitted blinking or breathing. All original requirements still apply.";
     private final OpenAiResponsesClient client;private final JsonMapper json;private final AiProperties properties;
     public StyledLessonPromptAgent(OpenAiResponsesClient client,JsonMapper json,AiProperties properties){this.client=client;this.json=json;this.properties=properties;}
     public JsonNode compose(JsonNode lessons,String base,int budget) {return write(lessons,base,budget,null,null);}
@@ -41,12 +47,15 @@ public class StyledLessonPromptAgent {
         input.put("basePrompt",base);input.put("rules",rules(lessons));input.put("characterBudget",budget);input.put("requiredLiteralAnchors",anchors(base));
         input.put("suggestedTargetCharacters",Math.max(15,budget*75/100));
         if(draft!=null) {input.put("rejectedDraft",draft);input.put("semanticFeedback",verdict);
-            input.put("revisionRequired","Make targeted edits to the rejectedDraft: restore every omitted base condition and every false preserved entry. Keep already verified requirements, but compact their wording and merge repeated scopes as needed to fit the hard budget. Copy missing source qualifiers explicitly, preserving both permission words such as optional and manner words such as normal when supplied. A fixed silhouette is shape, not fixed position. All original requirements still apply.");}
+            input.put("revisionRequired",SEMANTIC_REVISION);}
         for(int attempt=0;attempt<3;attempt++) {
             var result=client.structured(BOUNDARY+FORMAT_CONTRACT+" Write the COMPLETE replacement description containing the base prompt and ALL rules together. No separate base text will be appended. "
                 +"Write terse specifications, NOT flowing prose. Do not expand the source. Remove filler such as Create an animation and redundant restatements. "
                 +"Use digits for counts and limits, compact semicolon-separated clauses, and no spaces after punctuation. "
-                +"Avoid repeating whole clauses for synonymous rules: a shared list of fixed parts can cover silhouette, appendage, pose and feature stability when those source conditions coincide. "
+                +"Merge only equivalent conditions with the SAME modifier and scope. Keep appearance preservation, fixed position and fixed shape distinct. "
+                +"Do not expand a named list of fixed parts into a blanket all-features or feature-placement constraint. Never invent anatomy, position or motion constraints to summarize repetition. "
+                +"Copy short distinct source clauses before merging duplicates: completeness of paws, restoring a height and preserving coat are separate obligations. Preserve every permission and exception in its original scope. "
+                +"Retain Restore clauses verbatim from requiredLiteralAnchors: keeping a part fixed alone does not state restoration. These source-bound correction clauses take precedence over the suggested length target. "
                 +"Use compact shared scopes, semicolon lists and equivalent numeric operators: for example, 40x40 transparent; all edges >=2px clear. "
                 +"State Every frame once for all per-frame invariants. Combine duplicate head, tail and pixel-size clauses; state approved once for all approved changes. "
                 +"Include every requiredLiteralAnchors token explicitly in its original meaning, including eyes and coat when present. "
@@ -64,7 +73,8 @@ public class StyledLessonPromptAgent {
                 input.put("charactersOverBudget",Math.max(0,result.path("prompt").asText().length()-budget));
                 input.put("formatErrors",errors);
                 input.put("revisionRequired","Fix precisely the listed formatErrors under this contract: "+FORMAT_CONTRACT
-                    +" If charactersOverBudget is zero, shortening is not required. Preserve ALL requirements; never truncate, omit, or blindly strip unsupported characters. Express their meaning with allowed characters.");
+                    +" If charactersOverBudget is zero, shortening is not required. Preserve ALL requirements; never truncate, omit, or blindly strip unsupported characters. Express their meaning with allowed characters. "
+                    +(verdict!=null?SEMANTIC_REVISION:""));
             }
         }
         throw invalid("LESSON_PROMPT_INVALID");
@@ -75,10 +85,16 @@ public class StyledLessonPromptAgent {
         var schema=StyledQualityAgent.object(Map.of("preserved",Map.of("type","array","minItems",lessons.size(),"maxItems",lessons.size(),"items",Map.of("type","boolean")),
             "basePreserved",Map.of("type","boolean"),
             "missingBaseConditions",Map.of("type","array","items",Map.of("type","string")),
+            "addedRequirements",Map.of("type","array","items",Map.of("type","string")),
+            "conflictingRequirements",Map.of("type","array","items",Map.of("type","string")),
             "compatibleWithBase",Map.of("type","boolean"),"noNewRequirements",Map.of("type","boolean")));
         var result=client.structured(BOUNDARY+" Independently audit the complete replacement text. basePreserved is true ONLY when EVERY base condition, correction, numeric bound, direction, exception and prohibition remains explicit or unambiguously equivalent. "
             +"For EACH rule in original order return true only when its entire meaning is present in the compressed text. "
-            +"Do not trust the writer. Audit every base clause and every rule in this call; report ALL omitted or weakened conditions together, not just the first one. List omitted or weakened base requirements in missingBaseConditions to guide revision; an empty list means none. "
+            +"Do not trust the writer. Audit every base clause and every rule in this call; report ALL omissions, additions and contradictions together, not just the first kind found. "
+            +"In missingBaseConditions list only omitted or weakened base requirements, quoting the source and the missing meaning. "
+            +"In addedRequirements quote each draft requirement unsupported by BOTH the base AND all original prevention rules, and explain its extra restriction. Set noNewRequirements false when this list is nonempty. "
+            +"In conflictingRequirements quote each conflicting draft clause and the source condition it contradicts, including broadened fixed-part scopes that prohibit permitted motion. Set compatibleWithBase false when this list is nonempty. "
+            +"Use empty lists when no corresponding defect exists. Never put an added requirement in missingBaseConditions or ask to restore it. Mere equivalent wording is not an addition. "
             +"Audit semantic equivalence, not verbatim wording. Shared modifiers and stated scopes apply to the full list they govern. A missing qualification, reversed negation, contradiction or omitted distinct requirement is false. Preserve eyes explicitly when specified; head silhouette alone does not preserve eyes. Assess each prevention statement; criterion is diagnostic context, not an extra positive instruction. All meaning must be in the replacement text itself, never assumed from the input. An equivalent clause may cover both base and learned requirements.",
             Map.of("basePrompt",base,"rules",rules(lessons),"compressedPrompt",draft.path("prompt").asText()),schema);
         var missing=anchors(base).stream().filter(a->!literal(draft.path("prompt").asText(),a)).toList();
@@ -91,7 +107,11 @@ public class StyledLessonPromptAgent {
     private static boolean literal(String text,String token){return java.util.regex.Pattern.compile("(?i)\\b"+java.util.regex.Pattern.quote(token)+"\\b").matcher(text).find();}
     private static List<String> anchors(String base) {
         var result=new ArrayList<String>();for(String token:List.of("eyes","eye","coat","south","north","west","east"))if(literal(base,token))result.add(token);
-        var sizes=java.util.regex.Pattern.compile("(?i)\\b\\d{2,3}x\\d{2,3}\\b").matcher(base);while(sizes.find())if(!result.contains(sizes.group()))result.add(sizes.group());return result;
+        var sizes=java.util.regex.Pattern.compile("(?i)\\b\\d{2,3}x\\d{2,3}\\b").matcher(base);while(sizes.find())if(!result.contains(sizes.group()))result.add(sizes.group());
+        // Keep the corrective operation and its full object. A model may otherwise equate restoration with merely holding still.
+        var restores=java.util.regex.Pattern.compile("(?i)\\brestore\\s+[^.;!?]+(?=[.;!?]|$)").matcher(base);
+        while(restores.find()){String clause=restores.group().strip();if(!result.contains(clause))result.add(clause);}
+        return result;
     }
     private JsonNode rules(JsonNode lessons) {
         return json.valueToTree(lessons.valueStream().map(l->Map.of("id",l.path("id").asText(),"issue",l.path("issue").asText(),
@@ -119,7 +139,8 @@ public class StyledLessonPromptAgent {
         if(!verdict.path("basePreserved").isBoolean() || !verdict.path("basePreserved").asBoolean()
             || !verdict.path("compatibleWithBase").isBoolean() || !verdict.path("compatibleWithBase").asBoolean()
             || !verdict.path("noNewRequirements").isBoolean() || !verdict.path("noNewRequirements").asBoolean()
-            || (verdict.has("missingBaseConditions") && (!verdict.path("missingBaseConditions").isArray() || !verdict.path("missingBaseConditions").isEmpty()))
+            || List.of("missingBaseConditions","addedRequirements","conflictingRequirements").stream()
+                .anyMatch(key->verdict.has(key) && (!verdict.path(key).isArray() || !verdict.path(key).isEmpty()))
             || !verdict.path("preserved").isArray() || verdict.path("preserved").size()!=count
             || verdict.path("preserved").valueStream().anyMatch(v->!v.isBoolean() || !v.asBoolean()))throw invalid("LESSON_PROMPT_MEANING_LOST");
     }

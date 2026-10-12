@@ -2812,7 +2812,7 @@ class StyledAssetPostgresTest {
             "expectedSeedHashes",read(id).at("/steps/0/result/hashes"),"expectedRulesSha256",currentRules(),"label","idle-south","expectedPromptInputSha256","a".repeat(64)));
     }
     @org.junit.jupiter.params.ParameterizedTest
-    @org.junit.jupiter.params.provider.ValueSource(strings={"all-lessons-compact-v1","complete-prompt-compact-v2","complete-prompt-compact-v3"})
+    @org.junit.jupiter.params.provider.ValueSource(strings={"all-lessons-compact-v1","complete-prompt-compact-v2","complete-prompt-compact-v3","complete-prompt-compact-v4"})
     void promptResumePreservesImageAttemptHistoryApprovalRulesAndBudget(String version)throws Exception {
         UUID id=b75HeldPack();var body=promptResumeFixture(id);
         jdbc.update("UPDATE shelter.styled_lesson_prompts SET input=jsonb_set(input,'{version}',to_jsonb(?::text)) WHERE job_id=?",version,id);
@@ -2851,6 +2851,25 @@ class StyledAssetPostgresTest {
         assertThat(read(id).path("seedReview")).isEqualTo(before.path("seedReview"));
         assertThat(read(id).at("/qualityPolicy/promptResumes/0")).isEqualTo(prior);
         assertThat(read(id).at("/qualityPolicy/promptResumes/1/composerVersion").asText()).isEqualTo(StyledLessonPromptAgent.VERSION);
+        verifyNoInteractions(provider,promptAgent);publicStatus(404);
+    }
+    @Test void promptResumeV4WestRetainsBothPassedIdlesAndAllFiveLearnedRules()throws Exception {
+        UUID id=b75HeldPack();var body=promptResumeFixture(id);
+        var evidence=json.readTree(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("scripts/fixtures/prompt-scope-v5/evidence.json")));
+        jdbc.update("UPDATE shelter.asset_jobs SET failure_code='LESSON_PROMPT_MEANING_LOST' WHERE id=?",id);
+        jdbc.update("UPDATE shelter.styled_asset_steps w SET status='FAILED',repair_count=1,attempt_history=s.attempt_history,provider_job_id=NULL,provider_result=NULL,submitted_at=NULL,result=NULL,request_sha256=s.request_sha256,learned_lessons=?::jsonb FROM shelter.styled_asset_steps s WHERE w.job_id=? AND s.job_id=w.job_id AND w.label='idle-west' AND s.label='idle-south'",evidence.at("/input/lessons").toString(),id);
+        jdbc.update("UPDATE shelter.styled_asset_steps SET status='SUCCEEDED',result=attempt_history->-1->'result',quality_report=jsonb_set(quality_report,'{passed}','true'::jsonb) WHERE job_id=? AND label='idle-south'",id);
+        jdbc.update("UPDATE shelter.styled_lesson_prompts SET label='idle-west',input=?::jsonb,failure_code='LESSON_PROMPT_MEANING_LOST' WHERE job_id=?",evidence.path("input").toString(),id);
+        body.put("label","idle-west");var before=read(id);var south=step(id,"idle-south");var north=step(id,"idle-north");
+        String history=jdbc.queryForObject("SELECT attempt_history::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-west'",String.class,id);
+        assertThat(json.readTree(history).size()).isPositive();clearInvocations(provider,promptAgent);
+        post(subject,path(id)+"/prompt-resume",body,200);
+        assertThat(step(id,"idle-south")).isEqualTo(south);assertThat(step(id,"idle-north")).isEqualTo(north);
+        assertThat(step(id,"idle-west").path("repairCount").asInt()).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT attempt_history::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-west'",String.class,id)).isEqualTo(history);
+        assertThat(json.readTree(jdbc.queryForObject("SELECT learned_lessons::text FROM shelter.styled_asset_steps WHERE job_id=? AND label='idle-west'",String.class,id))).isEqualTo(evidence.at("/input/lessons"));
+        assertThat(read(id).path("seedReview")).isEqualTo(before.path("seedReview"));
+        assertThat(read(id).at("/qualityPolicy/promptResumes/0/composerVersion").asText()).isEqualTo(StyledLessonPromptAgent.VERSION);
         verifyNoInteractions(provider,promptAgent);publicStatus(404);
     }
     @org.junit.jupiter.params.ParameterizedTest
