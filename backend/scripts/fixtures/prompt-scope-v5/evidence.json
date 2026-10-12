@@ -1,0 +1,155 @@
+{
+  "label": "idle-west",
+  "input_sha256": "aed49d90ac05d7aa5902e4aa6b4eb5f5551c18289c567aa3a86b61d7fd324343",
+  "input": {
+    "budget": 1000,
+    "lessons": [
+      {
+        "id": "043f5725-0f1c-4894-b107-d32a9edd8427",
+        "tail": "UNKNOWN",
+        "issue": "IDLE_MOTION",
+        "action": "IDLE",
+        "sha256": "a672ca394c6938e9c410bd64ff29e872d43276280c39f6ecbed8d8e3c3a8678f",
+        "criterion": "Flag visible cyclic motion or pose changes beyond subtle breathing and normal blinking across the idle frames.",
+        "direction": "west",
+        "prevention": "Keep idle frames still apart from subtle breathing or occasional normal blinking.",
+        "rulesSha256": "eddc439488293d4286a5bbd56638398154c6df2c13b26711940872afda7093c3"
+      },
+      {
+        "id": "26bda924-6784-49b7-9548-e0a96b8c6080",
+        "tail": "UNKNOWN",
+        "issue": "ACTION_MISSING",
+        "action": "IDLE",
+        "sha256": "87af3c1e65de90c3558c13c3d0139e089f48f93774ff1054899b0640054dcad0",
+        "criterion": "Fail only when idle frames show visible cyclic motion beyond normal blinking or subtle breathing.",
+        "direction": "west",
+        "prevention": "For idle cycles, keep the approved silhouette stable except for normal blinking or subtle breathing.",
+        "rulesSha256": "eddc439488293d4286a5bbd56638398154c6df2c13b26711940872afda7093c3"
+      },
+      {
+        "id": "3a70cb0f-4ce4-4bc2-97e7-0f13c4a8fd48",
+        "tail": "UNKNOWN",
+        "issue": "TAIL_CARRIAGE",
+        "action": "IDLE",
+        "sha256": "574d87abcf1163a1176077ef86a1dd2e5dd02b628b968a42eeaed99d1f6a421b",
+        "criterion": "Fail only when idle frames show visible tail silhouette or pose changes beyond normal blinking or subtle breathing.",
+        "direction": "west",
+        "prevention": "Keep the approved tail silhouette stable throughout idle frames, allowing only blinking or subtle breathing.",
+        "rulesSha256": "eddc439488293d4286a5bbd56638398154c6df2c13b26711940872afda7093c3"
+      },
+      {
+        "id": "9e330107-ac72-4b33-bdc0-977fee2e9e7c",
+        "tail": "UNKNOWN",
+        "issue": "IDLE_MOTION",
+        "action": "IDLE",
+        "sha256": "45643d34987472104ba7ae49a8e8b325fdb5a882de53edad517f1346b206c038",
+        "criterion": "Fail only when idle frames show visible cyclic motion beyond normal blinking or subtle breathing.",
+        "direction": "west",
+        "prevention": "Keep idle frames visually still, allowing only normal blinking or subtle breathing.",
+        "rulesSha256": "eddc439488293d4286a5bbd56638398154c6df2c13b26711940872afda7093c3"
+      },
+      {
+        "id": "e057faab-b71f-437c-8bbd-96d1d4155d9d",
+        "tail": "UNKNOWN",
+        "issue": "ACTION_MISSING",
+        "action": "IDLE",
+        "sha256": "aed42f5ac87cb041671c6ba04e09f23360c6c3b9773f158d7da5e94127f361ba",
+        "criterion": "Fail only when idle frames show visible silhouette motion beyond normal blinking or subtle breathing.",
+        "direction": "west",
+        "prevention": "For idle cycles, keep the approved silhouette stable while allowing only blinking or subtle breathing.",
+        "rulesSha256": "eddc439488293d4286a5bbd56638398154c6df2c13b26711940872afda7093c3"
+      }
+    ],
+    "version": "complete-prompt-compact-v4",
+    "basePrompt": "Chest breath <=1px, blink optional. Fixed head, outline, tail, coat markings, paws; NO wag cycle or bob. Keep seed tail shape and position fixed. If hidden, keep hidden; never add a tail above the head. Remain west facing in ALL frames including the final hold. CORRECTION: Show requested motion inside the safe silhouette. IDLE: seed pose; chest breath only, no bob/wag. Restore shared tail height; never pump it vertically. Same native dog size, coat, eyes, crisp palette; fixed camera, no props/text. Keep the head silhouette unchanged; never create a crown, antenna or tail above ears. Hidden front tail stays behind body. Side/rear tails stay complete, connected in approved pose. Use the entire transparent 40x40 canvas. Keep two clear pixels at every edge, all paws and tail complete. Preserve native dog pixel size; no cropping, shrinking, blur or detached parts. Loop smoothly to the initial pose."
+  },
+  "state": "FAILED",
+  "draft": {
+    "prompt": "Native pixel dog,west-facing in ALL frames including final hold;transparent 40x40 canvas used entirely;2 clear pixels at every edge;same native dog size,crisp palette,fixed camera,no props or text;Every frame:fixed head silhouette,outline,tail shape and position,coat markings,coat,eyes,paws and feature placement;seed tail shape,position and shared tail height restored and fixed;hidden tail stays hidden;hidden front tail stays behind body;side/rear tails stay complete and connected in approved pose;all paws and tail complete;never add a tail above head or ears;never create a crown or antenna;no cropping,shrinking,blur or detached parts;chest breath <=1px;blink optional and normal;IDLE:seed pose,still except subtle breathing or normal blinking;no wag cycle,bob,cyclic motion,vertical tail pumping or other pose changes;show requested motion inside the safe silhouette;loop smoothly to initial pose."
+  },
+  "validation": {
+    "preserved": [
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "basePreserved": true,
+    "noNewRequirements": false,
+    "compatibleWithBase": true,
+    "missingBaseConditions": [
+      "Adds an explicit requirement to keep feature placement fixed, which is not stated in the base prompt."
+    ]
+  },
+  "history": [
+    {
+      "draft": {
+        "prompt": "West-facing native pixel dog;use entire transparent 40x40 canvas;keep 2 clear pixels at every edge;native dog size and crisp palette;fixed camera,no props or text;fixed head silhouette,outline,tail,coat markings,paws and eyes;keep seed tail shape,height and position fixed;hidden tail stays hidden and front tail stays behind body;side/rear tails stay complete and connected in approved pose;never add a tail above head or ears;never create a crown or antenna;no cropping,shrinking,blur or detached parts;chest breath <=1px;blink optional;idle frames and final hold remain still except subtle breathing or normal blinking;approved silhouette,tail silhouette,pose,head,outline,coat markings,paws and feature placement stay stable in every frame;no wag cycle,bob,cyclic motion,vertical tail pumping or other pose changes;show requested motion inside the safe silhouette;idle uses seed pose;remain west-facing in all frames including final hold;loop smoothly to initial pose."
+      }
+    },
+    {
+      "validation": {
+        "preserved": [
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "basePreserved": false,
+        "noNewRequirements": true,
+        "compatibleWithBase": true,
+        "missingBaseConditions": [
+          "The base requirement to preserve the same overall coat is weakened to fixed coat markings only; coat appearance itself is not explicitly preserved.",
+          "The base requirement that all paws remain complete is not explicit; fixed paws and no detached parts do not unambiguously state paw completeness."
+        ]
+      }
+    },
+    {
+      "draft": {
+        "prompt": "West-facing native pixel dog;use entire transparent 40x40 canvas;keep 2 clear pixels at every edge;same native dog size,overall coat,eyes and crisp palette;fixed camera,no props or text;every frame:keep head silhouette,outline,tail silhouette and position,coat markings,coat appearance,paws and feature placement stable;seed tail shape and position fixed;hidden tail stays hidden;hidden front tail stays behind body;side/rear tails stay complete and connected in approved pose;all paws and tail complete;never add a tail above head or ears;never create a crown or antenna;no cropping,shrinking,blur or detached parts;chest breath <=1px;blink optional and normal;idle uses seed pose and remains still except subtle breathing or normal blinking;no wag cycle,bob,cyclic motion,vertical tail pumping or other pose changes;show requested motion inside the safe silhouette;remain west-facing in ALL frames including final hold;loop smoothly to initial pose."
+      }
+    },
+    {
+      "validation": {
+        "preserved": [
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "basePreserved": false,
+        "noNewRequirements": true,
+        "compatibleWithBase": true,
+        "missingBaseConditions": [
+          "The correction to restore the shared tail height is not explicit; fixed seed tail shape and position and prohibition of vertical pumping do not unambiguously state restoration of the shared tail height."
+        ]
+      }
+    },
+    {
+      "draft": {
+        "prompt": "Native pixel dog,west-facing in ALL frames including final hold;transparent 40x40 canvas used entirely;2 clear pixels at every edge;same native dog size,crisp palette,fixed camera,no props or text;Every frame:fixed head silhouette,outline,tail shape and position,coat markings,coat,eyes,paws and feature placement;seed tail shape,position and shared tail height restored and fixed;hidden tail stays hidden;hidden front tail stays behind body;side/rear tails stay complete and connected in approved pose;all paws and tail complete;never add a tail above head or ears;never create a crown or antenna;no cropping,shrinking,blur or detached parts;chest breath <=1px;blink optional and normal;IDLE:seed pose,still except subtle breathing or normal blinking;no wag cycle,bob,cyclic motion,vertical tail pumping or other pose changes;show requested motion inside the safe silhouette;loop smoothly to initial pose."
+      }
+    },
+    {
+      "validation": {
+        "preserved": [
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "basePreserved": true,
+        "noNewRequirements": false,
+        "compatibleWithBase": true,
+        "missingBaseConditions": [
+          "Adds an explicit requirement to keep feature placement fixed, which is not stated in the base prompt."
+        ]
+      }
+    }
+  ],
+  "failure_code": "LESSON_PROMPT_MEANING_LOST"
+}
