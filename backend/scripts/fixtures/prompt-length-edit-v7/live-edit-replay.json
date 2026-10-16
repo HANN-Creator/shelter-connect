@@ -1,0 +1,106 @@
+{
+  "version": "complete-prompt-compact-v7",
+  "model": "gpt-5.6-luna",
+  "budget": 1000,
+  "ruleCount": 11,
+  "draft": {
+    "prompt": "Chest breath <=1px;blink optional;approved identity/pose stable every frame;head silhouette,outline,tail,coat markings,paws,appendages,attached features fixed;tail carriage/position/shape fixed;no repeated pose,appendage,tail/rear-silhouette displacement/reshaping;allow only subtle breathing or normal blinking;no wag cycle or bob;keep seed tail shape and position fixed;if hidden,keep hidden;never add a tail above head/ears/crown/antenna;NORTH=REAR,away from camera;remain north facing ALL frames,including final hold;no visible eyes,nose,mouth or chest;rear head only in every frame;no shoulder glance;same native dog/pixel size,coat,eyes and crisp palette;fixed camera;no props or text;hidden front tail stays behind body;side/rear tails complete,connected in approved pose;use entire transparent 40x40 canvas;every frame has all edges >=2px clear;all paws and tail complete;no cropping,shrinking,blur or detached parts;loop smoothly to the initial pose."
+  },
+  "diagnostics": {
+    "promptDraftFailures": [
+      {
+        "draft": {
+          "prompt": "Chest breath <=1px;blink optional;approved pose stable in every frame,allowing only subtle breathing or normal blinking;identity and recognizable features unchanged;head silhouette,outline,tail,coat markings and paws fixed;appendages and attached features fixed;tail carriage,position and shape fixed;no repeated pose,appendage,tail or rear silhouette displacement or reshaping;no wag cycle or bob;keep seed tail shape and position fixed;if hidden,keep hidden;never add a tail above the head,ears,crown or antenna;NORTH means REAR,away from camera;remain north facing in every frame,including the final hold;no visible eyes,nose,mouth or chest;rear head only in every frame;no shoulder glance;same native dog size,pixel size,coat,eyes and crisp palette;fixed camera;no props or text;hidden front tail stays behind body;side and rear tails stay complete and connected in the approved pose;use entire transparent 40x40 canvas;every frame has all edges >=2px clear;all paws and tail complete;no cropping,shrinking,blur or detached parts;loop smoothly to the initial pose."
+        },
+        "budget": 1000,
+        "attempt": 3,
+        "formatErrors": [
+          "TOO_LONG: exceeds characterBudget by 68"
+        ],
+        "measuredCharacters": 1068
+      }
+    ],
+    "lengthEditingAttempts": [
+      {
+        "attempt": 1,
+        "version": "source-bound-length-edits-v1",
+        "budget": 1000,
+        "originalCharacters": 1068,
+        "originalSha256": "e272cb51b8926319cccdfedb705a4451e51cd4de7a237e0bbb3399684db4062a",
+        "originalPrompt": "Chest breath <=1px;blink optional;approved pose stable in every frame,allowing only subtle breathing or normal blinking;identity and recognizable features unchanged;head silhouette,outline,tail,coat markings and paws fixed;appendages and attached features fixed;tail carriage,position and shape fixed;no repeated pose,appendage,tail or rear silhouette displacement or reshaping;no wag cycle or bob;keep seed tail shape and position fixed;if hidden,keep hidden;never add a tail above the head,ears,crown or antenna;NORTH means REAR,away from camera;remain north facing in every frame,including the final hold;no visible eyes,nose,mouth or chest;rear head only in every frame;no shoulder glance;same native dog size,pixel size,coat,eyes and crisp palette;fixed camera;no props or text;hidden front tail stays behind body;side and rear tails stay complete and connected in the approved pose;use entire transparent 40x40 canvas;every frame has all edges >=2px clear;all paws and tail complete;no cropping,shrinking,blur or detached parts;loop smoothly to the initial pose.",
+        "proposal": {
+          "edits": [
+            {
+              "replace": "approved identity and pose stable in every frame;head silhouette,outline,tail,coat markings,paws,appendages and attached features fixed;tail carriage,position and shape fixed;no repeated pose,appendage,tail or rear silhouette displacement or reshaping;allow only subtle breathing or normal blinking",
+              "find": "approved pose stable in every frame,allowing only subtle breathing or normal blinking;identity and recognizable features unchanged;head silhouette,outline,tail,coat markings and paws fixed;appendages and attached features fixed;tail carriage,position and shape fixed;no repeated pose,appendage,tail or rear silhouette displacement or reshaping"
+            },
+            {
+              "replace": "never add a tail above head/ears/crown/antenna",
+              "find": "never add a tail above the head,ears,crown or antenna"
+            },
+            {
+              "replace": "same native dog/pixel size",
+              "find": "same native dog size,pixel size"
+            }
+          ]
+        },
+        "characters": 1011,
+        "sha256": "97f47cbb36dfea9bf72a7a11f03710fa0166abd7bd97a2b25c1f6e294b5d3b71",
+        "formatErrors": [
+          "TOO_LONG: exceeds characterBudget by 11"
+        ]
+      },
+      {
+        "attempt": 2,
+        "version": "source-bound-length-edits-v1",
+        "budget": 1000,
+        "originalCharacters": 1011,
+        "originalSha256": "97f47cbb36dfea9bf72a7a11f03710fa0166abd7bd97a2b25c1f6e294b5d3b71",
+        "originalPrompt": "Chest breath <=1px;blink optional;approved identity and pose stable in every frame;head silhouette,outline,tail,coat markings,paws,appendages and attached features fixed;tail carriage,position and shape fixed;no repeated pose,appendage,tail or rear silhouette displacement or reshaping;allow only subtle breathing or normal blinking;no wag cycle or bob;keep seed tail shape and position fixed;if hidden,keep hidden;never add a tail above head/ears/crown/antenna;NORTH means REAR,away from camera;remain north facing in every frame,including the final hold;no visible eyes,nose,mouth or chest;rear head only in every frame;no shoulder glance;same native dog/pixel size,coat,eyes and crisp palette;fixed camera;no props or text;hidden front tail stays behind body;side and rear tails stay complete and connected in the approved pose;use entire transparent 40x40 canvas;every frame has all edges >=2px clear;all paws and tail complete;no cropping,shrinking,blur or detached parts;loop smoothly to the initial pose.",
+        "proposal": {
+          "edits": [
+            {
+              "replace": "approved identity/pose stable every frame;head silhouette,outline,tail,coat markings,paws,appendages,attached features fixed;tail carriage/position/shape fixed;no repeated pose,appendage,tail/rear-silhouette displacement/reshaping;allow only subtle breathing or normal blinking",
+              "find": "approved identity and pose stable in every frame;head silhouette,outline,tail,coat markings,paws,appendages and attached features fixed;tail carriage,position and shape fixed;no repeated pose,appendage,tail or rear silhouette displacement or reshaping;allow only subtle breathing or normal blinking"
+            },
+            {
+              "replace": "NORTH=REAR,away from camera;remain north facing ALL frames,including final hold",
+              "find": "NORTH means REAR,away from camera;remain north facing in every frame,including the final hold"
+            },
+            {
+              "replace": "side/rear tails complete,connected in approved pose",
+              "find": "side and rear tails stay complete and connected in the approved pose"
+            }
+          ]
+        },
+        "characters": 959,
+        "sha256": "a859316ac551bf24d9f3c89166656d4e7df46ff02e9222d93a00d6c13a37e50b",
+        "formatErrors": []
+      }
+    ]
+  },
+  "characters": 959,
+  "formatPassed": true,
+  "verdict": {
+    "noNewRequirements": true,
+    "missingBaseConditions": [],
+    "preserved": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "addedRequirements": [],
+    "conflictingRequirements": [],
+    "basePreserved": true,
+    "compatibleWithBase": true
+  },
+  "semanticPassed": true
+}

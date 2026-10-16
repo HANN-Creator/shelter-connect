@@ -33,6 +33,7 @@ class StyledAssetPostgresTest {
     @Autowired StyledLessonWorker lessonWorker;@Autowired StyledLessonStore lessonStore;
     @Autowired StyledLearningRecoveryWorker recoveryWorker;
     @Autowired StyledLessonPromptComposer promptComposer;
+    @Autowired StyledLessonPromptStore promptStore;
     @MockitoBean StyledLessonAgent lessonAgent;
     @MockitoBean StyledLessonPromptAgent promptAgent;
     @MockitoBean StyledAssetProvider provider;@MockitoBean AssetStorage storage;
@@ -2803,6 +2804,33 @@ class StyledAssetPostgresTest {
     JsonNode post(UUID subject,String path,Object body,int status) throws Exception {var req=org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(path).contentType("application/json").content(json.writeValueAsBytes(body));if(subject!=null)req.header("Authorization",bearer(subject));var result=mvc.perform(req).andExpect(status().is(status)).andReturn();return json.readTree(result.getResponse().getContentAsString());}
     JsonNode get(UUID subject,String path,int status) throws Exception {var req=org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(path);if(subject!=null)req.header("Authorization",bearer(subject));var result=mvc.perform(req).andExpect(status().is(status)).andReturn();return json.readTree(result.getResponse().getContentAsString());}
     void outsideTransaction() {assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isFalse();}
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"valid","expired","owner","input","revoked","ready"})
+    void promptLengthEditingRenewsOnlyCurrentAuthorizedCheckpoint(String condition)throws Exception {
+        UUID id=request();var work=store.claim();assertThat(work).isNotNull();
+        var selected=lessonStore.pin(work);var entry=promptStore.start(work,selected,"Keep every original source condition.",1000);
+        jdbc.update("UPDATE shelter.asset_jobs SET lease_until=now()+interval '10 seconds' WHERE id=?",id);
+        switch(condition) {
+            case "expired" -> jdbc.update("UPDATE shelter.asset_jobs SET lease_until=now()-interval '1 second' WHERE id=?",id);
+            case "owner" -> jdbc.update("UPDATE shelter.asset_jobs SET lease_token=? WHERE id=?",UUID.randomUUID(),id);
+            case "revoked" -> jdbc.update("UPDATE shelter.asset_source_permissions SET revoked_at=now() WHERE id=?",permission);
+            case "ready" -> jdbc.update("UPDATE shelter.styled_lesson_prompts SET state='READY' WHERE job_id=?",id);
+        }
+        var before=jdbc.queryForMap("SELECT lease_token,lease_until FROM shelter.asset_jobs WHERE id=?",id);
+        clearInvocations(provider,promptAgent);
+        if(condition.equals("valid")) {
+            promptStore.prepareLengthEditing(work,selected,entry.key());
+            assertThat(jdbc.queryForObject("SELECT lease_until>now()+interval '4 minutes' FROM shelter.asset_jobs WHERE id=?",Boolean.class,id)).isTrue();
+            assertThat(jdbc.queryForObject("SELECT lease_token FROM shelter.asset_jobs WHERE id=?",UUID.class,id)).isEqualTo(before.get("lease_token"));
+        } else {
+            RuntimeException failure=null;
+            try {promptStore.prepareLengthEditing(work,selected,condition.equals("input")?"0".repeat(64):entry.key());}
+            catch(RuntimeException rejected){failure=rejected;}
+            assertThat(failure).isNotNull().hasFieldOrProperty("code");
+            assertThat(jdbc.queryForMap("SELECT lease_token,lease_until FROM shelter.asset_jobs WHERE id=?",id)).isEqualTo(before);
+        }
+        verifyNoInteractions(provider,promptAgent);
+    }
     Map<String,Object> promptResumeFixture(UUID id)throws Exception {
         // Disposable DB fixture models the completed old request hash still retained after repair was queued.
         jdbc.update("UPDATE shelter.styled_asset_steps SET attempt_history=attempt_history || jsonb_build_array(jsonb_build_object('providerJobId',provider_job_id,'requestSha256',request_sha256,'result',result,'quality',quality_report,'repairCount',repair_count)),status='FAILED',repair_count=1,provider_job_id=NULL,provider_result=NULL,submitted_at=NULL,result=NULL WHERE job_id=? AND label='idle-south'",id);
@@ -2813,7 +2841,7 @@ class StyledAssetPostgresTest {
             "expectedSeedHashes",read(id).at("/steps/0/result/hashes"),"expectedRulesSha256",currentRules(),"label","idle-south","expectedPromptInputSha256","a".repeat(64)));
     }
     @org.junit.jupiter.params.ParameterizedTest
-    @org.junit.jupiter.params.provider.ValueSource(strings={"all-lessons-compact-v1","complete-prompt-compact-v2","complete-prompt-compact-v3","complete-prompt-compact-v4","complete-prompt-compact-v5","complete-prompt-compact-v5/visual-warnings-v1"})
+    @org.junit.jupiter.params.provider.ValueSource(strings={"all-lessons-compact-v1","complete-prompt-compact-v2","complete-prompt-compact-v3","complete-prompt-compact-v4","complete-prompt-compact-v5","complete-prompt-compact-v5/visual-warnings-v1","complete-prompt-compact-v6","complete-prompt-compact-v6/visual-warnings-v1"})
     void promptResumePreservesImageAttemptHistoryApprovalRulesAndBudget(String version)throws Exception {
         UUID id=b75HeldPack();var body=promptResumeFixture(id);
         jdbc.update("UPDATE shelter.styled_lesson_prompts SET input=jsonb_set(input,'{version}',to_jsonb(?::text)) WHERE job_id=?",version,id);
@@ -2854,9 +2882,11 @@ class StyledAssetPostgresTest {
         assertThat(read(id).at("/qualityPolicy/promptResumes/1/composerVersion").asText()).isEqualTo(StyledLessonPromptAgent.VERSION);
         verifyNoInteractions(provider,promptAgent);publicStatus(404);
     }
-    @Test void promptResumeWarningPolicyKeepsSeedWarningAndApprovalBound()throws Exception {
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"complete-prompt-compact-v5/visual-warnings-v1","complete-prompt-compact-v6/visual-warnings-v1"})
+    void promptResumeWarningPolicyKeepsSeedWarningAndApprovalBound(String version)throws Exception {
         warningObservation();UUID id=warningRequest();finish(id);var body=promptResumeFixture(id);
-        jdbc.update("UPDATE shelter.styled_lesson_prompts SET input=jsonb_set(input,'{version}','\"complete-prompt-compact-v5/visual-warnings-v1\"'::jsonb) WHERE job_id=?",id);
+        jdbc.update("UPDATE shelter.styled_lesson_prompts SET input=jsonb_set(input,'{version}',to_jsonb(?::text)) WHERE job_id=?",version,id);
         var before=read(id);var report=step(id,"character").path("qualityReport");
         assertThat(report.path("passed").asBoolean()).isFalse();
         clearInvocations(provider,promptAgent);post(subject,path(id)+"/prompt-resume",body,200);

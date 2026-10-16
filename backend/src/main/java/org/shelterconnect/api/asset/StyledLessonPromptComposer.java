@@ -24,7 +24,7 @@ public class StyledLessonPromptComposer {
         if(!entry.created())throw StyledLessonPromptAgent.invalid(advisory || entry.state().equals("FAILED")
             ?"LESSON_PROMPT_REVIEW_REQUIRED":"LESSON_PROMPT_INTERRUPTED");
         try {
-            var draft=write(w,lessons,entry.key(),budget,()->agent.compose(lessons,base,budget));
+            var draft=write(w,lessons,base,entry.key(),budget,()->agent.compose(lessons,base,budget));
             int attempts=advisory?1:3;
             for(int attempt=0;attempt<attempts;attempt++) {
                 StyledLessonPromptAgent.checkPrompt(draft,budget);store.draft(w,lessons,entry.key(),draft);
@@ -35,7 +35,7 @@ public class StyledLessonPromptComposer {
                     catch(AssetException rejected) {
                         if(attempt==attempts-1)throw rejected;
                         var rejectedDraft=draft;
-                        draft=write(w,lessons,entry.key(),budget,()->agent.rewrite(lessons,base,budget,rejectedDraft,verdict));continue;
+                        draft=write(w,lessons,base,entry.key(),budget,()->agent.rewrite(lessons,base,budget,rejectedDraft,verdict));continue;
                     }
                 }
                 String description=draft.path("prompt").asText();
@@ -58,11 +58,15 @@ public class StyledLessonPromptComposer {
         } catch(AiFailure | AssetException unavailable){audit.put("warning","PROMPT_REVIEW_UNAVAILABLE");}
         return audit;
     }
-    private JsonNode write(StyledAssetStore.Work w,JsonNode lessons,String key,int budget,java.util.function.Supplier<JsonNode> writer) {
+    private JsonNode write(StyledAssetStore.Work w,JsonNode lessons,String base,String key,int budget,java.util.function.Supplier<JsonNode> writer) {
         try {return writer.get();}
         catch(AssetException failure) {
             var recovered=StyledPromptSpacingRecovery.recover(failure,budget);
             if(recovered.isEmpty())recovered=StyledPromptWordingRecovery.recover(failure,budget);
+            if(recovered.isEmpty() && StyledPromptEditRecovery.candidate(failure,budget).isPresent()) {
+                store.prepareLengthEditing(w,lessons,key);
+                recovered=agent.compact(lessons,base,budget,failure);
+            }
             if(recovered.isEmpty())throw failure;
             var result=recovered.get();store.diagnostics(w,lessons,key,result.diagnostics());return result.draft();
         }

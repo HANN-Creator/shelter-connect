@@ -1,0 +1,45 @@
+[
+  {
+    "case": "result-1",
+    "characters": 990,
+    "formatPassed": true,
+    "semanticPassed": false,
+    "allLearnedRulesPreserved": true,
+    "missingBaseConditions": [
+      "\"Same native dog size, coat, eyes, crisp palette\" — the requirement for a crisp pixel palette is omitted.",
+      "\"never create a crown\" — the prohibition on creating a crown is omitted; mentioning a tail above the crown does not prohibit creating the crown itself."
+    ],
+    "editingCalls": 1,
+    "model": "gpt-5.6-luna"
+  },
+  {
+    "case": "result-2",
+    "characters": 991,
+    "formatPassed": true,
+    "semanticPassed": true,
+    "allLearnedRulesPreserved": true,
+    "missingBaseConditions": [],
+    "editingCalls": 2,
+    "model": "gpt-5.6-luna"
+  },
+  {
+    "case": "result-3",
+    "characters": 959,
+    "formatPassed": true,
+    "semanticPassed": true,
+    "allLearnedRulesPreserved": true,
+    "missingBaseConditions": [],
+    "editingCalls": 2,
+    "model": "gpt-5.6-luna"
+  },
+  {
+    "case": "result-4",
+    "characters": 961,
+    "formatPassed": true,
+    "semanticPassed": true,
+    "allLearnedRulesPreserved": true,
+    "missingBaseConditions": [],
+    "editingCalls": 1,
+    "model": "gpt-5.6-luna"
+  }
+]

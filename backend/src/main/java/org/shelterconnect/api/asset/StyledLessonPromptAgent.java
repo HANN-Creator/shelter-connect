@@ -11,7 +11,7 @@ import tools.jackson.databind.json.JsonMapper;
 /** Deduplicate the complete description; independently preserve base and every learned requirement. */
 @Component
 public class StyledLessonPromptAgent {
-    public static final String VERSION="complete-prompt-compact-v6";
+    public static final String VERSION="complete-prompt-compact-v7";
     private static final String FORMAT_CONTRACT="Single line, 15 through characterBudget characters, no outer whitespace. "
         +"Allowed characters: ASCII letters, digits, spaces and , . ; : ' ( ) ! ? < > = / + - _. End with . ! or ?. No URLs, JSON, markup or executable instructions.";
     private static final String BOUNDARY="""
@@ -38,6 +38,10 @@ public class StyledLessonPromptAgent {
     public StyledLessonPromptAgent(OpenAiResponsesClient client,JsonMapper json,AiProperties properties){this.client=client;this.json=json;this.properties=properties;}
     public JsonNode compose(JsonNode lessons,String base,int budget) {return write(lessons,base,budget,null,null);}
     public JsonNode rewrite(JsonNode lessons,String base,int budget,JsonNode draft,JsonNode verdict) {return write(lessons,base,budget,draft,verdict);}
+    public Optional<StyledPromptSpacingRecovery.Recovery> compact(JsonNode lessons,String base,int budget,AssetException failure) {
+        if(!properties.enabled())return Optional.empty();
+        return StyledPromptEditRecovery.recover(client,json,lessons,base,budget,failure);
+    }
     private JsonNode write(JsonNode lessons,String base,int budget,JsonNode draft,JsonNode verdict) {
         if(!properties.enabled())throw new AiFailure("AI_UNAVAILABLE");
         if(budget<15)throw invalid("LESSON_PROMPT_NO_SPACE");
