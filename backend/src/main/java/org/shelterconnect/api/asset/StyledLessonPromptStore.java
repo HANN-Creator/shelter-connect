@@ -50,6 +50,17 @@ public class StyledLessonPromptStore {
             .param("d",json.writeValueAsString(diagnostics)).param("j",w.id()).param("l",w.label()).param("h",key).param("t",w.token()).update()!=1)
             throw StyledLessonPromptAgent.invalid("LESSON_PROMPT_INTERRUPTED");
     }
+    /** A live owner may enter two bounded editor calls without inheriting the writer's elapsed lease. */
+    @Transactional public void prepareLengthEditing(StyledAssetStore.Work w,JsonNode selected,String key) {
+        require(w,selected);
+        if(jdbc.sql("""
+            UPDATE shelter.asset_jobs SET lease_until=now()+interval '5 minutes'
+            WHERE id=:j AND lease_token=:t AND status='RUNNING' AND lease_until>now()
+              AND EXISTS (SELECT 1 FROM shelter.styled_lesson_prompts p WHERE p.job_id=:j AND p.label=:l
+                AND p.input_sha256=:h AND p.lease_token=:t AND p.state IN ('COMPOSING','VALIDATING'))
+            """).param("j",w.id()).param("t",w.token()).param("l",w.label()).param("h",key).update()!=1)
+            throw StyledLessonPromptAgent.invalid("LESSON_PROMPT_INTERRUPTED");
+    }
     @Transactional(readOnly=true) public JsonNode warnings(StyledAssetStore.Work w) {
         var result=json.createArrayNode();
         var rows=jdbc.sql("SELECT validation::text FROM shelter.styled_lesson_prompts WHERE job_id=:j AND label=:l AND state='READY' AND input->>'version'=:v")
