@@ -2813,7 +2813,7 @@ class StyledAssetPostgresTest {
             "expectedSeedHashes",read(id).at("/steps/0/result/hashes"),"expectedRulesSha256",currentRules(),"label","idle-south","expectedPromptInputSha256","a".repeat(64)));
     }
     @org.junit.jupiter.params.ParameterizedTest
-    @org.junit.jupiter.params.provider.ValueSource(strings={"all-lessons-compact-v1","complete-prompt-compact-v2","complete-prompt-compact-v3","complete-prompt-compact-v4"})
+    @org.junit.jupiter.params.provider.ValueSource(strings={"all-lessons-compact-v1","complete-prompt-compact-v2","complete-prompt-compact-v3","complete-prompt-compact-v4","complete-prompt-compact-v5","complete-prompt-compact-v5/visual-warnings-v1"})
     void promptResumePreservesImageAttemptHistoryApprovalRulesAndBudget(String version)throws Exception {
         UUID id=b75HeldPack();var body=promptResumeFixture(id);
         jdbc.update("UPDATE shelter.styled_lesson_prompts SET input=jsonb_set(input,'{version}',to_jsonb(?::text)) WHERE job_id=?",version,id);
@@ -2853,6 +2853,18 @@ class StyledAssetPostgresTest {
         assertThat(read(id).at("/qualityPolicy/promptResumes/0")).isEqualTo(prior);
         assertThat(read(id).at("/qualityPolicy/promptResumes/1/composerVersion").asText()).isEqualTo(StyledLessonPromptAgent.VERSION);
         verifyNoInteractions(provider,promptAgent);publicStatus(404);
+    }
+    @Test void promptResumeWarningPolicyKeepsSeedWarningAndApprovalBound()throws Exception {
+        warningObservation();UUID id=warningRequest();finish(id);var body=promptResumeFixture(id);
+        jdbc.update("UPDATE shelter.styled_lesson_prompts SET input=jsonb_set(input,'{version}','\"complete-prompt-compact-v5/visual-warnings-v1\"'::jsonb) WHERE job_id=?",id);
+        var before=read(id);var report=step(id,"character").path("qualityReport");
+        assertThat(report.path("passed").asBoolean()).isFalse();
+        clearInvocations(provider,promptAgent);post(subject,path(id)+"/prompt-resume",body,200);
+        assertThat(read(id).path("status").asText()).isEqualTo("QUEUED");
+        assertThat(read(id).path("seedReview")).isEqualTo(before.path("seedReview"));
+        assertThat(step(id,"character").path("qualityReport")).isEqualTo(report);
+        assertThat(step(id,"idle-south").path("repairCount").asInt()).isEqualTo(1);
+        verifyNoInteractions(provider,promptAgent);
     }
     @Test void promptResumeV4WestRetainsBothPassedIdlesAndAllFiveLearnedRules()throws Exception {
         UUID id=b75HeldPack();var body=promptResumeFixture(id);

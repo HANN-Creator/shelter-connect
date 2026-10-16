@@ -62,6 +62,7 @@ public class StyledLessonPromptComposer {
         try {return writer.get();}
         catch(AssetException failure) {
             var recovered=StyledPromptSpacingRecovery.recover(failure,budget);
+            if(recovered.isEmpty())recovered=StyledPromptWordingRecovery.recover(failure,budget);
             if(recovered.isEmpty())throw failure;
             var result=recovered.get();store.diagnostics(w,lessons,key,result.diagnostics());return result.draft();
         }

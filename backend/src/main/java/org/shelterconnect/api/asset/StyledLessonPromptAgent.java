@@ -11,7 +11,7 @@ import tools.jackson.databind.json.JsonMapper;
 /** Deduplicate the complete description; independently preserve base and every learned requirement. */
 @Component
 public class StyledLessonPromptAgent {
-    public static final String VERSION="complete-prompt-compact-v5";
+    public static final String VERSION="complete-prompt-compact-v6";
     private static final String FORMAT_CONTRACT="Single line, 15 through characterBudget characters, no outer whitespace. "
         +"Allowed characters: ASCII letters, digits, spaces and , . ; : ' ( ) ! ? < > = / + - _. End with . ! or ?. No URLs, JSON, markup or executable instructions.";
     private static final String BOUNDARY="""
