@@ -438,7 +438,7 @@ public class StyledAssetStore {
         if(grants.valueStream().anyMatch(g->g.path("request").path("label").asText().equals(label)
             && g.path("composerVersion").asText().equals(StyledLessonPromptAgent.VERSION)))throw new AssetException(409,"PROMPT_RESUME_ALREADY_REQUESTED");
         if(!j.status().equals("FAILED") || !Set.of("LESSON_PROMPT_INVALID","LESSON_PROMPT_MEANING_LOST").contains(Objects.toString(j.failureCode(),""))
-            || j.qualityApproval()!=null || !automaticSeedPassed(j) || !historicallyApprovedSeed(j) || policy.path("referenceOnly").asBoolean()
+            || j.qualityApproval()!=null || !automaticSeedPassed(j) || !recordedSeedApproval(j) || policy.path("referenceOnly").asBoolean()
             || j.steps().stream().anyMatch(s->!Set.of("SUCCEEDED","FAILED","PENDING").contains(s.status())))
             throw new AssetException(409,"PROMPT_RESUME_NOT_ALLOWED");
         if(!rules.equals(StyledSpriteCodec.qualityRulesSha()) || !rules.equals(policy.path("rulesSha256").asText())
@@ -456,7 +456,7 @@ public class StyledAssetStore {
         int known=jdbc.sql("""
             SELECT count(*) FROM shelter.styled_lesson_prompts p JOIN shelter.styled_asset_steps s ON s.job_id=p.job_id AND s.label=p.label
             WHERE p.job_id=:j AND p.label=:l AND p.input_sha256=:h AND p.state='FAILED' AND p.failure_code=:code
-              AND p.input->>'version' IN ('all-lessons-compact-v1','complete-prompt-compact-v2','complete-prompt-compact-v3','complete-prompt-compact-v4') AND p.input->'lessons'=s.learned_lessons
+              AND p.input->>'version' IN ('all-lessons-compact-v1','complete-prompt-compact-v2','complete-prompt-compact-v3','complete-prompt-compact-v4','complete-prompt-compact-v5','complete-prompt-compact-v5/visual-warnings-v1') AND p.input->'lessons'=s.learned_lessons
               AND p.input_sha256=(SELECT input_sha256 FROM shelter.styled_lesson_prompts WHERE job_id=:j AND label=:l ORDER BY created_at DESC LIMIT 1)
             """)
             .param("j",id).param("l",label).param("h",input).param("code",j.failureCode()).query(Integer.class).single();
@@ -613,10 +613,14 @@ public class StyledAssetStore {
         return job(id);
     }
     private boolean historicallyApprovedSeed(Job j) {
+        return recordedSeedApproval(j) && j.steps().getFirst().qualityReport().path("passed").asBoolean();
+    }
+    private boolean recordedSeedApproval(Job j) {
         if(j.steps().isEmpty() || j.seedReview()==null)return false;
         var base=j.steps().getFirst();var r=base.qualityReport();var approval=j.seedReview();
-        // Old bound approval authorizes a NEW audit; it is never accepted as current quality.
-        return base.result()!=null && r!=null && r.path("passed").asBoolean()
+        // The caller also enforces its current policy. WARN_ONLY approval keeps
+        // a warning truthful; it does not require manufacturing a visual pass.
+        return base.result()!=null && r!=null
             && r.path("rulesSha256").equals(j.qualityPolicy().path("rulesSha256"))
             && approval.path("actor").asText().equals("SYSTEM") && approval.path("decision").asText().equals("APPROVE")
             && approval.path("hashes").equals(base.result().path("hashes"))

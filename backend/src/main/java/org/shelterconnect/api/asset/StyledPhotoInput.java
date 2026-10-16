@@ -12,7 +12,9 @@ public final class StyledPhotoInput {
     static boolean pending(JsonNode input) { return input!=null && VERSION.equals(input.path("automaticPhotoInput").asText()); }
     public static JsonNode traits(byte[] photo,JsonNode analysis,JsonMapper json) {
         // Reject multiple animals, hidden heads, tiny boxes and invalid observations before generation.
-        PhotoAppearance.prepare(photo,analysis);
+        // Vision uses a bounded photographic reference. Validate against that same
+        // scale, while binding the resulting traits to the immutable stored original.
+        PhotoAppearance.prepare(SpriteNormalizer.reference(photo),analysis);
         var features=analysis.path("features");
         for(String key:PhotoAppearance.FEATURES)if(features.path(key).asText().length()>80)
             throw new AssetException(422,"PHOTO_APPEARANCE_REQUIRES_REVIEW");

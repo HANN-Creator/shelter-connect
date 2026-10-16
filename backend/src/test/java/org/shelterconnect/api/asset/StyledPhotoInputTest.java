@@ -6,6 +6,17 @@ import static org.assertj.core.api.Assertions.*;
 
 class StyledPhotoInputTest {
     final PhotoAppearanceTest fixture=new PhotoAppearanceTest();
+    @Test void acceptedLargeUploadUsesVisionScaleButKeepsOriginalHashAndCoordinates() {
+        var original=SpriteNormalizer.png(new java.awt.image.BufferedImage(2000,1500,java.awt.image.BufferedImage.TYPE_INT_RGB));
+        var uploaded=PhotoUploadImage.normalize(original);
+        var traits=StyledPhotoInput.traits(uploaded,fixture.fixture(Map.of()),fixture.json);
+        assertThat(traits.path("sourcePhotoSha256").asText()).isEqualTo(StyledSpriteCodec.sha(uploaded));
+        assertThat(traits.at("/faceBox/0").asDouble()).isCloseTo(.19,within(.00001));
+        assertThat(traits.at("/faceBox/2").asDouble()).isCloseTo(.81,within(.00001));
+        assertThat(SpriteNormalizer.dimensions(uploaded,2048)).containsExactly(2000,1500);
+        assertThatThrownBy(()->StyledPhotoInput.traits(uploaded,fixture.fixture(Map.of("dogCount",2)),fixture.json))
+            .isInstanceOfSatisfying(AssetException.class,e->assertThat(e.code).isEqualTo("PHOTO_APPEARANCE_REQUIRES_REVIEW"));
+    }
     @Test void mapsAllVisibleFeaturesPaddedHeadAndStablePhotoHashWithoutInventingRear() {
         var photo=fixture.photo();var traits=StyledPhotoInput.traits(photo,fixture.fixture(Map.of()),fixture.json);
         assertThat(traits.path("identityDescription").asText()).contains("pink upper-center patch","not clearly visible");
