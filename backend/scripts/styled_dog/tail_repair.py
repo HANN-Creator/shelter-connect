@@ -8,7 +8,7 @@ import base64
 import hashlib
 import io
 from PIL import Image, ImageOps
-from .quality import frame_audit, frontal_tail_frames, load_quality, quality_binding, components
+from .quality import frame_audit, frontal_tail_frames, load_quality, quality_binding, components, action_motion
 
 
 def pixel_hash(image):
@@ -102,8 +102,7 @@ def idle_edit_payload(frames, direction):
 def margin_edit_payload(frames, action, direction):
     """Keep the requested action while editing a repeatedly clipped full strip."""
     rules = load_quality()
-    if action not in rules['actions']:
-        raise ValueError('Unsupported action')
+    motion = action_motion(action, direction)
     payload = edit_payload(frames, direction)
     payload['description'] = (
         'Repair clipped extremities in this COMPLETE nine-frame ' + action + ' animation. '
@@ -115,7 +114,7 @@ def margin_edit_payload(frames, action, direction):
         'erase body parts, blur, resize, crop or drop any frame. Keep the requested action and '
         'smooth phase progression; never replace all moving/seated poses with a standing still. '
         'Native 32x32 crisp pixels, original palette, fixed camera, transparent background. '
-        + rules['actions'][action] + ' ' + rules['commonMotion']
+        + motion + ' ' + rules['commonMotion']
         + ' Remain ' + direction + ' facing in every frame. '
         + (rules['rearView'] if direction == 'north' else '')
     )

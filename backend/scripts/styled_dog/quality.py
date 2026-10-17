@@ -65,10 +65,20 @@ def quality_binding():
     return {'revision': load_quality()['revision'], 'sha256': digest(POLICY)}
 
 
+def action_motion(action, direction):
+    # Additive motions live in the action catalog; keep v43 gates/hash for in-flight legacy jobs.
+    motion = load_quality()['actions'].get(action)
+    if action in ('GROWL', 'WARNING_BARK'):
+        spec = read(POLICY.with_name('rules.json'))['actions'][action]
+        motion = spec['qualityRearMotion' if direction == 'north' else 'qualityMotion']
+    if direction not in DIRECTIONS or not motion:
+        raise ValueError('Unsupported quality action/direction')
+    return motion
+
+
 def motion_guidance(action, direction, quality):
     rules = load_quality()
-    if direction not in DIRECTIONS or action not in rules['actions']:
-        raise ValueError('Unsupported quality action/direction')
+    motion = action_motion(action, direction)
     tail = quality['contract']['tailCarriage']
     issues = quality.get('issues', [])
     if tail not in TAILS or not isinstance(issues, list) or len(issues)>len(rules['corrections']) or any(i not in rules['corrections'] for i in issues):
@@ -80,7 +90,7 @@ def motion_guidance(action, direction, quality):
         tail_prompt = rules['idleTailCarriage'][tail]
     elif 'IDLE_MOTION' in issues:
         raise ValueError('IDLE motion correction is only valid for IDLE')
-    parts = [rules['actions'][action], tail_prompt, rules['commonMotion'],
+    parts = [motion, tail_prompt, rules['commonMotion'],
              'Remain '+direction+' facing in ALL frames including the final hold.']
     if direction == 'north':
         parts.append(rules['rearView'])
@@ -227,8 +237,9 @@ def audit_run(root):
     review=read(root/'seed-review.json') if (root/'seed-review.json').exists() else {}
     for path in sorted((root/'clips').glob('*.json')):
         clip = read(path); label = clip['label']
-        if label != clip['action'].lower()+'-'+clip['direction'] or clip['action'] not in load_quality()['actions'] or clip['direction'] not in DIRECTIONS:
+        if label != clip['action'].lower()+'-'+clip['direction']:
             raise ValueError('Invalid clip identity')
+        action_motion(clip['action'], clip['direction'])
         files = [root/'frames'/label/f'{i:02}.png' for i in range(9)]
         if clip['frameCount'] != 9 or clip['frameSha256'] != [digest(p) for p in files]:
             raise ValueError('Raw frames changed after generation')

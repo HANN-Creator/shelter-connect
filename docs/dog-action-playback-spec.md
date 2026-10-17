@@ -29,7 +29,7 @@
 | `/v1/dogs/{dogId}/behavior` | `dogId`, `schemaVersion`, `basis`, `revision`, `settings` |
 | `/v1/dogs/{dogId}/assets` | `id`, `schemaVersion`, `status`, `availableActions`, `fallbackAction`, `behaviorRevision`, `frameSize`, `anchorPixels`, `facing`, `baseUrl`, `expiresAt`, `animations` |
 
-행동 설정의 `settings.actions`에는 **8개 코드가 모두** 들어온다. 에셋의 `availableActions`는 **실제 생성·승인된 행동만** 담는다. 현재 신규 생성은 공통 IDLE/WALK/SIT와 대표 행동 최대 2개, 총 3~5개다. 이전 묶음이나 로컬 검토본에는 8개가 있을 수 있으므로 배열 길이를 고정하지 않는다. `BASE`는 기준 이미지이며 선택할 행동이 아니다.
+행동 설정의 `settings.actions`에는 기존 8종과 GROWL·WARNING_BARK가 들어온다. 에셋의 `availableActions`에는 실제 생성·승인된 행동만 포함된다. 기본 IDLE/WALK/SIT와 양수 비중의 추가 행동을 선택하며 개수 제한을 두지 않는다. 과거 팩에는 새 행동이 없으므로 배열 길이를 고정하지 않는다. `BASE`는 기준 이미지다.
 
 ### 선택 가능한 행동 구하기
 
@@ -199,3 +199,7 @@ SNIFF를 사용할 수 없으면 INSPECT 동안 IDLE로 대기한다. 입 부착
 `quality.warnings`에 행동·방향·프레임과 확인할 내용을 보존한다. 이를 근거로 강아지를 숨기거나
 자동 재생성을 요청하지 않는다. `UNAVAILABLE`은 이미지 관찰 불가이며 품질 통과를 의미하지 않는다.
 담당자 경고 이미지 API와 전환 조건은 [시각 경고 명세](visual-quality-warnings.md)를 따른다.
+
+## B-102 경고 반응
+
+GROWL은 으르렁거리기, WARNING_BARK는 경고 짖기다. 두 행동은 제자리 반복이며 worldMotion=0이다. 일반 배회 무작위 행동에서는 제외하고 `PERSON_WARNING` 근접 반응으로 재생한다. 현재 동작의 `actionMessages` 말풍선을 표시해 경계·물러나기와 구분한다. 없거나 종료된 동작의 말풍선은 지운다. PERSON_WARNING을 PERSON_GREETING/BALL_CHASE보다 먼저 평가하며, 없는 시트 대신 IDLE로 복귀한다. 상세 타이머·기존 팩 호환은 [경고 행동 계약](warning-behavior-actions.md)을 따른다. RN 구현은 별도다.

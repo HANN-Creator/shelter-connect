@@ -18,7 +18,7 @@ class BehaviorInputTest {
 	}
 	@Test void defaultHasEightActionsAndThreeCommonActions() {
 		var value=BehaviorInput.settings(settings());
-		assertThat(value.actions()).hasSize(8);
+		assertThat(value.actions()).hasSize(10);
 		assertThat(value.actions().entrySet().stream().filter(e->e.getValue().weight()>0).map(e->e.getKey()).toList()).containsExactly(Action.IDLE,Action.WALK,Action.SIT);
 		assertThat(value.ballPlay().chaseEnabled()).isFalse();
 		assertThat(BehaviorInput.save(request()).evidence()).isEmpty();
@@ -63,6 +63,17 @@ class BehaviorInputTest {
 		((ObjectNode)config.at("/actions/RUN")).put("weight",100).put("speedTilesPerSecond",6).put("minDurationMs",30000).put("maxDurationMs",60000).put("cooldownMs",120000);
 		((ObjectNode)config.at("/ballPlay")).put("chaseEnabled",true).put("returnEnabled",true).put("reactionDelayMs",0);
 		assertThat(BehaviorInput.save(body).settings().actions().get(Action.RUN).weight()).isEqualTo(100);
+	}
+	@Test void oldProfilesDefaultOnlyNewActionsToZeroAndWarningsCannotMoveAcrossTheMap() {
+		var body=settings();var actions=(ObjectNode)body.path("actions");actions.remove("GROWL");actions.remove("WARNING_BARK");
+		var old=BehaviorInput.settings(body);
+		assertThat(old.actions().get(Action.GROWL).weight()).isZero();
+		assertThat(old.actions().get(Action.WARNING_BARK).weight()).isZero();
+		for(String action:java.util.List.of("GROWL","WARNING_BARK")) {
+			var current=settings();((ObjectNode)current.at("/actions/"+action)).put("weight",30).put("speedTilesPerSecond",1);reject(current);
+			current=settings();((ObjectNode)current.path("actions")).putNull(action);reject(current);
+		}
+		actions.set("BITE",settings().at("/actions/GROWL"));reject(body);
 	}
 	private void reject(ObjectNode body) { assertThatThrownBy(()->BehaviorInput.settings(body)).isInstanceOf(BehaviorException.class); }
 }

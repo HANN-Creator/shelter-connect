@@ -125,7 +125,7 @@ class PipelineTest(unittest.TestCase):
                     verify_inputs(self.root)
                 path.write_bytes(previous)
 
-    def test_all_32_requests_have_correct_view_and_loop_semantics(self):
+    def test_all_action_requests_have_correct_view_and_loop_semantics(self):
         self.review()
         rules = load_rules()
         for a in rules['actions']:
@@ -167,7 +167,7 @@ class PipelineTest(unittest.TestCase):
         package(self.root)
         m = read(self.root/'manifest.json')
         self.assertEqual(m['status'],'PARTIAL')
-        self.assertEqual(len(m['missingClips']),31)
+        self.assertEqual(len(m['missingClips']),39)
         self.assertEqual(m['animations']['back_off-west']['worldMotion']['unitVector'],{'x':1,'y':0})
         self.assertFalse(m['published'])
         import zipfile
@@ -199,7 +199,7 @@ class PipelineTest(unittest.TestCase):
         self.assertTrue((self.root/'frames/sit-north/08.png').exists())
         self.assertFalse((self.root/'styled-dog-assets.zip').exists())
 
-    def test_all_32_jobs_pass_the_real_journal_and_reuse_on_second_run(self):
+    def test_all_action_jobs_pass_the_real_journal_and_reuse_on_second_run(self):
         import hashlib
         import json
         self.review()
@@ -217,12 +217,26 @@ class PipelineTest(unittest.TestCase):
         with patch.object(client,'request',side_effect=request) as remote:
             write(self.root/'failures.json',[{'error':'previous recovered failure'}])
             animate(self.root,client,None)
-            self.assertEqual(len(jobs),32)
+            self.assertEqual(len(jobs),40)
             self.assertEqual(read(self.root/'failures.json'),[])
-            self.assertEqual(len(list((self.root/'clips').glob('*.json'))),32)
+            self.assertEqual(len(list((self.root/'clips').glob('*.json'))),40)
             first_count = sum(c.args[0] == 'POST' for c in remote.call_args_list)
             animate(self.root,client,None)
             self.assertEqual(sum(c.args[0] == 'POST' for c in remote.call_args_list),first_count)
+
+    def test_warning_clips_survive_audit_and_package(self):
+        self.review()
+        for action in ('GROWL','WARNING_BARK'):
+            for direction in ('south','north','west','east'):
+                image = base64.b64encode((self.root/'directions'/(direction+'.png')).read_bytes()).decode()
+                save_clip(self.root,action,direction,{'last_response':{'images':[{'base64':image}]*9}})
+        package(self.root)
+        manifest = read(self.root/'manifest.json')
+        self.assertEqual(len(manifest['animations']),8)
+        for clip in manifest['animations'].values():
+            self.assertTrue(clip['loop'])
+            self.assertEqual(clip['worldMotion']['unitVector'],{'x':0,'y':0})
+        self.assertEqual(len(read(self.root/'quality-audit.json')['clips']),8)
 
     def test_job_labels_cannot_escape_the_run_directory(self):
         client = Client(self.root,'test-only',True)

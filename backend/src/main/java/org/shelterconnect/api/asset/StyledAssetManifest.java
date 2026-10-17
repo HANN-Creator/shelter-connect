@@ -84,6 +84,9 @@ public class StyledAssetManifest {
             result.put("contentPaddingPixels",4);result.put("nativeContentSize",32);}
         if(job.generationPlan()!=null)result.put("generationPlan",job.generationPlan());
         result.put("availableActions",job.availableActions());
+        var messages=new LinkedHashMap<String,String>();
+        BehaviorInteractions.warningMessages().forEach((action,message)->{if(job.availableActions().contains(action))messages.put(action,message);});
+        result.put("actionMessages",messages);
         if(job.qualityPolicy()!=null && job.qualityPolicy().path("referenceOnly").asBoolean()) {
             result.put("referenceOnly",true);result.put("provider","Imported seed reference");
         }

@@ -40,6 +40,10 @@ public class BehaviorService {
 		Save save=BehaviorInput.save(body);
 		var old=repository.profile(id).orElse(null);
 		if(save.expectedRevision()!=(old==null?0:old.revision())) throw BehaviorException.stale();
+		// An older editor must not silently erase newly configured warning actions.
+		if(old!=null) for(var action:BehaviorInput.EXTENDED_ACTIONS)
+			if(old.settings().at("/actions/"+action+"/weight").asInt()>0 && !body.path("settings").path("actions").has(action.name()))
+				throw new BehaviorException(409,"BEHAVIOR_ACTIONS_REQUIRED","최신 행동 설정을 불러온 뒤 다시 저장해 주세요.");
 		if(!save.evidence().isEmpty() && !repository.evidenceValid(id,save.evidence(),true)) throw BehaviorException.evidence();
 		repository.save(id,save);return repository.profile(id).orElseThrow();
 	}
