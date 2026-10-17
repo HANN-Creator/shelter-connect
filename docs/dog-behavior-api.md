@@ -1,6 +1,6 @@
 # 강아지 행동 설정 연결하기
 
-미리 만든 8종 동작을 강아지마다 다르게 조합하는 설정이야. 서버는 속도·비중·거리와 관찰 근거를 저장하고, 앱은 상황에 맞는 동작을 선택해서 재생해. 재생 중 AI 호출이나 새 이미지 생성은 없어.
+지원 동작을 강아지마다 다르게 조합하는 설정이야. 서버는 속도·비중·거리와 관찰 근거를 저장하고, 앱은 상황에 맞는 동작을 선택해서 재생해. 재생 중 AI 호출이나 새 이미지 생성은 없어.
 
 프론트에서 행동별로 구현할 이동·진입·종료·대체 규칙은 [강아지 행동별 재생 명세서](dog-action-playback-spec.md)를 봐줘. 아래는 API 계약이고, 재생 명세서의 상황 우선순위와 전환은 RN 구현 초안이야.
 
@@ -106,7 +106,7 @@ IDLE과 WALK 비중은 각각 1 이상이어야 해. WALK·RUN·BACK_OFF의 이�
 
 | HTTP / code | 처리 |
 | --- | --- |
-| 400 INVALID_BEHAVIOR | UUID·전체 필드·8개 키·수치·버전·근거 배열 확인 |
+| 400 INVALID_BEHAVIOR | UUID·전체 필드·기존 8개 필수 키·새 경고 키의 값·수치·버전·근거 배열 확인 |
 | 400 INVALID_REQUEST / 415 UNSUPPORTED_MEDIA_TYPE | JSON / Content-Type 확인 |
 | 403 FORBIDDEN / ACCOUNT_DISABLED / ACCOUNT_NOT_REGISTERED | 계정과 승인된 보호소 소속 확인 |
 | 404 DOG_NOT_FOUND | 공개 맵에서 강아지 제거 |
@@ -129,3 +129,7 @@ API와 지정 개발 DB까지 준비됐어. RN에서 8종 애니메이션을 재
 B-19부터 확인된 관찰 기록을 Luna로 분류하고 고정 프리셋에 매칭할 수 있어. 결과는 `AI_SUGGESTED` 초안이며 보호소 확인 전에는 공개 행동에 반영하지 않아. 요청·조회·사진 업로드 순서는 [사진·특징 입력 명세서](asset-input-workflow.md)에 정리했어. 공개 응답의 `interactions.BALL_CHASE`는 공놀이 단계·거리·시간을 함께 내려줘.
 
 B-42: [특징 기반 선택 생성·상호작용](trait-selected-sprites.md). 기본3개 + 필요한 모든 선택 행동을 4방향 생성한다. `PERSON_GREETING`과 `BALL_CHASE`를 프론트 상태 전이에 연결한다.
+
+## B-102 추가 행동
+
+GROWL(으르렁거리기), WARNING_BARK(경고 짖기)는 기존 schemaVersion 1의 선택적 입력 키다. 생략된 새 키는 비활성 값으로 읽으며 기존 필수 8키는 유지한다. 이미 활성화된 새 키를 빠뜨린 수정은 409 BEHAVIOR_ACTIONS_REQUIRED다. 재생 응답에는 새 두 키와 PERSON_WARNING 반응이 추가된다. 원문 특징별 선택·말풍선·프론트 우선순위는 [경고 행동 계약](warning-behavior-actions.md)을 따른다. 실제 배포와 RN 연결 상태는 해당 문서에 구분한다.

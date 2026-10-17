@@ -116,7 +116,7 @@ class TailRepairTest(unittest.TestCase):
 
     def test_repeated_actual_walk_clipping_remains_visible_in_complete_edit_inputs(self):
         from styled_dog.tail_repair import margin_edit_payload
-        from styled_dog.quality import frame_audit, load_quality
+        from styled_dog.quality import frame_audit, load_quality, action_motion
         fixture=read(Path(__file__).parent/'fixtures/tail-repair-alpha.json')['repeatedWalkClipping']
         self.assertEqual(len(fixture['clips']),3)
         for case in fixture['clips']:
@@ -129,12 +129,12 @@ class TailRepairTest(unittest.TestCase):
                 frames.append(frame)
             self.assertEqual(frame_audit(frames,frames[0],'WALK','west','UNKNOWN')['edgeFrames'],case['expectedEdgeFrames'])
             before=[f.tobytes() for f in frames]
-            for action in load_quality()['actions']:
+            for action in list(load_quality()['actions']) + ['GROWL', 'WARNING_BARK']:
                 for direction in ('south','north','west','east'):
                     payload=margin_edit_payload(frames,action,direction)
                     self.assertEqual(len(payload['frames']),9)
                     self.assertLessEqual(len(payload['description']),2000)
-                    self.assertIn(load_quality()['actions'][action],payload['description'])
+                    self.assertIn(action_motion(action,direction),payload['description'])
                     self.assertIn('ONE transparent pixel at ALL edges',payload['description'])
                     self.assertIn('Do not amputate',payload['description'])
                     for original,item in zip(frames,payload['frames']):

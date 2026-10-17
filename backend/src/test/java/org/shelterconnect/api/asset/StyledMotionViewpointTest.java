@@ -61,9 +61,11 @@ class StyledMotionViewpointTest {
     @Test void northRepairIncludesSameRearRuleWithoutChangingFrames() throws Exception {
         var frames=StyledSpriteCodec.frames(Files.readAllBytes(root.resolve("idle-north.png")));
         var r=json.createObjectNode().put("note","Synthetic confirmed tail defect");r.putArray("issues").add("TAIL_CARRIAGE");r.putArray("frames").add(1);r.putArray("edgeFrames");
-        for(String action:List.of("IDLE","WALK","SIT")) {
+        for(String action:List.of("IDLE","WALK","SIT","GROWL","WARNING_BARK")) {
             var p=StyledRecovery.motionPayload(json,frames,action,"north",r,42);
             assertThat(p.path("description").asText()).contains(StyledSpriteCodec.qualityRules(json).path("rearView").asText()).hasSizeLessThanOrEqualTo(2000);
+            assertThat(p.path("description").asText()).contains(StyledSpriteCodec.actionMotion(json,action,"north"));
+            if(Set.of("GROWL","WARNING_BARK").contains(action))assertThat(p.path("description").asText()).contains("Face stays hidden");
             assertThat(p.path("frames").size()).isEqualTo(9);
             for(int i=0;i<9;i++)assertThat(Base64.getDecoder().decode(p.path("frames").get(i).at("/image/base64").asText())).isEqualTo(frames.get(i));
         }

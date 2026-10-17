@@ -3,7 +3,7 @@ package org.shelterconnect.api.behavior;
 import java.util.*;
 import static org.shelterconnect.api.behavior.BehaviorTypes.*;
 
-/** Reusable instructions for the frontend state machine; no new sprite action codes. */
+/** Reusable, availability-checked instructions for the frontend state machine. */
 public final class BehaviorInteractions {
     private BehaviorInteractions() {}
     public record Phase(String phase,List<Action> preferredActions,String until) {}
@@ -13,17 +13,41 @@ public final class BehaviorInteractions {
     public record PersonGreeting(int schemaVersion,boolean enabled,double triggerDistanceTiles,
         double arrivalDistanceTiles,int reactionDelayMs,int wagDurationMs,int sniffDurationMs,
         int maxDurationMs,int cooldownMs,String cancelWhen,Action fallbackAction,List<Phase> phases) {}
+    public record PersonWarning(int schemaVersion,boolean enabled,double triggerDistanceTiles,
+        int reactionDelayMs,int growlDurationMs,int barkDurationMs,int maxDurationMs,int cooldownMs,
+        String priority,String cancelWhen,Action fallbackAction,Map<String,String> actionMessages,List<Phase> phases) {}
+    public static Map<String,String> warningMessages() {
+        return Map.of("GROWL","으르렁거리는 중","WARNING_BARK","경고하며 짖는 중");
+    }
     public static Map<String,Object> all(Settings settings) {
-        return Map.of("BALL_CHASE",ballChase(settings),"PERSON_GREETING",personGreeting(settings));
+        return forAvailable(settings,Arrays.stream(Action.values()).map(Enum::name).toList());
     }
     public static Map<String,Object> forAvailable(Settings settings,Collection<String> available) {
         // Evaluate caution before masking missing clips: no BACK_OFF sprite does not mean the dog is friendly.
         return Map.of("BALL_CHASE",ballChase(settings,available.containsAll(List.of("RUN","WALK","SNIFF","IDLE"))),
-            "PERSON_GREETING",personGreeting(settings,available.containsAll(List.of("WALK","TAIL_WAG","SNIFF","IDLE"))));
+            "PERSON_GREETING",personGreeting(settings,available.containsAll(List.of("WALK","TAIL_WAG","SNIFF","IDLE"))),
+            "PERSON_WARNING",personWarning(settings,available));
+    }
+    private static boolean warningConfigured(Settings settings) {
+        return settings.actions().get(Action.GROWL).weight()>0 || settings.actions().get(Action.WARNING_BARK).weight()>0;
+    }
+    public static PersonWarning personWarning(Settings settings,Collection<String> available) {
+        var phases=new ArrayList<Phase>();
+        if(available.contains("IDLE")) {
+            if(settings.actions().get(Action.GROWL).weight()>0 && available.contains("GROWL"))
+                phases.add(new Phase("GROWL",List.of(Action.GROWL),"GROWL_DURATION_ELAPSED"));
+            if(settings.actions().get(Action.WARNING_BARK).weight()>0 && available.contains("WARNING_BARK"))
+                phases.add(new Phase("BARK",List.of(Action.WARNING_BARK),"BARK_DURATION_ELAPSED"));
+        }
+        boolean enabled=!phases.isEmpty();if(enabled)phases.add(new Phase("FINISH",List.of(Action.IDLE),"IMMEDIATE"));
+        return new PersonWarning(1,enabled,Math.max(2,settings.personalSpaceTiles().doubleValue()),
+            settings.reactionDelayMs(),1200,1000,3000,15000,"BEFORE_PERSON_GREETING_AND_BALL_CHASE",
+            "TARGET_GONE_OR_OUTSIDE_TRIGGER_DISTANCE",Action.IDLE,warningMessages(),List.copyOf(phases));
     }
     public static PersonGreeting personGreeting(Settings settings) { return personGreeting(settings,true); }
     private static PersonGreeting personGreeting(Settings settings,boolean available) {
         boolean enabled=available && settings.approachDistanceTiles().signum()>0 && settings.actions().get(Action.BACK_OFF).weight()==0
+            && !warningConfigured(settings)
             && settings.actions().get(Action.TAIL_WAG).weight()>0 && settings.actions().get(Action.SNIFF).weight()>0;
         return new PersonGreeting(1,enabled,settings.approachDistanceTiles().doubleValue(),
             Math.max(.5,settings.personalSpaceTiles().doubleValue()),settings.reactionDelayMs(),1800,1200,12000,15000,

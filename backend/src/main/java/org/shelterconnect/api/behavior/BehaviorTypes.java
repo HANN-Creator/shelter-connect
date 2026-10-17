@@ -9,7 +9,7 @@ import tools.jackson.databind.JsonNode;
 
 public final class BehaviorTypes {
 	private BehaviorTypes() {}
-	public enum Action { IDLE, WALK, RUN, SNIFF, TAIL_WAG, BACK_OFF, SIT, LIE_DOWN }
+	public enum Action { IDLE, WALK, RUN, SNIFF, TAIL_WAG, BACK_OFF, SIT, LIE_DOWN, GROWL, WARNING_BARK }
 	public record Motion(int weight, BigDecimal speedTilesPerSecond, int minDurationMs, int maxDurationMs, int cooldownMs) {}
 	public record BallPlay(boolean chaseEnabled, boolean returnEnabled, int reactionDelayMs) {}
 	public record Settings(Map<Action, Motion> actions, BigDecimal approachDistanceTiles,

@@ -346,6 +346,31 @@ class StyledAssetPostgresTest {
         assertThat(manifest.at("/mapDirections/LEFT/BACK_OFF/worldMotion/unitVector/x").asInt()).isEqualTo(1);
         assertThat(request()).isEqualTo(id);assertThat(objects).hasSize(36);verify(provider,times(33)).submit(anyBoolean(),any());
     }
+    @Test void warningActionsPersistGenerateFourDirectionsAndPublishStationaryClips() throws Exception {
+        UUID evidence=UUID.randomUUID();
+        jdbc.update("INSERT INTO shelter.dog_observations(id,dog_id,category,content,observed_at,recorded_by,status,confirmed_by,confirmed_at) VALUES (?,?,'PEOPLE','사납고 접근 시 경고하며 짖음',now(),?,'CONFIRMED',?,now())",evidence,dog,user,user);
+        var settings=(tools.jackson.databind.node.ObjectNode)get(null,"/v1/dogs/"+dog+"/behavior",200).at("/data/settings").deepCopy();
+        // Exercise the expanded ordinal boundary too: BASE plus ten actions in four directions.
+        for(var motion:settings.path("actions"))((tools.jackson.databind.node.ObjectNode)motion).put("weight",30);
+        var body=Map.of("expectedRevision",0,"schemaVersion",1,"settings",settings,"source","SHELTER","evidenceObservationIds",List.of(evidence));
+        mvc.perform(put("/v1/shelter-admin/dogs/"+dog+"/behavior").header("Authorization",bearer(subject)).contentType("application/json").content(json.writeValueAsString(body))).andExpect(status().isOk());
+        post(subject,"/v1/shelter-admin/dogs/"+dog+"/behavior/confirmation",Map.of("expectedRevision",1),200);
+        UUID id=request();assertThat(read(id).path("steps").size()).isEqualTo(41);
+        tick();tick();review(id,true,"APPROVE",200);finish(id);review(id,false,"APPROVE",200);
+        var manifest=get(null,"/v1/dogs/"+dog+"/assets",200).path("data");
+        for(String direction:List.of("UP","DOWN","LEFT","RIGHT"))for(String action:List.of("GROWL","WARNING_BARK")) {
+            var clip=manifest.at("/mapDirections/"+direction+"/"+action);
+            assertThat(clip.path("frameCount").asInt()).isEqualTo(9);
+            assertThat(clip.path("loop").asBoolean()).isTrue();
+            assertThat(clip.at("/worldMotion/unitVector/x").asInt()).isZero();
+            assertThat(clip.at("/worldMotion/unitVector/y").asInt()).isZero();
+        }
+        assertThat(manifest.at("/actionMessages/GROWL").asText()).isEqualTo("으르렁거리는 중");
+        assertThat(manifest.at("/behavior/interactions/PERSON_GREETING/enabled").asBoolean()).isFalse();
+        assertThat(manifest.at("/behavior/interactions/PERSON_WARNING/enabled").asBoolean()).isTrue();
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_examples WHERE job_id=? AND action IN ('GROWL','WARNING_BARK')",Integer.class,id)).isEqualTo(8);
+        verify(provider,times(41)).submit(anyBoolean(),any());
+    }
     @Test void missingPlannedDirectionCannotReachReviewOrPublish() throws Exception {
         UUID id=request();tick();tick();review(id,true,"APPROVE",200);
         jdbc.update("DELETE FROM shelter.styled_asset_steps WHERE job_id=? AND label='walk-north'",id);

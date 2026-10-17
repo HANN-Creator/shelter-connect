@@ -75,6 +75,17 @@ class BehaviorPostgresTest {
 		assertThat(body(auth(get(path()),subject),200).get("data")).isEqualTo(original);
 		confirm(1,200);save(payload(1),409);confirm(1,409);
 	}
+	@Test void olderEditorsCannotEraseConfiguredWarningActions() throws Exception {
+		var input=payload(0);var actions=(ObjectNode)input.at("/settings/actions");
+		var growl=(ObjectNode)actions.path("IDLE").deepCopy();growl.put("weight",30);actions.set("GROWL",growl);
+		save(input,200);confirm(1,200);
+		var playback=body(get(pub()),200).path("data");
+		assertThat(playback.at("/settings/actions/GROWL/weight").asInt()).isEqualTo(30);
+		assertThat(playback.at("/interactions/PERSON_WARNING/enabled").asBoolean()).isTrue();
+		var legacy=payload(2);((ObjectNode)legacy.at("/settings/actions")).remove("GROWL");
+		save(legacy,409);
+		assertThat(body(auth(get(path()),subject),200).at("/data/settings/actions/GROWL/weight").asInt()).isEqualTo(30);
+	}
 	@ParameterizedTest @ValueSource(strings={"empty","other-dog","missing","draft","retracted"})
 	void confirmationRequiresCurrentEvidenceFromThisDog(String kind) throws Exception {
 		if(kind.equals("empty")) {

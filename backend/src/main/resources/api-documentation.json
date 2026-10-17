@@ -449,6 +449,12 @@
             },
             "LIE_DOWN": {
               "$ref": "#/components/schemas/MotionInput"
+            },
+            "GROWL": {
+              "$ref": "#/components/schemas/MotionInput"
+            },
+            "WARNING_BARK": {
+              "$ref": "#/components/schemas/MotionInput"
             }
           },
           "required": [
@@ -461,7 +467,8 @@
             "SIT",
             "LIE_DOWN"
           ],
-          "additionalProperties": false
+          "additionalProperties": false,
+          "description": "기존 8종 필수. GROWL/ WARNING_BARK는 생략 시 비활성(0). 이미 활성화된 새 행동은 수정 요청에 명시해야 하며 누락하면 409 BEHAVIOR_ACTIONS_REQUIRED."
         },
         "approachDistanceTiles": {
           "type": "number",
@@ -904,7 +911,9 @@
               "TAIL_WAG",
               "BACK_OFF",
               "SIT",
-              "LIE_DOWN"
+              "LIE_DOWN",
+              "GROWL",
+              "WARNING_BARK"
             ]
           }
         },
@@ -1019,7 +1028,7 @@
               }
             }
           },
-          "description": "cozy32-photo-style-v1 원본 32px 4방향. 각 방향 8행동, 각 9프레임. LEFT도 자체 그림 사용."
+          "description": "cozy32-photo-style-v1 원본 32px 4방향. 각 방향 선택된 행동, 각 9프레임. LEFT도 자체 그림 사용."
         },
         "generatorVersion": {
           "type": "string"
@@ -1038,6 +1047,13 @@
         },
         "quality": {
           "$ref": "#/components/schemas/VisualAssetQuality"
+        },
+        "actionMessages": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "실제 포함된 경고 행동의 말풍선. GROWL=으르렁거리는 중, WARNING_BARK=경고하며 짖는 중."
         }
       },
       "required": [
@@ -1886,7 +1902,9 @@
               "TAIL_WAG",
               "BACK_OFF",
               "SIT",
-              "LIE_DOWN"
+              "LIE_DOWN",
+              "GROWL",
+              "WARNING_BARK"
             ]
           }
         },
@@ -2077,7 +2095,9 @@
               "TAIL_WAG",
               "BACK_OFF",
               "SIT",
-              "LIE_DOWN"
+              "LIE_DOWN",
+              "GROWL",
+              "WARNING_BARK"
             ]
           },
           "uniqueItems": true
@@ -2211,11 +2231,15 @@
         },
         "PERSON_GREETING": {
           "$ref": "#/components/schemas/PersonGreeting"
+        },
+        "PERSON_WARNING": {
+          "$ref": "#/components/schemas/PersonWarning"
         }
       },
       "required": [
         "BALL_CHASE",
-        "PERSON_GREETING"
+        "PERSON_GREETING",
+        "PERSON_WARNING"
       ],
       "additionalProperties": false
     },
@@ -2249,7 +2273,9 @@
               "TAIL_WAG",
               "BACK_OFF",
               "SIT",
-              "LIE_DOWN"
+              "LIE_DOWN",
+              "GROWL",
+              "WARNING_BARK"
             ]
           },
           "uniqueItems": true
@@ -2266,7 +2292,9 @@
               "TAIL_WAG",
               "BACK_OFF",
               "SIT",
-              "LIE_DOWN"
+              "LIE_DOWN",
+              "GROWL",
+              "WARNING_BARK"
             ]
           },
           "uniqueItems": true
@@ -2283,7 +2311,9 @@
               "TAIL_WAG",
               "BACK_OFF",
               "SIT",
-              "LIE_DOWN"
+              "LIE_DOWN",
+              "GROWL",
+              "WARNING_BARK"
             ]
           },
           "uniqueItems": true
@@ -2297,7 +2327,7 @@
         "expectedProviderRequests": {
           "type": "integer",
           "minimum": 13,
-          "maximum": 33,
+          "maximum": 41,
           "description": "초기 시도 HTTP 생성 요청 수. PixelLab 청구 Generations와 다름."
         }
       },
@@ -2343,7 +2373,9 @@
               "TAIL_WAG",
               "BACK_OFF",
               "SIT",
-              "LIE_DOWN"
+              "LIE_DOWN",
+              "GROWL",
+              "WARNING_BARK"
             ]
           },
           "uniqueItems": true
@@ -2360,7 +2392,9 @@
               "TAIL_WAG",
               "BACK_OFF",
               "SIT",
-              "LIE_DOWN"
+              "LIE_DOWN",
+              "GROWL",
+              "WARNING_BARK"
             ]
           },
           "uniqueItems": true
@@ -2377,7 +2411,9 @@
               "TAIL_WAG",
               "BACK_OFF",
               "SIT",
-              "LIE_DOWN"
+              "LIE_DOWN",
+              "GROWL",
+              "WARNING_BARK"
             ]
           },
           "uniqueItems": true
@@ -2391,7 +2427,7 @@
         "expectedProviderRequests": {
           "type": "integer",
           "minimum": 13,
-          "maximum": 33,
+          "maximum": 41,
           "description": "초기 시도 HTTP 생성 요청 수. PixelLab 청구 Generations와 다름."
         },
         "settings": {
@@ -2744,7 +2780,7 @@
         "expectedSheetHashes": {
           "type": "object",
           "minProperties": 1,
-          "maxProperties": 32,
+          "maxProperties": 40,
           "additionalProperties": {
             "type": "string",
             "pattern": "^[a-f0-9]{64}$"
@@ -2846,7 +2882,7 @@
         "expectedSheetHashes": {
           "type": "object",
           "minProperties": 1,
-          "maxProperties": 32,
+          "maxProperties": 40,
           "additionalProperties": {
             "type": "string",
             "pattern": "^[a-f0-9]{64}$"
@@ -2927,7 +2963,7 @@
         "expectedSheetHashes": {
           "type": "object",
           "minProperties": 1,
-          "maxProperties": 32,
+          "maxProperties": 40,
           "additionalProperties": {
             "type": "string",
             "pattern": "^[a-f0-9]{64}$"
@@ -2937,7 +2973,7 @@
         "expectedReviewHashes": {
           "type": "object",
           "minProperties": 1,
-          "maxProperties": 32,
+          "maxProperties": 40,
           "additionalProperties": {
             "type": "string",
             "pattern": "^[a-f0-9]{64}$"
@@ -2987,7 +3023,7 @@
         },
         "expectedSheetHashes": {
           "type": "object",
-          "maxProperties": 32,
+          "maxProperties": 40,
           "additionalProperties": {
             "type": "string",
             "pattern": "^[a-f0-9]{64}$"
@@ -3205,6 +3241,82 @@
           }
         }
       }
+    },
+    "PersonWarning": {
+      "type": "object",
+      "description": "관찰 근거가 있는 제자리 경고 반응. PERSON_GREETING/BALL_CHASE보다 먼저 평가. 없는 시트는 재생하지 않음. maxDurationMs는 reactionDelayMs 이후 동작 시간이며 cooldownMs는 종료부터 적용. 대상 이탈 시 대기 중에도 취소.",
+      "properties": {
+        "schemaVersion": {
+          "type": "integer",
+          "enum": [
+            1
+          ]
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "triggerDistanceTiles": {
+          "type": "number"
+        },
+        "reactionDelayMs": {
+          "type": "integer"
+        },
+        "growlDurationMs": {
+          "type": "integer"
+        },
+        "barkDurationMs": {
+          "type": "integer"
+        },
+        "maxDurationMs": {
+          "type": "integer"
+        },
+        "cooldownMs": {
+          "type": "integer"
+        },
+        "priority": {
+          "type": "string",
+          "enum": [
+            "BEFORE_PERSON_GREETING_AND_BALL_CHASE"
+          ]
+        },
+        "cancelWhen": {
+          "type": "string"
+        },
+        "fallbackAction": {
+          "type": "string",
+          "enum": [
+            "IDLE"
+          ]
+        },
+        "actionMessages": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "phases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/BehaviorInteractionPhase"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "enabled",
+        "triggerDistanceTiles",
+        "reactionDelayMs",
+        "growlDurationMs",
+        "barkDurationMs",
+        "maxDurationMs",
+        "cooldownMs",
+        "priority",
+        "cancelWhen",
+        "fallbackAction",
+        "actionMessages",
+        "phases"
+      ]
     }
   },
   "operations": {
@@ -4743,7 +4855,7 @@
     },
     "GET /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}": {
       "summary": "32px 생성 상태 조회",
-      "description": "허가된 사진만 처리. 동일 사진·스타일·입력·확인된 행동 버전 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 기본3개+양수 비중 선택 행동만 각각 4방향 생성(총13~33단계), REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수. actionPlan/generationPlan은 작업 접수 당시 고정. 기존 33단계는 변경 없이 재개. 공개 assets.behavior는 현재 유효한 행동과 실제 시트의 교집합. 새 작업은 sprite-quality-v1 자동 검수 적용: 사진 기준 공통 꼬리 자세, 프레임 잘림과 Luna 시각 검사, 불합격 시트별 최대2회 수정 생성. qualityPolicy·steps.qualityReport·repairCount 제공. 최종 승인은 전 시트 품질 통과가 필요. 기존 작업은 repair 명시 호출로 적용. 생성 단계 수는 최초 계획이며 보완 제출 수와 Generations는 별도.",
+      "description": "허가된 사진만 처리. 동일 사진·스타일·입력·확인된 행동 버전 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 기본3개+양수 비중 선택 행동만 각각 4방향 생성(총13~41단계), REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수. actionPlan/generationPlan은 작업 접수 당시 고정. 기존 33단계는 변경 없이 재개. 공개 assets.behavior는 현재 유효한 행동과 실제 시트의 교집합. 새 작업은 sprite-quality-v1 자동 검수 적용: 사진 기준 공통 꼬리 자세, 프레임 잘림과 Luna 시각 검사, 불합격 시트별 최대2회 수정 생성. qualityPolicy·steps.qualityReport·repairCount 제공. 최종 승인은 전 시트 품질 통과가 필요. 기존 작업은 repair 명시 호출로 적용. 생성 단계 수는 최초 계획이며 보완 제출 수와 Generations는 별도.",
       "tag": "32px 에셋",
       "success": [
         "200"
@@ -4758,7 +4870,7 @@
     },
     "GET /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/preview": {
       "summary": "저장된 4방향·동작 검토 주소",
-      "description": "허가된 사진만 처리. 동일 사진·스타일·입력·확인된 행동 버전 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 기본3개+양수 비중 선택 행동만 각각 4방향 생성(총13~33단계), REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수. actionPlan/generationPlan은 작업 접수 당시 고정. 기존 33단계는 변경 없이 재개. 공개 assets.behavior는 현재 유효한 행동과 실제 시트의 교집합. 새 작업은 sprite-quality-v1 자동 검수 적용: 사진 기준 공통 꼬리 자세, 프레임 잘림과 Luna 시각 검사, 불합격 시트별 최대2회 수정 생성. qualityPolicy·steps.qualityReport·repairCount 제공. 최종 승인은 전 시트 품질 통과가 필요. 기존 작업은 repair 명시 호출로 적용. 생성 단계 수는 최초 계획이며 보완 제출 수와 Generations는 별도.",
+      "description": "허가된 사진만 처리. 동일 사진·스타일·입력·확인된 행동 버전 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 기본3개+양수 비중 선택 행동만 각각 4방향 생성(총13~41단계), REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수. actionPlan/generationPlan은 작업 접수 당시 고정. 기존 33단계는 변경 없이 재개. 공개 assets.behavior는 현재 유효한 행동과 실제 시트의 교집합. 새 작업은 sprite-quality-v1 자동 검수 적용: 사진 기준 공통 꼬리 자세, 프레임 잘림과 Luna 시각 검사, 불합격 시트별 최대2회 수정 생성. qualityPolicy·steps.qualityReport·repairCount 제공. 최종 승인은 전 시트 품질 통과가 필요. 기존 작업은 repair 명시 호출로 적용. 생성 단계 수는 최초 계획이며 보완 제출 수와 Generations는 별도.",
       "tag": "32px 에셋",
       "success": [
         "200"
@@ -4773,7 +4885,7 @@
     },
     "POST /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/seed-review": {
       "summary": "4방향 원본 확인 후 동작 생성 승인",
-      "description": "허가된 사진만 처리. 동일 사진·스타일·입력·확인된 행동 버전 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 기본3개+양수 비중 선택 행동만 각각 4방향 생성(총13~33단계), REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수. actionPlan/generationPlan은 작업 접수 당시 고정. 기존 33단계는 변경 없이 재개. 공개 assets.behavior는 현재 유효한 행동과 실제 시트의 교집합. 새 작업은 sprite-quality-v1 자동 검수 적용: 사진 기준 공통 꼬리 자세, 프레임 잘림과 Luna 시각 검사, 불합격 시트별 최대2회 수정 생성. qualityPolicy·steps.qualityReport·repairCount 제공. 최종 승인은 전 시트 품질 통과가 필요. 기존 작업은 repair 명시 호출로 적용. 생성 단계 수는 최초 계획이며 보완 제출 수와 Generations는 별도.",
+      "description": "허가된 사진만 처리. 동일 사진·스타일·입력·확인된 행동 버전 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 기본3개+양수 비중 선택 행동만 각각 4방향 생성(총13~41단계), REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수. actionPlan/generationPlan은 작업 접수 당시 고정. 기존 33단계는 변경 없이 재개. 공개 assets.behavior는 현재 유효한 행동과 실제 시트의 교집합. 새 작업은 sprite-quality-v1 자동 검수 적용: 사진 기준 공통 꼬리 자세, 프레임 잘림과 Luna 시각 검사, 불합격 시트별 최대2회 수정 생성. qualityPolicy·steps.qualityReport·repairCount 제공. 최종 승인은 전 시트 품질 통과가 필요. 기존 작업은 repair 명시 호출로 적용. 생성 단계 수는 최초 계획이며 보완 제출 수와 Generations는 별도.",
       "tag": "32px 에셋",
       "success": [
         "200"
@@ -4791,7 +4903,7 @@
     },
     "POST /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/review": {
       "summary": "선택된 동작 검토 후 공개 승인",
-      "description": "허가된 사진만 처리. 동일 사진·스타일·입력·확인된 행동 버전 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 기본3개+양수 비중 선택 행동만 각각 4방향 생성(총13~33단계), REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수. actionPlan/generationPlan은 작업 접수 당시 고정. 기존 33단계는 변경 없이 재개. 공개 assets.behavior는 현재 유효한 행동과 실제 시트의 교집합. 새 작업은 sprite-quality-v1 자동 검수 적용: 사진 기준 공통 꼬리 자세, 프레임 잘림과 Luna 시각 검사, 불합격 시트별 최대2회 수정 생성. qualityPolicy·steps.qualityReport·repairCount 제공. 최종 승인은 전 시트 품질 통과가 필요. 기존 작업은 repair 명시 호출로 적용. 생성 단계 수는 최초 계획이며 보완 제출 수와 Generations는 별도.",
+      "description": "허가된 사진만 처리. 동일 사진·스타일·입력·확인된 행동 버전 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 기본3개+양수 비중 선택 행동만 각각 4방향 생성(총13~41단계), REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수. actionPlan/generationPlan은 작업 접수 당시 고정. 기존 33단계는 변경 없이 재개. 공개 assets.behavior는 현재 유효한 행동과 실제 시트의 교집합. 새 작업은 sprite-quality-v1 자동 검수 적용: 사진 기준 공통 꼬리 자세, 프레임 잘림과 Luna 시각 검사, 불합격 시트별 최대2회 수정 생성. qualityPolicy·steps.qualityReport·repairCount 제공. 최종 승인은 전 시트 품질 통과가 필요. 기존 작업은 repair 명시 호출로 적용. 생성 단계 수는 최초 계획이며 보완 제출 수와 Generations는 별도.",
       "tag": "32px 에셋",
       "success": [
         "200"
@@ -4809,7 +4921,7 @@
     },
     "POST /v1/operations/styled-asset-jobs/{jobId}/recover": {
       "summary": "실패 작업 재개·결과 불명 작업 ID 연결",
-      "description": "허가된 사진만 처리. 동일 사진·스타일·입력·확인된 행동 버전 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 기본3개+양수 비중 선택 행동만 각각 4방향 생성(총13~33단계), REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수. actionPlan/generationPlan은 작업 접수 당시 고정. 기존 33단계는 변경 없이 재개. 공개 assets.behavior는 현재 유효한 행동과 실제 시트의 교집합.",
+      "description": "허가된 사진만 처리. 동일 사진·스타일·입력·확인된 행동 버전 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 기본3개+양수 비중 선택 행동만 각각 4방향 생성(총13~41단계), REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수. actionPlan/generationPlan은 작업 접수 당시 고정. 기존 33단계는 변경 없이 재개. 공개 assets.behavior는 현재 유효한 행동과 실제 시트의 교집합.",
       "tag": "32px 에셋",
       "success": [
         "200"

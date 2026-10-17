@@ -9,7 +9,9 @@ public enum AssetAction {
     TAIL_WAG(90, true, "Gently wag only the tail side to side. All four paws planted, body and head stable. Subtle seamless loop."),
     BACK_OFF(90, true, "Take small cautious backward steps in place, still looking right. Alternate paws without translating across the canvas. Seamless backward walk loop."),
     SIT(90, false, "Bend the hind legs and lower the hips into a natural seated dog pose. Front paws planted. End seated and hold for the last two frames. Do not stand again."),
-    LIE_DOWN(100, false, "Bend front and hind legs and lower chest and belly to rest on the ground. End lying down and hold for the last two frames. Do not stand again.");
+    LIE_DOWN(100, false, "Bend front and hind legs and lower chest and belly to rest on the ground. End lying down and hold for the last two frames. Do not stand again."),
+    GROWL(140, true, "Growl in place: paws planted, small forward chest lean, tiny tense jaw opening then close. Same cute face and eyes; no smile, leap, bite or travel. Seamless loop."),
+    WARNING_BARK(110, true, "Give two short warning barks in place: visibly open and close the mouth with a brief head/chest bob. Paws planted, same cute face and eyes, no smile, leap, bite or travel. Seamless loop.");
 
     public static final String VERSION = "pixellab-harness-v3";
     final int durationMs;
