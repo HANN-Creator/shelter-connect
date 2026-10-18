@@ -28,6 +28,8 @@ class DeploymentFlowTests(unittest.TestCase):
             self.stack.enter_context(patch.dict(sys.modules,{'msvcrt':SimpleNamespace(LK_NBLCK=1,LK_UNLCK=2,locking=lambda *a:None)}))
     def api(self,config,path):
         if path=='/commits/main':return {'sha':self.head}
+        if path.startswith('/actions/workflows/dependency-security.yml'):
+            return {'workflow_runs':[{'id':21,'head_sha':self.head,'head_branch':'main','event':'push','conclusion':'success','path':'.github/workflows/dependency-security.yml','repository':{'full_name':d.REPOSITORY}}]}
         if path.startswith('/actions/workflows/'):
             return {'workflow_runs':[{'id':17,'event':'workflow_run','path':'.github/workflows/mini-pc-release.yml','repository':{'full_name':d.REPOSITORY}}]}
         if path=='/actions/runs/17/artifacts':return {'artifacts':[{'name':'mini-pc-release-'+self.head,'id':23,'expired':False}]}
@@ -66,5 +68,13 @@ class DeploymentFlowTests(unittest.TestCase):
     def test_check_only_cannot_stop_services_or_change_app(self):
         d.main(check_only=True);self.assertEqual(self.events,[])
         self.assertEqual((self.app/'shelter-connect-api.jar').read_bytes(),b'OLD APP')
+    def test_security_failure_waits_without_downloading_or_stopping(self):
+        original=self.api
+        def api(config,path):
+            if path.startswith('/actions/workflows/dependency-security.yml'):return {'workflow_runs':[]}
+            return original(config,path)
+        with patch.object(d,'api',api),patch.object(d,'download') as download:
+            d.main();download.assert_not_called()
+        self.assertEqual(self.events,[]);self.assertEqual(self.state()['phase'],'waiting_for_security_check')
 
 if __name__=='__main__':unittest.main()

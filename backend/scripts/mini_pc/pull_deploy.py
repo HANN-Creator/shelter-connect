@@ -78,6 +78,9 @@ def main(check_only=False):
         head=api(config,'/commits/main')['sha']
         if not check_only and (previous.get('deployed_commit')==head or previous.get('failed_commit')==head):
             state.update(previous,checked=state['checked']);save();return
+        security=api(config,'/actions/workflows/dependency-security.yml/runs?branch=main&head_sha='+head+'&per_page=5')['workflow_runs']
+        if not any(r.get('head_sha')==head and r.get('head_branch')=='main' and r.get('event')=='push' and r.get('conclusion')=='success' and r.get('path')=='.github/workflows/dependency-security.yml' and r.get('repository',{}).get('full_name')==REPOSITORY for r in security):
+            state.update(phase='waiting_for_security_check',commit=head);save();print('WAITING_FOR_SECURITY_CHECK: production unchanged.');return
         runs=api(config,'/actions/workflows/mini-pc-release.yml/runs?branch=main&status=success&per_page=20')['workflow_runs']
         selected=None
         for run in runs:
