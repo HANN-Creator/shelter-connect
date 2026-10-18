@@ -1,0 +1,3 @@
+# Archived evidence is hashed byte-for-byte; retain repository LF on Windows.
+backend/scripts/fixtures/** -text
+backend/asset-styles/** -text
