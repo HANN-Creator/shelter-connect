@@ -1,6 +1,6 @@
 # WIN-03 GitHub → Windows 미니PC 자동 배포
 
-main의 Backend CI가 성공하면 Mini PC release가 **동일한 테스트 커밋**을 체크아웃하고 JAR·Python 스크립트·에셋 기준을 묶는다. GitHub-hosted runner에서 빌드하며 운영 PC에는 GitHub self-hosted runner를 설치하지 않는다. DB·Auth·Storage 개인키는 GitHub에 업로드하지 않는다.
+main의 Backend CI가 성공하면 Mini PC release가 **동일한 테스트 커밋**을 체크아웃하고 JAR·Python 스크립트·에셋 기준을 묶는다. 배포기는 같은 main 커밋의 Dependency security 성공까지 확인한다. main의 두 검사는 경로 필터 없이 실행해 문서 병합으로 HEAD가 이동해도 검증된 배포를 놓치지 않는다. GitHub-hosted runner에서 빌드하며 운영 PC에는 GitHub self-hosted runner를 설치하지 않는다. DB·Auth·Storage 개인키는 GitHub에 업로드하지 않는다.
 
 미니PC는 Actions/Contents 읽기 전용 토큰을 DPAPI 및 ACL로 보호하고 2분마다 성공한 main 빌드만 가져온다. 토큰은 api.github.com 요청에만 사용하며 서명된 외부 아티팩트 다운로드에는 전달하지 않는다. GitHub 아티팩트 SHA256, 파일별 SHA256, CI의 저장소·이벤트·분기·커밋·결과, 운영 저장소 클래스, Windows 작업 잠금 코드를 검사한다.
 
