@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import tools.jackson.databind.json.JsonMapper;
 
 @Component
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name="app.storage.backend",havingValue="supabase",matchIfMissing=true)
 public class SupabaseCommunityStorage implements CommunityStorage {
     private final String base,bucket,secret;private final boolean enabled;private final JsonMapper json;private final HttpClient client;
     @Autowired public SupabaseCommunityStorage(SupabaseProperties supabase,Environment env,JsonMapper json) {

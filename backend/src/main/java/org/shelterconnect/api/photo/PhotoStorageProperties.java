@@ -10,11 +10,16 @@ public class PhotoStorageProperties {
 	private final String secretKey;
 	private final String bucket;
 	private final int timeoutSeconds;
+	public PhotoStorageProperties(boolean enabled,String secretKey,String bucket,int timeoutSeconds) {
+		this(enabled,secretKey,bucket,timeoutSeconds,"supabase");
+	}
+	@org.springframework.beans.factory.annotation.Autowired
 	public PhotoStorageProperties(@Value("${app.photos.enabled:false}") boolean enabled,
 			@Value("${app.photos.secret-key:}") String secretKey,
 			@Value("${app.photos.bucket:dog-photos}") String bucket,
-			@Value("${app.photos.timeout-seconds:5}") int timeoutSeconds) {
-		if (enabled && (secretKey == null || !secretKey.matches("sb_secret_[A-Za-z0-9_-]+")))
+			@Value("${app.photos.timeout-seconds:5}") int timeoutSeconds,
+			@Value("${app.storage.backend:supabase}") String storageBackend) {
+		if (enabled && !"local".equals(storageBackend) && (secretKey == null || !secretKey.matches("sb_secret_[A-Za-z0-9_-]+")))
 			throw new IllegalArgumentException("SUPABASE_SECRET_KEY must be a server secret key when PHOTO_STORAGE_ENABLED=true");
 		if (bucket == null || !bucket.matches("[a-z0-9][a-z0-9_-]{0,62}")) throw new IllegalArgumentException("PHOTO_STORAGE_BUCKET is invalid");
 		if (timeoutSeconds < 1 || timeoutSeconds > 10) throw new IllegalArgumentException("PHOTO_STORAGE_TIMEOUT_SECONDS must be 1..10");

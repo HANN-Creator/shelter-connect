@@ -36,6 +36,7 @@ public class SecurityConfiguration {
 				.logout(AbstractHttpConfigurer::disable).requestCache(AbstractHttpConfigurer::disable)
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(rules -> rules
+						.requestMatchers(HttpMethod.GET,"/v1/storage/objects/{objectId}").permitAll()
 						.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
 						.requestMatchers(HttpMethod.GET, PUBLIC_READS).permitAll()
 						.requestMatchers(HttpMethod.HEAD, PUBLIC_READS).permitAll()
