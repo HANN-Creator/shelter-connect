@@ -21,7 +21,7 @@ class DeploymentFlowTests(unittest.TestCase):
         patches={'HOME':self.home,'APP_ROOT':self.app_root,'BACKUP_HOME':self.backup,
           'read_json':lambda p:{'owner_sid':'test','enabled':True,'workspace':str(self.root),'python':sys.executable},
           'current_sid':lambda:'test','api':self.api,'download':self.download,'unpack':self.unpack,
-          'migrations':lambda p:{'V1':'unchanged'},'command':self.command,'service':self.service,'health':lambda u:None}
+          'migrations':lambda p:{'V1':'unchanged'},'command':self.command,'service':self.service,'health':lambda u:None,'available_memory':lambda:2*1024**3}
         for name,value in patches.items():self.stack.enter_context(patch.object(d,name,value))
         if os.name!='nt':
             from types import SimpleNamespace
@@ -76,5 +76,9 @@ class DeploymentFlowTests(unittest.TestCase):
         with patch.object(d,'api',api),patch.object(d,'download') as download:
             d.main();download.assert_not_called()
         self.assertEqual(self.events,[]);self.assertEqual(self.state()['phase'],'waiting_for_security_check')
+    def test_commit_exhaustion_waits_without_touching_services(self):
+        with patch.object(d,'available_memory',return_value=128*1024**2),patch.object(d,'api') as api:
+            d.main();api.assert_not_called()
+        self.assertEqual(self.events,[]);self.assertEqual(self.state()['phase'],'waiting_for_memory')
 
 if __name__=='__main__':unittest.main()

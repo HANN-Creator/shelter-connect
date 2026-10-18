@@ -15,6 +15,8 @@ main의 Backend CI가 성공하면 Mini PC release가 **동일한 테스트 커�
 
 DB 마이그레이션 목록/내용 또는 Python 의존성이 바뀌면 자동 배포는 중지한다. 먼저 별도 복제 DB/환경에서 검증하고 운영 마이그레이션·의존성 적용을 수행한 후 다시 배포한다. 서비스의 DB_MIGRATE=false, 기존 AI/작업자 설정은 자동 변경하지 않는다. 이전 코드가 새 스키마와 호환되는지도 검토한다.
 
+이 PC에서 실제 커밋 메모리 한도 소진이 발생했으므로, 사용 가능한 RAM 또는 커밋 여유가 1GiB 미만이면 다운로드·백업·교체를 시작하지 않고 다음 주기에 다시 확인한다. `waiting_for_memory`는 배포 완료가 아니다. 가상 메모리 증가 원인의 해결을 대신하는 기능은 아니며 현재 서비스는 유지한다.
+
 ## 이 PC의 설치
 
 로컬 관리자 전용 outputs/Setup-GitHub-Deploy.py가 보호 설정과 ShelterGitHubDeploy(S4U/최고 권한, 2분 주기) 작업을 등록한다. 초기 enabled=false이며 실제 CI와 배포 전용 dry run을 통과하기 전에는 운영 교체하지 않는다. 실행 코드는 C:\ProgramData\ShelterConnectDeploy\bin에 고정 복사하며 아티팩트가 배포 도구 자체를 교체하지 않는다.

@@ -10,6 +10,15 @@ APP_ROOT=Path(r'C:\ProgramData\ShelterConnectPreview')
 BACKUP_HOME=Path(r'C:\ProgramData\ShelterConnectBackup')
 API='https://api.github.com/repos/'+REPOSITORY
 
+def available_memory():
+    import ctypes
+    from ctypes import wintypes
+    class Performance(ctypes.Structure):
+        _fields_=[('cb',wintypes.DWORD)]+[(n,ctypes.c_size_t) for n in ('CommitTotal','CommitLimit','CommitPeak','PhysicalTotal','PhysicalAvailable','SystemCache','KernelTotal','KernelPaged','KernelNonpaged','PageSize')]+[(n,wintypes.DWORD) for n in ('HandleCount','ProcessCount','ThreadCount')]
+    p=Performance();p.cb=ctypes.sizeof(p)
+    if not ctypes.windll.psapi.GetPerformanceInfo(ctypes.byref(p),p.cb):raise RuntimeError('Cannot check deployment memory headroom.')
+    return min((p.CommitLimit-p.CommitTotal)*p.PageSize,p.PhysicalAvailable*p.PageSize)
+
 class NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self,*args,**kwargs):return None
 
@@ -75,6 +84,8 @@ def main(check_only=False):
     def save():state_path.write_text(json.dumps(state,indent=2))
     save()
     try:
+        if available_memory()<1024**3:
+            state.update(phase='waiting_for_memory');save();print('WAITING_FOR_MEMORY: less than 1 GiB of RAM/commit headroom; services unchanged, next poll will retry.');return
         head=api(config,'/commits/main')['sha']
         if not check_only and (previous.get('deployed_commit')==head or previous.get('failed_commit')==head):
             state.update(previous,checked=state['checked']);save();return
