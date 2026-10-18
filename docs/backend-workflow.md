@@ -254,4 +254,6 @@ B-95: [생성 문구 공백 길이 초과 자동 복구](https://app.notion.com/
 
 B-100 배포 뒤 같은 10마리 배치에서 남은 1068자 초과 실패를 [전체 원문 기반 문장 편집](prompt-length-editing.md)으로 처리한다. 제한된 표현 치환 뒤에도 길면 Luna의 정확한 범위 편집을 최대 2회 적용하고 실제 길이를 다시 확인한다. 모든 원본 규칙 관찰, WARN_ONLY 경고, 기존 이미지·예산 보존을 유지한다. 노션 도구 미제공으로 카드 미동기화이며 배포 후 실작업 재개는 별도 검증한다.
 
-- WIN-02: 기존 권한 검사를 유지한 로컬 비공개 사진·에셋·게시글 이미지 저장. 명세: [Windows private file storage](../backend/docs/windows-local-storage.md). DB migration 변경 없음. 운영 전환과 별도로 구현·검증을 기록하며 노션 외부 카드는 미동기화.
+- WIN-01: Windows 파일 잠금·UTF-8 저널·절대 인증서 경로 테스트. 명세: [Windows 실행 호환](windows-runtime.md). 별도 회귀 검사와 CI 결과를 PR에 기록한다. 노션 외부 카드는 도구 미제공으로 미동기화.
+
+- WIN-02: 기존 권한 검사를 유지한 로컬 비공개 사진·에셋·게시글 이미지 저장. 명세: [Windows private file storage](../backend/docs/local-storage.md). DB migration 변경 없음. 운영 전환과 별도로 구현·검증을 기록하며 노션 외부 카드는 미동기화.
