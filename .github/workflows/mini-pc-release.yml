@@ -1,0 +1,48 @@
+name: Mini PC release
+
+on:
+  workflow_run:
+    workflows: [Backend]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mini-pc-release-main
+  cancel-in-progress: false
+
+jobs:
+  package:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+      TEST_RUN_ID: ${{ github.event.workflow_run.id }}
+      RELEASE_RUN_ID: ${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@67621b124fd2e251c5e8a0e6e3b91318f2287669 # v6.3.0
+      - name: Package the exact tested commit
+        working-directory: backend
+        run: |
+          ./gradlew --no-daemon --max-workers=2 bootJar
+          python3 scripts/mini_pc/release_bundle.py build --backend . --output build/mini-pc-release/release.zip
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: mini-pc-release-${{ github.event.workflow_run.head_sha }}
+          path: backend/build/mini-pc-release/release.zip
+          if-no-files-found: error
+          retention-days: 14
