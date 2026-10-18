@@ -10,7 +10,7 @@ class LoginStorageCheckTest {
         return new HashMap<>(Map.of("AUTH_CHECK_PROJECT_REF", "a".repeat(20),
                 "SUPABASE_URL", "https://" + "a".repeat(20) + ".supabase.co",
                 "DB_USERNAME", "postgres." + "a".repeat(20),
-                "DB_URL", "jdbc:postgresql://aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres?sslmode=verify-full&sslrootcert=/tmp/ca.crt",
+                "DB_URL", "jdbc:postgresql://aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres?sslmode=verify-full&sslrootcert=" + java.net.URLEncoder.encode(java.nio.file.Path.of("ca.crt").toAbsolutePath().toString(), java.nio.charset.StandardCharsets.UTF_8),
                 "DB_PASSWORD", "test-password-never-print", "SUPABASE_SECRET_KEY", "sb_secret_test_only"));
     }
 

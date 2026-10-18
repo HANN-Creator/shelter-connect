@@ -12,6 +12,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 @Component
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name="app.storage.backend",havingValue="supabase",matchIfMissing=true)
 public final class SupabaseAssetStorage implements AssetStorage {
     private final AssetProperties properties;
     private final JsonMapper json;
