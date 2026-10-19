@@ -48,7 +48,8 @@ DO $$ BEGIN
 END $$;
 CREATE ROLE shelter_migrator LOGIN NOSUPERUSER CREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS PASSWORD '%s';
 GRANT CONNECT ON DATABASE %s TO shelter_migrator;
-GRANT shelter_migration_owner TO shelter_migrator WITH INHERIT FALSE, SET TRUE;
+GRANT shelter_migration_owner TO shelter_migrator WITH INHERIT FALSE;
+GRANT shelter_migration_owner TO shelter_migrator WITH SET TRUE;
 SET LOCAL ROLE shelter_migration_owner;
 ALTER DEFAULT PRIVILEGES IN SCHEMA shelter GRANT SELECT ON TABLES TO shelter_backup;
 ALTER DEFAULT PRIVILEGES IN SCHEMA shelter GRANT SELECT ON SEQUENCES TO shelter_backup;
