@@ -75,8 +75,15 @@ class Migration:
         run([PG/'pg_dump.exe','-h','127.0.0.1','-U',self.secret['username'],'-d',self.db,'-w','-Fc','--schema=shelter','--no-owner','-f',dump],self.env)
         self.pg('CREATE DATABASE '+shadow+' TEMPLATE template0')
         self.pg('REVOKE CONNECT ON DATABASE '+shadow+' FROM PUBLIC')
+        # Original owners' default ACLs cannot be installed by a non-superuser.
+        # Preserve per-object ACLs; recreate only this deploy owner's defaults.
+        listing=run([PG/'pg_restore.exe','--list',dump],self.env).decode('utf-8')
+        restore_list=self.work/'restore.list'
+        restore_list.write_text('\n'.join(line for line in listing.splitlines() if ' DEFAULT ACL ' not in line)+'\n',encoding='utf-8')
         try:
-            run([PG/'pg_restore.exe','-h','127.0.0.1','-U',self.secret['username'],'-d',shadow,'-w','--no-owner','--single-transaction','--exit-on-error',dump],self.env)
+            run([PG/'pg_restore.exe','-h','127.0.0.1','-U',self.secret['username'],'-d',shadow,'-w','--no-owner','--single-transaction','--exit-on-error','--use-list',restore_list,dump],self.env)
+            self.pg('ALTER DEFAULT PRIVILEGES IN SCHEMA shelter GRANT SELECT ON TABLES TO shelter_backup',shadow)
+            self.pg('ALTER DEFAULT PRIVILEGES IN SCHEMA shelter GRANT SELECT ON SEQUENCES TO shelter_backup',shadow)
             self.apply(shadow)
             self.check_app(shadow)
             bad=self.pg("SELECT count(*) FROM pg_constraint WHERE connamespace='shelter'::regnamespace AND contype='f' AND NOT convalidated",shadow).strip()
