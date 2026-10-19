@@ -81,6 +81,10 @@ class Migration:
             self.check_app(shadow)
             bad=self.pg("SELECT count(*) FROM pg_constraint WHERE connamespace='shelter'::regnamespace AND contype='f' AND NOT convalidated",shadow).strip()
             if bad!=b'0':raise RuntimeError('Restored migration has unvalidated foreign keys.')
+            unsafe=self.pg("SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='shelter' AND c.relkind IN ('r','p') AND (NOT c.relrowsecurity OR NOT has_table_privilege('shelter_backup',c.oid,'SELECT'))",shadow).strip()
+            if unsafe!=b'0':raise RuntimeError('Migration must retain RLS and complete backup SELECT privileges.')
+            if self.pg("SELECT has_schema_privilege('shelter_runtime','shelter','CREATE')",shadow).strip()!=b'f':
+                raise RuntimeError('Migration must not grant runtime schema creation.')
         finally:
             # Only the random DB created by this method; never production/auth.
             self.pg('DROP DATABASE '+shadow+' WITH (FORCE)')
