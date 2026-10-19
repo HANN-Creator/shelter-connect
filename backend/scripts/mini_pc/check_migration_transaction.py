@@ -1,5 +1,5 @@
 """CI-only PostgreSQL proof: new versions commit together or roll back together."""
-import os,subprocess,tempfile,uuid,zipfile
+import os,re,subprocess,tempfile,uuid,zipfile
 from pathlib import Path
 
 def main():
@@ -20,17 +20,23 @@ def main():
                     elif name.startswith('BOOT-INF/classes/db/migration/') and name.endswith('.sql'):(sql/Path(name).name).write_bytes(z.read(name))
             subprocess.run(['javac','-cp',str(libs/'*'),'-d',str(root),'scripts/mini_pc/Migrate.java'],check=True)
             env.update(MIGRATION_URL='jdbc:postgresql://127.0.0.1:5432/'+db,MIGRATION_USER=user,MIGRATION_PASSWORD=password,MIGRATION_SQL=str(sql))
-            def migrate():return subprocess.run(['java','-Xmx192m','-cp',str(root)+os.pathsep+str(libs/'*'),'Migrate','migrate'],env=env,capture_output=True).returncode
-            assert migrate()==0,'Baseline failed'
-            (sql/'V25__transaction_probe.sql').write_text('CREATE TABLE shelter.migration_probe(id integer PRIMARY KEY);')
-            (sql/'V26__transaction_failure.sql').write_text('SELECT 1/0;')
-            assert migrate()!=0,'Expected failing migration'
+            def migrate():return subprocess.run(['java','-Xmx192m','-cp',str(root)+os.pathsep+str(libs/'*'),'Migrate','migrate'],env=env,capture_output=True)
+            assert migrate().returncode==0,'Baseline failed'
+            # Probe versions follow the packaged schema, including newly added migrations.
+            versions=[int(re.fullmatch(r'V(\d+)__.+\.sql',path.name).group(1)) for path in sql.glob('V*.sql')]
+            probe_version=max(versions)+1;failure_version=probe_version+1
+            (sql/f'V{probe_version}__transaction_probe.sql').write_text('CREATE TABLE shelter.migration_probe(id integer PRIMARY KEY);')
+            failure_file=sql/f'V{failure_version}__transaction_failure.sql'
+            failure_file.write_text('SELECT 1/0;')
+            failed=migrate()
+            assert failed.returncode!=0,'Expected failing migration'
+            assert f'{failure_version} - transaction failure'.encode() in failed.stdout+failed.stderr,'Probe did not reach the intentionally failing migration'
             assert pg("SELECT to_regclass('shelter.migration_probe') IS NULL",db)==b't','DDL was not rolled back'
-            assert pg("SELECT count(*) FROM shelter.flyway_schema_history WHERE version IN ('25','26')",db)==b'0','History was not rolled back'
-            (sql/'V26__transaction_failure.sql').unlink()
-            assert migrate()==0,'Valid forward migration failed'
-            assert pg("SELECT count(*) FROM shelter.flyway_schema_history WHERE version='25' AND success",db)==b'1'
-            assert migrate()==0,'Repeated deployment is not idempotent'
+            assert pg(f"SELECT count(*) FROM shelter.flyway_schema_history WHERE version IN ('{probe_version}','{failure_version}')",db)==b'0','History was not rolled back'
+            failure_file.unlink()
+            assert migrate().returncode==0,'Valid forward migration failed'
+            assert pg(f"SELECT count(*) FROM shelter.flyway_schema_history WHERE version='{probe_version}' AND success",db)==b'1'
+            assert migrate().returncode==0,'Repeated deployment is not idempotent'
             print('MIGRATION_TRANSACTION_OK: PostgreSQL DDL/history rollback, successful forward application and idempotency verified.')
     finally:pg('DROP DATABASE '+db+' WITH (FORCE)')
 

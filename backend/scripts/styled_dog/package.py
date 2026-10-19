@@ -131,7 +131,7 @@ def package(root):
     comparison.save(root/'comparison.png')
     (root/'README.md').write_text('# 사진 + 승인 도트 스타일\n\n'
         '백엔드 generate_styled_dog.py로 생성한 검토용 결과. 운영 DB/API 에셋을 교체하지 않았습니다.\n'
-        'create-character-pro + animate-pixminimax. 전체 계획 8종 × 4방향. 완료 범위는 manifest.json 참고.\n'
+        'create-character-pro + animate-pixminimax. 지원 행동 중 선택한 동작 × 4방향. 완료 범위는 manifest.json 참고.\n'
         'PNG 시트는 native 32px 픽셀 그대로이며 GIF는 보기용입니다. imageSmoothingEnabled=false로 정수 배율 재생하세요.\n'
         '고정 기준점 (16,30), 이동은 worldMotion 방향으로 프론트에서 처리합니다.\n'
         'SIT/LIE_DOWN은 마지막 자세 유지; 복귀는 프레임 역순. 모션은 기능 예시이고 실제 성격 판단이 아닙니다.\n'

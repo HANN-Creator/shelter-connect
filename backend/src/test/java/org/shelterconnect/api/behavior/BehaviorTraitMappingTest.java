@@ -59,6 +59,39 @@ class BehaviorTraitMappingTest {
         var rules=BehaviorInteractions.forAvailable(original,available);
         assertThat(((BehaviorInteractions.PersonGreeting)rules.get("PERSON_GREETING")).enabled()).isFalse();
     }
+    @Test void aggressionGrowlsAndOnlyExplicitWarningBarksAddBarking() {
+        var growl=warningMapped("사납고 공격적임. 사람 접근에 으르렁거림.","AGGRESSIVE");
+        var plan=BehaviorGenerationPlan.from(growl.settings(),"AI_DRAFT",1);
+        assertThat(plan.policyVersion()).isEqualTo("traits-v3");
+        assertThat(BehaviorGenerationPlan.defaults().policyVersion()).isEqualTo("traits-v2");
+        assertThat(BehaviorGenerationPlan.from(mapped("FRIENDLY").settings(),"CONFIRMED",2).policyVersion()).isEqualTo("traits-v2");
+        assertThat(plan.optionalActions()).containsExactly("GROWL");
+        assertThat(plan.expectedProviderRequests()).isEqualTo(17);
+        assertThat(growl.settings().actions().get(Action.GROWL).speedTilesPerSecond()).isZero();
+        var both=warningMapped("사납고 공격적이며 낯선 사람이 다가오면 경고하며 짖음.","AGGRESSIVE","WARNING_BARKER");
+        assertThat(BehaviorGenerationPlan.from(both.settings(),"AI_DRAFT",1).optionalActions()).containsExactly("GROWL","WARNING_BARK");
+        var warning=BehaviorInteractions.personWarning(both.settings(),List.of("IDLE","GROWL","WARNING_BARK"));
+        assertThat(warning.enabled()).isTrue();
+        assertThat(warning.phases().stream().map(BehaviorInteractions.Phase::phase)).containsExactly("GROWL","BARK","FINISH");
+        assertThat(warning.actionMessages()).containsEntry("GROWL","으르렁거리는 중");
+        assertThat(BehaviorGenerationPlan.from(mapped("CAUTIOUS").settings(),"AI_DRAFT",1).selectedActions()).doesNotContain("GROWL","WARNING_BARK");
+    }
+    @Test void warningEvidenceOverridesGreetingEvenWhenOldPackLacksWarningClips() {
+        var result=warningMapped("사람을 좋아하지만 낯선 사람이 다가오면 사납게 으르렁거림.","FRIENDLY","AGGRESSIVE");
+        assertThat(result.settings().actions().get(Action.TAIL_WAG).weight()).isZero();
+        var original=result.settings();
+        var rules=BehaviorInteractions.forAvailable(original,List.of("IDLE","WALK","SIT","SNIFF","TAIL_WAG"));
+        assertThat(((BehaviorInteractions.PersonGreeting)rules.get("PERSON_GREETING")).enabled()).isFalse();
+        assertThat(((BehaviorInteractions.PersonWarning)rules.get("PERSON_WARNING")).enabled()).isFalse();
+        assertThat(((BehaviorInteractions.PersonWarning)rules.get("PERSON_WARNING")).phases()).isEmpty();
+        var partial=BehaviorInteractions.personWarning(warningMapped("사납고 경고하며 짖음.","AGGRESSIVE","WARNING_BARKER").settings(),List.of("IDLE","WARNING_BARK"));
+        assertThat(partial.phases().getFirst().preferredActions()).containsExactly(Action.WARNING_BARK);
+    }
+    BehaviorTraitMapping.Result warningMapped(String content,String... traits) {
+        var evidence=new BehaviorSuggestionProvider.Observation(UUID.randomUUID(),"PEOPLE",content,Instant.now(),Instant.now());
+        return BehaviorTraitMapping.map(json.valueToTree(Map.of("traits",Arrays.stream(traits)
+            .map(code->Map.of("code",code,"observationId",evidence.id(),"quote",content)).toList())),List.of(evidence));
+    }
     BehaviorTraitMapping.Result mapped(String... traits) {
         return BehaviorTraitMapping.map(json.valueToTree(Map.of("traits",Arrays.stream(traits)
             .map(code->Map.of("code",code,"observationId",observation.id(),"quote",observation.content())).toList())),List.of(observation));

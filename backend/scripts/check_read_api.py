@@ -48,9 +48,19 @@ assert get("/v1/dogs/" + HAERI, 404)["code"] == "RESOURCE_NOT_FOUND"
 assert get("/v1/shelters", 400, limit=0)["code"] == "INVALID_REQUEST"
 behavior = get("/v1/dogs/" + BOMI + "/behavior")["data"]
 assert behavior["basis"] == "DEFAULT" and behavior["revision"] is None
-assert len(behavior["settings"]["actions"]) == 8
-assert behavior["settings"]["actions"]["WALK"]["weight"] == 30
+actions = behavior["settings"]["actions"]
+assert set(actions) == {
+    "IDLE", "WALK", "RUN", "SNIFF", "TAIL_WAG", "BACK_OFF", "SIT", "LIE_DOWN",
+    "GROWL", "WARNING_BARK",
+}, actions
+assert actions["WALK"]["weight"] == 30
+for action in ("GROWL", "WARNING_BARK"):
+    assert actions[action]["weight"] == 0, (action, actions[action])
+    assert actions[action]["speedTilesPerSecond"] == 0, (action, actions[action])
+warning = behavior["interactions"]["PERSON_WARNING"]
+assert warning["enabled"] is False and warning["phases"] == [], warning
+assert warning["fallbackAction"] == "IDLE", warning
 assert not behavior["settings"]["ballPlay"]["chaseEnabled"]
 assert "evidenceObservationIds" not in behavior and "confirmedBy" not in behavior
 assert get("/v1/dogs/" + HAERI + "/behavior", 404)["code"] == "DOG_NOT_FOUND"
-print("Packaged read API: shelter/dog pages, profiles, filters and errors passed.")
+print("Packaged read API: shelter/dog pages, profiles, 10-action defaults, filters and errors passed.")

@@ -23,11 +23,15 @@ public class OpenAiBehaviorSuggestions implements BehaviorSuggestionProvider {
             CAUTIOUS=사람 접근을 꺼리거나 피함/물러남, RESTFUL=누워서/엎드려 쉬기를 좋아함,
             BALL_CHASER=공놀이를 좋아함 또는 던진 공을 따라감, BALL_RETURNER=공을 물어 사람에게 가져온다는 명시적 기록,
             RUN_RESTRICTED=달리기를 피하거나 금지해야 한다는 명시적 지침/달리기 싫어함.
+            AGGRESSIVE=사납다/공격적이다/으르렁거린다는 명시적 기록. 앱에서는 제자리 으르렁 동작으로 표현한다.
+            WARNING_BARKER=사람 접근에 짖거나 경고하며 짖는다는 명시적 기록. 단순 사나움에서 짖기를 추측하지 않는다.
+            겁이 많음/경계함/소심함만으로 AGGRESSIVE를 선택하지 않는다. 입질만으로 공격성이나 짖기를 단정하지 않는다.
+            반가워서 짖음/놀이 중 짖음/짖지 않음은 WARNING_BARKER가 아니다. 두 새 태그 모두 해당 관찰 원문 근거가 필수다.
             단순 산책 중 발견·산책 가능·운동량 많음은 WALK_LOVER가 아니다. 단순 조용함·잠이 많음은 RESTFUL 근거가 아니다.
             공놀이 선호만으로 BALL_RETURNER를 선택하지 않는다. 사람 선호만으로 공놀이를 추측하지 않는다.
-            RUN_RESTRICTED와 CAUTIOUS는 다른 긍정 특징이 있어도 반드시 포함한다. 충돌은 서버의 보수적 우선순위로 처리한다.
+            RUN_RESTRICTED와 CAUTIOUS, AGGRESSIVE, WARNING_BARKER는 명시적 근거가 있으면 다른 긍정 특징이 있어도 반드시 포함한다. 충돌은 서버의 보수적 우선순위로 처리한다.
             같은 특징이 반대 기록과 충돌하면 긍정 태그를 생략하되 명시적 제한/회피 태그는 남긴다.
-            각 태그 최대 한 번, 전체 최대 9개. 정보 부족은 traits=[]다. 진단이나 안전 보장은 하지 않는다.
+            각 태그 최대 한 번, 전체 최대 11개. 정보 부족은 traits=[]다. 진단이나 안전 보장은 하지 않는다.
             observationId는 입력 중 해당 근거 ID, quote는 그대로 복사한 1~300자 완결된 근거 문장이다.
             부정어나 앞뒤 맥락을 빼서 의미를 바꾸지 않는다.
             """,Map.of("observations",observations),schema);

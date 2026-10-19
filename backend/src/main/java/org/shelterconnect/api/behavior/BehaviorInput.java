@@ -6,6 +6,7 @@ import tools.jackson.databind.JsonNode;
 import static org.shelterconnect.api.behavior.BehaviorTypes.*;
 
 final class BehaviorInput {
+	static final Set<Action> EXTENDED_ACTIONS=Set.of(Action.GROWL,Action.WARNING_BARK);
 	private BehaviorInput() {}
 	static UUID id(String value) {
 		try { UUID id=UUID.fromString(value); if(!id.toString().equalsIgnoreCase(value)) throw BehaviorException.invalid(); return id; }
@@ -27,9 +28,15 @@ final class BehaviorInput {
 	static Settings settings(JsonNode body) {
 		exact(body,"actions","approachDistanceTiles","personalSpaceTiles","reactionDelayMs","ballPlay");
 		JsonNode actions=body.get("actions");
-		exact(actions,Arrays.stream(Action.values()).map(Enum::name).toArray(String[]::new));
+		// Additive schema-v1 extension: persisted eight-action profiles remain readable.
+		if(actions==null || !actions.isObject()) throw BehaviorException.invalid();
+		var supported=Arrays.stream(Action.values()).map(Enum::name).collect(java.util.stream.Collectors.toSet());
+		for(String name:actions.propertyNames()) if(!supported.contains(name)) throw BehaviorException.invalid();
 		var motions=new EnumMap<Action,Motion>(Action.class);
 		for(Action action:Action.values()) {
+			if(!actions.has(action.name()) && EXTENDED_ACTIONS.contains(action)) {
+				motions.put(action,defaults().actions().get(action));continue;
+			}
 			var node=actions.get(action.name());
 			exact(node,"weight","speedTilesPerSecond","minDurationMs","maxDurationMs","cooldownMs");
 			int weight=integer(node,"weight",0,100);

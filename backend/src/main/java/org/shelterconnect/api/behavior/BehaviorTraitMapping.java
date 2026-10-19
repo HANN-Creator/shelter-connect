@@ -7,7 +7,7 @@ import tools.jackson.databind.JsonNode;
 import static org.shelterconnect.api.behavior.BehaviorTypes.*;
 
 final class BehaviorTraitMapping {
-    enum Trait { RUNNER, SNIFFER, FRIENDLY, CAUTIOUS, RESTFUL, BALL_CHASER, BALL_RETURNER, WALK_LOVER, RUN_RESTRICTED }
+    enum Trait { RUNNER, SNIFFER, FRIENDLY, CAUTIOUS, RESTFUL, BALL_CHASER, BALL_RETURNER, WALK_LOVER, RUN_RESTRICTED, AGGRESSIVE, WARNING_BARKER }
     record Evidence(Trait code,UUID observationId,String quote) {}
     record Result(Settings settings,List<Evidence> traits) {}
     static Result map(JsonNode output,List<BehaviorSuggestionProvider.Observation> observations) {
@@ -29,6 +29,8 @@ final class BehaviorTraitMapping {
             case FRIENDLY -> { weight(actions,Action.TAIL_WAG,30);weight(actions,Action.SNIFF,30); }
             case CAUTIOUS -> weight(actions,Action.BACK_OFF,30);
             case RESTFUL -> weight(actions,Action.LIE_DOWN,30);
+            case AGGRESSIVE -> weight(actions,Action.GROWL,30);
+            case WARNING_BARKER -> weight(actions,Action.WARNING_BARK,30);
             case BALL_CHASER,BALL_RETURNER -> { weight(actions,Action.RUN,40);weight(actions,Action.SNIFF,30); }
             case RUN_RESTRICTED -> { /* Applied after all positive traits, regardless of order. */ }
         }
@@ -36,7 +38,14 @@ final class BehaviorTraitMapping {
             var run=actions.get(Action.RUN);actions.put(Action.RUN,new Motion(0,run.speedTilesPerSecond(),run.minDurationMs(),run.maxDurationMs(),run.cooldownMs()));
         }
         boolean chase=!seen.contains(Trait.RUN_RESTRICTED) && (seen.contains(Trait.BALL_CHASER)||seen.contains(Trait.BALL_RETURNER));
-        boolean cautious=seen.contains(Trait.CAUTIOUS),friendly=seen.contains(Trait.FRIENDLY);
+        boolean warning=seen.contains(Trait.AGGRESSIVE)||seen.contains(Trait.WARNING_BARKER);
+        if(warning) {
+            var wag=actions.get(Action.TAIL_WAG);actions.put(Action.TAIL_WAG,new Motion(0,wag.speedTilesPerSecond(),wag.minDurationMs(),wag.maxDurationMs(),wag.cooldownMs()));
+            if(!seen.contains(Trait.SNIFFER) && !seen.contains(Trait.BALL_CHASER) && !seen.contains(Trait.BALL_RETURNER)) {
+                var sniff=actions.get(Action.SNIFF);actions.put(Action.SNIFF,new Motion(0,sniff.speedTilesPerSecond(),sniff.minDurationMs(),sniff.maxDurationMs(),sniff.cooldownMs()));
+            }
+        }
+        boolean cautious=seen.contains(Trait.CAUTIOUS)||warning,friendly=seen.contains(Trait.FRIENDLY);
         // A cautious record takes precedence over a friendly approach suggestion; the shelter reviews both quotes.
         var settings=new Settings(Collections.unmodifiableMap(actions),BigDecimal.valueOf(cautious?3:friendly?4:0),
             BigDecimal.valueOf(cautious?2:friendly?1:0),cautious?1500:1000,new BallPlay(chase,chase&&seen.contains(Trait.BALL_RETURNER),800));

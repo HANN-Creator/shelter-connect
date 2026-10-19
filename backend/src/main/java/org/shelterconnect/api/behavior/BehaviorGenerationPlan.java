@@ -7,13 +7,14 @@ import static org.shelterconnect.api.behavior.BehaviorTypes.*;
 public record BehaviorGenerationPlan(String policyVersion,String basis,Integer behaviorRevision,
         List<String> baseActions,List<String> optionalActions,List<String> selectedActions,
         int directionCount,int expectedProviderRequests,Settings settings,Map<String,Object> interactions) {
-    public static final String POLICY="traits-v2";
+    public static final String POLICY="traits-v3";
     public static final List<String> BASE=List.of("IDLE","WALK","SIT");
     public static BehaviorGenerationPlan from(Settings settings,String basis,Integer revision) {
         var optional=Arrays.stream(Action.values()).filter(a->!BASE.contains(a.name()) && settings.actions().get(a).weight()>0)
             .map(Enum::name).toList();
         var selected=new ArrayList<>(BASE);selected.addAll(optional);
-        return new BehaviorGenerationPlan(POLICY,basis,revision,BASE,optional,List.copyOf(selected),4,
+        String policy=optional.contains("GROWL")||optional.contains("WARNING_BARK")?POLICY:"traits-v2";
+        return new BehaviorGenerationPlan(policy,basis,revision,BASE,optional,List.copyOf(selected),4,
             1+selected.size()*4,settings,BehaviorInteractions.all(settings));
     }
     /** Current behavior must never ask a cached, smaller pack for a missing clip. */

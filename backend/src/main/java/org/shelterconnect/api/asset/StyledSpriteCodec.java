@@ -35,7 +35,7 @@ public class StyledSpriteCodec {
     public static final String SEED_IDLE_VERSION="approved-seed-idle-v1";
     public static final String MIRROR_VERSION="symmetric-approved-motion-v1";
     static final List<String> DIRECTIONS=List.of("south","north","west","east");
-    static final List<String> ACTIONS=List.of("IDLE","WALK","RUN","SNIFF","TAIL_WAG","BACK_OFF","SIT","LIE_DOWN");
+    static final List<String> ACTIONS=List.of("IDLE","WALK","RUN","SNIFF","TAIL_WAG","BACK_OFF","SIT","LIE_DOWN","GROWL","WARNING_BARK");
     private final JsonMapper json;
     private final String python;
     public StyledSpriteCodec(JsonMapper json,@Value("${app.assets.harness-python:python3}") String python) { this.json=json;this.python=python; }
@@ -231,5 +231,11 @@ public class StyledSpriteCodec {
         }catch(IOException e){throw new IllegalStateException(e);}
     }
     static JsonNode qualityRules(JsonMapper json) {return json.readTree(qualityRulesBytes());}
+    static String actionMotion(JsonMapper json,String action,String direction) {
+        if(!ACTIONS.contains(action) || !DIRECTIONS.contains(direction))throw AssetException.invalid();
+        return Set.of("GROWL","WARNING_BARK").contains(action)?
+            rules(json).path("actions").path(action).path(direction.equals("north")?"qualityRearMotion":"qualityMotion").asText():
+            qualityRules(json).path("actions").path(action).asText();
+    }
     static String qualityRulesSha() {return sha(qualityRulesBytes());}
 }

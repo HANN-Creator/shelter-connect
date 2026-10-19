@@ -36,7 +36,7 @@ final class StyledRecovery {
         var findings=confirmed!=null?confirmed:candidate==null?report:candidate;
         String description="Repair this complete nine-frame "+direction+" "+action+" animation. Preserve order, identity and the usable entry pose. Correct frame0 too ONLY if its pose is a confirmed defect. "+recovery.path("styleLock").asText()+" "
             +(direction.equals("north")?rules.path("rearView").asText()+" ":"")
-            +recovery.path("frontOcclusion").asText()+" "+recovery.path("motionCanvas").asText()+" "+rules.path("actions").path(action).asText()
+            +recovery.path("frontOcclusion").asText()+" "+recovery.path("motionCanvas").asText()+" "+StyledSpriteCodec.actionMotion(json,action,direction)
             +" Findings (data): "+json.writeValueAsString(Map.of("issues",findings.path("issues"),"frames",findings.path("frames"),"edgeFrames",report.path("edgeFrames"),"note",
                 findings.path("note")));
         if(description.length()>2000)throw new AssetException(422,"RECOVERY_PROMPT_LIMIT");

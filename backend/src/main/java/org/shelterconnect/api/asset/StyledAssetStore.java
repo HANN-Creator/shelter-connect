@@ -55,7 +55,7 @@ public class StyledAssetStore {
             .param("p",photo).param("v",StyledSpriteCodec.VERSION).param("s",oldSelection).query(UUID.class).optional();
         if(old.isPresent())return job(old.get());
         var selected=behaviors.assetSelection(dog);
-        canonical.put("behaviorPolicy",BehaviorGenerationPlan.POLICY);canonical.put("behaviorRevision",selected.revision());
+        canonical.put("behaviorPolicy",selected.generationPlan().policyVersion());canonical.put("behaviorRevision",selected.revision());
         canonical.put("actions",selected.actions());
         String selection=StyledSpriteCodec.sha(json.writeValueAsBytes(canonical));
         var existing=jdbc.sql("SELECT id FROM shelter.asset_jobs WHERE photo_id=:p AND pipeline_version=:v AND selection_key=:s")
@@ -268,7 +268,7 @@ public class StyledAssetStore {
         String expected=AssetInput.text(body,"expectedRulesSha256",64);var seeds=body.path("expectedSeedHashes");var sheets=body.path("expectedSheetHashes");
         if(note.length()<20 || !expected.matches("[a-f0-9]{64}") || !seeds.isObject() || seeds.size()!=4
             || StyledSpriteCodec.DIRECTIONS.stream().anyMatch(d->!seeds.path(d).asText().matches("[a-f0-9]{64}"))
-            || !sheets.isObject() || sheets.isEmpty() || sheets.size()>32
+            || !sheets.isObject() || sheets.isEmpty() || sheets.size()>StyledSpriteCodec.ACTIONS.size()*StyledSpriteCodec.DIRECTIONS.size()
             || sheets.valueStream().anyMatch(n->!n.asText().matches("[a-f0-9]{64}")))throw AssetException.invalid();
         lock(id);var j=job(id);if(!j.dogId().equals(dog))throw missing();legacy.valid(id,true);var policy=j.qualityPolicy();
         if(policy==null)throw new AssetException(409,"MOTION_REPAIR_RESUME_NOT_ALLOWED");
@@ -325,7 +325,7 @@ public class StyledAssetStore {
         var seeds=body.path("expectedSeedHashes");var sheets=body.path("expectedSheetHashes");var reviews=body.path("expectedReviewHashes");
         if(note.length()<20 || !rules.matches("[a-f0-9]{64}") || !seeds.isObject() || seeds.size()!=4
             || StyledSpriteCodec.DIRECTIONS.stream().anyMatch(d->!seeds.path(d).asText().matches("[a-f0-9]{64}"))
-            || !sheets.isObject() || sheets.isEmpty() || sheets.size()>32 || !reviews.isObject() || !reviews.propertyNames().equals(sheets.propertyNames())
+            || !sheets.isObject() || sheets.isEmpty() || sheets.size()>StyledSpriteCodec.ACTIONS.size()*StyledSpriteCodec.DIRECTIONS.size() || !reviews.isObject() || !reviews.propertyNames().equals(sheets.propertyNames())
             || sheets.valueStream().anyMatch(v->!v.asText().matches("[a-f0-9]{64}")) || reviews.valueStream().anyMatch(v->!v.asText().matches("[a-f0-9]{64}")))throw AssetException.invalid();
         lock(id);var j=job(id);if(!j.dogId().equals(dog))throw missing();legacy.valid(id,true);
         var policy=j.qualityPolicy();if(policy==null)throw new AssetException(409,"MOTION_CANDIDATE_NOT_ALLOWED");
@@ -565,7 +565,7 @@ public class StyledAssetStore {
         var seeds=body.path("expectedSeedHashes");var sheets=body.path("expectedSheetHashes");
         if(note.length()<20 || !rules.matches("[a-f0-9]{64}") || !digest.matches("[a-f0-9]{64}") || !seeds.isObject() || seeds.size()!=4
             || StyledSpriteCodec.DIRECTIONS.stream().anyMatch(d->!seeds.path(d).asText().matches("[a-f0-9]{64}"))
-            || !sheets.isObject() || sheets.size()>32 || sheets.valueStream().anyMatch(s->!s.asText().matches("[a-f0-9]{64}")))throw AssetException.invalid();
+            || !sheets.isObject() || sheets.size()>StyledSpriteCodec.ACTIONS.size()*StyledSpriteCodec.DIRECTIONS.size() || sheets.valueStream().anyMatch(s->!s.asText().matches("[a-f0-9]{64}")))throw AssetException.invalid();
         lock(id);var j=job(id);if(!j.dogId().equals(dog))throw missing();legacy.valid(id,true);var policy=j.qualityPolicy();
         var grants=json.createArrayNode();if(policy!=null && policy.path("qualityTimeoutResumes").isArray())grants.addAll((tools.jackson.databind.node.ArrayNode)policy.path("qualityTimeoutResumes"));
         var canonical=(tools.jackson.databind.node.ObjectNode)body.deepCopy();canonical.put("requestId",request.toString());
@@ -710,7 +710,7 @@ public class StyledAssetStore {
         AssetInput.fields(body,"requestId","note","expectedSeedHashes","expectedSheetHashes");
         UUID requestId=AssetInput.id(body,"requestId");String note=AssetInput.text(body,"note",2000);
         var expected=body.path("expectedSheetHashes");
-        if(note.length()<20 || !expected.isObject() || expected.isEmpty() || expected.size()>32
+        if(note.length()<20 || !expected.isObject() || expected.isEmpty() || expected.size()>StyledSpriteCodec.ACTIONS.size()*StyledSpriteCodec.DIRECTIONS.size()
             || expected.properties().stream().anyMatch(e->!e.getValue().isTextual() || !e.getValue().asText().matches("[a-f0-9]{64}")))throw AssetException.invalid();
         var canonical=new TreeMap<String,Object>();canonical.put("note",note);
         for(String field:List.of("expectedSeedHashes","expectedSheetHashes")) {

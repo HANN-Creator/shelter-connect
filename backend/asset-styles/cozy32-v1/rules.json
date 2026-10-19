@@ -61,6 +61,24 @@
       "motion": "Bend the legs, tuck front paws close under the chest, and lower chest and belly into a compact natural resting pose. Tail stays close to rump. End lying down and hold; do not stand again.",
       "durationMs": 150,
       "loop": false
+    },
+    "GROWL": {
+      "motion": "Growl in place with planted paws, a small forward chest lean and a tiny tense jaw opening, then close. Keep the same cute face and eyes; no grin, bite, lunge or travel.",
+      "qualityMotion": "Growl IN PLACE: planted paws, small forward chest lean, tense jaw opens slightly then shuts. No grin, bite or lunge.",
+      "durationMs": 140,
+      "loop": true,
+      "displayName": "으르렁거리기",
+      "message": "으르렁거리는 중",
+      "qualityRearMotion": "Growl IN PLACE, REAR: planted paws, tense shoulders lean forward slightly. Face stays hidden; no turn, bite or lunge."
+    },
+    "WARNING_BARK": {
+      "motion": "Give two short warning barks in place: open and close the mouth with a brief head and chest bob. Paws planted; same cute eyes and face, no smile, bite, jump or travel.",
+      "qualityMotion": "Two warning barks IN PLACE: open/shut mouth, short head/chest bobs; planted paws. No grin, bite or jump.",
+      "durationMs": 110,
+      "loop": true,
+      "displayName": "경고 짖기",
+      "message": "경고하며 짖는 중",
+      "qualityRearMotion": "Two warning barks IN PLACE, REAR: short head/shoulder bobs, planted paws. Face stays hidden; no turn, bite or jump."
     }
   },
   "invariants": [
@@ -73,5 +91,6 @@
     "Repeated/uncertain paid requests are never submitted automatically.",
     "Photo appearance must not be treated as verified temperament.",
     "Assets remain local review outputs; production publication is a separate approval."
-  ]
+  ],
+  "warningActionsVersion": "warning-actions-v1"
 }
