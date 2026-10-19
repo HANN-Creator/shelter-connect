@@ -66,24 +66,25 @@ class Migration:
 
     def apply(self,database):
         env=dict(self.env,MIGRATION_URL='jdbc:postgresql://127.0.0.1:5432/'+database,
-                 MIGRATION_USER=self.secret['username'],MIGRATION_PASSWORD=self.secret['password'],MIGRATION_SQL=str(self.sql))
+                 MIGRATION_USER=self.secret['username'],MIGRATION_PASSWORD=self.secret['password'],MIGRATION_SQL=str(self.sql),MIGRATION_SCHEMA_OWNER='shelter_migration_owner')
         run([self.java,'-Xms32m','-Xmx192m','-XX:ActiveProcessorCount=2','-cp',self.cp,'Migrate','migrate'],env)
 
     def rehearse(self):
         shadow='shelter_migration_check_'+uuid.uuid4().hex
         dump=self.work/'rehearsal.dump'
-        run([PG/'pg_dump.exe','-h','127.0.0.1','-U',self.secret['username'],'-d',self.db,'-w','-Fc','--schema=shelter','--no-owner','-f',dump],self.env)
+        run([PG/'pg_dump.exe','-h','127.0.0.1','-U',self.secret['username'],'-d',self.db,'-w','-Fc','--role=shelter_migration_owner','--schema=shelter','--no-owner','-f',dump],self.env)
         self.pg('CREATE DATABASE '+shadow+' TEMPLATE template0')
         self.pg('REVOKE CONNECT ON DATABASE '+shadow+' FROM PUBLIC')
+        self.pg('GRANT CREATE ON DATABASE '+shadow+' TO shelter_migration_owner')
         # Original owners' default ACLs cannot be installed by a non-superuser.
         # Preserve per-object ACLs; recreate only this deploy owner's defaults.
         listing=run([PG/'pg_restore.exe','--list',dump],self.env).decode('utf-8')
         restore_list=self.work/'restore.list'
         restore_list.write_text('\n'.join(line for line in listing.splitlines() if ' DEFAULT ACL ' not in line)+'\n',encoding='utf-8')
         try:
-            run([PG/'pg_restore.exe','-h','127.0.0.1','-U',self.secret['username'],'-d',shadow,'-w','--no-owner','--single-transaction','--exit-on-error','--use-list',restore_list,dump],self.env)
-            self.pg('ALTER DEFAULT PRIVILEGES IN SCHEMA shelter GRANT SELECT ON TABLES TO shelter_backup',shadow)
-            self.pg('ALTER DEFAULT PRIVILEGES IN SCHEMA shelter GRANT SELECT ON SEQUENCES TO shelter_backup',shadow)
+            run([PG/'pg_restore.exe','-h','127.0.0.1','-U',self.secret['username'],'-d',shadow,'-w','--role=shelter_migration_owner','--no-owner','--single-transaction','--exit-on-error','--use-list',restore_list,dump],self.env)
+            self.pg('SET ROLE shelter_migration_owner; ALTER DEFAULT PRIVILEGES IN SCHEMA shelter GRANT SELECT ON TABLES TO shelter_backup',shadow)
+            self.pg('SET ROLE shelter_migration_owner; ALTER DEFAULT PRIVILEGES IN SCHEMA shelter GRANT SELECT ON SEQUENCES TO shelter_backup',shadow)
             self.apply(shadow)
             self.check_app(shadow)
             bad=self.pg("SELECT count(*) FROM pg_constraint WHERE connamespace='shelter'::regnamespace AND contype='f' AND NOT convalidated",shadow).strip()
@@ -129,5 +130,5 @@ class Migration:
     def production(self):
         # Backend/tunnel are stopped by caller. Preserve the exact final app data
         # immediately before the transaction, including writes since encrypted backup.
-        run([PG/'pg_dump.exe','-h','127.0.0.1','-U',self.secret['username'],'-d',self.db,'-w','-Fc','--schema=shelter','--no-owner','-f',self.work/'frozen-before-migration.dump'],self.env)
+        run([PG/'pg_dump.exe','-h','127.0.0.1','-U',self.secret['username'],'-d',self.db,'-w','-Fc','--role=shelter_migration_owner','--schema=shelter','--no-owner','-f',self.work/'frozen-before-migration.dump'],self.env)
         self.apply(self.db)

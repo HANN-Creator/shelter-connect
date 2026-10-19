@@ -24,7 +24,7 @@ On a tested `main` release with new `V<number>__description.sql` files:
 The installer uses the local postgres administrator password once to create a
 separate schema-owner role. It does not retain that administrator password. The new
 role is NOSUPERUSER/NOCREATEROLE/NOREPLICATION/NOBYPASSRLS, with CREATEDB solely for
-temporary rehearsals. It owns existing shelter objects; the normal runtime role
+temporary rehearsals. It can SET ROLE to the existing NOLOGIN shelter_migration_owner; existing ownership and SECURITY DEFINER execution identity stay unchanged. The normal runtime role
 receives no DDL privileges. Future objects default to SELECT grants for the existing
 complete-backup account. New migration authors must explicitly grant appropriate
 runtime access and RLS policies, following the existing migrations.

@@ -41,26 +41,18 @@ def main():
             new_password=secrets.token_hex(32)
             # Administrative password is used for bootstrap only, never stored.
             sql="""BEGIN;
-CREATE ROLE shelter_migrator LOGIN NOSUPERUSER CREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS PASSWORD '%s';
-GRANT CONNECT, CREATE ON DATABASE %s TO shelter_migrator;
-GRANT USAGE, CREATE ON SCHEMA shelter TO shelter_migrator;
-DO $$ DECLARE r record; kind text; BEGIN
- FOR r IN SELECT c.oid,c.relkind FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='shelter' AND c.relkind IN ('r','p','v','m','S') ORDER BY CASE WHEN c.relkind='S' THEN 1 ELSE 0 END LOOP
-  kind:=CASE r.relkind WHEN 'v' THEN 'VIEW' WHEN 'm' THEN 'MATERIALIZED VIEW' WHEN 'S' THEN 'SEQUENCE' ELSE 'TABLE' END;
-  EXECUTE format('ALTER %%s %%s OWNER TO shelter_migrator',kind,r.oid::regclass);
- END LOOP;
- FOR r IN SELECT p.oid,p.prokind FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='shelter' LOOP
-  EXECUTE format('ALTER %%s %%s OWNER TO shelter_migrator',CASE r.prokind WHEN 'p' THEN 'PROCEDURE' ELSE 'FUNCTION' END,r.oid::regprocedure);
- END LOOP;
- FOR r IN SELECT t.oid,t.typtype FROM pg_type t JOIN pg_namespace n ON n.oid=t.typnamespace WHERE n.nspname='shelter' AND t.typtype IN ('e','d') LOOP
-  EXECUTE format('ALTER %%s %%s OWNER TO shelter_migrator',CASE r.typtype WHEN 'd' THEN 'DOMAIN' ELSE 'TYPE' END,r.oid::regtype);
- END LOOP;
+DO $$ BEGIN
+ IF (SELECT pg_get_userbyid(nspowner) FROM pg_namespace WHERE nspname='shelter') <> 'shelter_migration_owner'
+ OR NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='shelter_migration_owner' AND NOT rolcanlogin AND NOT rolsuper AND NOT rolcreatedb AND NOT rolcreaterole AND NOT rolbypassrls AND NOT rolreplication)
+ THEN RAISE EXCEPTION 'Unexpected existing schema owner'; END IF;
 END $$;
-ALTER SCHEMA shelter OWNER TO shelter_migrator;
-REVOKE CREATE ON DATABASE %s FROM shelter_migrator;
-ALTER DEFAULT PRIVILEGES FOR ROLE shelter_migrator IN SCHEMA shelter GRANT SELECT ON TABLES TO shelter_backup;
-ALTER DEFAULT PRIVILEGES FOR ROLE shelter_migrator IN SCHEMA shelter GRANT SELECT ON SEQUENCES TO shelter_backup;
-COMMIT;""" % (new_password,db,db)
+CREATE ROLE shelter_migrator LOGIN NOSUPERUSER CREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS PASSWORD '%s';
+GRANT CONNECT ON DATABASE %s TO shelter_migrator;
+GRANT shelter_migration_owner TO shelter_migrator WITH INHERIT FALSE, SET TRUE;
+SET LOCAL ROLE shelter_migration_owner;
+ALTER DEFAULT PRIVILEGES IN SCHEMA shelter GRANT SELECT ON TABLES TO shelter_backup;
+ALTER DEFAULT PRIVILEGES IN SCHEMA shelter GRANT SELECT ON SEQUENCES TO shelter_backup;
+COMMIT;""" % (new_password,db)
             # stdin instead of command arguments: no passwords in process command lines.
             p=subprocess.run([str(PG/'psql.exe'),'-X','-h','127.0.0.1','-U','postgres','-d',db,'-w','-v','ON_ERROR_STOP=1'],input=sql.encode(),env=env,capture_output=True,timeout=120)
             password=None;env.pop('PGPASSWORD',None)
