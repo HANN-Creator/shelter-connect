@@ -68,6 +68,8 @@ jobs:
         run: python3 -m unittest discover -s scripts/mini_pc -p 'test_*.py'
       - name: Test and build against PostgreSQL
         run: ./gradlew --no-daemon clean build integrationTest
+      - name: Verify grouped migration rollback against isolated PostgreSQL
+        run: python3 scripts/mini_pc/check_migration_transaction.py
       - name: Check sample loading and package separation
         env:
           DB_URL: jdbc:postgresql://127.0.0.1:5432/shelter_test
