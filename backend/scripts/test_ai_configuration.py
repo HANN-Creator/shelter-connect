@@ -39,11 +39,12 @@ class AiConfigurationTest(unittest.TestCase):
             self.assertNotIn('private-value', str(error.exception))
 
     def test_documented_behavior_limit_is_accepted_and_bounded(self):
-        self.assertEqual('20', self.load('OPENAI_API_KEY=sk-fake')['BEHAVIOR_AI_DAILY_LIMIT'])
+        self.assertEqual('0', self.load('OPENAI_API_KEY=sk-fake')['BEHAVIOR_AI_DAILY_LIMIT'])
+        self.assertEqual('0', self.load('OPENAI_API_KEY=sk-fake\nBEHAVIOR_AI_DAILY_LIMIT=0')['BEHAVIOR_AI_DAILY_LIMIT'])
         ai = self.load('OPENAI_API_KEY=sk-fake\nBEHAVIOR_AI_DAILY_LIMIT=7')
         env, _ = launch_settings({}, {'BEHAVIOR_AI_DAILY_LIMIT': '99'}, ai=ai)
         self.assertEqual('7', env['BEHAVIOR_AI_DAILY_LIMIT'])
-        for value in ['0', '101', '-1', 'abc']:
+        for value in ['101', '-1', 'abc']:
             with self.assertRaises(ConfigurationError):
                 self.load('OPENAI_API_KEY=sk-fake\nBEHAVIOR_AI_DAILY_LIMIT=' + value)
 
