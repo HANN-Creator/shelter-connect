@@ -57,3 +57,11 @@ Flyway V25는 `asset_steps`, `styled_asset_steps`, 품질 관찰/학습 scope에
 - JAR의 새 행동 카탈로그·V25·샘플 데이터 제외 확인. 기존 8종 행동 지시·스타일 해시·품질 규칙 v43의 파일 해시(`eddc439488293d4286a5bbd56638398154c6df2c13b26711940872afda7093c3`)는 변경 전과 동일하다.
 - 미리보기 JavaScript 문법 및 신규 API 스키마 참조 확인. 문서에 원래 있던 `PhotoRegistrationResponse`의 미정의 `AssetJob` 참조는 이번 행동 추가와 무관한 기존 항목으로 남아 있다.
 - 실제 PixelLab/Luna 호출, RN 앱 연결, 미니 PC/Render 배포, 운영 DB 마이그레이션은 수행하지 않았다. 기존 50마리 배치는 재개하지 않았다.
+
+### 2026-10-19 미니 PC 코드 통합
+
+- Windows 실행·비공개 파일 저장·자동 배포·트랜잭션 마이그레이션이 포함된 main `e4e150c`를 통합했다. 충돌은 작업 기록 문서 한 곳이며 B-102와 WIN 기록을 모두 보존했다.
+- 패키지 HTTP 검사가 여전히 8종 행동만 기대해 실패한 원인을 수정했다. 10종 키를 정확히 검사하고, 기본 개체의 GROWL/WARNING_BARK 가중치·이동 속도 0 및 PERSON_WARNING 비활성·IDLE 대체를 확인한다.
+- 미니 PC의 DB 롤백 검사도 테스트용 V25와 실제 신규 V25가 겹쳤다. 패키지의 마지막 버전 다음 번호로 시험 마이그레이션을 만들며, 의도한 실패 단계 도달·DDL/이력 롤백·정상 적용·재실행을 확인한다. 운영 마이그레이션 및 대상 제한은 변경하지 않았다.
+- 통합 코드로 `bootJar loadSampleData` 성공, 실제 JAR readiness UP, 공개 조회 HTTP 검사 및 미인증 30개 경계 검사 통과. 폐기 가능한 로컬 PostgreSQL에서 DB 트랜잭션 검사도 통과했다.
+- Python 스크립트 117건, 미니 PC 배포 검사 37건 통과. 전체 Java/PostgreSQL 및 Docker 검증 결과는 갱신된 PR의 GitHub CI에 기록한다. 병합·실제 배포·유료 생성·50마리 배치 재개는 수행하지 않았다.

@@ -9,7 +9,8 @@ class DatabaseTargetPolicyTest {
     private final String prefix="jdbc:postgresql://aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres?";
     private final String user="shelter_runtime.abcdefghijklmnopqrst";
     @Test void acceptsValidatedTlsAndDisposableLocalDatabase() {
-        assertThatCode(()->DatabaseTargetPolicy.validate(prefix+"sslmode=verify-full&sslrootcert=/app/certs/supabase.crt",user)).doesNotThrowAnyException();
+        String cert=java.net.URLEncoder.encode(java.nio.file.Path.of("supabase.crt").toAbsolutePath().toString(),java.nio.charset.StandardCharsets.UTF_8);
+        assertThatCode(()->DatabaseTargetPolicy.validate(prefix+"sslmode=verify-full&sslrootcert="+cert,user)).doesNotThrowAnyException();
         assertThatCode(()->DatabaseTargetPolicy.validate("jdbc:postgresql://127.0.0.1:5432/shelter_test","shelter_ci")).doesNotThrowAnyException();
     }
     @ParameterizedTest @ValueSource(strings={

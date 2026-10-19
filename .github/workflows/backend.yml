@@ -5,13 +5,10 @@ on:
     paths:
       - 'backend/**'
       - '.github/workflows/backend.yml'
+      - '.github/workflows/mini-pc-release.yml'
       - 'render.yaml'
   push:
     branches: [main]
-    paths:
-      - 'backend/**'
-      - '.github/workflows/backend.yml'
-      - 'render.yaml'
 
 permissions:
   contents: read
@@ -67,8 +64,12 @@ jobs:
           node --check scripts/browser-flow/app.js
       - name: Test motion renderer
         run: /tmp/shelter-motion-venv/bin/python -m unittest discover -s motion-tests -p 'test_*.py'
+      - name: Test mini PC release verification
+        run: python3 -m unittest discover -s scripts/mini_pc -p 'test_*.py'
       - name: Test and build against PostgreSQL
         run: ./gradlew --no-daemon clean build integrationTest
+      - name: Verify grouped migration rollback against isolated PostgreSQL
+        run: python3 scripts/mini_pc/check_migration_transaction.py
       - name: Check sample loading and package separation
         env:
           DB_URL: jdbc:postgresql://127.0.0.1:5432/shelter_test

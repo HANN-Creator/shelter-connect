@@ -15,6 +15,7 @@ import tools.jackson.databind.json.JsonMapper;
 import static org.shelterconnect.api.photo.PhotoTypes.*;
 
 @Component
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name="app.storage.backend",havingValue="supabase",matchIfMissing=true)
 public class SupabasePhotoStorage implements PhotoStorage {
 	private final PhotoStorageProperties properties;
 	private final JsonMapper json;

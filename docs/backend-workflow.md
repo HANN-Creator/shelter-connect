@@ -257,3 +257,12 @@ B-100 배포 뒤 같은 10마리 배치에서 남은 1068자 초과 실패를 [�
 ## B-102 사나움·경고 짖기 행동
 
 [범위·계약·이전 경계](warning-behavior-actions.md). AGGRESSIVE/GROWL, WARNING_BARKER/WARNING_BARK를 원문 근거에 따라 따로 선택한다. 기존 8종 설정 호환, 가까운 사람에 대한 제자리 경고 반응, 말풍선, 4방향 생성과 V25 제약 확장. 기존 v43 품질 규칙·이미지·작업 보존. 사용자 미니 PC 이전 준비로 배포와 유료 생성은 대기하며 노션 도구 미제공으로 카드 미동기화.
+## Windows 미니 PC 이전
+
+- WIN-01: Windows 파일 잠금·UTF-8 저널·절대 인증서 경로 테스트. 명세: [Windows 실행 호환](windows-runtime.md). 별도 회귀 검사와 CI 결과를 PR에 기록한다. 노션 외부 카드는 도구 미제공으로 미동기화.
+
+- WIN-02: 기존 권한 검사를 유지한 로컬 비공개 사진·에셋·게시글 이미지 저장. 명세: [Windows private file storage](../backend/docs/local-storage.md). DB migration 변경 없음. 운영 전환과 별도로 구현·검증을 기록하며 노션 외부 카드는 미동기화.
+
+- WIN-03: GitHub main CI 성공 커밋의 아티팩트 배포, 로컬 보호 인증·백업·실패 복구. 명세: [미니PC 자동 배포](mini-pc-deployment.md). WIN-01/02 선행 병합 필요. 실제 활성화는 CI/dry run/운영 배포 검증 후 기록한다. 노션 외부 카드는 미동기화.
+
+- WIN-04: 첫 자동 배포 사전 검사에서 발견한 requirements CRLF/LF 오차단을 수정한다. 정확한 pin 및 설치 버전 검증은 유지하며 회귀 15개 통과. 명세: [미니PC 배포](mini-pc-deployment.md). 노션 도구 미제공으로 외부 카드 미동기화.

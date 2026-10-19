@@ -1,6 +1,6 @@
 """Bounded HTTPS and durable paid-job journal. No implicit generation retries."""
 import base64
-import fcntl
+from contextlib import contextmanager
 import hashlib
 import io
 import json
@@ -18,19 +18,52 @@ from PIL import Image
 API = 'https://api.pixellab.ai/v2/'
 
 
+@contextmanager
+def job_lock(path):
+    """Keep paid-job journals exclusive across processes on Windows and Unix."""
+    with Path(path).open('a+b') as lock:
+        if os.name == 'nt':
+            import msvcrt
+            if lock.seek(0, os.SEEK_END) == 0:
+                lock.write(b'\0')
+                lock.flush()
+            while True:
+                lock.seek(0)
+                try:
+                    msvcrt.locking(lock.fileno(), msvcrt.LK_NBLCK, 1)
+                    break
+                except OSError as error:
+                    import errno
+                    if error.errno not in (errno.EACCES, errno.EAGAIN, errno.EDEADLK):
+                        raise
+                    time.sleep(0.1)
+            try:
+                yield
+            finally:
+                lock.seek(0)
+                msvcrt.locking(lock.fileno(), msvcrt.LK_UNLCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                fcntl.flock(lock, fcntl.LOCK_UN)
+
+
 def digest(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
 def read(path):
-    return json.loads(Path(path).read_text())
+    return json.loads(Path(path).read_text(encoding='utf-8'))
 
 
 def write(path, value):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     temp = path.with_suffix(path.suffix + '.tmp')
-    with temp.open('w') as file:
+    with temp.open('w', encoding='utf-8', newline='\n') as file:
         json.dump(value, file, ensure_ascii=False, indent=2)
         file.flush()
         os.fsync(file.fileno())
@@ -109,8 +142,7 @@ class Client:
     def generate(self, label, endpoint, body):
         if not re.fullmatch(r'[a-z0-9_-]+', label):
             raise ValueError('Invalid job label')
-        with (self.raw / (label + '.lock')).open('a') as lock:
-            fcntl.flock(lock, fcntl.LOCK_EX)
+        with job_lock(self.raw / (label + '.lock')):
             return self._generate(label, endpoint, body)
 
     def _generate(self, label, endpoint, body):
