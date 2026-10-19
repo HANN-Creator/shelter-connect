@@ -4,6 +4,7 @@ from importlib.metadata import version as installed_version
 from datetime import datetime
 from pathlib import Path
 from backup_security import current_sid,read_json
+from auto_migrate import plan as migration_plan,Migration
 from release_bundle import REPOSITORY,unpack,migrations,require_tested_run,require_dependencies
 
 HOME=Path(r'C:\ProgramData\ShelterConnectDeploy')
@@ -114,25 +115,34 @@ def main(check_only=False):
         if manifest['commit']!=head or manifest['release_run_id']!=run['id']:raise RuntimeError('Artifact release run or commit mismatch.')
         test=api(config,'/actions/runs/'+str(int(manifest['test_run_id'])));require_tested_run(test,manifest)
         current=APP_ROOT/'app'
-        if migrations(current/'shelter-connect-api.jar')!=manifest['migrations']:raise RuntimeError('DB migrations changed. Automatic deployment blocked; apply a separately reviewed DB migration first.')
+        pending=migration_plan(migrations(current/'shelter-connect-api.jar'),manifest['migrations'],candidate/'app/shelter-connect-api.jar')
         requirements=current/'motion-requirements.txt'
         if not requirements.exists():requirements=Path(config['workspace'])/'shelter-connect/backend/motion-requirements.txt'
         require_dependencies(requirements.read_text(encoding='utf-8-sig'),(candidate/'app/motion-requirements.txt').read_text(encoding='utf-8-sig'),installed_version)
         state.update(phase='release_verified',commit=head,release=str(release));save()
-        if check_only:print('DEPLOY_CHECK_OK: trusted tested commit, checksums, storage capability and unchanged migrations/dependencies; no service switch.');return
+        if check_only:print('DEPLOY_CHECK_OK: trusted tested commit, checksums, storage capability and append-only migration plan and unchanged dependencies; no service switch.');return
         command([config['python'],Path(config['workspace'])/'outputs/production_backup.py'],1800)
         # Backup worker owns the same byte lock. Acquire only AFTER it completes.
         operation=(BACKUP_HOME/'operation.lock').open('r+b');operation.seek(0)
         try:msvcrt.locking(operation.fileno(),msvcrt.LK_NBLCK,1)
         except OSError:raise RuntimeError('Another backup/deployment is active; no services stopped.') from None
-        moved=False;stopped=False
+        moved=False;stopped=False;production_migration_attempted=False
         try:
             if api(config,'/commits/main')['sha']!=head:raise RuntimeError('Main advanced during preparation; production unchanged.')
             # Candidate must be readable/executable by the existing LocalService runtime.
             command(['icacls.exe',candidate/'app','/grant','*S-1-5-19:(OI)(CI)RX','/T','/Q'])
+            migration=None
+            if pending:
+                state.update(phase='migration_rehearsal');save()
+                migration=Migration(candidate/'app/shelter-connect-api.jar',release)
+                migration.rehearse()
             state.update(phase='switching',failed_commit=head);save()
             stopped=True
             service('Stop','ShelterConnectTunnel');service('Stop','ShelterConnectPreviewBackend')
+            if migration:
+                state.update(phase='migrating',pending_migrations=pending);save()
+                production_migration_attempted=True
+                migration.production()
             current.replace(release/'previous-app');moved=True
             (candidate/'app').replace(current)
             service('Start','ShelterConnectPreviewBackend');health('http://127.0.0.1:8083/actuator/health/readiness')
@@ -142,7 +152,13 @@ def main(check_only=False):
             state.pop('failed_commit',None);save()
             print('AUTO_DEPLOY_OK: tested main deployed; backup, readiness and signed photo downloads verified.')
         except Exception:
-            if stopped:
+            if production_migration_attempted:
+                # No automatic restore of an old DB or old code after schema changes.
+                for name in ('ShelterConnectTunnel','ShelterConnectPreviewBackend'):
+                    try:service('Stop',name)
+                    except Exception:pass
+                state.update(phase='migration_recovery_required',failed_commit=head);save()
+            elif stopped:
                 for name in ('ShelterConnectTunnel','ShelterConnectPreviewBackend'):
                     try:service('Stop',name)
                     except Exception:pass
@@ -155,7 +171,7 @@ def main(check_only=False):
         finally:
             operation.seek(0);msvcrt.locking(operation.fileno(),msvcrt.LK_UNLCK,1);operation.close()
     except Exception as error:
-        if state.get('phase')!='rolled_back':
+        if state.get('phase') not in ('rolled_back','migration_recovery_required'):
             state.update(phase='blocked',error=str(error) if isinstance(error,(RuntimeError,ValueError)) else type(error).__name__)
             if state.get('commit'):state['failed_commit']=state['commit']
             save()
