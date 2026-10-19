@@ -11,6 +11,25 @@ REQUIRED_CLASSES={'BOOT-INF/classes/org/shelterconnect/api/storage/LocalObjectSt
 
 def sha(data):return hashlib.sha256(data).hexdigest()
 
+def requirement_pins(text):
+    result={}
+    for raw in text.splitlines():
+        line=raw.split('#',1)[0].strip()
+        if not line:continue
+        match=re.fullmatch(r'([A-Za-z0-9][A-Za-z0-9_.-]*)\s*==\s*([A-Za-z0-9][A-Za-z0-9.+!-]*)',line)
+        if not match:raise ValueError('Deployment requirements must contain exact package pins only.')
+        name=re.sub(r'[-_.]+','-',match[1]).lower()
+        if name in result:raise ValueError('Duplicate dependency pin refused.')
+        result[name]=match[2]
+    if not result:raise ValueError('Dependency pins missing.')
+    return result
+
+def require_dependencies(current,candidate,installed_version):
+    expected=requirement_pins(candidate)
+    if requirement_pins(current)!=expected:raise ValueError('Python dependency pins changed; install and verify separately before deployment.')
+    for name,version in expected.items():
+        if installed_version(name)!=version:raise ValueError('Installed Python dependency does not match the release pin: '+name)
+
 def migrations(jar):
     with zipfile.ZipFile(jar) as z:
         if not REQUIRED_CLASSES.issubset(z.namelist()):raise ValueError('Local storage capability missing from JAR.')

@@ -21,7 +21,7 @@ class DeploymentFlowTests(unittest.TestCase):
         patches={'HOME':self.home,'APP_ROOT':self.app_root,'BACKUP_HOME':self.backup,
           'read_json':lambda p:{'owner_sid':'test','enabled':True,'workspace':str(self.root),'python':sys.executable},
           'current_sid':lambda:'test','api':self.api,'download':self.download,'unpack':self.unpack,
-          'migrations':lambda p:{'V1':'unchanged'},'command':self.command,'service':self.service,'health':lambda u:None,'available_memory':lambda:2*1024**3}
+          'migrations':lambda p:{'V1':'unchanged'},'command':self.command,'service':self.service,'health':lambda u:None,'available_memory':lambda:2*1024**3,'installed_version':lambda name:'12.3.0'}
         for name,value in patches.items():self.stack.enter_context(patch.object(d,name,value))
         if os.name!='nt':
             from types import SimpleNamespace
