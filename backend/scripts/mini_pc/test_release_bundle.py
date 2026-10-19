@@ -3,6 +3,17 @@ from pathlib import Path
 from release_bundle import *
 
 class ReleaseSafetyTests(unittest.TestCase):
+    def test_line_endings_comments_and_package_case_do_not_change_pins(self):
+        a='# Windows file\r\nPillow==12.3.0\r\nnumpy==2.2.6\r\n'
+        b='numpy==2.2.6\npillow == 12.3.0 # same pin\n'
+        require_dependencies(a,b,{'pillow':'12.3.0','numpy':'2.2.6'}.__getitem__)
+    def test_changed_version_still_blocks_deployment(self):
+        with self.assertRaises(ValueError):require_dependencies('Pillow==12.3.0','Pillow==13.0.0',lambda n:'12.3.0')
+    def test_stale_installed_environment_still_blocks_deployment(self):
+        with self.assertRaises(ValueError):require_dependencies('Pillow==12.3.0','Pillow==12.3.0',lambda n:'12.2.0')
+    def test_unpinned_duplicate_and_installer_options_refused(self):
+        for text in ('Pillow>=12','-r other.txt','Pillow==12\npillow==12','https://example.invalid/package.whl'):
+            with self.subTest(text=text),self.assertRaises(ValueError):requirement_pins(text)
     def test_windows_zip_slip_and_special_files(self):
         for name in ('../escape','/absolute','C:/file','app/../file','app\\file','app/CON.txt','app/file.','app//file'):
             with self.subTest(name=name),self.assertRaises(ValueError):safe_name(name)

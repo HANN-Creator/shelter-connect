@@ -1,9 +1,10 @@
 """Windows scheduled pull deployment. GitHub token never leaves api.github.com."""
 import argparse,hashlib,json,os,subprocess,sys,time,urllib.request,urllib.error,urllib.parse,uuid,zipfile
+from importlib.metadata import version as installed_version
 from datetime import datetime
 from pathlib import Path
 from backup_security import current_sid,read_json
-from release_bundle import REPOSITORY,unpack,migrations,require_tested_run
+from release_bundle import REPOSITORY,unpack,migrations,require_tested_run,require_dependencies
 
 HOME=Path(r'C:\ProgramData\ShelterConnectDeploy')
 APP_ROOT=Path(r'C:\ProgramData\ShelterConnectPreview')
@@ -116,7 +117,7 @@ def main(check_only=False):
         if migrations(current/'shelter-connect-api.jar')!=manifest['migrations']:raise RuntimeError('DB migrations changed. Automatic deployment blocked; apply a separately reviewed DB migration first.')
         requirements=current/'motion-requirements.txt'
         if not requirements.exists():requirements=Path(config['workspace'])/'shelter-connect/backend/motion-requirements.txt'
-        if requirements.read_bytes()!=(candidate/'app/motion-requirements.txt').read_bytes():raise RuntimeError('Python dependencies changed; install and verify separately before enabling this release.')
+        require_dependencies(requirements.read_text(encoding='utf-8-sig'),(candidate/'app/motion-requirements.txt').read_text(encoding='utf-8-sig'),installed_version)
         state.update(phase='release_verified',commit=head,release=str(release));save()
         if check_only:print('DEPLOY_CHECK_OK: trusted tested commit, checksums, storage capability and unchanged migrations/dependencies; no service switch.');return
         command([config['python'],Path(config['workspace'])/'outputs/production_backup.py'],1800)
