@@ -2,6 +2,7 @@ package org.shelterconnect.api;
 
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
 import javax.imageio.ImageIO;
@@ -2795,6 +2796,80 @@ class StyledAssetPostgresTest {
         tick();assertThat(read(id).at("/qualityPolicy/photoPreparation/status").asText()).isEqualTo("READY");
         verify(appearance,never()).analyzeStyled(any());verifyNoInteractions(provider);
         tick();verify(provider).submit(eq(true),any());
+    }
+    Map<String,Object> interruptedPhotoFixture(UUID id)throws Exception {
+        var checkpoint=Map.of("status","STARTED","version","styled-photo-analysis-v1","photoSha256",sha(png),
+            "attempts",1,"model","test-vision","startedAt",Instant.now().toString());
+        jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=quality_policy || jsonb_build_object('photoPreparation',CAST(? AS jsonb)) WHERE id=?",json.writeValueAsString(checkpoint),id);
+        tick();assertThat(read(id).path("failureCode").asText()).isEqualTo("STYLED_PHOTO_ANALYSIS_INTERRUPTED");
+        return new HashMap<>(Map.of("requestId",UUID.randomUUID().toString(),"expectedPhotoSha256",sha(png),
+            "expectedStartedAt",checkpoint.get("startedAt"),"note","Resume the interrupted photo analysis on the same private job"));
+    }
+    @Test void photoResumeKeepsJobEvidenceAndDoesNotChargeOnReplay()throws Exception {
+        UUID id=requestPhotoOnly();var body=interruptedPhotoFixture(id);
+        jdbc.update("UPDATE shelter.shelter_memberships SET role='STAFF' WHERE user_id=? AND shelter_id=?",user,shelter);
+        var before=read(id);when(appearance.analyzeStyled(any())).thenReturn(photoObservation());
+        post(subject,path(id)+"/photo-analysis-resume",body,200);
+        body.put("requestId",body.get("requestId").toString().toUpperCase(Locale.ROOT));
+        post(subject,path(id)+"/photo-analysis-resume",body,200);verify(appearance,never()).analyzeStyled(any());verifyNoInteractions(provider);
+        var resumed=read(id);assertThat(resumed.path("status").asText()).isEqualTo("QUEUED");
+        assertThat(resumed.at("/qualityPolicy/photoAnalysisResumes/0/checkpoint")).isEqualTo(before.at("/qualityPolicy/photoPreparation"));
+        assertThat(resumed.path("generationPlan")).isEqualTo(before.path("generationPlan"));
+        assertThat(resumed.at("/qualityPolicy/rulesSha256")).isEqualTo(before.at("/qualityPolicy/rulesSha256"));
+        assertThat(requestPhotoOnly()).isEqualTo(id);tick();
+        assertThat(read(id).at("/qualityPolicy/photoPreparation/attempts").asInt()).isEqualTo(2);
+        assertThat(read(id).at("/qualityPolicy/photoPreparation/status").asText()).isEqualTo("READY");
+        post(subject,path(id)+"/photo-analysis-resume",body,200);tick();
+        verify(appearance,times(1)).analyzeStyled(any());verify(provider,times(1)).submit(eq(true),any());
+        body.put("note","Changed replay must not authorize another photo analysis");post(subject,path(id)+"/photo-analysis-resume",body,409);
+        jdbc.update("UPDATE shelter.asset_source_permissions SET revoked_at=now() WHERE id=?",permission);
+        post(subject,path(id)+"/photo-analysis-resume",body,409);
+    }
+    @Test void photoResumeRechecksActualBytesBeforeAnotherAnalysis()throws Exception {
+        UUID id=requestPhotoOnly();var body=interruptedPhotoFixture(id);post(subject,path(id)+"/photo-analysis-resume",body,200);
+        when(storage.photo(any(),anyString(),anyString())).thenReturn(new byte[]{1,2,3});tick();
+        assertThat(read(id).path("failureCode").asText()).isEqualTo("PHOTO_APPEARANCE_SOURCE_CHANGED");
+        verify(appearance,never()).analyzeStyled(any());verifyNoInteractions(provider);
+    }
+    @Test void secondPhotoInterruptionNeedsNewBoundRequest()throws Exception {
+        UUID id=requestPhotoOnly();var body=interruptedPhotoFixture(id);post(subject,path(id)+"/photo-analysis-resume",body,200);
+        var work=store.claim();assertThat(store.beginPhotoInput(work,"test-vision",sha(png))).isTrue();
+        jdbc.update("UPDATE shelter.asset_jobs SET lease_until=now()-interval '1 second' WHERE id=?",id);tick();
+        assertThat(read(id).path("failureCode").asText()).isEqualTo("STYLED_PHOTO_ANALYSIS_INTERRUPTED");
+        post(subject,path(id)+"/photo-analysis-resume",body,200);
+        assertThat(read(id).path("status").asText()).isEqualTo("FAILED");
+        body.put("requestId",UUID.randomUUID().toString());post(subject,path(id)+"/photo-analysis-resume",body,409);
+        body.put("expectedStartedAt",read(id).at("/qualityPolicy/photoPreparation/startedAt").asText());
+        post(subject,path(id)+"/photo-analysis-resume",body,200);
+        when(appearance.analyzeStyled(any())).thenReturn(photoObservation());tick();
+        assertThat(read(id).at("/qualityPolicy/photoPreparation/attempts").asInt()).isEqualTo(3);
+        verify(appearance,times(1)).analyzeStyled(any());verifyNoInteractions(provider);
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"hash","started","analysis","version","attempt","state","failure","provider","receipt","request","reservation","history","ledger","revoked","anonymous","unauthorized","otherDog","duplicate"})
+    void photoResumeRejectsUnboundOrPossiblyPaidAttempts(String defect)throws Exception {
+        UUID id=requestPhotoOnly();var body=interruptedPhotoFixture(id);UUID actor=subject;int expected=409;String url=path(id)+"/photo-analysis-resume";
+        switch(defect) {
+            case "hash" -> body.put("expectedPhotoSha256","f".repeat(64));
+            case "started" -> body.put("expectedStartedAt",Instant.EPOCH.toString());
+            case "analysis" -> jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=jsonb_set(quality_policy,'{photoPreparation,analysis}','{}'::jsonb) WHERE id=?",id);
+            case "version" -> jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=jsonb_set(quality_policy,'{photoPreparation,version}','\"unknown\"'::jsonb) WHERE id=?",id);
+            case "attempt" -> jdbc.update("UPDATE shelter.asset_jobs SET quality_policy=jsonb_set(quality_policy,'{photoPreparation,attempts}','7'::jsonb) WHERE id=?",id);
+            case "state" -> jdbc.update("UPDATE shelter.asset_jobs SET status='RUNNING' WHERE id=?",id);
+            case "failure" -> jdbc.update("UPDATE shelter.asset_jobs SET failure_code='PROVIDER_JOB_FAILED' WHERE id=?",id);
+            case "provider" -> jdbc.update("UPDATE shelter.styled_asset_steps SET provider_job_id=? WHERE job_id=? AND label='character'",UUID.randomUUID(),id);
+            case "receipt" -> jdbc.update("UPDATE shelter.styled_asset_steps SET provider_result='{}'::jsonb WHERE job_id=? AND label='character'",id);
+            case "request" -> jdbc.update("UPDATE shelter.styled_asset_steps SET request_sha256=? WHERE job_id=? AND label='character'","f".repeat(64),id);
+            case "reservation" -> jdbc.update("UPDATE shelter.styled_asset_steps SET submitted_at=now() WHERE job_id=? AND label='character'",id);
+            case "history" -> jdbc.update("UPDATE shelter.styled_asset_steps SET attempt_history='[{}]'::jsonb WHERE job_id=? AND label='character'",id);
+            case "ledger" -> jdbc.update("INSERT INTO shelter.asset_submissions(job_id,action) VALUES (?,'BASE')",id);
+            case "revoked" -> jdbc.update("UPDATE shelter.asset_source_permissions SET revoked_at=now() WHERE id=?",permission);
+            case "anonymous" -> {actor=null;expected=401;}
+            case "unauthorized" -> {actor=UUID.randomUUID();expected=403;}
+            case "otherDog" -> {url="/v1/shelter-admin/dogs/"+UUID.randomUUID()+"/styled-assets/"+id+"/photo-analysis-resume";expected=403;}
+            case "duplicate" -> {post(subject,url,body,200);body.put("requestId",UUID.randomUUID().toString());}
+        }
+        post(actor,url,body,expected);verify(appearance,never()).analyzeStyled(any());verifyNoInteractions(provider);
     }
     @Test void changedPhotoCannotReusePersistedObservation()throws Exception {
         UUID id=requestPhotoOnly();

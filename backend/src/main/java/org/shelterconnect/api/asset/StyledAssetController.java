@@ -34,6 +34,8 @@ public class StyledAssetController {
     public Item<StyledAssetStore.Job> resumeQualityResponse(@AuthenticationPrincipal Jwt jwt,@PathVariable String dogId,@PathVariable String jobId,@RequestBody JsonNode body) {return new Item<>(store.resumeQualityResponse(subject(jwt),AssetInput.id(dogId),AssetInput.id(jobId),body));}
     @PostMapping("/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/prompt-resume")
     public Item<StyledAssetStore.Job> resumePrompt(@AuthenticationPrincipal Jwt jwt,@PathVariable String dogId,@PathVariable String jobId,@RequestBody JsonNode body) {return new Item<>(store.resumePrompt(subject(jwt),AssetInput.id(dogId),AssetInput.id(jobId),body));}
+    @PostMapping("/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/photo-analysis-resume")
+    public Item<StyledAssetStore.Job> resumePhotoAnalysis(@AuthenticationPrincipal Jwt jwt,@PathVariable String dogId,@PathVariable String jobId,@RequestBody JsonNode body) {return new Item<>(store.resumePhotoAnalysis(subject(jwt),AssetInput.id(dogId),AssetInput.id(jobId),body));}
     @GetMapping("/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/quality-timeout-checkpoint")
     public Item<JsonNode> qualityTimeoutCheckpoint(@AuthenticationPrincipal Jwt jwt,@PathVariable String dogId,@PathVariable String jobId) {return new Item<>(store.qualityTimeoutCheckpoint(subject(jwt),AssetInput.id(dogId),AssetInput.id(jobId)));}
     @PostMapping("/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/quality-timeout-resume")
