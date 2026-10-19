@@ -3236,6 +3236,84 @@ class StyledAssetPostgresTest {
         clearInvocations(provider,quality);post(actor,path(id)+"/quality-timeout-resume",body,expected);verifyNoInteractions(provider,quality);
         if(defect.equals("unauthorized") || defect.equals("anonymous"))get(actor,path(id)+"/quality-timeout-checkpoint",expected);
     }
+    UUID privateApprovedExtensionPack()throws Exception {
+        warningObservation();UUID id=warningRequest();finish(id);
+        assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
+        jdbc.update("UPDATE shelter.dogs SET is_public=false WHERE id=?",dog);
+        jdbc.update("UPDATE shelter.shelter_memberships SET role='STAFF' WHERE user_id=? AND shelter_id=?",user,shelter);
+        return id;
+    }
+    void extensionBehavior(boolean confirm,boolean growl)throws Exception {
+        UUID evidence=UUID.randomUUID();String content="사나움";
+        jdbc.update("INSERT INTO shelter.dog_observations(id,dog_id,category,content,observed_at,recorded_by,status,confirmed_by,confirmed_at) VALUES (?,?,'PEOPLE',?,now(),?,'CONFIRMED',?,now())",evidence,dog,content,user,user);
+        when(suggestions.suggest(anyList())).thenReturn(json.valueToTree(Map.of("traits",growl?
+            List.of(Map.of("code","AGGRESSIVE","quote",content,"observationId",evidence)):List.of())));
+        String path="/v1/shelter-admin/dogs/"+dog+"/behavior";
+        post(subject,path+"/suggestions",Map.of("clientRequestId",UUID.randomUUID(),"expectedRevision",0,"evidenceObservationIds",List.of(evidence)),200);
+        if(confirm)post(subject,path+"/confirmation",Map.of("expectedRevision",1),200);
+    }
+    Map<String,Object> extensionBody(UUID id)throws Exception {
+        var j=read(id);return new HashMap<>(Map.of("requestId",UUID.randomUUID().toString(),
+            "note","Add only confirmed missing actions; preserve all existing sprite bytes",
+            "expectedBehaviorRevision",2,"expectedActionPlan",j.path("actionPlan"),"expectedSeedHashes",j.at("/steps/0/result/hashes")));
+    }
+    @Test void actionExtensionGeneratesOnlyFourMissingDirectionsAndKeepsApprovedPixels()throws Exception {
+        UUID id=privateApprovedExtensionPack();var original=read(id);var oldObjects=new HashMap<>(objects);
+        extensionBehavior(true,true);var body=extensionBody(id);
+        clearInvocations(provider,appearance,warningAgent,storage);
+        var extended=post(subject,path(id)+"/action-extension",body,200).path("data");
+        assertThat(extended.path("id").asText()).isEqualTo(id.toString());assertThat(extended.path("status").asText()).isEqualTo("QUEUED");
+        assertThat(extended.path("steps").size()).isEqualTo(17);
+        for(int i=0;i<13;i++)assertThat(extended.path("steps").get(i)).isEqualTo(original.path("steps").get(i));
+        assertThat(extended.path("seedReview")).isEqualTo(original.path("seedReview"));
+        assertThat(extended.at("/qualityPolicy/actionExtensions/0/previousApproval")).isEqualTo(original.path("qualityApproval"));
+        assertThat(extended.at("/generationPlan/selectedActions").valueStream().map(JsonNode::asText)).containsExactly("IDLE","WALK","SIT","GROWL");
+        assertThat(extended.at("/generationPlan/interactions/PERSON_WARNING/enabled").asBoolean()).isTrue();
+        body.put("requestId",body.get("requestId").toString().toUpperCase(Locale.ROOT));
+        post(subject,path(id)+"/action-extension",body,200);verifyNoInteractions(provider,appearance,storage);
+        finish(id);var complete=read(id);assertThat(complete.path("status").asText()).isEqualTo("APPROVED");
+        for(int i=0;i<13;i++)assertThat(complete.path("steps").get(i)).isEqualTo(original.path("steps").get(i));
+        for(var entry:oldObjects.entrySet())assertThat(objects.get(entry.getKey())).isEqualTo(entry.getValue());
+        verify(provider,never()).submit(eq(true),any());verify(provider,times(4)).submit(eq(false),argThat(p->p.path("action").asText().equals("GROWL")));
+        verify(provider,never()).editAnimation(any());verifyNoInteractions(appearance);
+        verify(warningAgent,times(4)).observe(anyList(),anyList(),eq("GROWL"),anyString());
+        assertThat(complete.at("/qualityApproval/steps").size()).isEqualTo(17);
+        clearInvocations(provider);post(subject,path(id)+"/action-extension",body,200);tick();verifyNoInteractions(provider);
+        body.put("note","A changed replay must not append or pay for another motion");post(subject,path(id)+"/action-extension",body,409);
+    }
+    @Test void concurrentActionExtensionsCannotReserveDuplicateClips()throws Exception {
+        UUID id=privateApprovedExtensionPack();extensionBehavior(true,true);var body=json.valueToTree(extensionBody(id));
+        clearInvocations(provider);var pool=Executors.newFixedThreadPool(2);
+        try {
+            var a=pool.submit(()->store.extendActions(subject,dog,id,body));
+            var b=pool.submit(()->store.extendActions(subject,dog,id,body));
+            assertThat(a.get(15,TimeUnit.SECONDS).id()).isEqualTo(id);assertThat(b.get(15,TimeUnit.SECONDS).id()).isEqualTo(id);
+        }finally{pool.shutdownNow();}
+        assertThat(read(id).path("steps").size()).isEqualTo(17);
+        assertThat(read(id).at("/qualityPolicy/actionExtensions").size()).isEqualTo(1);verifyNoInteractions(provider);
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={"public","draft","revision","hash","plan","incomplete","photo","noAddition","revoked","evidence","anonymous","unauthorized","membership","duplicate","extra"})
+    void actionExtensionRejectsStaleUnauthorizedOrUnconfirmedChanges(String defect)throws Exception {
+        UUID id=privateApprovedExtensionPack();extensionBehavior(!defect.equals("draft"),!defect.equals("noAddition"));var body=extensionBody(id);
+        UUID actor=subject;int expected=409;
+        switch(defect) {
+            case "public" -> jdbc.update("UPDATE shelter.dogs SET is_public=true WHERE id=?",dog);
+            case "revision" -> body.put("expectedBehaviorRevision",99);
+            case "hash" -> body.put("expectedSeedHashes",Map.of());
+            case "plan" -> body.put("expectedActionPlan",List.of("BASE","IDLE"));
+            case "incomplete" -> jdbc.update("UPDATE shelter.styled_asset_steps SET status='FAILED' WHERE job_id=? AND label='walk-west'",id);
+            case "photo" -> jdbc.update("UPDATE shelter.asset_jobs SET styled_input=jsonb_set(styled_input,'{sourcePhotoSha256}',to_jsonb(CAST(? AS text))) WHERE id=?","f".repeat(64),id);
+            case "revoked" -> jdbc.update("UPDATE shelter.asset_source_permissions SET revoked_at=now() WHERE id=?",permission);
+            case "evidence" -> jdbc.update("UPDATE shelter.dog_observations SET status='RETRACTED' WHERE dog_id=?",dog);
+            case "anonymous" -> {actor=null;expected=401;}
+            case "unauthorized" -> {actor=UUID.randomUUID();expected=403;}
+            case "membership" -> {jdbc.update("DELETE FROM shelter.shelter_memberships WHERE user_id=? AND shelter_id=?",user,shelter);expected=403;}
+            case "duplicate" -> {post(subject,path(id)+"/action-extension",body,200);body.put("requestId",UUID.randomUUID().toString());}
+            case "extra" -> {body.put("skipEvidence",true);expected=400;}
+        }
+        clearInvocations(provider);post(actor,path(id)+"/action-extension",body,expected);verifyNoInteractions(provider);
+    }
     UUID warningRequest()throws Exception {
         org.springframework.test.util.ReflectionTestUtils.setField(store,"visualWarningsOnly",true);
         try {return recoveryRequest(0,false);}finally{org.springframework.test.util.ReflectionTestUtils.setField(store,"visualWarningsOnly",false);}

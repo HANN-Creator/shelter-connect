@@ -39,7 +39,7 @@ class ApiDocumentationTest {
             for(String path:mapping.getPatternValues()) if(path.startsWith("/v1/"))
                 for(var method:mapping.getMethodsCondition().getMethods()) actual.add(method+" "+path);
         });
-        assertThat(documented).containsExactlyElementsOf(actual).hasSize(106);
+        assertThat(documented).containsExactlyElementsOf(actual).hasSize(107);
         assertThat(root.at("/servers/0/url").asText()).isEqualTo("/");
         assertThat(root.at("/components/securitySchemes/supabaseBearer/scheme").asText()).isEqualTo("bearer");
         assertThat(root.path("paths").path("/v1/dogs/{dogId}/assets").path("get").path("security").size()).isZero();
@@ -60,6 +60,7 @@ class ApiDocumentationTest {
         assertThat(schemas.at("/StyledPromptResume/required").toString()).contains("requestId","label","expectedSeedHashes","expectedRulesSha256","expectedPromptInputSha256");
         assertThat(schemas.at("/StyledPhotoAnalysisResume/required").toString()).contains("requestId","expectedPhotoSha256","expectedStartedAt","note");
         assertThat(root.path("paths").path("/v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/photo-analysis-resume").path("post").path("security").get(0).has("supabaseBearer")).isTrue();
+        assertThat(root.path("paths").path("/v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/action-extension").path("post").path("security").get(0).has("supabaseBearer")).isTrue();
         assertThat(root.path("paths").path("/v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/prompt-resume").path("post").path("security").get(0).has("supabaseBearer")).isTrue();
         assertThat(root.path("paths").path("/v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/visual-warnings").path("post").path("security").get(0).has("supabaseBearer")).isTrue();
         assertThat(root.path("paths").path("/v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/warnings").path("get").path("security").get(0).has("supabaseBearer")).isTrue();

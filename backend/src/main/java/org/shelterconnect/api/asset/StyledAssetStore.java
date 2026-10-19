@@ -75,6 +75,54 @@ public class StyledAssetStore {
             insert(id,ordinal++,action.toLowerCase(Locale.ROOT)+"-"+direction,action,direction);
         return job(id);
     }
+    /** Append confirmed missing actions to a private approved pack without touching its saved pixels. */
+    @Transactional public Job extendActions(UUID subject,UUID dog,UUID id,JsonNode body) {
+        var actor=access.requireDogForWrite(subject,dog);properties.requireEnabled();
+        AssetInput.fields(body,"requestId","note","expectedBehaviorRevision","expectedActionPlan","expectedSeedHashes");
+        UUID request=AssetInput.id(body,"requestId");String note=AssetInput.text(body,"note",2000);
+        var revision=body.path("expectedBehaviorRevision");
+        if(note.length()<20 || !revision.isIntegralNumber() || revision.asLong()<1 || revision.asLong()>Integer.MAX_VALUE
+            || !body.path("expectedActionPlan").isArray() || !body.path("expectedSeedHashes").isObject())throw AssetException.invalid();
+        lock(id);var j=job(id);if(!j.dogId().equals(dog))throw missing();legacy.valid(id,true);
+        // Reopening an in-use public pack would temporarily remove it from the app's approved manifest.
+        if(!jdbc.sql("SELECT NOT is_public FROM shelter.dogs WHERE id=:d").param("d",dog).query(Boolean.class).single())
+            throw new AssetException(409,"ACTION_EXTENSION_REQUIRES_PRIVATE_DOG");
+        var policy=j.qualityPolicy();if(policy==null)throw new AssetException(409,"ACTION_EXTENSION_NOT_ALLOWED");
+        var canonical=(tools.jackson.databind.node.ObjectNode)body.deepCopy();canonical.put("requestId",request.toString()).put("note",note);
+        var history=policy.path("actionExtensions").isArray()?policy.path("actionExtensions").deepCopy():json.createArrayNode();
+        for(var event:history)if(event.at("/request/requestId").asText().equals(request.toString())) {
+            if(!event.path("request").equals(canonical))throw new AssetException(409,"ACTION_EXTENSION_REPLAY_CONFLICT");
+            return j;
+        }
+        if(!j.status().equals("APPROVED") || !j.complete() || j.qualityApproval()==null
+            || !StyledVisualWarnings.enabled(policy) || !automaticSeedPassed(j)
+            || !StyledAutoApproval.pack(j,json) || !lessonsBound(id,false))throw new AssetException(409,"ACTION_EXTENSION_NOT_ALLOWED");
+        if(!body.path("expectedActionPlan").equals(json.valueToTree(j.actionPlan()))
+            || !body.path("expectedSeedHashes").equals(j.steps().getFirst().result().path("hashes")))
+            throw new AssetException(409,"ACTION_EXTENSION_STALE");
+        var selected=behaviors.assetSelection(dog);
+        if(!"CONFIRMED".equals(selected.generationPlan().basis()) || !Objects.equals(selected.revision(),revision.asInt()))
+            throw new AssetException(409,"ACTION_EXTENSION_BEHAVIOR_STALE");
+        if(!selected.actions().containsAll(j.actionPlan()))throw new AssetException(409,"ACTION_EXTENSION_CANNOT_REMOVE_ACTIONS");
+        var added=selected.actions().stream().filter(a->!j.actionPlan().contains(a)).toList();
+        if(added.isEmpty())throw new AssetException(409,"ACTION_EXTENSION_NO_MISSING_ACTIONS");
+        var event=json.createObjectNode().put("requestedBy",actor.userId().toString()).put("at",Instant.now().toString());
+        event.set("request",canonical);event.set("addedActions",json.valueToTree(added));
+        event.set("previousActionPlan",json.valueToTree(j.actionPlan()));event.set("previousGenerationPlan",j.generationPlan());
+        event.set("previousApproval",j.qualityApproval());
+        ((tools.jackson.databind.node.ArrayNode)history).add(event);
+        int ordinal=jdbc.sql("SELECT max(ordinal)+1 FROM shelter.styled_asset_steps WHERE job_id=:j").param("j",id).query(Integer.class).single();
+        for(String action:added)for(String direction:StyledSpriteCodec.DIRECTIONS)
+            insert(id,ordinal++,action.toLowerCase(Locale.ROOT)+"-"+direction,action,direction);
+        jdbc.sql("""
+            UPDATE shelter.asset_jobs SET action_plan=CAST(:plan AS jsonb),behavior_plan=CAST(:behavior AS jsonb),behavior_revision=:revision,
+              quality_policy=quality_policy || jsonb_build_object('actionExtensions',CAST(:history AS jsonb)),
+              status='QUEUED',quality_approval=NULL,reviewed_by=NULL,reviewed_at=NULL,failure_code=NULL,
+              next_run_at=now(),lease_token=NULL,lease_until=NULL WHERE id=:j
+            """).param("plan",json.writeValueAsString(selected.actions())).param("behavior",json.writeValueAsString(selected.generationPlan()))
+            .param("revision",selected.revision()).param("history",json.writeValueAsString(history)).param("j",id).update();
+        return job(id);
+    }
     private void insert(UUID id,int ordinal,String label,String action,String direction) {
         jdbc.sql("INSERT INTO shelter.styled_asset_steps(job_id,ordinal,label,action,direction) VALUES (:id,:o,:l,:a,:d) ON CONFLICT DO NOTHING")
             .param("id",id).param("o",ordinal).param("l",label).param("a",action).param("d",direction,java.sql.Types.VARCHAR).update();
