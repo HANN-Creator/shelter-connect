@@ -62,9 +62,9 @@ def load_ai_settings(path):
         raise ConfigurationError("OPENAI_MODEL 이름을 확인해 주세요.")
     if not timeout.isascii() or not timeout.isdecimal() or not 5 <= int(timeout) <= 60:
         raise ConfigurationError("AI_TIMEOUT_SECONDS는 5~60초로 설정해 주세요.")
-    limit = values.setdefault("BEHAVIOR_AI_DAILY_LIMIT", "20")
-    if not limit.isascii() or not limit.isdecimal() or not 1 <= int(limit) <= 100:
-        raise ConfigurationError("BEHAVIOR_AI_DAILY_LIMIT는 1~100으로 설정해 주세요.")
+    limit = values.setdefault("BEHAVIOR_AI_DAILY_LIMIT", "0")
+    if not limit.isascii() or not limit.isdecimal() or not 0 <= int(limit) <= 100:
+        raise ConfigurationError("BEHAVIOR_AI_DAILY_LIMIT는 0~100으로 설정해 주세요. 0은 무제한입니다.")
     for name, default, maximum in [("AI_USER_MINUTE_LIMIT", "6", 60), ("AI_USER_DAILY_LIMIT", "60", 1000),
                                     ("AI_GLOBAL_DAILY_LIMIT", "500", 10000), ("AI_CONCURRENT_LIMIT", "2", 10)]:
         value = values.setdefault(name, default)

@@ -361,6 +361,16 @@ class AssetPostgresTest {
         postJson(subject,"/v1/shelter-admin/dogs/"+dog+"/behavior/confirmation",Map.of("expectedRevision",1),200);
         assertThat(read(subject,importPhoto(permission(true)),200).at("/data/actionPlan").valueStream().map(JsonNode::asText).toList()).contains("SIT","RUN","SNIFF");
     }
+    @Test void behaviorSuggestionsRemainAvailableAfterFormerDailyQuotaIsExhausted() throws Exception {
+        UUID evidence=observation("공을 따라 달렸어요.");
+        for(int i=0;i<21;i++) jdbc.update("INSERT INTO shelter.behavior_suggestions(dog_id,client_request_id,requested_by,expected_revision,evidence_ids,observations,status,failure_code) VALUES (?,?,?,0,'[]'::jsonb,'[]'::jsonb,'FAILED','TEST_ONLY')",dog,UUID.randomUUID(),user);
+        when(suggestions.suggest(anyList())).thenAnswer(c->{noTransaction();return json.valueToTree(Map.of("traits",List.of(Map.of("code","BALL_CHASER","observationId",evidence,"quote","공을 따라 달렸어요."))));});
+        var body=Map.of("clientRequestId",UUID.randomUUID(),"expectedRevision",0,"evidenceObservationIds",List.of(evidence));
+        String path="/v1/shelter-admin/dogs/"+dog+"/behavior/suggestions";
+        assertThat(postJson(subject,path,body,200).at("/data/status").asText()).isEqualTo("COMPLETED");
+        postJson(subject,path,body,200);
+        verify(suggestions,times(1)).suggest(anyList());
+    }
     @Test void aiCompletionRechecksEvidenceAndRevisionAndDoesNotOverwriteShelterEdits() throws Exception {
         UUID evidence=observation("공을 따라 달렸어요.");
         when(suggestions.suggest(anyList())).thenAnswer(c->{jdbc.update("UPDATE shelter.dog_observations SET status='RETRACTED' WHERE id=?",evidence);return json.valueToTree(Map.of("traits",List.of()));});

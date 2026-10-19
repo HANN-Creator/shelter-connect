@@ -21,8 +21,8 @@ public class BehaviorSuggestionStore {
     private final JdbcClient jdbc;private final JsonMapper json;private final ShelterAccessService access;
     private final BehaviorRepository repository;private final AiProperties ai;private final int dailyLimit;
     public BehaviorSuggestionStore(JdbcClient jdbc,JsonMapper json,ShelterAccessService access,BehaviorRepository repository,AiProperties ai,
-                                  @Value("${app.ai.behavior-daily-limit:20}") int dailyLimit) {
-        if(dailyLimit<1 || dailyLimit>100) throw new IllegalArgumentException("BEHAVIOR_AI_DAILY_LIMIT must be 1..100");
+                                  @Value("${app.ai.behavior-daily-limit:0}") int dailyLimit) {
+        if(dailyLimit<0 || dailyLimit>100) throw new IllegalArgumentException("BEHAVIOR_AI_DAILY_LIMIT must be 0..100 (0 means unlimited)");
         this.jdbc=jdbc;this.json=json;this.access=access;this.repository=repository;this.ai=ai;this.dailyLimit=dailyLimit;
     }
     @Transactional public Prepared prepare(UUID subject,UUID dog,JsonNode body) {
@@ -46,9 +46,11 @@ public class BehaviorSuggestionStore {
         if(!repository.evidenceValid(dog,List.copyOf(ids),true)) throw BehaviorException.evidence();
         var observations=observations(dog,ids);
         if(observations.stream().mapToInt(o->o.content().length()).sum()>20000) throw BehaviorException.invalid();
-        jdbc.sql("SELECT pg_advisory_xact_lock(62019)").query(Object.class).single();
-        int count=jdbc.sql("SELECT count(*) FROM shelter.behavior_suggestions WHERE created_at >= date_trunc('day',now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'").query(Integer.class).single();
-        if(count>=dailyLimit) throw new BehaviorException(429,"BEHAVIOR_AI_DAILY_LIMIT","오늘의 행동 초안 생성 한도에 도달했어요.");
+        if(dailyLimit>0) {
+            jdbc.sql("SELECT pg_advisory_xact_lock(62019)").query(Object.class).single();
+            int count=jdbc.sql("SELECT count(*) FROM shelter.behavior_suggestions WHERE created_at >= date_trunc('day',now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'").query(Integer.class).single();
+            if(count>=dailyLimit) throw new BehaviorException(429,"BEHAVIOR_AI_DAILY_LIMIT","오늘의 행동 초안 생성 한도에 도달했어요.");
+        }
         UUID id=jdbc.sql("""
             INSERT INTO shelter.behavior_suggestions(dog_id,client_request_id,requested_by,expected_revision,evidence_ids,observations,status)
             VALUES (:d,:r,:u,:v,CAST(:e AS jsonb),CAST(:o AS jsonb),'PENDING') RETURNING id
