@@ -905,13 +905,61 @@ public class StyledAssetStore {
         return w.get();
     }
     @Transactional public boolean authorized(Work w) { return owned(w) && validOrCancel(w.id()); }
+    /** Explicitly retry only an interrupted, unobserved photo analysis before any sprite purchase. */
+    @Transactional public Job resumePhotoAnalysis(UUID subject,UUID dog,UUID id,JsonNode body) {
+        var actor=access.requireDogForWrite(subject,dog);properties.requireEnabled();
+        AssetInput.fields(body,"requestId","note","expectedPhotoSha256","expectedStartedAt");
+        UUID requestId=AssetInput.id(body,"requestId");String note=AssetInput.text(body,"note",2000);
+        String photoSha=AssetInput.text(body,"expectedPhotoSha256",64),started=AssetInput.text(body,"expectedStartedAt",60);
+        if(note.length()<20 || !photoSha.matches("[a-f0-9]{64}"))throw AssetException.invalid();
+        lock(id);var j=job(id);if(!j.dogId().equals(dog))throw missing();legacy.valid(id,true);
+        var policy=j.qualityPolicy();if(policy==null)throw new AssetException(409,"PHOTO_ANALYSIS_RESUME_NOT_ALLOWED");
+        var grants=json.createArrayNode();if(policy.path("photoAnalysisResumes").isArray())grants.addAll((tools.jackson.databind.node.ArrayNode)policy.path("photoAnalysisResumes"));
+        var canonical=(tools.jackson.databind.node.ObjectNode)body.deepCopy();canonical.put("requestId",requestId.toString());
+        for(var grant:grants)if(grant.path("request").path("requestId").asText().equalsIgnoreCase(requestId.toString())) {
+            if(grant.path("request").equals(canonical))return j;
+            throw new AssetException(409,"PHOTO_ANALYSIS_RESUME_ALREADY_REQUESTED");
+        }
+        var checkpoint=policy.path("photoPreparation");
+        if(!j.status().equals("FAILED") || !"STYLED_PHOTO_ANALYSIS_INTERRUPTED".equals(j.failureCode())
+            || j.seedReview()!=null || j.qualityApproval()!=null || j.steps().isEmpty()
+            || !StyledPhotoInput.VERSION.equals(checkpoint.path("version").asText())
+            || !"STARTED".equals(checkpoint.path("status").asText()) || checkpoint.has("analysis")
+            || checkpoint.path("attempts").asInt()!=grants.size()+1
+            || !photoSha.equals(checkpoint.path("photoSha256").asText()) || !started.equals(checkpoint.path("startedAt").asText())
+            || grants.valueStream().anyMatch(g->g.path("checkpoint").path("startedAt").asText().equals(started)))
+            throw new AssetException(409,"PHOTO_ANALYSIS_RESUME_NOT_ALLOWED");
+        int clean=jdbc.sql("""
+            SELECT count(*) FROM shelter.styled_asset_steps WHERE job_id=:id
+              AND ((action='BASE' AND status='FAILED') OR (action<>'BASE' AND status='PENDING'))
+              AND provider_job_id IS NULL AND submitted_at IS NULL AND request_sha256 IS NULL
+              AND provider_result IS NULL AND result IS NULL AND quality_report IS NULL
+              AND repair_count=0 AND attempt_history='[]'::jsonb
+            """).param("id",id).query(Integer.class).single();
+        int untouched=jdbc.sql("""
+            SELECT count(*) FROM shelter.asset_jobs WHERE id=:id AND styled_input=CAST(:pending AS jsonb)
+              AND NOT EXISTS (SELECT 1 FROM shelter.asset_submissions WHERE job_id=:id)
+            """).param("id",id).param("pending",json.writeValueAsString(StyledPhotoInput.pending(json))).query(Integer.class).single();
+        if(clean!=j.steps().size() || untouched!=1)throw new AssetException(409,"PHOTO_ANALYSIS_RESUME_NOT_ALLOWED");
+        var grant=grants.addObject().put("requestedBy",actor.userId().toString()).put("requestedAt",Instant.now().toString());
+        grant.set("request",canonical);grant.set("checkpoint",checkpoint);
+        jdbc.sql("UPDATE shelter.styled_asset_steps SET status='PENDING' WHERE job_id=:id AND action='BASE' AND status='FAILED'").param("id",id).update();
+        jdbc.sql("""
+            UPDATE shelter.asset_jobs SET quality_policy=(quality_policy-'photoPreparation') || jsonb_build_object('photoAnalysisResumes',CAST(:g AS jsonb)),
+              status='QUEUED',failure_code=NULL,next_run_at=now(),lease_token=NULL,lease_until=NULL WHERE id=:id
+            """).param("g",json.writeValueAsString(grants)).param("id",id).update();return job(id);
+    }
     @Transactional public boolean beginPhotoInput(Work w,String model,String photoSha) {
         if(!authorized(w))return false;
         if(!w.character() || !w.status().equals("PENDING") || !StyledPhotoInput.pending(w.traits()))throw AssetException.invalid();
         var current=job(w.id()).qualityPolicy();
         if(current.has("photoPreparation"))throw new AssetException(409,"STYLED_PHOTO_ANALYSIS_INTERRUPTED");
+        var resumes=current.path("photoAnalysisResumes");
+        if(resumes.isArray() && !resumes.isEmpty()
+            && !photoSha.equals(resumes.get(resumes.size()-1).path("request").path("expectedPhotoSha256").asText()))
+            throw new AssetException(409,"PHOTO_APPEARANCE_SOURCE_CHANGED");
         var record=Map.of("status","STARTED","version",StyledPhotoInput.VERSION,"model",model,
-            "photoSha256",photoSha,"attempts",1,"startedAt",Instant.now().toString());
+            "photoSha256",photoSha,"attempts",resumes.size()+1,"startedAt",Instant.now().toString());
         return jdbc.sql("UPDATE shelter.asset_jobs SET quality_policy=quality_policy || jsonb_build_object('photoPreparation',CAST(:p AS jsonb)) WHERE id=:id AND NOT jsonb_exists(quality_policy,'photoPreparation')")
             .param("p",json.writeValueAsString(record)).param("id",w.id()).update()==1;
     }

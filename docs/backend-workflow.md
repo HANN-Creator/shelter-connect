@@ -266,3 +266,11 @@ B-100 배포 뒤 같은 10마리 배치에서 남은 1068자 초과 실패를 [�
 - WIN-03: GitHub main CI 성공 커밋의 아티팩트 배포, 로컬 보호 인증·백업·실패 복구. 명세: [미니PC 자동 배포](mini-pc-deployment.md). WIN-01/02 선행 병합 필요. 실제 활성화는 CI/dry run/운영 배포 검증 후 기록한다. 노션 외부 카드는 미동기화.
 
 - WIN-04: 첫 자동 배포 사전 검사에서 발견한 requirements CRLF/LF 오차단을 수정한다. 정확한 pin 및 설치 버전 검증은 유지하며 회귀 15개 통과. 명세: [미니PC 배포](mini-pc-deployment.md). 노션 도구 미제공으로 외부 카드 미동기화.
+
+## B-103 사진 분석 중 전원 중단 복구
+
+- 범위: 미니 PC 50마리 배치의 22번이 `STYLED_PHOTO_ANALYSIS_INTERRUPTED`로 중단된 문제. 같은 작업을 소속 STAFF가 명시적으로 재개한다.
+- 완료 기준: 사진 해시·중단 시각·사용 허가 확인, 응답/PixelLab 접수 이력 없는 경우만 허용, 과거 시도 기록 유지, 멱등 재전송, 배포 후 같은 작업 실제 재개 확인.
+- 자동으로 중복 과금하지 않는 기존 중단 보호는 유지한다. 재개 요청은 Luna 사진 분석 비용이 다시 발생할 수 있음을 명시한다. 행동 계획·경고 정책·기존 승인 이미지·품질 규칙은 변경하지 않는다.
+- API: `POST /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/photo-analysis-resume`. 요청은 `requestId`, `note`, `expectedPhotoSha256`, `expectedStartedAt`. 기록은 기존 JSONB의 `photoAnalysisResumes`; DB 마이그레이션·환경변수 변경 없음.
+- 검증/병합/실서버 결과: 진행 중. 노션 연결 도구가 없어 카드 상태는 변경하지 못함.
