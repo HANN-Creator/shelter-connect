@@ -101,7 +101,7 @@ class SchemaMigrationTest {
 	@Test
 	void migrationCanRunAgainWithoutChangingTheSchema() {
 		assertThat(flyway.migrate().migrationsExecuted).isZero();
-		assertThat(flyway.info().current().getVersion().toString()).isEqualTo("27");
+		assertThat(flyway.info().current().getVersion().toString()).isEqualTo("28");
 	}
 
 	@Test

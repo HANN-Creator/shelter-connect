@@ -14,7 +14,7 @@ V27은 **정확한 50개 기존 dog UUID**와 동물번호가 모두 맞는 행�
 
 - `GET /v1/shelter-admin/dogs/{dogId}/public-source`: 담당자에게 실제 shelterId, managementShelterId, animalId, careRegNo, 이름·지역·주소·연락처·공공 상태·조회시각을 반환. 미연결은 404.
 - `POST /v1/shelter-admin/dogs/{dogId}/public-source`: `{animalId, expectedUpdatedAt}`. 기존 담당자 권한을 확인한 뒤 서버가 고정 정부 API에서 조회하고, 쓰기 잠금 후 권한·버전을 다시 검사한다. 외부 URL/보호소 메타데이터는 클라이언트 입력으로 받지 않는다.
-- 새로 가져오는 강아지도 비공개 등록 시 `public animal <15자리 번호>.` 출처를 보존하고, **생성 요청 전에** 이 연결 API를 호출해야 한다. `styled_dog/source.py`는 보호소 코드·주소·전화번호·관할 지역을 이제 버리지 않는다.
+- B-106부터 새 공공 강아지는 등록 요청의 `publicAnimalId` 또는 기존 `public animal <15자리 번호>.` 출처 표기를 통해 실제 보호소까지 자동 연결된다. 별도의 연결 POST가 필요하지 않다. 자세한 실패·재개 계약은 [자동 연결](automatic-public-shelter-linkage.md)을 따른다. `styled_dog/source.py`는 보호소 코드·주소·전화번호·관할 지역을 보존한다.
 - 새 동물 조회에는 서버의 `DATA_GO_KR_SERVICE_KEY`가 필요하다. 미설정이면 503 `PUBLIC_SOURCE_NOT_CONFIGURED`로 중단하며 가상 보호소 연결 완료로 처리하지 않는다. 기존 50마리 V27 적용에는 이미 확인한 원본 스냅샷을 쓰므로 새 설정이 필요 없다.
 - 409: `STALE_RESOURCE`, `PUBLIC_SOURCE_PRIVATE_REQUIRED`, `PUBLIC_SOURCE_IDENTITY_MISMATCH`, `PUBLIC_SOURCE_JOB_ACTIVE`, `PUBLIC_SOURCE_INVALID`, `PUBLIC_SOURCE_DUPLICATE`.
 - 인증키 포함 URL·응답 예외를 기록하지 않으며, 담당자 이름 등 불필요한 원본 항목도 저장하지 않는다.

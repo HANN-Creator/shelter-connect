@@ -187,6 +187,11 @@
           "type": "string",
           "maxLength": 2000,
           "nullable": true
+        },
+        "publicAnimalId": {
+          "type": "string",
+          "pattern": "^[0-9]{15}$",
+          "description": "공공 API 동물번호. 실제 보호소를 서버에서 조회해 강아지와 함께 원자적으로 저장한다. 공공 동물은 isPublic=false로 등록한다."
         }
       },
       "required": [
@@ -3758,14 +3763,16 @@
     "POST /v1/shelter-admin/dogs": {
       "summary": "강아지 등록",
       "tag": "06. 보호소 관리",
-      "description": "승인된 보호소의 활성 소속만 가능. 생일 모름은 UNKNOWN/null, YEAR는 1월 1일, MONTH는 1일로 저장.",
+      "description": "승인된 보호소의 활성 소속만 가능. 생일 모름은 UNKNOWN/null, YEAR는 1월 1일, MONTH는 1일로 저장. publicAnimalId 또는 기존 introduction의 public animal <15자리>. 표기가 있으면 공공 API로 실제 보호소를 확인하고 같은 트랜잭션에서 연결한다. 실패하면 강아지를 저장하지 않고 원인 코드를 반환한다. 새 공개 보호소나 직원 권한을 자동 승인하지 않는다.",
       "success": [
         201
       ],
       "errors": [
         400,
         404,
-        409
+        409,
+        502,
+        503
       ],
       "public": false,
       "request": {
@@ -4109,7 +4116,7 @@
     "POST /v1/shelter-admin/dogs/{dogId}/assets": {
       "summary": "도트·행동 생성 요청",
       "tag": "08. 도트와 애니메이션",
-      "description": "등록된 사진과 허가로 요청. 동일 사진·생성 버전·행동 버전은 기존 작업 반환. 체형 검토 및 최종 승인을 거칩니다.",
+      "description": "등록된 사진과 허가로 요청. 동일 사진·생성 버전·행동 버전은 기존 작업 반환. 체형 검토 및 최종 승인을 거칩니다. 공공 동물의 실제 보호소 연결이 누락되거나 불일치하면 PUBLIC_SOURCE_LINK_REQUIRED(409)로 생성 전 중단한다.",
       "success": [
         202
       ],
@@ -4945,7 +4952,7 @@
     },
     "POST /v1/shelter-admin/dogs/{dogId}/styled-assets": {
       "summary": "32px 4방향 생성 작업 접수",
-      "description": "허가된 사진만 처리하며 동일 사진·입력·행동 버전 요청은 기존 작업을 반환합니다. 기본 IDLE/WALK/SIT와 특성에 맞는 선택 행동을 4방향으로 생성해 저장합니다. 새 일반 작업은 기본적으로 WARN_ONLY 정책: 시각 관찰을 한 번 기록하고 경고 때문에 재생성·보완·승인을 반복하지 않습니다. 필요한 파일·프레임·해시·사용 허가가 유효하면 SYSTEM 승인합니다. 관찰의 passed=false는 유지하며 경고 목록으로 확인합니다. ASSET_VISUAL_WARNINGS_ONLY=false는 새 작업에 이전 차단 정책을 적용합니다. 기존 작업 정책은 자동 변경하지 않으며 담당자 visual-warnings 호출로 명시적으로 전환합니다. 조회는 생성 요청을 하지 않습니다. 원본 입력 분석·공급자 오류·파일 손상·접수 결과 미확정은 기술 실패로 처리합니다. 13~33단계의 최초 계획과 공급자 Generations 사용량은 다릅니다.",
+      "description": "허가된 사진만 처리하며 동일 사진·입력·행동 버전 요청은 기존 작업을 반환합니다. 기본 IDLE/WALK/SIT와 특성에 맞는 선택 행동을 4방향으로 생성해 저장합니다. 새 일반 작업은 기본적으로 WARN_ONLY 정책: 시각 관찰을 한 번 기록하고 경고 때문에 재생성·보완·승인을 반복하지 않습니다. 필요한 파일·프레임·해시·사용 허가가 유효하면 SYSTEM 승인합니다. 관찰의 passed=false는 유지하며 경고 목록으로 확인합니다. ASSET_VISUAL_WARNINGS_ONLY=false는 새 작업에 이전 차단 정책을 적용합니다. 기존 작업 정책은 자동 변경하지 않으며 담당자 visual-warnings 호출로 명시적으로 전환합니다. 조회는 생성 요청을 하지 않습니다. 원본 입력 분석·공급자 오류·파일 손상·접수 결과 미확정은 기술 실패로 처리합니다. 13~33단계의 최초 계획과 공급자 Generations 사용량은 다릅니다. 공공 동물의 실제 보호소 연결이 누락되거나 불일치하면 PUBLIC_SOURCE_LINK_REQUIRED(409)로 생성 전 중단한다.",
       "tag": "32px 에셋",
       "success": [
         "202"

@@ -22,7 +22,8 @@ public class AssetErrorHandler {
 	ResponseEntity<SecurityErrors.Error> badPart(HttpServletRequest request) { return error(400,"INVALID_ASSET_REQUEST","파일과 입력 항목을 확인해 주세요.",request); }
 	@ExceptionHandler(AssetException.class)
 	ResponseEntity<SecurityErrors.Error> invalid(AssetException exception, HttpServletRequest request) {
-		return error(exception.status, exception.code, "에셋 상태와 요청 내용을 확인해 주세요.", request);
+		return error(exception.status, exception.code, PublicShelterGate.PENDING.equals(exception.code)
+			? "실제 보호소 연결이 완료되어야 도트 생성을 시작할 수 있어요." : "에셋 상태와 요청 내용을 확인해 주세요.", request);
 	}
 	@ExceptionHandler(AccountAccessException.class)
 	ResponseEntity<SecurityErrors.Error> denied(AccountAccessException exception, HttpServletRequest request) {

@@ -926,7 +926,7 @@ public class StyledAssetStore {
         if(id.isEmpty())return null;
         if(!validOrCancel(id.get()))return null;
         UUID token=UUID.randomUUID();
-        jdbc.sql("UPDATE shelter.asset_jobs SET status='RUNNING',lease_token=:t,lease_until=now()+interval '5 minutes',failure_code=CASE WHEN failure_code='DAILY_REQUEST_LIMIT' THEN NULL ELSE failure_code END WHERE id=:id").param("t",token).param("id",id.get()).update();
+        jdbc.sql("UPDATE shelter.asset_jobs SET status='RUNNING',lease_token=:t,lease_until=now()+interval '5 minutes',failure_code=CASE WHEN failure_code IN ('DAILY_REQUEST_LIMIT','PUBLIC_SOURCE_LINK_REQUIRED') THEN NULL ELSE failure_code END WHERE id=:id").param("t",token).param("id",id.get()).update();
         var w=jdbc.sql("""
             SELECT j.id,j.dog_id,j.styled_input::text,j.quality_policy::text,s.*,b.storage_bucket,b.storage_key
             FROM shelter.asset_jobs j JOIN shelter.styled_asset_steps s ON s.job_id=j.id JOIN shelter.asset_photo_sources b ON b.photo_id=j.photo_id
@@ -1263,7 +1263,7 @@ public class StyledAssetStore {
     }
     private boolean validOrCancel(UUID id) {
         try { legacy.valid(id,true);return true; }
-        catch(AssetException e) { status(id,"CANCELLED","SOURCE_NO_LONGER_ALLOWED");return false; }
+        catch(AssetException e) { legacy.invalidSource(id,e);return false; }
     }
     private boolean owned(Work w) { return jdbc.sql("SELECT id FROM shelter.asset_jobs WHERE id=:id AND lease_token=:t AND lease_until>now() AND status='RUNNING' FOR UPDATE")
         .param("id",w.id()).param("t",w.token()).query(UUID.class).optional().isPresent(); }
