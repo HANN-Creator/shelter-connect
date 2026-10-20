@@ -64,7 +64,7 @@ public class StyledAssetStore {
         var plan=selected.actions();
         UUID id=jdbc.sql("""
             INSERT INTO shelter.asset_jobs(photo_id,dog_id,shelter_id,permission_id,pipeline_version,selection_key,action_plan,styled_input,behavior_revision,behavior_plan,quality_policy)
-            SELECT p.id,p.dog_id,d.shelter_id,b.permission_id,:v,:s,CAST(:plan AS jsonb),CAST(:input AS jsonb),:revision,CAST(:behavior AS jsonb),CAST(:quality AS jsonb)
+            SELECT p.id,p.dog_id,coalesce(d.management_shelter_id,d.shelter_id),b.permission_id,:v,:s,CAST(:plan AS jsonb),CAST(:input AS jsonb),:revision,CAST(:behavior AS jsonb),CAST(:quality AS jsonb)
             FROM shelter.dog_photos p JOIN shelter.dogs d ON d.id=p.dog_id JOIN shelter.asset_photo_sources b ON b.photo_id=p.id WHERE p.id=:p
             ON CONFLICT(photo_id,pipeline_version,selection_key) DO UPDATE SET photo_id=EXCLUDED.photo_id RETURNING id
             """).param("p",photo).param("v",StyledSpriteCodec.VERSION).param("s",selection).param("plan",json.writeValueAsString(plan))
@@ -147,7 +147,7 @@ public class StyledAssetStore {
         policy.put("referenceRecordedBy",actor.userId().toString());policy.put("referenceRecordedAt",Instant.now().toString());
         var inserted=jdbc.sql("""
             INSERT INTO shelter.asset_jobs(id,photo_id,dog_id,shelter_id,permission_id,pipeline_version,selection_key,action_plan,styled_input,quality_policy)
-            SELECT :id,p.id,p.dog_id,d.shelter_id,b.permission_id,:v,:s,'["BASE"]'::jsonb,'{}'::jsonb,CAST(:q AS jsonb)
+            SELECT :id,p.id,p.dog_id,coalesce(d.management_shelter_id,d.shelter_id),b.permission_id,:v,:s,'["BASE"]'::jsonb,'{}'::jsonb,CAST(:q AS jsonb)
             FROM shelter.dog_photos p JOIN shelter.dogs d ON d.id=p.dog_id JOIN shelter.asset_photo_sources b ON b.photo_id=p.id WHERE p.id=:p
             ON CONFLICT(photo_id,pipeline_version,selection_key) DO NOTHING RETURNING id
             """).param("id",id).param("p",photo).param("v",StyledSpriteCodec.VERSION).param("s",selection).param("q",json.writeValueAsString(policy)).query(UUID.class).optional();

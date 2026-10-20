@@ -24,10 +24,12 @@ class ManagementHttpTest {
 	@Autowired MockMvc mvc;
 	@Autowired JwtTestSupport tokens;
 	@MockitoBean ManagementRepository repository;
+	@MockitoBean PublicSourceService sources;
 	@MockitoBean AccountRepository accounts;
 
 	@Test void everyManagementRouteRequiresAuthentication() throws Exception {
 		for (var request : List.of(post("/v1/shelter-admin/dogs"), patch("/v1/shelter-admin/dogs/"+DOG),
+				get("/v1/shelter-admin/dogs/"+DOG+"/public-source"), post("/v1/shelter-admin/dogs/"+DOG+"/public-source"),
 				get("/v1/shelter-admin/dogs/"+DOG), get("/v1/shelter-admin/shelters/"+SHELTER+"/dogs"),
 				get("/v1/shelter-admin/dogs/"+DOG+"/observations"), post("/v1/shelter-admin/dogs/"+DOG+"/observations"),
 				patch("/v1/shelter-admin/dogs/"+DOG+"/observations/"+UUID.randomUUID()))) {

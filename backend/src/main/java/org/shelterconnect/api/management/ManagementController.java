@@ -14,7 +14,8 @@ import static org.shelterconnect.api.management.ManagementResponses.*;
 @RequestMapping("/v1/shelter-admin")
 public class ManagementController {
 	private final ManagementService service;
-	public ManagementController(ManagementService service) { this.service = service; }
+	private final PublicSourceService sources;
+	public ManagementController(ManagementService service, PublicSourceService sources) { this.service = service; this.sources=sources; }
 	@GetMapping("/shelters/{shelterId}/dogs")
 	public Page<Dog> dogs(@AuthenticationPrincipal Jwt jwt, @PathVariable String shelterId,
 			@RequestParam(required = false) String cursor, @RequestParam(required = false) String limit) {
@@ -46,6 +47,14 @@ public class ManagementController {
 	public Item<Observation> updateObservation(@AuthenticationPrincipal Jwt jwt, @PathVariable String dogId,
 			@PathVariable String observationId, @RequestBody JsonNode body) {
 		return new Item<>(service.updateObservation(subject(jwt), dogId, observationId, body));
+	}
+	@GetMapping("/dogs/{dogId}/public-source")
+	public Item<PublicSourceService.Source> publicSource(@AuthenticationPrincipal Jwt jwt, @PathVariable String dogId) {
+		return new Item<>(sources.get(subject(jwt), ManagementInput.id(dogId)));
+	}
+	@PostMapping("/dogs/{dogId}/public-source")
+	public Item<PublicSourceService.Source> linkPublicSource(@AuthenticationPrincipal Jwt jwt, @PathVariable String dogId, @RequestBody JsonNode body) {
+		return new Item<>(sources.link(subject(jwt), ManagementInput.id(dogId), body));
 	}
 	private UUID subject(Jwt jwt) { return UUID.fromString(jwt.getSubject()); }
 }

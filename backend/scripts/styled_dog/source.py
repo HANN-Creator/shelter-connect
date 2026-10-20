@@ -9,7 +9,8 @@ from .client import download, read, secret, write
 
 ENDPOINT = 'https://apis.data.go.kr/1543061/abandonmentPublicService_v2/abandonmentPublic_v2'
 FIELDS = {'desertionNo','noticeNo','kindCd','kindNm','colorCd','age','weight','sexCd',
-          'specialMark','popfile1','popfile2','careNm','processState'}
+          'specialMark','popfile1','popfile2','careNm','careRegNo','careAddr','careTel','orgNm',
+          'processState','neuterYn','happenDt','noticeSdt','noticeEdt','updTm'}
 
 
 def secure_photo_url(url):

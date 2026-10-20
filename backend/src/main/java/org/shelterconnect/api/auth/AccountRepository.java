@@ -63,7 +63,7 @@ public class AccountRepository {
 
 	public Optional<ManagementAccess> dogAccess(UUID subject, UUID dogId) {
 		return jdbc.sql("SELECT s.id, d.id AS dog_id, m.role FROM shelter.dogs d "
-				+ "JOIN shelter.shelters s ON s.id = d.shelter_id " + membershipJoin()
+				+ "JOIN shelter.shelters s ON s.id = coalesce(d.management_shelter_id,d.shelter_id) " + membershipJoin()
 				+ " WHERE " + allowed() + " AND d.id = :id")
 				.param("provider", provider).param("subject", subject.toString()).param("id", dogId)
 				.query((rs, row) -> new ManagementAccess(rs.getObject("id", UUID.class),
@@ -80,7 +80,7 @@ public class AccountRepository {
 	}
 
 	public boolean lockDogInShelter(UUID dogId, UUID shelterId) {
-		return jdbc.sql("SELECT id FROM shelter.dogs WHERE id = :dog AND shelter_id = :shelter FOR UPDATE")
+		return jdbc.sql("SELECT id FROM shelter.dogs WHERE id = :dog AND coalesce(management_shelter_id,shelter_id) = :shelter FOR UPDATE")
 				.param("dog", dogId).param("shelter", shelterId).query(UUID.class).optional().isPresent();
 	}
 
