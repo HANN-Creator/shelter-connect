@@ -24,14 +24,14 @@ public class ManagementRepository {
 	public ManagementRepository(JdbcClient jdbc) { this.jdbc = jdbc; }
 
 	public List<Dog> dogs(UUID shelterId, UUID after, int count) {
-		var query = jdbc.sql("SELECT * FROM shelter.dogs WHERE shelter_id = :shelter AND archived_at IS NULL"
+		var query = jdbc.sql("SELECT * FROM shelter.dogs WHERE coalesce(management_shelter_id,shelter_id) = :shelter AND archived_at IS NULL"
 				+ (after == null ? "" : " AND id > :after") + " ORDER BY id LIMIT :count")
 				.param("shelter", shelterId).param("count", count);
 		if (after != null) query = query.param("after", after);
 		return query.query(DOG_ROW).list();
 	}
 	public Optional<Dog> dog(UUID id, UUID shelterId) {
-		return jdbc.sql("SELECT * FROM shelter.dogs WHERE id = :id AND shelter_id = :shelter")
+		return jdbc.sql("SELECT * FROM shelter.dogs WHERE id = :id AND coalesce(management_shelter_id,shelter_id) = :shelter")
 				.param("id", id).param("shelter", shelterId).query(DOG_ROW).optional();
 	}
 	public Dog createDog(UUID shelterId, DogFields values) {
@@ -53,11 +53,11 @@ public class ManagementRepository {
 				"""), values).param("id", current.id()).param("shelter", current.shelterId())
 				.param("version", utc(current.updatedAt())).update();
 		if (changed != 1) throw ManagementException.conflict("STALE_RESOURCE", "다시 조회한 뒤 수정해 주세요.");
-		return dog(current.id(), current.shelterId()).orElseThrow();
+		return jdbc.sql("SELECT * FROM shelter.dogs WHERE id=:id").param("id",current.id()).query(DOG_ROW).single();
 	}
 	public List<Observation> observations(UUID dogId, UUID shelterId, UUID after, int count) {
 		var query = jdbc.sql("SELECT o.* FROM shelter.dog_observations o JOIN shelter.dogs d ON d.id=o.dog_id"
-				+ " WHERE o.dog_id=:dog AND d.shelter_id=:shelter" + (after == null ? "" : " AND o.id > :after") + " ORDER BY o.id LIMIT :count")
+				+ " WHERE o.dog_id=:dog AND coalesce(d.management_shelter_id,d.shelter_id)=:shelter" + (after == null ? "" : " AND o.id > :after") + " ORDER BY o.id LIMIT :count")
 				.param("dog", dogId).param("shelter", shelterId).param("count", count);
 		if (after != null) query = query.param("after", after);
 		return query.query(OBS_ROW).list();

@@ -3407,6 +3407,24 @@
           }
         }
       }
+    },
+    "PublicAnimalLinkInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "animalId",
+        "expectedUpdatedAt"
+      ],
+      "properties": {
+        "animalId": {
+          "type": "string",
+          "pattern": "^[0-9]{15}$"
+        },
+        "expectedUpdatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
     }
   },
   "operations": {
@@ -5356,6 +5374,39 @@
       ],
       "request": {
         "schema": "StyledActionExtension"
+      }
+    },
+    "GET /v1/shelter-admin/dogs/{dogId}/public-source": {
+      "summary": "공공 동물의 실제 보호소 연결 조회",
+      "tag": "06. 보호소 관리",
+      "description": "소속 담당자 전용. 실제 shelterId, 관리 범위 managementShelterId, 공공 동물번호, 보호소 코드·이름·주소·연락처와 확인 시각을 반환합니다. 연결 전에는 404입니다.",
+      "success": [
+        200
+      ],
+      "errors": [
+        404
+      ],
+      "public": false
+    },
+    "POST /v1/shelter-admin/dogs/{dogId}/public-source": {
+      "summary": "공공 API의 실제 보호소에 연결",
+      "tag": "06. 보호소 관리",
+      "description": "비공개 강아지의 담당자만 가능. DATA_GO_KR_SERVICE_KEY로 서버가 동물번호를 직접 검증합니다. 설명의 public animal <번호>. 또는 기존 연결과 일치해야 합니다. 실제 소속을 보호소 코드로 연결하고 관리 범위와 도트·작업·사진 사용 허가는 보존합니다. 새 보호소는 비공개·미승인, 소속 권한을 부여하지 않습니다. 실행 중 작업은 409로 거절합니다. expectedUpdatedAt으로 동시 변경을 막습니다.",
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404,
+        409,
+        502,
+        503
+      ],
+      "public": false,
+      "request": {
+        "schema": "PublicAnimalLinkInput",
+        "required": true,
+        "contentType": "application/json"
       }
     }
   }

@@ -66,6 +66,8 @@ public class SecurityConfiguration {
 								"/v1/chat-sessions/{sessionId}/messages/{messageId}/reply").authenticated()
 						.requestMatchers(HttpMethod.GET, "/v1/me/chat-sessions", "/v1/chat-sessions/{sessionId}",
 								"/v1/chat-sessions/{sessionId}/messages").authenticated()
+						.requestMatchers(HttpMethod.POST, "/v1/shelter-admin/dogs/{dogId}/public-source").authenticated()
+						.requestMatchers(HttpMethod.GET, "/v1/shelter-admin/dogs/{dogId}/public-source").authenticated()
 						.requestMatchers(HttpMethod.POST, "/v1/shelter-admin/dogs",
 								"/v1/shelter-admin/dogs/{dogId}/observations").authenticated()
 						.requestMatchers(HttpMethod.PATCH, "/v1/shelter-admin/dogs/{dogId}",

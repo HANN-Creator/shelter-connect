@@ -66,7 +66,7 @@ public class AssetStore {
     public Map<String,Object> photoStored(UUID photo,UUID permission) {
         var id=jdbc.sql("""
             SELECT p.id FROM shelter.dog_photos p JOIN shelter.dogs d ON d.id=p.dog_id
-            JOIN shelter.shelters s ON s.id=d.shelter_id
+            JOIN shelter.shelters s ON s.id=coalesce(d.management_shelter_id,d.shelter_id)
             JOIN shelter.asset_source_permissions a ON a.shelter_id=s.id
             WHERE p.id=:photo AND a.id=:permission AND p.rights_status='GRANTED' AND d.archived_at IS NULL
               AND s.approval_status='APPROVED' AND a.revoked_at IS NULL AND a.derivatives_allowed AND a.pixellab_allowed
@@ -103,7 +103,7 @@ public class AssetStore {
         if(existing.isPresent()) return job(existing.get());
         UUID id=jdbc.sql("""
             INSERT INTO shelter.asset_jobs(photo_id,dog_id,shelter_id,permission_id,pipeline_version,action_plan,behavior_revision,selection_key)
-            SELECT p.id,p.dog_id,d.shelter_id,a.permission_id,:version,CAST(:plan AS jsonb),:revision,:selection FROM shelter.dog_photos p
+            SELECT p.id,p.dog_id,coalesce(d.management_shelter_id,d.shelter_id),a.permission_id,:version,CAST(:plan AS jsonb),:revision,:selection FROM shelter.dog_photos p
               JOIN shelter.dogs d ON d.id=p.dog_id JOIN shelter.asset_photo_sources a ON a.photo_id=p.id WHERE p.id=:photo
             ON CONFLICT (photo_id,pipeline_version,selection_key) DO UPDATE SET photo_id=EXCLUDED.photo_id RETURNING id
             """).param("version",AssetAction.VERSION).param("photo",photo).param("plan",json.writeValueAsString(plan.actions()))
@@ -361,7 +361,7 @@ public class AssetStore {
             .param("id",work.id()).param("t",work.token()).query(UUID.class).optional().isPresent();
     }
     void valid(UUID id,boolean lock) {
-        var ids=jdbc.sql("SELECT j.photo_id,j.permission_id FROM shelter.asset_jobs j JOIN shelter.dog_photos p ON p.id=j.photo_id JOIN shelter.dogs d ON d.id=p.dog_id WHERE j.id=:id AND j.dog_id=p.dog_id AND j.shelter_id=d.shelter_id").param("id",id)
+        var ids=jdbc.sql("SELECT j.photo_id,j.permission_id FROM shelter.asset_jobs j JOIN shelter.dog_photos p ON p.id=j.photo_id JOIN shelter.dogs d ON d.id=p.dog_id WHERE j.id=:id AND j.dog_id=p.dog_id AND j.shelter_id=coalesce(d.management_shelter_id,d.shelter_id)").param("id",id)
             .query((r,n)->new UUID[]{r.getObject(1,UUID.class),r.getObject(2,UUID.class)}).optional().orElseThrow(AssetStore::missing);
         validPhoto(ids[0],ids[1],lock);
     }
@@ -369,9 +369,9 @@ public class AssetStore {
         boolean valid=jdbc.sql("""
             SELECT p.id FROM shelter.dog_photos p JOIN shelter.asset_photo_sources b ON b.photo_id=p.id
             JOIN shelter.asset_source_permissions a ON a.id=b.permission_id JOIN shelter.dogs d ON d.id=p.dog_id
-            JOIN shelter.shelters s ON s.id=d.shelter_id
+            JOIN shelter.shelters s ON s.id=coalesce(d.management_shelter_id,d.shelter_id)
             WHERE p.id=:p AND p.rights_status='GRANTED' AND p.storage_bucket=b.storage_bucket AND p.storage_key=b.storage_key
-              AND d.shelter_id=a.shelter_id AND d.archived_at IS NULL AND s.approval_status='APPROVED'
+              AND coalesce(d.management_shelter_id,d.shelter_id)=a.shelter_id AND d.archived_at IS NULL AND s.approval_status='APPROVED'
               AND a.revoked_at IS NULL AND a.derivatives_allowed AND a.pixellab_allowed
               AND (a.source_kind<>'CRAWL' OR a.crawl_allowed)
             """+(permission==null?"":" AND a.id=:permission")+(lock?" FOR SHARE OF p,b,a,d,s":""))
