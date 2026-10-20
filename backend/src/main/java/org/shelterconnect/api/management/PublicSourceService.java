@@ -12,6 +12,7 @@ import tools.jackson.databind.JsonNode;
 
 @Service
 public class PublicSourceService {
+    private static final org.slf4j.Logger log=org.slf4j.LoggerFactory.getLogger(PublicSourceService.class);
     public record Source(UUID dogId,String animalId,UUID shelterId,UUID managementShelterId,
         String careRegNo,String shelterName,String region,String address,String contactPhone,
         String processState,Instant fetchedAt) {}
@@ -42,23 +43,36 @@ public class PublicSourceService {
         try { version=Instant.parse(body.path("expectedUpdatedAt").asText()); }
         catch(Exception invalid) { throw ManagementException.invalid("expectedUpdatedAt을 확인해 주세요."); }
         // The HTTP request runs outside a DB transaction; scope/version are rechecked under locks afterwards.
-        var record=source.fetch(body.path("animalId").asText());
+        var record=fetch(body.path("animalId").asText());
         try {
             transaction.executeWithoutResult(status->{
                 access.requireDogForWrite(subject,dog);
-                jdbc.sql("SELECT shelter.link_public_animal(:dog,:version,CAST(:record AS jsonb),:fetched)")
-                    .param("dog",dog).param("version",version.atOffset(ZoneOffset.UTC)).param("record",record.toString())
-                    .param("fetched",OffsetDateTime.now(ZoneOffset.UTC)).query(UUID.class).single();
+                applyVerified(dog,version,record);
             });
         } catch(DataAccessException failure) {
-            String message=Objects.toString(failure.getMostSpecificCause().getMessage(),"");
-            for(String code:List.of("STALE_RESOURCE","PUBLIC_SOURCE_PRIVATE_REQUIRED","PUBLIC_SOURCE_IDENTITY_MISMATCH",
-                    "PUBLIC_SOURCE_JOB_ACTIVE","PUBLIC_SOURCE_INVALID"))
-                if(message.contains(code)) throw ManagementException.conflict(code,"공공 데이터 연결 조건을 확인해 주세요.");
-            if(message.contains("public_animal_sources_animal_id_key"))
-                throw ManagementException.conflict("PUBLIC_SOURCE_DUPLICATE","이미 등록된 공공 동물이 있어요.");
-            throw failure;
+            throw translate(failure);
         }
         return get(subject,dog);
+    }
+    JsonNode fetch(String animal) {
+        try { return source.fetch(animal); }
+        catch(ManagementException failure) {
+            log.warn("Public shelter lookup stopped: code={}",failure.code);
+            throw failure;
+        }
+    }
+    void applyVerified(UUID dog,Instant version,JsonNode record) {
+        jdbc.sql("SELECT shelter.link_public_animal(:dog,:version,CAST(:record AS jsonb),:fetched)")
+            .param("dog",dog).param("version",version.atOffset(ZoneOffset.UTC)).param("record",record.toString())
+            .param("fetched",OffsetDateTime.now(ZoneOffset.UTC)).query(UUID.class).single();
+    }
+    RuntimeException translate(DataAccessException failure) {
+        String message=Objects.toString(failure.getMostSpecificCause().getMessage(),"");
+        for(String code:List.of("STALE_RESOURCE","PUBLIC_SOURCE_PRIVATE_REQUIRED","PUBLIC_SOURCE_IDENTITY_MISMATCH",
+                "PUBLIC_SOURCE_JOB_ACTIVE","PUBLIC_SOURCE_INVALID"))
+            if(message.contains(code))return ManagementException.conflict(code,"공공 데이터 연결 조건을 확인해 주세요.");
+        if(message.contains("public_animal_sources_animal_id_key"))
+            return ManagementException.conflict("PUBLIC_SOURCE_DUPLICATE","이미 등록된 공공 동물이 있어요.");
+        return failure;
     }
 }

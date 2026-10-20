@@ -15,7 +15,10 @@ import static org.shelterconnect.api.management.ManagementResponses.*;
 public class ManagementService {
 	private final ShelterAccessService access;
 	private final ManagementRepository repository;
-	public ManagementService(ShelterAccessService access, ManagementRepository repository) { this.access = access; this.repository = repository; }
+	private final PublicDogRegistration registration;
+	public ManagementService(ShelterAccessService access, ManagementRepository repository, PublicDogRegistration registration) {
+		this.access = access; this.repository = repository; this.registration=registration;
+	}
 
 	public Page<Dog> dogs(UUID subject, String shelter, String cursor, String limit) {
 		UUID id = ManagementInput.id(shelter);
@@ -29,12 +32,9 @@ public class ManagementService {
 		var owner = access.requireDog(subject, id);
 		return repository.dog(id, owner.shelterId()).orElseThrow(ManagementException::missing);
 	}
-	@Transactional(timeout = 10)
+	@Transactional(propagation = org.springframework.transaction.annotation.Propagation.SUPPORTS)
 	public Dog createDog(UUID subject, JsonNode body) {
-		ManagementInput.dogBody(body, true);
-		UUID shelter = ManagementInput.shelterId(body);
-		access.requireShelterForWrite(subject, shelter);
-		return repository.createDog(shelter, ManagementInput.dogFields(body, DogFields.defaults()));
+		return registration.create(subject,body);
 	}
 	@Transactional(timeout = 10)
 	public Dog updateDog(UUID subject, String dog, JsonNode body) {

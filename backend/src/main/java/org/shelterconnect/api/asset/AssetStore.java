@@ -27,8 +27,9 @@ public class AssetStore {
     private final AccountService accounts;
     private final AssetProperties properties;
     private final org.shelterconnect.api.behavior.BehaviorService behaviors;
-    public AssetStore(JdbcClient jdbc,JsonMapper json,ShelterAccessService access,AccountService accounts,AssetProperties properties,org.shelterconnect.api.behavior.BehaviorService behaviors) {
-        this.jdbc=jdbc;this.json=json;this.access=access;this.accounts=accounts;this.properties=properties;this.behaviors=behaviors;
+    private final PublicShelterGate shelters;
+    public AssetStore(JdbcClient jdbc,JsonMapper json,ShelterAccessService access,AccountService accounts,AssetProperties properties,org.shelterconnect.api.behavior.BehaviorService behaviors,PublicShelterGate shelters) {
+        this.jdbc=jdbc;this.json=json;this.access=access;this.accounts=accounts;this.properties=properties;this.behaviors=behaviors;this.shelters=shelters;
     }
     @Transactional
     public UUID permission(UUID subject,JsonNode body) {
@@ -180,9 +181,9 @@ public class AssetStore {
               AND pipeline_version=:version AND (lease_until IS NULL OR lease_until<now()) ORDER BY next_run_at,id FOR UPDATE SKIP LOCKED LIMIT 1
             """).param("version",AssetAction.VERSION).query(UUID.class).optional();
         if(id.isEmpty()) return null;
-        try { valid(id.get(),true); } catch(AssetException e) { cancel(id.get());return null; }
+        try { valid(id.get(),true); } catch(AssetException e) { invalidSource(id.get(),e);return null; }
         UUID token=UUID.randomUUID();
-        jdbc.sql("UPDATE shelter.asset_jobs SET status='RUNNING',lease_token=:t,lease_until=now()+interval '3 minutes',failure_code=CASE WHEN failure_code='DAILY_REQUEST_LIMIT' THEN NULL ELSE failure_code END WHERE id=:id")
+        jdbc.sql("UPDATE shelter.asset_jobs SET status='RUNNING',lease_token=:t,lease_until=now()+interval '3 minutes',failure_code=CASE WHEN failure_code IN ('DAILY_REQUEST_LIMIT','PUBLIC_SOURCE_LINK_REQUIRED') THEN NULL ELSE failure_code END WHERE id=:id")
             .param("t",token).param("id",id.get()).update();
         var work=jdbc.sql("""
             SELECT j.id,j.dog_id,j.photo_id,j.lease_token,t.action,t.status,t.provider_job_id,t.submitted_at,p.storage_bucket,p.storage_key
@@ -196,7 +197,7 @@ public class AssetStore {
     @Transactional
     public boolean reserve(Work work) {
         if(!owned(work)) return false;
-        try { valid(work.id(),true); } catch(AssetException e) { cancel(work.id());return false; }
+        try { valid(work.id(),true); } catch(AssetException e) { invalidSource(work.id(),e);return false; }
         if(jdbc.sql("UPDATE shelter.asset_steps SET status='SUBMITTING',submitted_at=now() WHERE job_id=:id AND action=:a AND status='PENDING'")
             .param("id",work.id()).param("a",work.action().name()).update()!=1)return false;
         jdbc.sql("INSERT INTO shelter.asset_submissions(job_id,action) VALUES (:id,:action)").param("id",work.id()).param("action",work.action().name()).update();
@@ -377,6 +378,11 @@ public class AssetStore {
             """+(permission==null?"":" AND a.id=:permission")+(lock?" FOR SHARE OF p,b,a,d,s":""))
             .params(permission==null?Map.of("p",photo):Map.of("p",photo,"permission",permission)).query(UUID.class).optional().isPresent();
         if(!valid) throw new AssetException(409,"ASSET_PERMISSION_REQUIRED");
+        if(lock)shelters.requirePhoto(photo);
+    }
+    void invalidSource(UUID id,AssetException failure) {
+        if(PublicShelterGate.PENDING.equals(failure.code))shelters.waitForLink(id);
+        else cancel(id);
     }
     private void cancel(UUID id) { jdbc.sql("UPDATE shelter.asset_jobs SET status='CANCELLED',failure_code='SOURCE_NO_LONGER_ALLOWED',lease_token=NULL,lease_until=NULL WHERE id=:id").param("id",id).update(); }
     private void complete(UUID id) { jdbc.sql("UPDATE shelter.asset_jobs SET status='REVIEW',failure_code=NULL,lease_token=NULL,lease_until=NULL WHERE id=:id").param("id",id).update(); }

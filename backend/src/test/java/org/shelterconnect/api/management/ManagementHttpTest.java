@@ -17,7 +17,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ManagementController.class)
-@Import({ManagementService.class, ManagementErrorHandler.class, ShelterAccessService.class, AccountService.class,
+@Import({ManagementService.class, PublicDogRegistration.class, ManagementErrorHandler.class, ShelterAccessService.class, AccountService.class,
 		ApiRequestFilter.class, SecurityConfiguration.class, SecurityErrors.class, JwtTestConfiguration.class})
 class ManagementHttpTest {
 	private static final UUID SUBJECT=UUID.randomUUID(), USER=UUID.randomUUID(), SHELTER=UUID.randomUUID(), DOG=UUID.randomUUID();
@@ -25,6 +25,7 @@ class ManagementHttpTest {
 	@Autowired JwtTestSupport tokens;
 	@MockitoBean ManagementRepository repository;
 	@MockitoBean PublicSourceService sources;
+	@MockitoBean org.springframework.transaction.PlatformTransactionManager transactions;
 	@MockitoBean AccountRepository accounts;
 
 	@Test void everyManagementRouteRequiresAuthentication() throws Exception {

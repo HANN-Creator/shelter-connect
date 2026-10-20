@@ -85,7 +85,7 @@ class PublicSourcePostgresTest {
         jdbc.update("UPDATE shelter.shelter_memberships SET status='REVOKED' WHERE user_id=?",user);
         mvc.perform(auth(get(path()),subject)).andExpect(status().isForbidden());
     }
-    @ParameterizedTest @ValueSource(strings={"stale","wrong-id","public","archived","active-job","bad-code","duplicate"})
+    @ParameterizedTest @ValueSource(strings={"stale","wrong-id","public","archived","active-job","queued-job","waiting-lease","bad-code","duplicate"})
     void invalidLinksAreRejected(String scenario) throws Exception {
         var body=request();String expected;
         switch(scenario) {
@@ -94,6 +94,12 @@ class PublicSourcePostgresTest {
             case "public" -> { jdbc.update("UPDATE shelter.dogs SET is_public=true WHERE id=?",dog);body=request();expected="PUBLIC_SOURCE_PRIVATE_REQUIRED"; }
             case "archived" -> { jdbc.update("UPDATE shelter.dogs SET archived_at=now() WHERE id=?",dog);body=request();expected="PUBLIC_SOURCE_PRIVATE_REQUIRED"; }
             case "active-job" -> { job("RUNNING");expected="PUBLIC_SOURCE_JOB_ACTIVE"; }
+            case "queued-job" -> { job("QUEUED");expected="PUBLIC_SOURCE_JOB_ACTIVE"; }
+            case "waiting-lease" -> {
+                UUID waiting=job("QUEUED");
+                jdbc.update("UPDATE shelter.asset_jobs SET failure_code='PUBLIC_SOURCE_LINK_REQUIRED',lease_token=?,lease_until=now()+interval '1 minute' WHERE id=?",UUID.randomUUID(),waiting);
+                expected="PUBLIC_SOURCE_JOB_ACTIVE";
+            }
             case "bad-code" -> { when(upstream.fetch(animal)).thenReturn(record(animal,"not-a-code"));expected="PUBLIC_SOURCE_INVALID"; }
             default -> { link();dog=UUID.randomUUID();addDog(dog,animal);body=request();expected="PUBLIC_SOURCE_DUPLICATE"; }
         }
