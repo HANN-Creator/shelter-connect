@@ -12,6 +12,8 @@ public class StyledAssetController {
     public StyledAssetController(StyledAssetStore store,StyledAssetManifest manifests,StyledLearningRecoveryStore learning) { this.store=store;this.manifests=manifests;this.learning=learning; }
     @PostMapping("/shelter-admin/dogs/{dogId}/styled-assets") @ResponseStatus(org.springframework.http.HttpStatus.ACCEPTED)
     public Item<StyledAssetStore.Job> request(@AuthenticationPrincipal Jwt jwt,@PathVariable String dogId,@RequestBody JsonNode body) { return new Item<>(store.request(subject(jwt),AssetInput.id(dogId),body)); }
+    @PostMapping("/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/action-extension")
+    public Item<StyledAssetStore.Job> extendActions(@AuthenticationPrincipal Jwt jwt,@PathVariable String dogId,@PathVariable String jobId,@RequestBody JsonNode body) { return new Item<>(store.extendActions(subject(jwt),AssetInput.id(dogId),AssetInput.id(jobId),body)); }
     @GetMapping("/shelter-admin/dogs/{dogId}/styled-assets/{jobId}")
     public Item<StyledAssetStore.Job> read(@AuthenticationPrincipal Jwt jwt,@PathVariable String dogId,@PathVariable String jobId) { return new Item<>(store.read(subject(jwt),AssetInput.id(dogId),AssetInput.id(jobId))); }
     @GetMapping("/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/preview")

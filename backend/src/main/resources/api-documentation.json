@@ -3347,6 +3347,66 @@
         "expectedStartedAt"
       ],
       "additionalProperties": false
+    },
+    "StyledActionExtension": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requestId",
+        "note",
+        "expectedBehaviorRevision",
+        "expectedActionPlan",
+        "expectedSeedHashes"
+      ],
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "note": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 2000
+        },
+        "expectedBehaviorRevision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "expectedActionPlan": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "expectedSeedHashes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "south",
+            "north",
+            "west",
+            "east"
+          ],
+          "properties": {
+            "south": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "north": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "west": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "east": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        }
+      }
     }
   },
   "operations": {
@@ -5277,6 +5337,25 @@
       ],
       "request": {
         "schema": "StyledPhotoAnalysisResume"
+      }
+    },
+    "POST /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/action-extension": {
+      "summary": "완료된 비공개 도트에 누락 행동만 추가",
+      "description": "소속 STAFF 이상. 자동 승인된 WARN_ONLY 비공개 작업에 현재 CONFIRMED 행동 계획의 누락 동작만 4방향으로 추가합니다. 기존 기본 도트·완료 시트·사진 분석·규칙·접수 이력은 그대로 유지하고 이전 계획과 승인을 기록합니다. 작업은 같은 ID로 QUEUED가 되며 전체 완료 후 다시 자동 승인합니다. 공개 강아지, 행동 제거, 미확인·낡은 근거와 사진 사용 허가를 거절합니다. 동일 requestId/본문은 멱등이며 다른 본문은 409입니다. 추가 행동마다 유료 생성 4건이 발생할 수 있습니다. 일반 생성 API 대신 이 API를 사용해야 기존 이미지를 재생성하지 않습니다.",
+      "tag": "32px 에셋",
+      "success": [
+        "200"
+      ],
+      "errors": [
+        "400",
+        "401",
+        "403",
+        "404",
+        "409",
+        "503"
+      ],
+      "request": {
+        "schema": "StyledActionExtension"
       }
     }
   }
