@@ -54,8 +54,12 @@
 ## 프론트/담당자 연결
 
 공개 `/v1/dogs/{dogId}/assets`는 완성·승인된 결과만 제공한다. 기존 4방향 프레임 좌표·재생 규약은 같다.
-`quality.mode`는 `WARN_ONLY` 또는 `BLOCKING`; `quality.reviewStatus`는 `CLEAR/WARNING/UNAVAILABLE/PENDING`이다.
-`quality.passed`와 `quality.warnings[]`를 함께 사용한다. 경고가 있는 팩도 정상 재생할 수 있다.
+공개 응답에는 내부 검수 정보인 `quality` 전체를 포함하지 않는다. 경고가 있는 팩도 정상 재생할 수 있다.
+으르렁거리기·경고 짖기 등 실제 행동을 설명하는 `actionMessages`와 행동 상호작용은 공개 재생 데이터에 유지한다.
+
+담당자 전용 `GET /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/preview`와 `/warnings`에서 검수 정보를 확인한다.
+이 응답의 `quality.mode`는 `WARN_ONLY` 또는 `BLOCKING`; `quality.reviewStatus`는 `CLEAR/WARNING/UNAVAILABLE/PENDING`이다.
+`quality.passed`와 `quality.warnings[]`를 함께 사용한다. 공개 응답에서 제외해도 DB의 검수·경고·학습 기록은 그대로 보존된다.
 
 `GET /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/warnings`는 미완료 작업에도 현재 저장된 이미지를 제공한다.
 응답의 `images[]`에는 `label/action/direction`, 원본 `report`, `warnings`, `metadata`,

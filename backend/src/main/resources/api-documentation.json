@@ -1050,9 +1050,6 @@
         "behavior": {
           "$ref": "#/components/schemas/BehaviorPlayback"
         },
-        "quality": {
-          "$ref": "#/components/schemas/VisualAssetQuality"
-        },
         "actionMessages": {
           "type": "object",
           "additionalProperties": {
@@ -4100,7 +4097,7 @@
     "GET /v1/dogs/{dogId}/assets": {
       "summary": "승인된 강아지 에셋 조회",
       "tag": "08. 도트와 애니메이션",
-      "description": "완성·승인된 팩을 조회하며 서명 URL은 60초입니다. availableActions에 있는 행동만 재생합니다. WARN_ONLY 정책에서는 quality.passed=false여도 승인된 시트를 정상 재생합니다. quality.reviewStatus와 warnings는 사람이 확인할 관찰 결과이며 재생 차단/자동 재생성 신호가 아닙니다. 동작·방향·프레임과 경고를 함께 표시하세요. 서버 상태 APPROVED는 시각적으로 무결하다는 보증이 아닙니다.",
+      "description": "완성·승인된 팩을 조회하며 서명 URL은 60초입니다. availableActions에 있는 행동만 재생합니다. 내부 검수 정보인 quality 전체(경고·검수 상태·보완 횟수)는 공개 응답에서 제외합니다. 담당자는 styled-assets의 preview 또는 warnings에서 확인할 수 있습니다. 실제 행동을 설명하는 actionMessages와 behavior는 유지합니다. 서버 상태 APPROVED는 시각적으로 무결하다는 보증이 아닙니다.",
       "success": [
         200
       ],
@@ -4985,7 +4982,7 @@
     },
     "GET /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/preview": {
       "summary": "저장된 4방향·동작 검토 주소",
-      "description": "허가된 사진만 처리. 동일 사진·스타일·입력·확인된 행동 버전 재요청은 기존 작업을 반환. SEED_REVIEW에서 원본 4방향 검토 후 기본3개+양수 비중 선택 행동만 각각 4방향 생성(총13~41단계), REVIEW에서 최종 승인. 생성은 백그라운드 작업이며 조회는 유료 API를 호출하지 않음. recover는 운영자 전용: FAILED는 빈 본문, OUTCOME_UNKNOWN은 확인된 providerJobId 필수. actionPlan/generationPlan은 작업 접수 당시 고정. 기존 33단계는 변경 없이 재개. 공개 assets.behavior는 현재 유효한 행동과 실제 시트의 교집합. 새 작업은 sprite-quality-v1 자동 검수 적용: 사진 기준 공통 꼬리 자세, 프레임 잘림과 Luna 시각 검사, 불합격 시트별 최대2회 수정 생성. qualityPolicy·steps.qualityReport·repairCount 제공. 최종 승인은 전 시트 품질 통과가 필요. 기존 작업은 repair 명시 호출로 적용. 생성 단계 수는 최초 계획이며 보완 제출 수와 Generations는 별도.",
+      "description": "소속 및 원본 사진 허가를 확인한 담당자만 저장된 기본 도트·동작과 quality 검수 정보를 조회합니다. quality에는 mode, passed, reviewStatus, warnings, repairCount가 포함됩니다. WARN_ONLY의 경고나 관찰 불가는 생성 완료를 막지 않으며 통과로 바꾸어 기록하지 않습니다. 공개 assets 응답에는 quality가 없습니다. 조회는 유료 생성·보완을 실행하지 않으며 서명 URL은 60초 유효합니다.",
       "tag": "32px 에셋",
       "success": [
         "200"

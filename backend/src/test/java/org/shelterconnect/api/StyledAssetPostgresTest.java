@@ -359,6 +359,7 @@ class StyledAssetPostgresTest {
         UUID id=request();assertThat(read(id).path("steps").size()).isEqualTo(41);
         tick();tick();review(id,true,"APPROVE",200);finish(id);review(id,false,"APPROVE",200);
         var manifest=get(null,"/v1/dogs/"+dog+"/assets",200).path("data");
+        assertThat(manifest.has("quality")).isFalse();
         for(String direction:List.of("UP","DOWN","LEFT","RIGHT"))for(String action:List.of("GROWL","WARNING_BARK")) {
             var clip=manifest.at("/mapDirections/"+direction+"/"+action);
             assertThat(clip.path("frameCount").asInt()).isEqualTo(9);
@@ -3333,22 +3334,29 @@ class StyledAssetPostgresTest {
         verify(warningAgent,times(13)).observe(anyList(),anyList(),anyString(),nullable(String.class));
         assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_quality_lessons WHERE source_job_id=?",Integer.class,id)).isZero();
         var manifest=get(null,"/v1/dogs/"+dog+"/assets",200).path("data");
-        assertThat(manifest.at("/quality/mode").asText()).isEqualTo("WARN_ONLY");assertThat(manifest.at("/quality/passed").asBoolean()).isFalse();
-        assertThat(manifest.at("/quality/warnings").size()).isEqualTo(13);
-        assertThat(manifest.toString()).doesNotContain("privateAudit","internal prompt validation details");
+        assertThat(manifest.has("quality")).isFalse();
+        assertThat(manifest.toString()).doesNotContain("privateAudit","internal prompt validation details","꼬리 모양이 불확실합니다.","\"warnings\"","\"reviewStatus\"","\"repairCount\"");
         for(String d:List.of("UP","DOWN","LEFT","RIGHT"))for(String action:List.of("IDLE","WALK","SIT"))assertThat(manifest.at("/mapDirections/"+d+"/"+action+"/frames").size()).isEqualTo(9);
+        var preview=get(subject,path(id)+"/preview",200).path("data");
+        assertThat(preview.at("/quality/mode").asText()).isEqualTo("WARN_ONLY");assertThat(preview.at("/quality/passed").asBoolean()).isFalse();
+        assertThat(preview.at("/quality/warnings").size()).isEqualTo(13);
         var warningPage=get(subject,path(id)+"/warnings",200).path("data");assertThat(warningPage.path("images").size()).isEqualTo(13);
+        assertThat(warningPage.path("quality")).isEqualTo(preview.path("quality"));
         assertThat(warningPage.at("/images/1/warnings/0/frames")).isEqualTo(json.valueToTree(List.of(2,8)));
         assertThat(warningPage.at("/images/1/spritesheetUrl").asText()).contains("/sheets/idle-south.png");
         get(null,path(id)+"/warnings",401);get(UUID.randomUUID(),path(id)+"/warnings",403);
+        get(null,path(id)+"/preview",401);get(UUID.randomUUID(),path(id)+"/preview",403);
+        assertThat(read(id)).isEqualTo(result);
     }
     @Test void visualWarningsUnavailableDoesNotHoldThePackOrRetryObservation()throws Exception {
         when(warningAgent.observe(anyList(),anyList(),anyString(),nullable(String.class))).thenThrow(new org.shelterconnect.api.chat.AiFailure("AI_UNAVAILABLE"));
         when(quality.contract(any(),any())).thenThrow(new org.shelterconnect.api.chat.AiFailure("AI_UNAVAILABLE"));
         UUID id=warningRequest();finish(id);assertThat(read(id).path("status").asText()).isEqualTo("APPROVED");
         var manifest=get(null,"/v1/dogs/"+dog+"/assets",200).path("data");
-        assertThat(manifest.at("/quality/reviewStatus").asText()).isEqualTo("UNAVAILABLE");assertThat(manifest.at("/quality/passed").asBoolean()).isFalse();
-        assertThat(manifest.at("/quality/warnings").size()).isEqualTo(14);
+        assertThat(manifest.has("quality")).isFalse();
+        var preview=get(subject,path(id)+"/preview",200).path("data");
+        assertThat(preview.at("/quality/reviewStatus").asText()).isEqualTo("UNAVAILABLE");assertThat(preview.at("/quality/passed").asBoolean()).isFalse();
+        assertThat(preview.at("/quality/warnings").size()).isEqualTo(14);
         verify(warningAgent,times(13)).observe(anyList(),anyList(),anyString(),nullable(String.class));verify(provider,times(12)).submit(eq(false),any());
     }
     @Test void visualWarningsStillRejectUnusableImageAndNeverPayToRepairIt()throws Exception {
