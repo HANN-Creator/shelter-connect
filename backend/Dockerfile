@@ -17,7 +17,8 @@ COPY scripts/styled_dog ./scripts/styled_dog
 COPY asset-styles ./asset-styles
 RUN --network=none ./gradlew --no-daemon --max-workers=2 --offline bootJar
 
-FROM eclipse-temurin:21-jre-jammy
+# Pillow 13 requires Python >=3.11; Noble provides Python 3.12.
+FROM eclipse-temurin:21-jre-noble
 RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-venv \
     && rm -rf /var/lib/apt/lists/*
 COPY motion-requirements.txt /tmp/motion-requirements.txt
