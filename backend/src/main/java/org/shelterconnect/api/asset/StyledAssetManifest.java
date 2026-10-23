@@ -28,6 +28,7 @@ public class StyledAssetManifest {
     }
     public Map<String,Object> preview(UUID subject,UUID dog,UUID id) {
         var j=store.preview(subject,dog,id);var result=manifest(j,j.status().equals("SEED_REVIEW") || (j.qualityPolicy()!=null && j.qualityPolicy().path("referenceOnly").asBoolean()));
+        if(j.qualityPolicy()!=null)result.put("quality",quality(j));
         if(!store.preview(subject,dog,id).status().equals(j.status()))throw new AssetException(409,"ASSET_CHANGED");return result;
     }
     public Map<String,Object> warnings(UUID subject,UUID dog,UUID id) {
@@ -54,7 +55,7 @@ public class StyledAssetManifest {
     private Map<String,Object> quality(StyledAssetStore.Job job) {
         var mapper=new tools.jackson.databind.json.JsonMapper();var warnings=mapper.createArrayNode();
         for(var step:job.steps())for(var warning:StyledVisualWarnings.warnings(step,mapper)) {
-            // Public playback carries actionable findings, never the full prompt/observation audit.
+            // Admin previews summarize findings; the warnings endpoint retains the full audit.
             var item=mapper.createObjectNode().put("label",step.label()).put("action",step.action());
             for(String field:List.of("code","note","frames","direction"))if(warning.has(field))item.set(field,warning.path(field));
             if(!item.has("direction"))item.put("direction",Objects.toString(step.direction(),"all"));warnings.add(item);
@@ -90,7 +91,6 @@ public class StyledAssetManifest {
         if(job.qualityPolicy()!=null && job.qualityPolicy().path("referenceOnly").asBoolean()) {
             result.put("referenceOnly",true);result.put("provider","Imported seed reference");
         }
-        if(job.qualityPolicy()!=null)result.put("quality",quality(job));
         if(seedsOnly) { result.put("directions",directions);result.put("seedHashes",base.path("hashes"));return result; }
         var clips=new LinkedHashMap<String,Map<String,Object>>();
         var names=Map.of("south","DOWN","north","UP","west","LEFT","east","RIGHT");

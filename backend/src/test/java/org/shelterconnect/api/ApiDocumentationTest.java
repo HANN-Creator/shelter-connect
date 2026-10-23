@@ -77,6 +77,7 @@ class ApiDocumentationTest {
         var manifest=root.path("paths").path("/v1/dogs/{dogId}/assets").path("get");
         assertThat(manifest.at("/responses/200/content/application~1json/schema/$ref").asText()).endsWith("AssetManifestResponse");
         assertThat(schemas.path("AssetManifest").path("properties").has("animations")).isTrue();
+        assertThat(schemas.path("AssetManifest").path("properties").has("quality")).isFalse();
         assertThat(schemas.at("/AssetManifest/properties/variants/properties/MAP_32/$ref").asText()).endsWith("MapPixelVariant");
         assertThat(schemas.at("/MapPixelVariant/properties/frameSize/properties/width/maximum").asInt()).isEqualTo(32);
         assertThat(schemas.at("/AssetAnimation/properties/frameCount/maximum").asInt()).isEqualTo(48);

@@ -32,7 +32,8 @@
 
 - DB V25 (B102 코드 적용 기준): 작업 상태, 특징·행동 계획, 파일 위치·해시, 관찰 결과, 경고, 비용 영수증과 이전 시도를 보관한다.
 - PNG는 비공개 Storage에 저장한다. DB에 PNG 원본 바이너리를 넣는 방식이 아니다.
-- 완성된 공개 팩: `GET /v1/dogs/{dogId}/assets`. 경고가 있어도 기존 좌표로 재생할 수 있다.
+- 완성된 공개 팩: `GET /v1/dogs/{dogId}/assets`. 내부 검수 정보인 `quality`는 제외하며, 경고가 있어도 기존 좌표로 재생할 수 있다. 실제 행동을 설명하는 `actionMessages`는 유지한다.
+- 담당자 미리보기: `GET /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/preview`. `quality`의 경고·검수 상태를 포함한다.
 - 담당자 경고 이미지: `GET /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/warnings`.
 - 기존 미승인 작업 전환: `POST /v1/shelter-admin/dogs/{dogId}/styled-assets/{jobId}/visual-warnings`.
   권한·해시·과거 전송 상태를 검사하고 확정 저장 이미지를 재사용한다.
