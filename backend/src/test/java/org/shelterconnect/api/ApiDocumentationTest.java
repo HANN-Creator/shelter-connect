@@ -37,12 +37,18 @@ class ApiDocumentationTest {
         var actual=new TreeSet<String>();
         requestMappingHandlerMapping.getHandlerMethods().forEach((mapping,handler) -> {
             for(String path:mapping.getPatternValues()) if(path.startsWith("/v1/"))
-                for(var method:mapping.getMethodsCondition().getMethods()) actual.add(method+" "+path);
+                for(var method:mapping.getMethodsCondition().getMethods()) actual.add(method+" "+path.replace("{*file}","{file}"));
         });
-        assertThat(documented).containsExactlyElementsOf(actual).hasSize(109);
+        assertThat(documented).containsExactlyElementsOf(actual).hasSize(111);
         assertThat(root.at("/servers/0/url").asText()).isEqualTo("/");
         assertThat(root.at("/components/securitySchemes/supabaseBearer/scheme").asText()).isEqualTo("bearer");
         assertThat(root.path("paths").path("/v1/dogs/{dogId}/assets").path("get").path("security").size()).isZero();
+        var mapFile=root.path("paths").path("/v1/map-assets/{version}/{mapId}/{file}").path("get");
+        assertThat(mapFile.path("security").size()).isZero();
+        assertThat(mapFile.at("/responses/200/content").propertyNames()).contains("image/png","application/json");
+        assertThat(mapFile.at("/responses/304/content").isMissingNode()).isTrue();
+        for(var p:mapFile.path("parameters")) assertThat(p.at("/schema/format").asText()).isNotEqualTo("uuid");
+        assertThat(root.path("paths").path("/v1/shelters/{shelterId}/maps").path("get").at("/responses/200/content/application~1json/schema/$ref").asText()).endsWith("ShelterMapList");
         assertThat(root.path("paths").path("/v1/dogs/{dogId}/photos").path("get").path("security").get(0).has("supabaseBearer")).isTrue();
         checkReferences(root,root);
     }

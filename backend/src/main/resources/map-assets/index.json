@@ -1,0 +1,1022 @@
+{
+  "1.0.0/01-sunny-meadow/animations/grass/frames/frame-00.png": {
+    "bytes": 157,
+    "contentType": "image/png",
+    "sha256": "cec55b025c09953c46e6ea6176b3b0432f0bd6419cc72d087d4ccd28432a2eed"
+  },
+  "1.0.0/01-sunny-meadow/animations/grass/frames/frame-01.png": {
+    "bytes": 158,
+    "contentType": "image/png",
+    "sha256": "a11fc7d620834b92a3ffcf175a2d25f3118fad67a367b9c4c82b1dedf06ea281"
+  },
+  "1.0.0/01-sunny-meadow/animations/grass/frames/frame-02.png": {
+    "bytes": 152,
+    "contentType": "image/png",
+    "sha256": "c67d1628681e45fe3e9df43ae6b3375371ccce6b8d352006f5d2dbcb5a129bab"
+  },
+  "1.0.0/01-sunny-meadow/animations/grass/frames/frame-03.png": {
+    "bytes": 158,
+    "contentType": "image/png",
+    "sha256": "a11fc7d620834b92a3ffcf175a2d25f3118fad67a367b9c4c82b1dedf06ea281"
+  },
+  "1.0.0/01-sunny-meadow/animations/grass/frames/frame-04.png": {
+    "bytes": 157,
+    "contentType": "image/png",
+    "sha256": "cec55b025c09953c46e6ea6176b3b0432f0bd6419cc72d087d4ccd28432a2eed"
+  },
+  "1.0.0/01-sunny-meadow/animations/grass/frames/frame-05.png": {
+    "bytes": 157,
+    "contentType": "image/png",
+    "sha256": "fc912a37ead1d7617302b321594553f0d5f78a1f1e4e0baa1b071cc87375927f"
+  },
+  "1.0.0/01-sunny-meadow/animations/grass/frames/frame-06.png": {
+    "bytes": 152,
+    "contentType": "image/png",
+    "sha256": "16a6642d71f89dffeabf0c3fe9fdbd0e0aab6865cc1103b5a06fb115e1ff8652"
+  },
+  "1.0.0/01-sunny-meadow/animations/grass/frames/frame-07.png": {
+    "bytes": 157,
+    "contentType": "image/png",
+    "sha256": "fc912a37ead1d7617302b321594553f0d5f78a1f1e4e0baa1b071cc87375927f"
+  },
+  "1.0.0/01-sunny-meadow/animations/grass/sheet.png": {
+    "bytes": 268,
+    "contentType": "image/png",
+    "sha256": "72c8d5d0f7f04a1d0c12e30b83439876756182e9c5920650d933c1b98f9f24ef"
+  },
+  "1.0.0/01-sunny-meadow/animations/plants-atlas.png": {
+    "bytes": 455,
+    "contentType": "image/png",
+    "sha256": "552a7c8676951965281fc1f55e5fa176aa94b9ac695bd4ba2a9c473c15e18ea5"
+  },
+  "1.0.0/01-sunny-meadow/animations/reeds/frames/frame-00.png": {
+    "bytes": 139,
+    "contentType": "image/png",
+    "sha256": "779b4c16244e83c7d4769e4d8181454ae4e9424c92addd95fd8ad20069ff951f"
+  },
+  "1.0.0/01-sunny-meadow/animations/reeds/frames/frame-01.png": {
+    "bytes": 139,
+    "contentType": "image/png",
+    "sha256": "779b4c16244e83c7d4769e4d8181454ae4e9424c92addd95fd8ad20069ff951f"
+  },
+  "1.0.0/01-sunny-meadow/animations/reeds/frames/frame-02.png": {
+    "bytes": 152,
+    "contentType": "image/png",
+    "sha256": "4e4c67feeb948712a255351c994498a7bef94bc91834cde2e3e0e79d17d2adb8"
+  },
+  "1.0.0/01-sunny-meadow/animations/reeds/frames/frame-03.png": {
+    "bytes": 139,
+    "contentType": "image/png",
+    "sha256": "779b4c16244e83c7d4769e4d8181454ae4e9424c92addd95fd8ad20069ff951f"
+  },
+  "1.0.0/01-sunny-meadow/animations/reeds/frames/frame-04.png": {
+    "bytes": 139,
+    "contentType": "image/png",
+    "sha256": "779b4c16244e83c7d4769e4d8181454ae4e9424c92addd95fd8ad20069ff951f"
+  },
+  "1.0.0/01-sunny-meadow/animations/reeds/frames/frame-05.png": {
+    "bytes": 139,
+    "contentType": "image/png",
+    "sha256": "779b4c16244e83c7d4769e4d8181454ae4e9424c92addd95fd8ad20069ff951f"
+  },
+  "1.0.0/01-sunny-meadow/animations/reeds/frames/frame-06.png": {
+    "bytes": 151,
+    "contentType": "image/png",
+    "sha256": "f7ec814e53ebbba55541c230d85dbe7a0317fbc6ffc38d8de9633fd8c519a9d6"
+  },
+  "1.0.0/01-sunny-meadow/animations/reeds/frames/frame-07.png": {
+    "bytes": 139,
+    "contentType": "image/png",
+    "sha256": "779b4c16244e83c7d4769e4d8181454ae4e9424c92addd95fd8ad20069ff951f"
+  },
+  "1.0.0/01-sunny-meadow/animations/reeds/sheet.png": {
+    "bytes": 271,
+    "contentType": "image/png",
+    "sha256": "203beca7ec7e3ee248c1705a1d28a47b440368c7bf0e02ae7e3c7a5086d5868c"
+  },
+  "1.0.0/01-sunny-meadow/animations/water/frames/frame-00.png": {
+    "bytes": 168,
+    "contentType": "image/png",
+    "sha256": "2d6ed9390dcf76cbc8b3f9921be3d57f19edd77e848886753778061559b8b3c4"
+  },
+  "1.0.0/01-sunny-meadow/animations/water/frames/frame-01.png": {
+    "bytes": 168,
+    "contentType": "image/png",
+    "sha256": "0f2510a4fb21d4de41849cafaa5a258539a09ae781dcd202d0a578c1fc729a7c"
+  },
+  "1.0.0/01-sunny-meadow/animations/water/frames/frame-02.png": {
+    "bytes": 179,
+    "contentType": "image/png",
+    "sha256": "2bb2f65a28f069c1371fa4c1693bbafea3b7ce92ccf41933dcd133e6d45730d8"
+  },
+  "1.0.0/01-sunny-meadow/animations/water/frames/frame-03.png": {
+    "bytes": 167,
+    "contentType": "image/png",
+    "sha256": "a35e83abb25c07db76e851f2832f4c8d99205dd27afa9907f0f3054b7fec7e2e"
+  },
+  "1.0.0/01-sunny-meadow/animations/water/frames/frame-04.png": {
+    "bytes": 163,
+    "contentType": "image/png",
+    "sha256": "aa29dfc503e826b027be82668f4081685478c4e8ed70d58466357751e01d64a6"
+  },
+  "1.0.0/01-sunny-meadow/animations/water/frames/frame-05.png": {
+    "bytes": 166,
+    "contentType": "image/png",
+    "sha256": "1883fcd1ddd38b22227c67a6b62c66e13ae262a912d3d2727207d747c925f029"
+  },
+  "1.0.0/01-sunny-meadow/animations/water/frames/frame-06.png": {
+    "bytes": 177,
+    "contentType": "image/png",
+    "sha256": "3078547faefe322695584f8fc5e28e7bb8aa9a39e45c9f64d1d7bfc5d611ee80"
+  },
+  "1.0.0/01-sunny-meadow/animations/water/frames/frame-07.png": {
+    "bytes": 175,
+    "contentType": "image/png",
+    "sha256": "7724dd591f18db55e6640ef6c2d2dde4b6a994b26d7e133bc0ee156297a9cc21"
+  },
+  "1.0.0/01-sunny-meadow/animations/water/full-map/frame-00.png": {
+    "bytes": 4960,
+    "contentType": "image/png",
+    "sha256": "17afd6fe7b25f26c608a63ead6e9d55fc2683ecdd1604b08477f1cb16296cdc0"
+  },
+  "1.0.0/01-sunny-meadow/animations/water/full-map/frame-01.png": {
+    "bytes": 4972,
+    "contentType": "image/png",
+    "sha256": "551f04230592f93e5352b744373dc0b1c025a947b3caa206f5f4781e8e41e957"
+  },
+  "1.0.0/01-sunny-meadow/animations/water/full-map/frame-02.png": {
+    "bytes": 4910,
+    "contentType": "image/png",
+    "sha256": "c5080f6ac199c55944958a7581082b22b612849949b9c1d9cd4022cfdbd1e018"
+  },
+  "1.0.0/01-sunny-meadow/animations/water/full-map/frame-03.png": {
+    "bytes": 4894,
+    "contentType": "image/png",
+    "sha256": "af054ebc426259a18edc53ec6c3459ed1e16f87bc1be6d7cd440adbec32c4a2b"
+  },
+  "1.0.0/01-sunny-meadow/animations/water/full-map/frame-04.png": {
+    "bytes": 4926,
+    "contentType": "image/png",
+    "sha256": "de999374025e89e1c744cb325335622a25336cdbd18b1b2f533e05a8c02a53b3"
+  },
+  "1.0.0/01-sunny-meadow/animations/water/full-map/frame-05.png": {
+    "bytes": 4903,
+    "contentType": "image/png",
+    "sha256": "90d32a3b5bc1c52591e68692edcf4ca0d491e9dd08041abaa59b268a83de659e"
+  },
+  "1.0.0/01-sunny-meadow/animations/water/full-map/frame-06.png": {
+    "bytes": 4923,
+    "contentType": "image/png",
+    "sha256": "88d40190e0799178dd94282177ea3fc559388853acc502dac9b6be56a4939139"
+  },
+  "1.0.0/01-sunny-meadow/animations/water/full-map/frame-07.png": {
+    "bytes": 4939,
+    "contentType": "image/png",
+    "sha256": "1e0d4bed6fff60445bc0d8b11d915234a102ecb51c9dfd3817dbd9ffb2dd953f"
+  },
+  "1.0.0/01-sunny-meadow/animations/water/sheet.png": {
+    "bytes": 302,
+    "contentType": "image/png",
+    "sha256": "f696b26c6e4cd361c8178dc03ad4af859a1bd89c46bbca90949b2e49f99a5ad7"
+  },
+  "1.0.0/01-sunny-meadow/manifest.json": {
+    "bytes": 7091,
+    "contentType": "application/json",
+    "sha256": "171443838b9339de8babb62dba2786edb31d2fe1f03745b1136d64070a38ac74"
+  },
+  "1.0.0/01-sunny-meadow/map/ground-tilemap.json": {
+    "bytes": 17139,
+    "contentType": "application/json",
+    "sha256": "63c0716aa8348e7839e9b10a516b77d6386356afb172597e36d42da20eb95f38"
+  },
+  "1.0.0/01-sunny-meadow/map/ground-tiles.png": {
+    "bytes": 8304,
+    "contentType": "image/png",
+    "sha256": "7784f8aa418672808ddc586b4da727785d64f7441b4765ce96c381302fb464c7"
+  },
+  "1.0.0/01-sunny-meadow/map/ground.png": {
+    "bytes": 10166,
+    "contentType": "image/png",
+    "sha256": "25ea3b529dcc85beba9a973d2acc2ec41cc8415d64a6d0211aaaac93a03f9d6a"
+  },
+  "1.0.0/01-sunny-meadow/map/layout.json": {
+    "bytes": 28249,
+    "contentType": "application/json",
+    "sha256": "2b3a91533c5fd2156c7481aceb472a8a38e1b0165eb66f5b2a2ba3c791f6b1ca"
+  },
+  "1.0.0/01-sunny-meadow/map/scenery-atlas.png": {
+    "bytes": 10747,
+    "contentType": "image/png",
+    "sha256": "648a24d59b54969c070d21f023b338a442964d2e242d9a00bcd4ae25f8fcc0c1"
+  },
+  "1.0.0/01-sunny-meadow/map/water-mask.png": {
+    "bytes": 2855,
+    "contentType": "image/png",
+    "sha256": "d4073720384499541a2742fb42efa28358c4d8b3aff32a42fe20e7fd8139493b"
+  },
+  "1.0.0/01-sunny-meadow/props/bench-01.png": {
+    "bytes": 252,
+    "contentType": "image/png",
+    "sha256": "0729aaed2310bb34e79c0cb76a838c21c46ee69ee71fb6d6c2d98e1cfbb8b3da"
+  },
+  "1.0.0/01-sunny-meadow/props/bush-01.png": {
+    "bytes": 289,
+    "contentType": "image/png",
+    "sha256": "a407c4e575eefd019cb820152d28262b5960ad131b95a2c81640ea4aecfc5c88"
+  },
+  "1.0.0/01-sunny-meadow/props/cottage-01.png": {
+    "bytes": 1419,
+    "contentType": "image/png",
+    "sha256": "e7bdd1a896e14bcf57fe2591ca1e254197c5da18b001d968cd7f3a1342bd710f"
+  },
+  "1.0.0/01-sunny-meadow/props/cottage-02.png": {
+    "bytes": 784,
+    "contentType": "image/png",
+    "sha256": "f6e5d70a6207ff576c36dec661282bb1ff2b37789d029cb0e39389004d527d78"
+  },
+  "1.0.0/01-sunny-meadow/props/fence-01.png": {
+    "bytes": 164,
+    "contentType": "image/png",
+    "sha256": "be9801344ea161a1ae4d615629233be5d73c408abde3c22e057de43a36f42099"
+  },
+  "1.0.0/01-sunny-meadow/props/fence-02.png": {
+    "bytes": 146,
+    "contentType": "image/png",
+    "sha256": "a3bf4871915e62dc4367d1bda36a182720027ce194541888ad20cc46e3818cd8"
+  },
+  "1.0.0/01-sunny-meadow/props/fence-03.png": {
+    "bytes": 192,
+    "contentType": "image/png",
+    "sha256": "b3bfefecca9f5dbc2ba21dfcef6566058e6ddb792b7ed42c347833154533e7e5"
+  },
+  "1.0.0/01-sunny-meadow/props/fence-04.png": {
+    "bytes": 156,
+    "contentType": "image/png",
+    "sha256": "d75f509faee14ac94f945ae87e437b7e4c00348e32128e419684f253a46ec634"
+  },
+  "1.0.0/01-sunny-meadow/props/flowerbed-01.png": {
+    "bytes": 430,
+    "contentType": "image/png",
+    "sha256": "647f1dfcba2c7fa0b6e607ea0b11ddfae33f822d29afce949aefc5d04b0048f9"
+  },
+  "1.0.0/01-sunny-meadow/props/flowerbed-02.png": {
+    "bytes": 558,
+    "contentType": "image/png",
+    "sha256": "1137b899dc575469eb60d9de3f082195ebec3df628a45e6ecd3b2fed56ab32f6"
+  },
+  "1.0.0/01-sunny-meadow/props/flowerbed-03.png": {
+    "bytes": 538,
+    "contentType": "image/png",
+    "sha256": "6005ee7045567a741c572ff68e7ce8e4157b9bbbd215a885151fabd3e26028b9"
+  },
+  "1.0.0/01-sunny-meadow/props/sign-01.png": {
+    "bytes": 294,
+    "contentType": "image/png",
+    "sha256": "bca6bd93b160f0f59fe149ee78a4437ba011f4b4bab60c36cb2b8eb84f4811b2"
+  },
+  "1.0.0/01-sunny-meadow/props/sign-02.png": {
+    "bytes": 287,
+    "contentType": "image/png",
+    "sha256": "2a0659385bde38aee3c6dc6450879c203c40037f0e9d36d36ffeabafc5005925"
+  },
+  "1.0.0/01-sunny-meadow/props/tree-01.png": {
+    "bytes": 806,
+    "contentType": "image/png",
+    "sha256": "aeb3949e8f52f22f00b9b2f3e1e476971d1747468166d6b5fa867a9f02bc463e"
+  },
+  "1.0.0/01-sunny-meadow/props/tree-02.png": {
+    "bytes": 842,
+    "contentType": "image/png",
+    "sha256": "af9f28aab7dfe69e90fd9fb6a0aa53c9b6450af068dad370b78a81dafc62b2f8"
+  },
+  "1.0.0/01-sunny-meadow/props/tree-03.png": {
+    "bytes": 624,
+    "contentType": "image/png",
+    "sha256": "73e842e474df154316ca533f1ec625855e0d7ef095350929f58cd56c4634f017"
+  },
+  "1.0.0/01-sunny-meadow/props/tree-04.png": {
+    "bytes": 712,
+    "contentType": "image/png",
+    "sha256": "f8634971dea9c7f7bfc96d12d5aa2037e32621d04516face3b363c58f5121d87"
+  },
+  "1.0.0/01-sunny-meadow/props/tree-05.png": {
+    "bytes": 650,
+    "contentType": "image/png",
+    "sha256": "e753e5555784e178e675b9740b0ada264d1d60a329b2acf5033e09129b88c82f"
+  },
+  "1.0.0/01-sunny-meadow/props/tree-06.png": {
+    "bytes": 685,
+    "contentType": "image/png",
+    "sha256": "caa21489e5f9c427f8475f130ecbd58e353ebdde422e7d50856cc5cf5d5a3779"
+  },
+  "1.0.0/01-sunny-meadow/props/tree-07.png": {
+    "bytes": 664,
+    "contentType": "image/png",
+    "sha256": "547e4ad71bc675c2cd853fd55d1a3ab4a6a52d7dec17f43cfc99cbb9f2a25e2e"
+  },
+  "1.0.0/01-sunny-meadow/props/tree-08.png": {
+    "bytes": 699,
+    "contentType": "image/png",
+    "sha256": "838a578ab616f737fa378092ac662149a0c0acc63e0137dec05ef2af4c44c2b8"
+  },
+  "1.0.0/01-sunny-meadow/props/tree-09.png": {
+    "bytes": 820,
+    "contentType": "image/png",
+    "sha256": "d6e4797060124f3f4d0cfc267ad869428209de34234fff3002f95959e11e3c7f"
+  },
+  "1.0.0/01-sunny-meadow/props/tree-10.png": {
+    "bytes": 735,
+    "contentType": "image/png",
+    "sha256": "7835e4ce2cf766fdd39836b8b61a7b74a31ae72c835f2a5ba772814fc7ea84d2"
+  },
+  "1.0.0/01-sunny-meadow/props/tree-11.png": {
+    "bytes": 637,
+    "contentType": "image/png",
+    "sha256": "8bdc63146e601129cef8b5fd4e24aef8d9cb3cc31ba80131e679cd1a1e5dde9f"
+  },
+  "1.0.0/01-sunny-meadow/props/water-bowl-01.png": {
+    "bytes": 165,
+    "contentType": "image/png",
+    "sha256": "fee22d7670ab2bef53733204885df73e195c483161ab5febbe13bbb86ad019e3"
+  },
+  "1.0.0/02-woodland-trail/animations/grass/frames/frame-00.png": {
+    "bytes": 157,
+    "contentType": "image/png",
+    "sha256": "cec55b025c09953c46e6ea6176b3b0432f0bd6419cc72d087d4ccd28432a2eed"
+  },
+  "1.0.0/02-woodland-trail/animations/grass/frames/frame-01.png": {
+    "bytes": 158,
+    "contentType": "image/png",
+    "sha256": "a11fc7d620834b92a3ffcf175a2d25f3118fad67a367b9c4c82b1dedf06ea281"
+  },
+  "1.0.0/02-woodland-trail/animations/grass/frames/frame-02.png": {
+    "bytes": 152,
+    "contentType": "image/png",
+    "sha256": "c67d1628681e45fe3e9df43ae6b3375371ccce6b8d352006f5d2dbcb5a129bab"
+  },
+  "1.0.0/02-woodland-trail/animations/grass/frames/frame-03.png": {
+    "bytes": 158,
+    "contentType": "image/png",
+    "sha256": "a11fc7d620834b92a3ffcf175a2d25f3118fad67a367b9c4c82b1dedf06ea281"
+  },
+  "1.0.0/02-woodland-trail/animations/grass/frames/frame-04.png": {
+    "bytes": 157,
+    "contentType": "image/png",
+    "sha256": "cec55b025c09953c46e6ea6176b3b0432f0bd6419cc72d087d4ccd28432a2eed"
+  },
+  "1.0.0/02-woodland-trail/animations/grass/frames/frame-05.png": {
+    "bytes": 157,
+    "contentType": "image/png",
+    "sha256": "fc912a37ead1d7617302b321594553f0d5f78a1f1e4e0baa1b071cc87375927f"
+  },
+  "1.0.0/02-woodland-trail/animations/grass/frames/frame-06.png": {
+    "bytes": 152,
+    "contentType": "image/png",
+    "sha256": "16a6642d71f89dffeabf0c3fe9fdbd0e0aab6865cc1103b5a06fb115e1ff8652"
+  },
+  "1.0.0/02-woodland-trail/animations/grass/frames/frame-07.png": {
+    "bytes": 157,
+    "contentType": "image/png",
+    "sha256": "fc912a37ead1d7617302b321594553f0d5f78a1f1e4e0baa1b071cc87375927f"
+  },
+  "1.0.0/02-woodland-trail/animations/grass/sheet.png": {
+    "bytes": 268,
+    "contentType": "image/png",
+    "sha256": "72c8d5d0f7f04a1d0c12e30b83439876756182e9c5920650d933c1b98f9f24ef"
+  },
+  "1.0.0/02-woodland-trail/animations/plants-atlas.png": {
+    "bytes": 455,
+    "contentType": "image/png",
+    "sha256": "552a7c8676951965281fc1f55e5fa176aa94b9ac695bd4ba2a9c473c15e18ea5"
+  },
+  "1.0.0/02-woodland-trail/animations/reeds/frames/frame-00.png": {
+    "bytes": 139,
+    "contentType": "image/png",
+    "sha256": "779b4c16244e83c7d4769e4d8181454ae4e9424c92addd95fd8ad20069ff951f"
+  },
+  "1.0.0/02-woodland-trail/animations/reeds/frames/frame-01.png": {
+    "bytes": 139,
+    "contentType": "image/png",
+    "sha256": "779b4c16244e83c7d4769e4d8181454ae4e9424c92addd95fd8ad20069ff951f"
+  },
+  "1.0.0/02-woodland-trail/animations/reeds/frames/frame-02.png": {
+    "bytes": 152,
+    "contentType": "image/png",
+    "sha256": "4e4c67feeb948712a255351c994498a7bef94bc91834cde2e3e0e79d17d2adb8"
+  },
+  "1.0.0/02-woodland-trail/animations/reeds/frames/frame-03.png": {
+    "bytes": 139,
+    "contentType": "image/png",
+    "sha256": "779b4c16244e83c7d4769e4d8181454ae4e9424c92addd95fd8ad20069ff951f"
+  },
+  "1.0.0/02-woodland-trail/animations/reeds/frames/frame-04.png": {
+    "bytes": 139,
+    "contentType": "image/png",
+    "sha256": "779b4c16244e83c7d4769e4d8181454ae4e9424c92addd95fd8ad20069ff951f"
+  },
+  "1.0.0/02-woodland-trail/animations/reeds/frames/frame-05.png": {
+    "bytes": 139,
+    "contentType": "image/png",
+    "sha256": "779b4c16244e83c7d4769e4d8181454ae4e9424c92addd95fd8ad20069ff951f"
+  },
+  "1.0.0/02-woodland-trail/animations/reeds/frames/frame-06.png": {
+    "bytes": 151,
+    "contentType": "image/png",
+    "sha256": "f7ec814e53ebbba55541c230d85dbe7a0317fbc6ffc38d8de9633fd8c519a9d6"
+  },
+  "1.0.0/02-woodland-trail/animations/reeds/frames/frame-07.png": {
+    "bytes": 139,
+    "contentType": "image/png",
+    "sha256": "779b4c16244e83c7d4769e4d8181454ae4e9424c92addd95fd8ad20069ff951f"
+  },
+  "1.0.0/02-woodland-trail/animations/reeds/sheet.png": {
+    "bytes": 271,
+    "contentType": "image/png",
+    "sha256": "203beca7ec7e3ee248c1705a1d28a47b440368c7bf0e02ae7e3c7a5086d5868c"
+  },
+  "1.0.0/02-woodland-trail/animations/water/frames/frame-00.png": {
+    "bytes": 168,
+    "contentType": "image/png",
+    "sha256": "2d6ed9390dcf76cbc8b3f9921be3d57f19edd77e848886753778061559b8b3c4"
+  },
+  "1.0.0/02-woodland-trail/animations/water/frames/frame-01.png": {
+    "bytes": 168,
+    "contentType": "image/png",
+    "sha256": "0f2510a4fb21d4de41849cafaa5a258539a09ae781dcd202d0a578c1fc729a7c"
+  },
+  "1.0.0/02-woodland-trail/animations/water/frames/frame-02.png": {
+    "bytes": 179,
+    "contentType": "image/png",
+    "sha256": "2bb2f65a28f069c1371fa4c1693bbafea3b7ce92ccf41933dcd133e6d45730d8"
+  },
+  "1.0.0/02-woodland-trail/animations/water/frames/frame-03.png": {
+    "bytes": 167,
+    "contentType": "image/png",
+    "sha256": "a35e83abb25c07db76e851f2832f4c8d99205dd27afa9907f0f3054b7fec7e2e"
+  },
+  "1.0.0/02-woodland-trail/animations/water/frames/frame-04.png": {
+    "bytes": 163,
+    "contentType": "image/png",
+    "sha256": "aa29dfc503e826b027be82668f4081685478c4e8ed70d58466357751e01d64a6"
+  },
+  "1.0.0/02-woodland-trail/animations/water/frames/frame-05.png": {
+    "bytes": 166,
+    "contentType": "image/png",
+    "sha256": "1883fcd1ddd38b22227c67a6b62c66e13ae262a912d3d2727207d747c925f029"
+  },
+  "1.0.0/02-woodland-trail/animations/water/frames/frame-06.png": {
+    "bytes": 177,
+    "contentType": "image/png",
+    "sha256": "3078547faefe322695584f8fc5e28e7bb8aa9a39e45c9f64d1d7bfc5d611ee80"
+  },
+  "1.0.0/02-woodland-trail/animations/water/frames/frame-07.png": {
+    "bytes": 175,
+    "contentType": "image/png",
+    "sha256": "7724dd591f18db55e6640ef6c2d2dde4b6a994b26d7e133bc0ee156297a9cc21"
+  },
+  "1.0.0/02-woodland-trail/animations/water/full-map/frame-00.png": {
+    "bytes": 5001,
+    "contentType": "image/png",
+    "sha256": "ef85fd0cb39cb685d62abbb2bd0d4c5a651f9b87adebd4afbb04e19d9ff44845"
+  },
+  "1.0.0/02-woodland-trail/animations/water/full-map/frame-01.png": {
+    "bytes": 5016,
+    "contentType": "image/png",
+    "sha256": "1434493452167c97565c965d7d386451936f6ed7f0a9c5a4fa194a53e16efea1"
+  },
+  "1.0.0/02-woodland-trail/animations/water/full-map/frame-02.png": {
+    "bytes": 4953,
+    "contentType": "image/png",
+    "sha256": "b9c7d582e20fa6631918bec9e8eceed662fbcec09ed760b502e47c9b6c12b78b"
+  },
+  "1.0.0/02-woodland-trail/animations/water/full-map/frame-03.png": {
+    "bytes": 4941,
+    "contentType": "image/png",
+    "sha256": "1e7b5231b918ce91907ac60cb7f6ec2cca6898cd76bfbd83c16516621723d6a1"
+  },
+  "1.0.0/02-woodland-trail/animations/water/full-map/frame-04.png": {
+    "bytes": 4971,
+    "contentType": "image/png",
+    "sha256": "b551c41ab35264116d17810ae990c951fd81807eb43b4a5d0e908379dca6d8d8"
+  },
+  "1.0.0/02-woodland-trail/animations/water/full-map/frame-05.png": {
+    "bytes": 4951,
+    "contentType": "image/png",
+    "sha256": "b50a873ce4a605efc9d4a7a8c00d0ad6a81e43e6e30a3da4625f3246e8cceaa3"
+  },
+  "1.0.0/02-woodland-trail/animations/water/full-map/frame-06.png": {
+    "bytes": 4974,
+    "contentType": "image/png",
+    "sha256": "7c6031c591543376939723a688338900a1431bf0235e606c38e15dc1ca301d2f"
+  },
+  "1.0.0/02-woodland-trail/animations/water/full-map/frame-07.png": {
+    "bytes": 4992,
+    "contentType": "image/png",
+    "sha256": "860d0c08bcefcc420396755c396a2c2b42746f29c3b9ed22fd40ad71f34db55e"
+  },
+  "1.0.0/02-woodland-trail/animations/water/sheet.png": {
+    "bytes": 302,
+    "contentType": "image/png",
+    "sha256": "f696b26c6e4cd361c8178dc03ad4af859a1bd89c46bbca90949b2e49f99a5ad7"
+  },
+  "1.0.0/02-woodland-trail/manifest.json": {
+    "bytes": 7146,
+    "contentType": "application/json",
+    "sha256": "47c11284e805962d033e8a08560e855fbad279c2a8774a8865b6ceba4c8137e4"
+  },
+  "1.0.0/02-woodland-trail/map/ground-tilemap.json": {
+    "bytes": 17163,
+    "contentType": "application/json",
+    "sha256": "f84b3a38eee108f233288b48762ef83c8fe2944cc7e5b972d9b0c43753003397"
+  },
+  "1.0.0/02-woodland-trail/map/ground-tiles.png": {
+    "bytes": 8141,
+    "contentType": "image/png",
+    "sha256": "3673969645e94501b68fb74384ac4169d856427ac00f2cdcacf04b53b170afc2"
+  },
+  "1.0.0/02-woodland-trail/map/ground.png": {
+    "bytes": 9928,
+    "contentType": "image/png",
+    "sha256": "8b93f4f2d56abfb5e218417efcd21e9c723cc22e67205f0f6d66ace42f780c01"
+  },
+  "1.0.0/02-woodland-trail/map/layout.json": {
+    "bytes": 27022,
+    "contentType": "application/json",
+    "sha256": "f87743b4c4be43e5a5a5cadbd3956973aea0c2a21e9644b312ad47efa5197bcd"
+  },
+  "1.0.0/02-woodland-trail/map/scenery-atlas.png": {
+    "bytes": 13512,
+    "contentType": "image/png",
+    "sha256": "2dacef10b259934bde3435a2b82c6629965e8229ed5080e865d06ceaf8ca6e5f"
+  },
+  "1.0.0/02-woodland-trail/map/water-mask.png": {
+    "bytes": 2877,
+    "contentType": "image/png",
+    "sha256": "2688ca27f488a7bf577d1096cb609bc11e70aef9394a2bcae1c649c9b942ca59"
+  },
+  "1.0.0/02-woodland-trail/props/bench-01.png": {
+    "bytes": 252,
+    "contentType": "image/png",
+    "sha256": "0729aaed2310bb34e79c0cb76a838c21c46ee69ee71fb6d6c2d98e1cfbb8b3da"
+  },
+  "1.0.0/02-woodland-trail/props/bridge-01.png": {
+    "bytes": 368,
+    "contentType": "image/png",
+    "sha256": "88317dcda578344cd63ab144d686fd3c1d705b8ab9acf4c9f4162ced2397091c"
+  },
+  "1.0.0/02-woodland-trail/props/bridge-02.png": {
+    "bytes": 362,
+    "contentType": "image/png",
+    "sha256": "3d8ea4b1b25dd04ba254e131335ec3cecede0ad46d8ffe36ec345d2000998ce3"
+  },
+  "1.0.0/02-woodland-trail/props/bush-01.png": {
+    "bytes": 289,
+    "contentType": "image/png",
+    "sha256": "a407c4e575eefd019cb820152d28262b5960ad131b95a2c81640ea4aecfc5c88"
+  },
+  "1.0.0/02-woodland-trail/props/cottage-01.png": {
+    "bytes": 812,
+    "contentType": "image/png",
+    "sha256": "de81f2afb955514c744f689066631a32024081126ca66eb959308fa275eabfec"
+  },
+  "1.0.0/02-woodland-trail/props/cottage-02.png": {
+    "bytes": 784,
+    "contentType": "image/png",
+    "sha256": "f6e5d70a6207ff576c36dec661282bb1ff2b37789d029cb0e39389004d527d78"
+  },
+  "1.0.0/02-woodland-trail/props/fence-01.png": {
+    "bytes": 164,
+    "contentType": "image/png",
+    "sha256": "be9801344ea161a1ae4d615629233be5d73c408abde3c22e057de43a36f42099"
+  },
+  "1.0.0/02-woodland-trail/props/fence-02.png": {
+    "bytes": 146,
+    "contentType": "image/png",
+    "sha256": "a3bf4871915e62dc4367d1bda36a182720027ce194541888ad20cc46e3818cd8"
+  },
+  "1.0.0/02-woodland-trail/props/flowerbed-01.png": {
+    "bytes": 558,
+    "contentType": "image/png",
+    "sha256": "1137b899dc575469eb60d9de3f082195ebec3df628a45e6ecd3b2fed56ab32f6"
+  },
+  "1.0.0/02-woodland-trail/props/flowerbed-02.png": {
+    "bytes": 430,
+    "contentType": "image/png",
+    "sha256": "647f1dfcba2c7fa0b6e607ea0b11ddfae33f822d29afce949aefc5d04b0048f9"
+  },
+  "1.0.0/02-woodland-trail/props/sign-01.png": {
+    "bytes": 287,
+    "contentType": "image/png",
+    "sha256": "2a0659385bde38aee3c6dc6450879c203c40037f0e9d36d36ffeabafc5005925"
+  },
+  "1.0.0/02-woodland-trail/props/tree-01.png": {
+    "bytes": 712,
+    "contentType": "image/png",
+    "sha256": "f8634971dea9c7f7bfc96d12d5aa2037e32621d04516face3b363c58f5121d87"
+  },
+  "1.0.0/02-woodland-trail/props/tree-02.png": {
+    "bytes": 733,
+    "contentType": "image/png",
+    "sha256": "4c9466d3b7dfdde82441fe5966aa590c49604483c06d25b1fed73df1b4f30058"
+  },
+  "1.0.0/02-woodland-trail/props/tree-03.png": {
+    "bytes": 651,
+    "contentType": "image/png",
+    "sha256": "d83893899e35634339badfb78a175671781f8d9d7c4984b01667649ce3f7723d"
+  },
+  "1.0.0/02-woodland-trail/props/tree-04.png": {
+    "bytes": 825,
+    "contentType": "image/png",
+    "sha256": "781ea0039ccf1c2b3e9c44e7477abf5c539de024f65815a1ff64847711e9e6bb"
+  },
+  "1.0.0/02-woodland-trail/props/tree-05.png": {
+    "bytes": 842,
+    "contentType": "image/png",
+    "sha256": "af9f28aab7dfe69e90fd9fb6a0aa53c9b6450af068dad370b78a81dafc62b2f8"
+  },
+  "1.0.0/02-woodland-trail/props/tree-06.png": {
+    "bytes": 650,
+    "contentType": "image/png",
+    "sha256": "e753e5555784e178e675b9740b0ada264d1d60a329b2acf5033e09129b88c82f"
+  },
+  "1.0.0/02-woodland-trail/props/tree-07.png": {
+    "bytes": 685,
+    "contentType": "image/png",
+    "sha256": "caa21489e5f9c427f8475f130ecbd58e353ebdde422e7d50856cc5cf5d5a3779"
+  },
+  "1.0.0/02-woodland-trail/props/tree-08.png": {
+    "bytes": 624,
+    "contentType": "image/png",
+    "sha256": "73e842e474df154316ca533f1ec625855e0d7ef095350929f58cd56c4634f017"
+  },
+  "1.0.0/02-woodland-trail/props/tree-09.png": {
+    "bytes": 722,
+    "contentType": "image/png",
+    "sha256": "b0ba6ce8da9e1a2d5aaae4f36c3c0759fd9cbbb10ed895f00be85d0508002123"
+  },
+  "1.0.0/02-woodland-trail/props/tree-10.png": {
+    "bytes": 820,
+    "contentType": "image/png",
+    "sha256": "d6e4797060124f3f4d0cfc267ad869428209de34234fff3002f95959e11e3c7f"
+  },
+  "1.0.0/02-woodland-trail/props/tree-11.png": {
+    "bytes": 701,
+    "contentType": "image/png",
+    "sha256": "ca66cd3aff83e010cc79df007675faed27dffb71bff0807688575282ee3a0905"
+  },
+  "1.0.0/02-woodland-trail/props/tree-12.png": {
+    "bytes": 735,
+    "contentType": "image/png",
+    "sha256": "7835e4ce2cf766fdd39836b8b61a7b74a31ae72c835f2a5ba772814fc7ea84d2"
+  },
+  "1.0.0/02-woodland-trail/props/tree-13.png": {
+    "bytes": 664,
+    "contentType": "image/png",
+    "sha256": "547e4ad71bc675c2cd853fd55d1a3ab4a6a52d7dec17f43cfc99cbb9f2a25e2e"
+  },
+  "1.0.0/02-woodland-trail/props/tree-14.png": {
+    "bytes": 707,
+    "contentType": "image/png",
+    "sha256": "a65ce99fb1d5ddd519417e8085b9ba76d41394de0a2828e0616a39e4a2318973"
+  },
+  "1.0.0/02-woodland-trail/props/water-bowl-01.png": {
+    "bytes": 165,
+    "contentType": "image/png",
+    "sha256": "fee22d7670ab2bef53733204885df73e195c483161ab5febbe13bbb86ad019e3"
+  },
+  "1.0.0/03-lakeside-retreat/animations/grass/frames/frame-00.png": {
+    "bytes": 157,
+    "contentType": "image/png",
+    "sha256": "cec55b025c09953c46e6ea6176b3b0432f0bd6419cc72d087d4ccd28432a2eed"
+  },
+  "1.0.0/03-lakeside-retreat/animations/grass/frames/frame-01.png": {
+    "bytes": 158,
+    "contentType": "image/png",
+    "sha256": "a11fc7d620834b92a3ffcf175a2d25f3118fad67a367b9c4c82b1dedf06ea281"
+  },
+  "1.0.0/03-lakeside-retreat/animations/grass/frames/frame-02.png": {
+    "bytes": 152,
+    "contentType": "image/png",
+    "sha256": "c67d1628681e45fe3e9df43ae6b3375371ccce6b8d352006f5d2dbcb5a129bab"
+  },
+  "1.0.0/03-lakeside-retreat/animations/grass/frames/frame-03.png": {
+    "bytes": 158,
+    "contentType": "image/png",
+    "sha256": "a11fc7d620834b92a3ffcf175a2d25f3118fad67a367b9c4c82b1dedf06ea281"
+  },
+  "1.0.0/03-lakeside-retreat/animations/grass/frames/frame-04.png": {
+    "bytes": 157,
+    "contentType": "image/png",
+    "sha256": "cec55b025c09953c46e6ea6176b3b0432f0bd6419cc72d087d4ccd28432a2eed"
+  },
+  "1.0.0/03-lakeside-retreat/animations/grass/frames/frame-05.png": {
+    "bytes": 157,
+    "contentType": "image/png",
+    "sha256": "fc912a37ead1d7617302b321594553f0d5f78a1f1e4e0baa1b071cc87375927f"
+  },
+  "1.0.0/03-lakeside-retreat/animations/grass/frames/frame-06.png": {
+    "bytes": 152,
+    "contentType": "image/png",
+    "sha256": "16a6642d71f89dffeabf0c3fe9fdbd0e0aab6865cc1103b5a06fb115e1ff8652"
+  },
+  "1.0.0/03-lakeside-retreat/animations/grass/frames/frame-07.png": {
+    "bytes": 157,
+    "contentType": "image/png",
+    "sha256": "fc912a37ead1d7617302b321594553f0d5f78a1f1e4e0baa1b071cc87375927f"
+  },
+  "1.0.0/03-lakeside-retreat/animations/grass/sheet.png": {
+    "bytes": 268,
+    "contentType": "image/png",
+    "sha256": "72c8d5d0f7f04a1d0c12e30b83439876756182e9c5920650d933c1b98f9f24ef"
+  },
+  "1.0.0/03-lakeside-retreat/animations/plants-atlas.png": {
+    "bytes": 455,
+    "contentType": "image/png",
+    "sha256": "552a7c8676951965281fc1f55e5fa176aa94b9ac695bd4ba2a9c473c15e18ea5"
+  },
+  "1.0.0/03-lakeside-retreat/animations/reeds/frames/frame-00.png": {
+    "bytes": 139,
+    "contentType": "image/png",
+    "sha256": "779b4c16244e83c7d4769e4d8181454ae4e9424c92addd95fd8ad20069ff951f"
+  },
+  "1.0.0/03-lakeside-retreat/animations/reeds/frames/frame-01.png": {
+    "bytes": 139,
+    "contentType": "image/png",
+    "sha256": "779b4c16244e83c7d4769e4d8181454ae4e9424c92addd95fd8ad20069ff951f"
+  },
+  "1.0.0/03-lakeside-retreat/animations/reeds/frames/frame-02.png": {
+    "bytes": 152,
+    "contentType": "image/png",
+    "sha256": "4e4c67feeb948712a255351c994498a7bef94bc91834cde2e3e0e79d17d2adb8"
+  },
+  "1.0.0/03-lakeside-retreat/animations/reeds/frames/frame-03.png": {
+    "bytes": 139,
+    "contentType": "image/png",
+    "sha256": "779b4c16244e83c7d4769e4d8181454ae4e9424c92addd95fd8ad20069ff951f"
+  },
+  "1.0.0/03-lakeside-retreat/animations/reeds/frames/frame-04.png": {
+    "bytes": 139,
+    "contentType": "image/png",
+    "sha256": "779b4c16244e83c7d4769e4d8181454ae4e9424c92addd95fd8ad20069ff951f"
+  },
+  "1.0.0/03-lakeside-retreat/animations/reeds/frames/frame-05.png": {
+    "bytes": 139,
+    "contentType": "image/png",
+    "sha256": "779b4c16244e83c7d4769e4d8181454ae4e9424c92addd95fd8ad20069ff951f"
+  },
+  "1.0.0/03-lakeside-retreat/animations/reeds/frames/frame-06.png": {
+    "bytes": 151,
+    "contentType": "image/png",
+    "sha256": "f7ec814e53ebbba55541c230d85dbe7a0317fbc6ffc38d8de9633fd8c519a9d6"
+  },
+  "1.0.0/03-lakeside-retreat/animations/reeds/frames/frame-07.png": {
+    "bytes": 139,
+    "contentType": "image/png",
+    "sha256": "779b4c16244e83c7d4769e4d8181454ae4e9424c92addd95fd8ad20069ff951f"
+  },
+  "1.0.0/03-lakeside-retreat/animations/reeds/sheet.png": {
+    "bytes": 271,
+    "contentType": "image/png",
+    "sha256": "203beca7ec7e3ee248c1705a1d28a47b440368c7bf0e02ae7e3c7a5086d5868c"
+  },
+  "1.0.0/03-lakeside-retreat/animations/water/frames/frame-00.png": {
+    "bytes": 168,
+    "contentType": "image/png",
+    "sha256": "2d6ed9390dcf76cbc8b3f9921be3d57f19edd77e848886753778061559b8b3c4"
+  },
+  "1.0.0/03-lakeside-retreat/animations/water/frames/frame-01.png": {
+    "bytes": 168,
+    "contentType": "image/png",
+    "sha256": "0f2510a4fb21d4de41849cafaa5a258539a09ae781dcd202d0a578c1fc729a7c"
+  },
+  "1.0.0/03-lakeside-retreat/animations/water/frames/frame-02.png": {
+    "bytes": 179,
+    "contentType": "image/png",
+    "sha256": "2bb2f65a28f069c1371fa4c1693bbafea3b7ce92ccf41933dcd133e6d45730d8"
+  },
+  "1.0.0/03-lakeside-retreat/animations/water/frames/frame-03.png": {
+    "bytes": 167,
+    "contentType": "image/png",
+    "sha256": "a35e83abb25c07db76e851f2832f4c8d99205dd27afa9907f0f3054b7fec7e2e"
+  },
+  "1.0.0/03-lakeside-retreat/animations/water/frames/frame-04.png": {
+    "bytes": 163,
+    "contentType": "image/png",
+    "sha256": "aa29dfc503e826b027be82668f4081685478c4e8ed70d58466357751e01d64a6"
+  },
+  "1.0.0/03-lakeside-retreat/animations/water/frames/frame-05.png": {
+    "bytes": 166,
+    "contentType": "image/png",
+    "sha256": "1883fcd1ddd38b22227c67a6b62c66e13ae262a912d3d2727207d747c925f029"
+  },
+  "1.0.0/03-lakeside-retreat/animations/water/frames/frame-06.png": {
+    "bytes": 177,
+    "contentType": "image/png",
+    "sha256": "3078547faefe322695584f8fc5e28e7bb8aa9a39e45c9f64d1d7bfc5d611ee80"
+  },
+  "1.0.0/03-lakeside-retreat/animations/water/frames/frame-07.png": {
+    "bytes": 175,
+    "contentType": "image/png",
+    "sha256": "7724dd591f18db55e6640ef6c2d2dde4b6a994b26d7e133bc0ee156297a9cc21"
+  },
+  "1.0.0/03-lakeside-retreat/animations/water/full-map/frame-00.png": {
+    "bytes": 5086,
+    "contentType": "image/png",
+    "sha256": "1fa0d0b98dcf66a3920bf5ea85c28d5e496ca4731b7b3c2e5de156da3e0b721b"
+  },
+  "1.0.0/03-lakeside-retreat/animations/water/full-map/frame-01.png": {
+    "bytes": 5106,
+    "contentType": "image/png",
+    "sha256": "7057657829fd178970e058ea2e9b5fa24f4c3f488377395be143b1497473f3e0"
+  },
+  "1.0.0/03-lakeside-retreat/animations/water/full-map/frame-02.png": {
+    "bytes": 5052,
+    "contentType": "image/png",
+    "sha256": "76df429bff999a4bc3f53feb31f2488ed1b45f37685e0691c42a2a849d90bf42"
+  },
+  "1.0.0/03-lakeside-retreat/animations/water/full-map/frame-03.png": {
+    "bytes": 5031,
+    "contentType": "image/png",
+    "sha256": "53ad8e1c032383fc082b8d45c826a27472274b896810d03f735e4bdaca7b8037"
+  },
+  "1.0.0/03-lakeside-retreat/animations/water/full-map/frame-04.png": {
+    "bytes": 5058,
+    "contentType": "image/png",
+    "sha256": "0397dd29b17077f59d966b532b2a01ca54a27613e9e21256431fa5737e735c3b"
+  },
+  "1.0.0/03-lakeside-retreat/animations/water/full-map/frame-05.png": {
+    "bytes": 5038,
+    "contentType": "image/png",
+    "sha256": "cac233420299f868adf8101864f0f7ca2abbf12a235a23ef963e76a0039d7c8b"
+  },
+  "1.0.0/03-lakeside-retreat/animations/water/full-map/frame-06.png": {
+    "bytes": 5058,
+    "contentType": "image/png",
+    "sha256": "c67fbcf0b991dc223bd55f2e58b7d5c34ebb8112dcdf1757d4900312cfdce0b9"
+  },
+  "1.0.0/03-lakeside-retreat/animations/water/full-map/frame-07.png": {
+    "bytes": 5068,
+    "contentType": "image/png",
+    "sha256": "9cd625c9890f8720e4570dfc3d61613d62339d879deb38b62bffb531d017910f"
+  },
+  "1.0.0/03-lakeside-retreat/animations/water/sheet.png": {
+    "bytes": 302,
+    "contentType": "image/png",
+    "sha256": "f696b26c6e4cd361c8178dc03ad4af859a1bd89c46bbca90949b2e49f99a5ad7"
+  },
+  "1.0.0/03-lakeside-retreat/manifest.json": {
+    "bytes": 6750,
+    "contentType": "application/json",
+    "sha256": "65d40586d051dc8f64745807da784a8d2ae757e15a40d2ce70c070cadc828028"
+  },
+  "1.0.0/03-lakeside-retreat/map/ground-tilemap.json": {
+    "bytes": 17004,
+    "contentType": "application/json",
+    "sha256": "cbe1999558ebdcd6e7fbc787b2bca7b3617c8bfa7bf85c5b449bbc100814f6d3"
+  },
+  "1.0.0/03-lakeside-retreat/map/ground-tiles.png": {
+    "bytes": 8570,
+    "contentType": "image/png",
+    "sha256": "fb86f7b751987c2fbe6c0dd4a598c78170d016ac7b5ce5df60ab5e972bf50465"
+  },
+  "1.0.0/03-lakeside-retreat/map/ground.png": {
+    "bytes": 10350,
+    "contentType": "image/png",
+    "sha256": "1ee69c5c01e8b8016515f05837f2a1ae352855a9baf33fef3de33e1d5286270e"
+  },
+  "1.0.0/03-lakeside-retreat/map/layout.json": {
+    "bytes": 25707,
+    "contentType": "application/json",
+    "sha256": "d74aad6932bb580260fe26ba1504915ef9d7ac8ee3af3140efaffba1d81b7f79"
+  },
+  "1.0.0/03-lakeside-retreat/map/scenery-atlas.png": {
+    "bytes": 10681,
+    "contentType": "image/png",
+    "sha256": "dbfd27ee1a4771487e4354fe316d5ae7315fe709c464bdafe5e3877d2c95b873"
+  },
+  "1.0.0/03-lakeside-retreat/map/water-mask.png": {
+    "bytes": 2909,
+    "contentType": "image/png",
+    "sha256": "0e4c348feb831c487841a5b33b6c8f8a0f638cb018fb61e5e5d5889d997f7306"
+  },
+  "1.0.0/03-lakeside-retreat/props/bench-01.png": {
+    "bytes": 252,
+    "contentType": "image/png",
+    "sha256": "0729aaed2310bb34e79c0cb76a838c21c46ee69ee71fb6d6c2d98e1cfbb8b3da"
+  },
+  "1.0.0/03-lakeside-retreat/props/bridge-01.png": {
+    "bytes": 337,
+    "contentType": "image/png",
+    "sha256": "b33547a8740480a6738bd9d6c93dfd13236a02e05281b8a501805c52b73d31d0"
+  },
+  "1.0.0/03-lakeside-retreat/props/bridge-02.png": {
+    "bytes": 329,
+    "contentType": "image/png",
+    "sha256": "50bb088d4593aa0dee1d7dc949149fc689725ad1952abaf1679698c6baa6c878"
+  },
+  "1.0.0/03-lakeside-retreat/props/bush-01.png": {
+    "bytes": 289,
+    "contentType": "image/png",
+    "sha256": "a407c4e575eefd019cb820152d28262b5960ad131b95a2c81640ea4aecfc5c88"
+  },
+  "1.0.0/03-lakeside-retreat/props/cottage-01.png": {
+    "bytes": 1419,
+    "contentType": "image/png",
+    "sha256": "e7bdd1a896e14bcf57fe2591ca1e254197c5da18b001d968cd7f3a1342bd710f"
+  },
+  "1.0.0/03-lakeside-retreat/props/cottage-02.png": {
+    "bytes": 812,
+    "contentType": "image/png",
+    "sha256": "de81f2afb955514c744f689066631a32024081126ca66eb959308fa275eabfec"
+  },
+  "1.0.0/03-lakeside-retreat/props/fence-01.png": {
+    "bytes": 164,
+    "contentType": "image/png",
+    "sha256": "be9801344ea161a1ae4d615629233be5d73c408abde3c22e057de43a36f42099"
+  },
+  "1.0.0/03-lakeside-retreat/props/fence-02.png": {
+    "bytes": 146,
+    "contentType": "image/png",
+    "sha256": "a3bf4871915e62dc4367d1bda36a182720027ce194541888ad20cc46e3818cd8"
+  },
+  "1.0.0/03-lakeside-retreat/props/flowerbed-01.png": {
+    "bytes": 430,
+    "contentType": "image/png",
+    "sha256": "647f1dfcba2c7fa0b6e607ea0b11ddfae33f822d29afce949aefc5d04b0048f9"
+  },
+  "1.0.0/03-lakeside-retreat/props/flowerbed-02.png": {
+    "bytes": 538,
+    "contentType": "image/png",
+    "sha256": "6005ee7045567a741c572ff68e7ce8e4157b9bbbd215a885151fabd3e26028b9"
+  },
+  "1.0.0/03-lakeside-retreat/props/flowerbed-03.png": {
+    "bytes": 572,
+    "contentType": "image/png",
+    "sha256": "c6ee130ec89580ad30e4edf4f1e38c244dd0d8d2daad1de1fe2cdd1734fd4807"
+  },
+  "1.0.0/03-lakeside-retreat/props/sign-01.png": {
+    "bytes": 287,
+    "contentType": "image/png",
+    "sha256": "2a0659385bde38aee3c6dc6450879c203c40037f0e9d36d36ffeabafc5005925"
+  },
+  "1.0.0/03-lakeside-retreat/props/sign-02.png": {
+    "bytes": 294,
+    "contentType": "image/png",
+    "sha256": "bca6bd93b160f0f59fe149ee78a4437ba011f4b4bab60c36cb2b8eb84f4811b2"
+  },
+  "1.0.0/03-lakeside-retreat/props/tree-01.png": {
+    "bytes": 637,
+    "contentType": "image/png",
+    "sha256": "8bdc63146e601129cef8b5fd4e24aef8d9cb3cc31ba80131e679cd1a1e5dde9f"
+  },
+  "1.0.0/03-lakeside-retreat/props/tree-02.png": {
+    "bytes": 692,
+    "contentType": "image/png",
+    "sha256": "781eea18b128e562462ba29fd108720db72172fd664b44c78e6a278c762fb76b"
+  },
+  "1.0.0/03-lakeside-retreat/props/tree-03.png": {
+    "bytes": 842,
+    "contentType": "image/png",
+    "sha256": "af9f28aab7dfe69e90fd9fb6a0aa53c9b6450af068dad370b78a81dafc62b2f8"
+  },
+  "1.0.0/03-lakeside-retreat/props/tree-04.png": {
+    "bytes": 650,
+    "contentType": "image/png",
+    "sha256": "e753e5555784e178e675b9740b0ada264d1d60a329b2acf5033e09129b88c82f"
+  },
+  "1.0.0/03-lakeside-retreat/props/tree-05.png": {
+    "bytes": 825,
+    "contentType": "image/png",
+    "sha256": "781ea0039ccf1c2b3e9c44e7477abf5c539de024f65815a1ff64847711e9e6bb"
+  },
+  "1.0.0/03-lakeside-retreat/props/tree-06.png": {
+    "bytes": 806,
+    "contentType": "image/png",
+    "sha256": "aeb3949e8f52f22f00b9b2f3e1e476971d1747468166d6b5fa867a9f02bc463e"
+  },
+  "1.0.0/03-lakeside-retreat/props/tree-07.png": {
+    "bytes": 707,
+    "contentType": "image/png",
+    "sha256": "3cdfe4918aac03bee6268312f0f96b714dcb894c55892e85e6b48ee5a5f80305"
+  },
+  "1.0.0/03-lakeside-retreat/props/tree-08.png": {
+    "bytes": 624,
+    "contentType": "image/png",
+    "sha256": "73e842e474df154316ca533f1ec625855e0d7ef095350929f58cd56c4634f017"
+  },
+  "1.0.0/03-lakeside-retreat/props/tree-09.png": {
+    "bytes": 820,
+    "contentType": "image/png",
+    "sha256": "d6e4797060124f3f4d0cfc267ad869428209de34234fff3002f95959e11e3c7f"
+  },
+  "1.0.0/03-lakeside-retreat/props/tree-10.png": {
+    "bytes": 722,
+    "contentType": "image/png",
+    "sha256": "b0ba6ce8da9e1a2d5aaae4f36c3c0759fd9cbbb10ed895f00be85d0508002123"
+  },
+  "1.0.0/03-lakeside-retreat/props/water-bowl-01.png": {
+    "bytes": 165,
+    "contentType": "image/png",
+    "sha256": "fee22d7670ab2bef53733204885df73e195c483161ab5febbe13bbb86ad019e3"
+  }
+}

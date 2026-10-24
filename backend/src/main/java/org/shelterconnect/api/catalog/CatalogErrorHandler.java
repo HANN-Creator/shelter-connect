@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-@RestControllerAdvice(assignableTypes = PublicCatalogController.class)
+@RestControllerAdvice(assignableTypes = {PublicCatalogController.class, ShelterMapController.class})
 public class CatalogErrorHandler {
 	private static final Logger log = LoggerFactory.getLogger(CatalogErrorHandler.class);
 
