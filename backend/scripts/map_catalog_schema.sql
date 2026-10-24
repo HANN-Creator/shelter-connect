@@ -32,7 +32,7 @@ CREATE TABLE shelter.shelter_maps (
 CREATE UNIQUE INDEX shelter_map_default ON shelter.shelter_maps(shelter_id) WHERE is_default;
 ALTER TABLE shelter.map_templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE shelter.shelter_maps ENABLE ROW LEVEL SECURITY;
-REVOKE ALL ON shelter.map_templates, shelter.shelter_maps FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON shelter.map_templates, shelter.shelter_maps FROM PUBLIC;
 GRANT SELECT ON shelter.map_templates, shelter.shelter_maps TO shelter_runtime;
 CREATE POLICY runtime_map_read ON shelter.map_templates FOR SELECT TO shelter_runtime USING (true);
 CREATE POLICY runtime_shelter_map_read ON shelter.shelter_maps FOR SELECT TO shelter_runtime USING (true);
@@ -54,6 +54,16 @@ BEGIN
     FROM shelter.map_templates m WHERE m.auto_assign;
     RETURN NEW;
 END $$;
-REVOKE ALL ON FUNCTION shelter.assign_default_maps() FROM PUBLIC, anon, authenticated, shelter_runtime;
+REVOKE ALL ON FUNCTION shelter.assign_default_maps() FROM PUBLIC, shelter_runtime;
+-- Supabase client roles are optional on the self-hosted PostgreSQL server.
+-- Keep their denial explicit when present; do not create unused roles.
+DO $$ DECLARE api_role text; BEGIN
+    FOREACH api_role IN ARRAY ARRAY['anon', 'authenticated'] LOOP
+        IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = api_role) THEN
+            EXECUTE format('REVOKE ALL ON shelter.map_templates, shelter.shelter_maps FROM %I', api_role);
+            EXECUTE format('REVOKE ALL ON FUNCTION shelter.assign_default_maps() FROM %I', api_role);
+        END IF;
+    END LOOP;
+END $$;
 CREATE TRIGGER shelter_default_maps AFTER INSERT ON shelter.shelters
 FOR EACH ROW EXECUTE FUNCTION shelter.assign_default_maps();
