@@ -3427,6 +3427,86 @@
           "format": "date-time"
         }
       }
+    },
+    "ShelterMapSummary": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "assetBaseUrl": {
+          "type": "string"
+        },
+        "manifestUrl": {
+          "type": "string"
+        },
+        "layoutUrl": {
+          "type": "string"
+        },
+        "manifestSha256": {
+          "type": "string"
+        },
+        "layoutSha256": {
+          "type": "string"
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sortOrder": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "isDefault": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "version",
+        "title",
+        "assetBaseUrl",
+        "manifestUrl",
+        "layoutUrl",
+        "manifestSha256",
+        "layoutSha256",
+        "width",
+        "height",
+        "sortOrder",
+        "isDefault"
+      ]
+    },
+    "ShelterMapList": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/ShelterMapSummary"
+          }
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "MapImageFile": {
+      "type": "string",
+      "format": "binary"
+    },
+    "MapJsonFile": {
+      "type": "object",
+      "additionalProperties": true
     }
   },
   "operations": {
@@ -5411,6 +5491,43 @@
         "schema": "PublicAnimalLinkInput",
         "required": true,
         "contentType": "application/json"
+      }
+    },
+    "GET /v1/shelters/{shelterId}/maps": {
+      "summary": "공개 보호소의 공용 맵 3종 조회",
+      "description": "보호소마다 세 공용 맵을 모두 사용합니다. URL은 API 원점을 기준으로 해석합니다. 비공개 보호소는 404입니다.",
+      "tag": "01. 공개 조회",
+      "public": true,
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        404
+      ],
+      "responseSchema": "ShelterMapList"
+    },
+    "GET /v1/map-assets/{version}/{mapId}/{file}": {
+      "summary": "버전 고정 맵 이미지·좌표 파일 조회",
+      "description": "manifest의 상대 경로를 assetBaseUrl에 붙입니다. 등록된 PNG/JSON만 반환하며 SHA-256 ETag와 immutable 캐시를 제공합니다.",
+      "tag": "01. 공개 조회",
+      "public": true,
+      "success": [
+        200,
+        304
+      ],
+      "errors": [
+        400,
+        404
+      ],
+      "responseContent": {
+        "image/png": "MapImageFile",
+        "application/json": "MapJsonFile"
+      },
+      "stringPathParameters": {
+        "version": "맵 버전. 예: 1.0.0",
+        "mapId": "맵 식별자. 예: 01-sunny-meadow",
+        "file": "맵 안의 파일 경로. 예: map/ground.png"
       }
     }
   }

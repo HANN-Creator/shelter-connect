@@ -62,6 +62,8 @@ public class ApiDocumentation {
                 op.setSecurity(spec.path("public").asBoolean(false)?List.of():List.of(new SecurityRequirement().addList("supabaseBearer")));
                 if(op.getParameters()!=null) op.getParameters().forEach(p -> {
                     if("path".equals(p.getIn()) || p.getName().endsWith("Id")) p.setSchema(new StringSchema().format("uuid"));
+                    if(spec.path("stringPathParameters").has(p.getName()))
+                        p.setSchema(new StringSchema().description(spec.path("stringPathParameters").path(p.getName()).asText()));
                     if("cursor".equals(p.getName())) p.setDescription("이전 응답의 nextCursor. 첫 페이지에서는 생략.");
                     if("limit".equals(p.getName())) p.setSchema(new IntegerSchema().minimum(java.math.BigDecimal.ONE).maximum(java.math.BigDecimal.valueOf(50))._default(20));
                 });
@@ -78,8 +80,12 @@ public class ApiDocumentation {
                 var responses=new ApiResponses();
                 for(var code:spec.path("success")) {
                     var response=new ApiResponse().description(code.asText().equals("202")?"접수됨 · 작업 상태를 조회하세요":"성공");
-                    if(!code.asText().equals("204")) {
-                        if(spec.has("responseSchema")) response.content(new Content().addMediaType("application/json",new MediaType().schema(ref(spec.path("responseSchema").asText()))));
+                    if(!code.asText().equals("204") && !code.asText().equals("304")) {
+                        if(spec.has("responseContent")) {
+                            var content = new Content();
+                            spec.path("responseContent").properties().forEach(entry -> content.addMediaType(entry.getKey(),new MediaType().schema(ref(entry.getValue().asText()))));
+                            response.content(content);
+                        } else if(spec.has("responseSchema")) response.content(new Content().addMediaType("application/json",new MediaType().schema(ref(spec.path("responseSchema").asText()))));
                         else if(discovered!=null) response.content(discovered.getContent());
                     }
                     responses.addApiResponse(code.asText(),response);

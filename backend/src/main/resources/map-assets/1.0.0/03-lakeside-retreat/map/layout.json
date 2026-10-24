@@ -1,0 +1,1628 @@
+{
+  "version": "pastel-village-variants-1",
+  "id": "03-lakeside-retreat",
+  "title": "물가 쉼터",
+  "description": "호수를 따라 걷다가, 나무 데크에서 나란히 쉬는 산책 정원.",
+  "width": 640,
+  "height": 640,
+  "bounds": {
+    "left": 36,
+    "top": 36,
+    "right": 604,
+    "bottom": 600
+  },
+  "spawn": {
+    "x": 200,
+    "y": 380
+  },
+  "slots": [
+    {
+      "x": 194,
+      "y": 286
+    },
+    {
+      "x": 196,
+      "y": 428
+    },
+    {
+      "x": 314,
+      "y": 492
+    },
+    {
+      "x": 474,
+      "y": 470
+    },
+    {
+      "x": 568,
+      "y": 354
+    },
+    {
+      "x": 368,
+      "y": 182
+    }
+  ],
+  "landmarks": {
+    "shelterDoor": {
+      "x": 140,
+      "y": 228
+    },
+    "viewingDeck": {
+      "x": 252,
+      "y": 334
+    },
+    "bridge": {
+      "x": 402,
+      "y": 498
+    },
+    "eastBank": {
+      "x": 570,
+      "y": 380
+    },
+    "flowers": {
+      "x": 146,
+      "y": 544
+    }
+  },
+  "obstacles": [
+    {
+      "x": 32,
+      "y": 32,
+      "w": 24,
+      "h": 24
+    },
+    {
+      "x": 560,
+      "y": 32,
+      "w": 48,
+      "h": 8
+    },
+    {
+      "x": 600,
+      "y": 40,
+      "w": 8,
+      "h": 24
+    },
+    {
+      "x": 32,
+      "y": 56,
+      "w": 8,
+      "h": 48
+    },
+    {
+      "x": 288,
+      "y": 224,
+      "w": 168,
+      "h": 8
+    },
+    {
+      "x": 288,
+      "y": 232,
+      "w": 224,
+      "h": 8
+    },
+    {
+      "x": 264,
+      "y": 240,
+      "w": 248,
+      "h": 32
+    },
+    {
+      "x": 264,
+      "y": 272,
+      "w": 280,
+      "h": 8
+    },
+    {
+      "x": 240,
+      "y": 280,
+      "w": 304,
+      "h": 32
+    },
+    {
+      "x": 32,
+      "y": 288,
+      "w": 8,
+      "h": 144
+    },
+    {
+      "x": 280,
+      "y": 312,
+      "w": 264,
+      "h": 48
+    },
+    {
+      "x": 240,
+      "y": 360,
+      "w": 304,
+      "h": 8
+    },
+    {
+      "x": 240,
+      "y": 368,
+      "w": 272,
+      "h": 16
+    },
+    {
+      "x": 264,
+      "y": 384,
+      "w": 248,
+      "h": 24
+    },
+    {
+      "x": 264,
+      "y": 408,
+      "w": 200,
+      "h": 16
+    },
+    {
+      "x": 312,
+      "y": 424,
+      "w": 152,
+      "h": 16
+    },
+    {
+      "x": 312,
+      "y": 440,
+      "w": 112,
+      "h": 24
+    },
+    {
+      "x": 376,
+      "y": 464,
+      "w": 48,
+      "h": 16
+    },
+    {
+      "x": 376,
+      "y": 520,
+      "w": 48,
+      "h": 80
+    },
+    {
+      "x": 32,
+      "y": 552,
+      "w": 8,
+      "h": 48
+    },
+    {
+      "x": 592,
+      "y": 552,
+      "w": 16,
+      "h": 40
+    },
+    {
+      "x": 560,
+      "y": 592,
+      "w": 48,
+      "h": 16
+    },
+    {
+      "x": 32,
+      "y": 600,
+      "w": 40,
+      "h": 8
+    },
+    {
+      "x": 160,
+      "y": 600,
+      "w": 264,
+      "h": 8
+    },
+    {
+      "x": 364,
+      "y": 472,
+      "w": 82,
+      "h": 6
+    },
+    {
+      "x": 364,
+      "y": 520,
+      "w": 82,
+      "h": 6
+    },
+    {
+      "x": 206,
+      "y": 310,
+      "w": 74,
+      "h": 6
+    },
+    {
+      "x": 206,
+      "y": 354,
+      "w": 74,
+      "h": 8
+    },
+    {
+      "x": 274,
+      "y": 310,
+      "w": 6,
+      "h": 52
+    },
+    {
+      "x": 80,
+      "y": 130,
+      "w": 120,
+      "h": 66
+    },
+    {
+      "x": 508,
+      "y": 154,
+      "w": 52,
+      "h": 24
+    },
+    {
+      "x": 56,
+      "y": 110,
+      "w": 12,
+      "h": 14
+    },
+    {
+      "x": 218,
+      "y": 106,
+      "w": 12,
+      "h": 14
+    },
+    {
+      "x": 288,
+      "y": 112,
+      "w": 12,
+      "h": 14
+    },
+    {
+      "x": 368,
+      "y": 102,
+      "w": 12,
+      "h": 14
+    },
+    {
+      "x": 432,
+      "y": 122,
+      "w": 12,
+      "h": 14
+    },
+    {
+      "x": 564,
+      "y": 90,
+      "w": 12,
+      "h": 14
+    },
+    {
+      "x": 580,
+      "y": 232,
+      "w": 12,
+      "h": 14
+    },
+    {
+      "x": 70,
+      "y": 272,
+      "w": 12,
+      "h": 14
+    },
+    {
+      "x": 104,
+      "y": 346,
+      "w": 12,
+      "h": 14
+    },
+    {
+      "x": 56,
+      "y": 420,
+      "w": 12,
+      "h": 14
+    },
+    {
+      "x": 86,
+      "y": 570,
+      "w": 12,
+      "h": 14
+    },
+    {
+      "x": 200,
+      "y": 590,
+      "w": 12,
+      "h": 14
+    },
+    {
+      "x": 306,
+      "y": 572,
+      "w": 12,
+      "h": 14
+    },
+    {
+      "x": 356,
+      "y": 546,
+      "w": 12,
+      "h": 14
+    },
+    {
+      "x": 554,
+      "y": 566,
+      "w": 12,
+      "h": 14
+    },
+    {
+      "x": 556,
+      "y": 466,
+      "w": 12,
+      "h": 14
+    },
+    {
+      "x": 84,
+      "y": 234,
+      "w": 24,
+      "h": 8
+    },
+    {
+      "x": 220,
+      "y": 226,
+      "w": 24,
+      "h": 8
+    },
+    {
+      "x": 440,
+      "y": 190,
+      "w": 24,
+      "h": 8
+    },
+    {
+      "x": 568,
+      "y": 418,
+      "w": 24,
+      "h": 8
+    },
+    {
+      "x": 458,
+      "y": 568,
+      "w": 24,
+      "h": 8
+    },
+    {
+      "x": 70,
+      "y": 508,
+      "w": 24,
+      "h": 8
+    },
+    {
+      "x": 88,
+      "y": 444,
+      "w": 52,
+      "h": 12
+    },
+    {
+      "x": 486,
+      "y": 430,
+      "w": 52,
+      "h": 12
+    },
+    {
+      "x": 64,
+      "y": 530,
+      "w": 46,
+      "h": 34
+    },
+    {
+      "x": 160,
+      "y": 522,
+      "w": 58,
+      "h": 38
+    },
+    {
+      "x": 498,
+      "y": 550,
+      "w": 60,
+      "h": 38
+    },
+    {
+      "x": 180,
+      "y": 480,
+      "w": 8,
+      "h": 6
+    },
+    {
+      "x": 474,
+      "y": 224,
+      "w": 8,
+      "h": 6
+    },
+    {
+      "x": 286,
+      "y": 184,
+      "w": 8,
+      "h": 8
+    },
+    {
+      "x": 290,
+      "y": 188,
+      "w": 24,
+      "h": 4
+    },
+    {
+      "x": 310,
+      "y": 184,
+      "w": 8,
+      "h": 8
+    },
+    {
+      "x": 314,
+      "y": 188,
+      "w": 24,
+      "h": 4
+    },
+    {
+      "x": 334,
+      "y": 184,
+      "w": 8,
+      "h": 8
+    },
+    {
+      "x": 132,
+      "y": 590,
+      "w": 8,
+      "h": 8
+    },
+    {
+      "x": 136,
+      "y": 594,
+      "w": 24,
+      "h": 4
+    },
+    {
+      "x": 156,
+      "y": 590,
+      "w": 8,
+      "h": 8
+    },
+    {
+      "x": 160,
+      "y": 594,
+      "w": 24,
+      "h": 4
+    },
+    {
+      "x": 180,
+      "y": 590,
+      "w": 8,
+      "h": 8
+    },
+    {
+      "x": 462,
+      "y": 594,
+      "w": 8,
+      "h": 8
+    },
+    {
+      "x": 466,
+      "y": 598,
+      "w": 24,
+      "h": 4
+    },
+    {
+      "x": 486,
+      "y": 594,
+      "w": 8,
+      "h": 8
+    },
+    {
+      "x": 490,
+      "y": 598,
+      "w": 24,
+      "h": 4
+    },
+    {
+      "x": 510,
+      "y": 594,
+      "w": 8,
+      "h": 8
+    },
+    {
+      "x": 514,
+      "y": 598,
+      "w": 24,
+      "h": 4
+    },
+    {
+      "x": 534,
+      "y": 594,
+      "w": 8,
+      "h": 8
+    }
+  ],
+  "objects": [
+    {
+      "name": "cottage",
+      "x": 68,
+      "y": 60,
+      "depth": 198,
+      "sx": 0,
+      "sy": 0,
+      "w": 144,
+      "h": 152,
+      "id": "object-000",
+      "asset": "cottage-01",
+      "file": "props/cottage-01.png"
+    },
+    {
+      "name": "cottage",
+      "x": 496,
+      "y": 106,
+      "depth": 180,
+      "sx": 148,
+      "sy": 0,
+      "w": 76,
+      "h": 88,
+      "id": "object-001",
+      "asset": "cottage-02",
+      "file": "props/cottage-02.png"
+    },
+    {
+      "name": "tree",
+      "x": 38,
+      "y": 40,
+      "depth": 124,
+      "sx": 228,
+      "sy": 0,
+      "w": 50,
+      "h": 90,
+      "id": "object-002",
+      "asset": "tree-01",
+      "file": "props/tree-01.png"
+    },
+    {
+      "name": "tree",
+      "x": 190,
+      "y": 38,
+      "depth": 120,
+      "sx": 282,
+      "sy": 0,
+      "w": 68,
+      "h": 88,
+      "id": "object-003",
+      "asset": "tree-02",
+      "file": "props/tree-02.png"
+    },
+    {
+      "name": "tree",
+      "x": 260,
+      "y": 44,
+      "depth": 126,
+      "sx": 354,
+      "sy": 0,
+      "w": 68,
+      "h": 88,
+      "id": "object-004",
+      "asset": "tree-03",
+      "file": "props/tree-03.png"
+    },
+    {
+      "name": "tree",
+      "x": 350,
+      "y": 32,
+      "depth": 116,
+      "sx": 426,
+      "sy": 0,
+      "w": 50,
+      "h": 90,
+      "id": "object-005",
+      "asset": "tree-04",
+      "file": "props/tree-04.png"
+    },
+    {
+      "name": "tree",
+      "x": 404,
+      "y": 54,
+      "depth": 136,
+      "sx": 0,
+      "sy": 156,
+      "w": 68,
+      "h": 88,
+      "id": "object-006",
+      "asset": "tree-05",
+      "file": "props/tree-05.png"
+    },
+    {
+      "name": "tree",
+      "x": 536,
+      "y": 22,
+      "depth": 104,
+      "sx": 72,
+      "sy": 156,
+      "w": 68,
+      "h": 88,
+      "id": "object-007",
+      "asset": "tree-06",
+      "file": "props/tree-06.png"
+    },
+    {
+      "name": "tree",
+      "x": 562,
+      "y": 162,
+      "depth": 246,
+      "sx": 144,
+      "sy": 156,
+      "w": 50,
+      "h": 90,
+      "id": "object-008",
+      "asset": "tree-04",
+      "file": "props/tree-04.png"
+    },
+    {
+      "name": "tree",
+      "x": 42,
+      "y": 204,
+      "depth": 286,
+      "sx": 198,
+      "sy": 156,
+      "w": 68,
+      "h": 88,
+      "id": "object-009",
+      "asset": "tree-07",
+      "file": "props/tree-07.png"
+    },
+    {
+      "name": "tree",
+      "x": 86,
+      "y": 276,
+      "depth": 360,
+      "sx": 270,
+      "sy": 156,
+      "w": 50,
+      "h": 90,
+      "id": "object-010",
+      "asset": "tree-08",
+      "file": "props/tree-08.png"
+    },
+    {
+      "name": "tree",
+      "x": 28,
+      "y": 352,
+      "depth": 434,
+      "sx": 324,
+      "sy": 156,
+      "w": 68,
+      "h": 88,
+      "id": "object-011",
+      "asset": "tree-06",
+      "file": "props/tree-06.png"
+    },
+    {
+      "name": "tree",
+      "x": 58,
+      "y": 502,
+      "depth": 584,
+      "sx": 396,
+      "sy": 156,
+      "w": 68,
+      "h": 88,
+      "id": "object-012",
+      "asset": "tree-07",
+      "file": "props/tree-07.png"
+    },
+    {
+      "name": "tree",
+      "x": 172,
+      "y": 522,
+      "depth": 604,
+      "sx": 0,
+      "sy": 250,
+      "w": 68,
+      "h": 88,
+      "id": "object-013",
+      "asset": "tree-09",
+      "file": "props/tree-09.png"
+    },
+    {
+      "name": "tree",
+      "x": 278,
+      "y": 504,
+      "depth": 586,
+      "sx": 72,
+      "sy": 250,
+      "w": 68,
+      "h": 88,
+      "id": "object-014",
+      "asset": "tree-07",
+      "file": "props/tree-07.png"
+    },
+    {
+      "name": "tree",
+      "x": 338,
+      "y": 476,
+      "depth": 560,
+      "sx": 144,
+      "sy": 250,
+      "w": 50,
+      "h": 90,
+      "id": "object-015",
+      "asset": "tree-08",
+      "file": "props/tree-08.png"
+    },
+    {
+      "name": "tree",
+      "x": 526,
+      "y": 498,
+      "depth": 580,
+      "sx": 198,
+      "sy": 250,
+      "w": 68,
+      "h": 88,
+      "id": "object-016",
+      "asset": "tree-10",
+      "file": "props/tree-10.png"
+    },
+    {
+      "name": "tree",
+      "x": 528,
+      "y": 398,
+      "depth": 480,
+      "sx": 270,
+      "sy": 250,
+      "w": 68,
+      "h": 88,
+      "id": "object-017",
+      "asset": "tree-05",
+      "file": "props/tree-05.png"
+    },
+    {
+      "name": "bush",
+      "x": 78,
+      "y": 218,
+      "depth": 240,
+      "sx": 342,
+      "sy": 250,
+      "w": 38,
+      "h": 28,
+      "id": "object-018",
+      "asset": "bush-01",
+      "file": "props/bush-01.png"
+    },
+    {
+      "name": "bush",
+      "x": 214,
+      "y": 210,
+      "depth": 232,
+      "sx": 384,
+      "sy": 250,
+      "w": 38,
+      "h": 28,
+      "id": "object-019",
+      "asset": "bush-01",
+      "file": "props/bush-01.png"
+    },
+    {
+      "name": "bush",
+      "x": 434,
+      "y": 174,
+      "depth": 196,
+      "sx": 426,
+      "sy": 250,
+      "w": 38,
+      "h": 28,
+      "id": "object-020",
+      "asset": "bush-01",
+      "file": "props/bush-01.png"
+    },
+    {
+      "name": "bush",
+      "x": 562,
+      "y": 402,
+      "depth": 424,
+      "sx": 468,
+      "sy": 250,
+      "w": 38,
+      "h": 28,
+      "id": "object-021",
+      "asset": "bush-01",
+      "file": "props/bush-01.png"
+    },
+    {
+      "name": "bush",
+      "x": 452,
+      "y": 552,
+      "depth": 574,
+      "sx": 0,
+      "sy": 344,
+      "w": 38,
+      "h": 28,
+      "id": "object-022",
+      "asset": "bush-01",
+      "file": "props/bush-01.png"
+    },
+    {
+      "name": "bush",
+      "x": 64,
+      "y": 492,
+      "depth": 514,
+      "sx": 42,
+      "sy": 344,
+      "w": 38,
+      "h": 28,
+      "id": "object-023",
+      "asset": "bush-01",
+      "file": "props/bush-01.png"
+    },
+    {
+      "name": "bench",
+      "x": 84,
+      "y": 424,
+      "depth": 458,
+      "sx": 84,
+      "sy": 344,
+      "w": 60,
+      "h": 40,
+      "id": "object-024",
+      "asset": "bench-01",
+      "file": "props/bench-01.png"
+    },
+    {
+      "name": "bench",
+      "x": 482,
+      "y": 410,
+      "depth": 444,
+      "sx": 148,
+      "sy": 344,
+      "w": 60,
+      "h": 40,
+      "id": "object-025",
+      "asset": "bench-01",
+      "file": "props/bench-01.png"
+    },
+    {
+      "name": "flowerbed",
+      "x": 64,
+      "y": 522,
+      "depth": 562,
+      "sx": 212,
+      "sy": 344,
+      "w": 46,
+      "h": 44,
+      "id": "object-026",
+      "asset": "flowerbed-01",
+      "file": "props/flowerbed-01.png"
+    },
+    {
+      "name": "flowerbed",
+      "x": 160,
+      "y": 514,
+      "depth": 558,
+      "sx": 262,
+      "sy": 344,
+      "w": 58,
+      "h": 48,
+      "id": "object-027",
+      "asset": "flowerbed-02",
+      "file": "props/flowerbed-02.png"
+    },
+    {
+      "name": "flowerbed",
+      "x": 498,
+      "y": 542,
+      "depth": 586,
+      "sx": 324,
+      "sy": 344,
+      "w": 60,
+      "h": 48,
+      "id": "object-028",
+      "asset": "flowerbed-03",
+      "file": "props/flowerbed-03.png"
+    },
+    {
+      "name": "sign",
+      "x": 164,
+      "y": 434,
+      "depth": 486,
+      "sx": 388,
+      "sy": 344,
+      "w": 42,
+      "h": 54,
+      "id": "object-029",
+      "asset": "sign-01",
+      "file": "props/sign-01.png"
+    },
+    {
+      "name": "sign",
+      "x": 458,
+      "y": 178,
+      "depth": 230,
+      "sx": 434,
+      "sy": 344,
+      "w": 42,
+      "h": 54,
+      "id": "object-030",
+      "asset": "sign-02",
+      "file": "props/sign-02.png"
+    },
+    {
+      "name": "water bowl",
+      "x": 178,
+      "y": 208,
+      "depth": 220,
+      "sx": 480,
+      "sy": 344,
+      "w": 24,
+      "h": 16,
+      "id": "object-031",
+      "asset": "water-bowl-01",
+      "file": "props/water-bowl-01.png"
+    },
+    {
+      "name": "water bowl",
+      "x": 552,
+      "y": 192,
+      "depth": 204,
+      "sx": 0,
+      "sy": 402,
+      "w": 24,
+      "h": 16,
+      "id": "object-032",
+      "asset": "water-bowl-01",
+      "file": "props/water-bowl-01.png"
+    },
+    {
+      "name": "water bowl",
+      "x": 126,
+      "y": 388,
+      "depth": 400,
+      "sx": 28,
+      "sy": 402,
+      "w": 24,
+      "h": 16,
+      "id": "object-033",
+      "asset": "water-bowl-01",
+      "file": "props/water-bowl-01.png"
+    },
+    {
+      "name": "fence",
+      "x": 280,
+      "y": 170,
+      "depth": 190,
+      "sx": 56,
+      "sy": 402,
+      "w": 32,
+      "h": 26,
+      "id": "object-034",
+      "asset": "fence-01",
+      "file": "props/fence-01.png"
+    },
+    {
+      "name": "fence",
+      "x": 304,
+      "y": 170,
+      "depth": 190,
+      "sx": 92,
+      "sy": 402,
+      "w": 32,
+      "h": 26,
+      "id": "object-035",
+      "asset": "fence-01",
+      "file": "props/fence-01.png"
+    },
+    {
+      "name": "fence",
+      "x": 328,
+      "y": 170,
+      "depth": 190,
+      "sx": 128,
+      "sy": 402,
+      "w": 32,
+      "h": 26,
+      "id": "object-036",
+      "asset": "fence-02",
+      "file": "props/fence-02.png"
+    },
+    {
+      "name": "fence",
+      "x": 126,
+      "y": 576,
+      "depth": 596,
+      "sx": 164,
+      "sy": 402,
+      "w": 32,
+      "h": 26,
+      "id": "object-037",
+      "asset": "fence-01",
+      "file": "props/fence-01.png"
+    },
+    {
+      "name": "fence",
+      "x": 150,
+      "y": 576,
+      "depth": 596,
+      "sx": 200,
+      "sy": 402,
+      "w": 32,
+      "h": 26,
+      "id": "object-038",
+      "asset": "fence-01",
+      "file": "props/fence-01.png"
+    },
+    {
+      "name": "fence",
+      "x": 174,
+      "y": 576,
+      "depth": 596,
+      "sx": 236,
+      "sy": 402,
+      "w": 32,
+      "h": 26,
+      "id": "object-039",
+      "asset": "fence-02",
+      "file": "props/fence-02.png"
+    },
+    {
+      "name": "fence",
+      "x": 456,
+      "y": 580,
+      "depth": 600,
+      "sx": 272,
+      "sy": 402,
+      "w": 32,
+      "h": 26,
+      "id": "object-040",
+      "asset": "fence-01",
+      "file": "props/fence-01.png"
+    },
+    {
+      "name": "fence",
+      "x": 480,
+      "y": 580,
+      "depth": 600,
+      "sx": 308,
+      "sy": 402,
+      "w": 32,
+      "h": 26,
+      "id": "object-041",
+      "asset": "fence-01",
+      "file": "props/fence-01.png"
+    },
+    {
+      "name": "fence",
+      "x": 504,
+      "y": 580,
+      "depth": 600,
+      "sx": 344,
+      "sy": 402,
+      "w": 32,
+      "h": 26,
+      "id": "object-042",
+      "asset": "fence-01",
+      "file": "props/fence-01.png"
+    },
+    {
+      "name": "fence",
+      "x": 528,
+      "y": 580,
+      "depth": 600,
+      "sx": 380,
+      "sy": 402,
+      "w": 32,
+      "h": 26,
+      "id": "object-043",
+      "asset": "fence-02",
+      "file": "props/fence-02.png"
+    }
+  ],
+  "environment": {
+    "water": {
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 8,
+      "frameDurationMs": 250,
+      "row": 0,
+      "direction": "right"
+    },
+    "clips": {
+      "grass": {
+        "frameWidth": 24,
+        "frameHeight": 24,
+        "frameCount": 8,
+        "frameDurationMs": 250,
+        "row": 0,
+        "anchorX": 12,
+        "anchorY": 20
+      },
+      "reeds": {
+        "frameWidth": 24,
+        "frameHeight": 24,
+        "frameCount": 8,
+        "frameDurationMs": 250,
+        "row": 1,
+        "anchorX": 12,
+        "anchorY": 20
+      }
+    },
+    "plants": [
+      {
+        "clip": "grass",
+        "x": 276,
+        "y": 162,
+        "phase": 7
+      },
+      {
+        "clip": "grass",
+        "x": 394,
+        "y": 70,
+        "phase": 2
+      },
+      {
+        "clip": "grass",
+        "x": 90,
+        "y": 160,
+        "phase": 7
+      },
+      {
+        "clip": "grass",
+        "x": 150,
+        "y": 358,
+        "phase": 4
+      },
+      {
+        "clip": "grass",
+        "x": 154,
+        "y": 332,
+        "phase": 5
+      },
+      {
+        "clip": "grass",
+        "x": 478,
+        "y": 80,
+        "phase": 5
+      },
+      {
+        "clip": "grass",
+        "x": 176,
+        "y": 90,
+        "phase": 5
+      },
+      {
+        "clip": "grass",
+        "x": 530,
+        "y": 418,
+        "phase": 4
+      },
+      {
+        "clip": "grass",
+        "x": 538,
+        "y": 390,
+        "phase": 2
+      },
+      {
+        "clip": "grass",
+        "x": 320,
+        "y": 104,
+        "phase": 4
+      },
+      {
+        "clip": "grass",
+        "x": 198,
+        "y": 530,
+        "phase": 2
+      },
+      {
+        "clip": "grass",
+        "x": 126,
+        "y": 150,
+        "phase": 0
+      },
+      {
+        "clip": "grass",
+        "x": 328,
+        "y": 104,
+        "phase": 0
+      },
+      {
+        "clip": "grass",
+        "x": 526,
+        "y": 250,
+        "phase": 2
+      },
+      {
+        "clip": "grass",
+        "x": 142,
+        "y": 116,
+        "phase": 7
+      },
+      {
+        "clip": "grass",
+        "x": 168,
+        "y": 358,
+        "phase": 7
+      },
+      {
+        "clip": "grass",
+        "x": 564,
+        "y": 558,
+        "phase": 5
+      },
+      {
+        "clip": "grass",
+        "x": 190,
+        "y": 162,
+        "phase": 6
+      },
+      {
+        "clip": "grass",
+        "x": 168,
+        "y": 312,
+        "phase": 0
+      },
+      {
+        "clip": "grass",
+        "x": 152,
+        "y": 66,
+        "phase": 5
+      },
+      {
+        "clip": "grass",
+        "x": 296,
+        "y": 532,
+        "phase": 6
+      },
+      {
+        "clip": "grass",
+        "x": 260,
+        "y": 88,
+        "phase": 2
+      },
+      {
+        "clip": "grass",
+        "x": 106,
+        "y": 432,
+        "phase": 7
+      },
+      {
+        "clip": "grass",
+        "x": 456,
+        "y": 464,
+        "phase": 4
+      },
+      {
+        "clip": "grass",
+        "x": 126,
+        "y": 234,
+        "phase": 2
+      },
+      {
+        "clip": "grass",
+        "x": 86,
+        "y": 470,
+        "phase": 4
+      },
+      {
+        "clip": "grass",
+        "x": 174,
+        "y": 100,
+        "phase": 7
+      },
+      {
+        "clip": "grass",
+        "x": 278,
+        "y": 232,
+        "phase": 5
+      },
+      {
+        "clip": "grass",
+        "x": 438,
+        "y": 548,
+        "phase": 3
+      },
+      {
+        "clip": "grass",
+        "x": 128,
+        "y": 294,
+        "phase": 3
+      },
+      {
+        "clip": "grass",
+        "x": 442,
+        "y": 218,
+        "phase": 4
+      },
+      {
+        "clip": "grass",
+        "x": 440,
+        "y": 448,
+        "phase": 4
+      },
+      {
+        "clip": "grass",
+        "x": 314,
+        "y": 472,
+        "phase": 3
+      },
+      {
+        "clip": "grass",
+        "x": 232,
+        "y": 426,
+        "phase": 1
+      },
+      {
+        "clip": "grass",
+        "x": 220,
+        "y": 138,
+        "phase": 7
+      },
+      {
+        "clip": "grass",
+        "x": 434,
+        "y": 212,
+        "phase": 5
+      },
+      {
+        "clip": "grass",
+        "x": 120,
+        "y": 176,
+        "phase": 4
+      },
+      {
+        "clip": "grass",
+        "x": 468,
+        "y": 174,
+        "phase": 5
+      },
+      {
+        "clip": "grass",
+        "x": 266,
+        "y": 68,
+        "phase": 1
+      },
+      {
+        "clip": "grass",
+        "x": 264,
+        "y": 398,
+        "phase": 3
+      },
+      {
+        "clip": "grass",
+        "x": 128,
+        "y": 294,
+        "phase": 3
+      },
+      {
+        "clip": "grass",
+        "x": 262,
+        "y": 584,
+        "phase": 5
+      },
+      {
+        "clip": "grass",
+        "x": 590,
+        "y": 534,
+        "phase": 0
+      },
+      {
+        "clip": "grass",
+        "x": 462,
+        "y": 76,
+        "phase": 3
+      },
+      {
+        "clip": "grass",
+        "x": 172,
+        "y": 138,
+        "phase": 7
+      },
+      {
+        "clip": "grass",
+        "x": 230,
+        "y": 140,
+        "phase": 7
+      },
+      {
+        "clip": "grass",
+        "x": 58,
+        "y": 162,
+        "phase": 0
+      },
+      {
+        "clip": "grass",
+        "x": 546,
+        "y": 424,
+        "phase": 7
+      },
+      {
+        "clip": "grass",
+        "x": 76,
+        "y": 342,
+        "phase": 5
+      },
+      {
+        "clip": "grass",
+        "x": 224,
+        "y": 366,
+        "phase": 7
+      },
+      {
+        "clip": "grass",
+        "x": 512,
+        "y": 396,
+        "phase": 6
+      },
+      {
+        "clip": "grass",
+        "x": 300,
+        "y": 448,
+        "phase": 2
+      },
+      {
+        "clip": "grass",
+        "x": 576,
+        "y": 260,
+        "phase": 2
+      },
+      {
+        "clip": "grass",
+        "x": 230,
+        "y": 504,
+        "phase": 5
+      },
+      {
+        "clip": "grass",
+        "x": 266,
+        "y": 456,
+        "phase": 3
+      },
+      {
+        "clip": "grass",
+        "x": 556,
+        "y": 502,
+        "phase": 5
+      },
+      {
+        "clip": "grass",
+        "x": 506,
+        "y": 516,
+        "phase": 1
+      },
+      {
+        "clip": "grass",
+        "x": 532,
+        "y": 416,
+        "phase": 6
+      },
+      {
+        "clip": "grass",
+        "x": 238,
+        "y": 168,
+        "phase": 1
+      },
+      {
+        "clip": "grass",
+        "x": 522,
+        "y": 542,
+        "phase": 6
+      },
+      {
+        "clip": "grass",
+        "x": 158,
+        "y": 132,
+        "phase": 7
+      },
+      {
+        "clip": "grass",
+        "x": 466,
+        "y": 416,
+        "phase": 3
+      },
+      {
+        "clip": "grass",
+        "x": 588,
+        "y": 292,
+        "phase": 4
+      },
+      {
+        "clip": "grass",
+        "x": 516,
+        "y": 158,
+        "phase": 5
+      },
+      {
+        "clip": "grass",
+        "x": 130,
+        "y": 166,
+        "phase": 6
+      },
+      {
+        "clip": "reeds",
+        "x": 288,
+        "y": 244,
+        "phase": 2
+      },
+      {
+        "clip": "reeds",
+        "x": 448,
+        "y": 228,
+        "phase": 2
+      },
+      {
+        "clip": "reeds",
+        "x": 538,
+        "y": 288,
+        "phase": 5
+      },
+      {
+        "clip": "reeds",
+        "x": 508,
+        "y": 392,
+        "phase": 2
+      },
+      {
+        "clip": "reeds",
+        "x": 464,
+        "y": 438,
+        "phase": 3
+      },
+      {
+        "clip": "reeds",
+        "x": 318,
+        "y": 456,
+        "phase": 3
+      },
+      {
+        "clip": "reeds",
+        "x": 366,
+        "y": 558,
+        "phase": 6
+      },
+      {
+        "clip": "reeds",
+        "x": 428,
+        "y": 580,
+        "phase": 0
+      }
+    ],
+    "bridges": [
+      {
+        "file": "props/bridge-01.png",
+        "x": 362,
+        "y": 470,
+        "w": 88,
+        "h": 58,
+        "bakedIntoGround": true,
+        "kind": "bridge"
+      },
+      {
+        "file": "props/bridge-02.png",
+        "x": 206,
+        "y": 310,
+        "w": 74,
+        "h": 52,
+        "bakedIntoGround": true,
+        "kind": "viewing-deck"
+      }
+    ]
+  },
+  "validation": {
+    "dryPoints": [
+      {
+        "x": 200,
+        "y": 380
+      },
+      {
+        "x": 140,
+        "y": 228
+      },
+      {
+        "x": 252,
+        "y": 334
+      },
+      {
+        "x": 402,
+        "y": 498
+      },
+      {
+        "x": 570,
+        "y": 380
+      },
+      {
+        "x": 146,
+        "y": 544
+      }
+    ],
+    "waterPoints": [
+      {
+        "x": 392,
+        "y": 340
+      }
+    ]
+  }
+}

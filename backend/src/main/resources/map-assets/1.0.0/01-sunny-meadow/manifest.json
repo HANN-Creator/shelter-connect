@@ -1,0 +1,370 @@
+{
+  "name": "01-sunny-meadow",
+  "title": "햇살 운동장",
+  "version": "1.0.0",
+  "mapWidth": 640,
+  "mapHeight": 640,
+  "coordinates": "top-left, world pixels, y increases down",
+  "pixelScale": 2,
+  "sampling": "nearest",
+  "layout": "map/layout.json",
+  "ground": "map/ground.png",
+  "sceneryAtlas": "map/scenery-atlas.png",
+  "plantsAtlas": "animations/plants-atlas.png",
+  "tilemap": "map/ground-tilemap.json",
+  "drawOrder": [
+    "ground",
+    "masked water",
+    "plants",
+    "objects and actors sorted by depth",
+    "labels and UI"
+  ],
+  "animations": {
+    "water": {
+      "frameWidth": 32,
+      "frameHeight": 32,
+      "frameCount": 8,
+      "frameDurationMs": 250,
+      "row": 0,
+      "direction": "right",
+      "sheet": "animations/water/sheet.png",
+      "mask": "map/water-mask.png",
+      "fullMapFrames": [
+        "animations/water/full-map/frame-00.png",
+        "animations/water/full-map/frame-01.png",
+        "animations/water/full-map/frame-02.png",
+        "animations/water/full-map/frame-03.png",
+        "animations/water/full-map/frame-04.png",
+        "animations/water/full-map/frame-05.png",
+        "animations/water/full-map/frame-06.png",
+        "animations/water/full-map/frame-07.png"
+      ]
+    },
+    "grass": {
+      "frameWidth": 24,
+      "frameHeight": 24,
+      "frameCount": 8,
+      "frameDurationMs": 250,
+      "row": 0,
+      "anchorX": 12,
+      "anchorY": 20,
+      "sheet": "animations/grass/sheet.png",
+      "combinedAtlasRow": 0
+    },
+    "reeds": {
+      "frameWidth": 24,
+      "frameHeight": 24,
+      "frameCount": 8,
+      "frameDurationMs": 250,
+      "row": 0,
+      "anchorX": 12,
+      "anchorY": 20,
+      "sheet": "animations/reeds/sheet.png",
+      "combinedAtlasRow": 1
+    }
+  },
+  "props": [
+    {
+      "id": "cottage-01",
+      "file": "props/cottage-01.png",
+      "width": 144,
+      "height": 152,
+      "atlasRect": {
+        "x": 0,
+        "y": 0,
+        "w": 144,
+        "h": 152
+      }
+    },
+    {
+      "id": "cottage-02",
+      "file": "props/cottage-02.png",
+      "width": 76,
+      "height": 88,
+      "atlasRect": {
+        "x": 148,
+        "y": 0,
+        "w": 76,
+        "h": 88
+      }
+    },
+    {
+      "id": "tree-01",
+      "file": "props/tree-01.png",
+      "width": 68,
+      "height": 88,
+      "atlasRect": {
+        "x": 228,
+        "y": 0,
+        "w": 68,
+        "h": 88
+      }
+    },
+    {
+      "id": "tree-02",
+      "file": "props/tree-02.png",
+      "width": 68,
+      "height": 88,
+      "atlasRect": {
+        "x": 300,
+        "y": 0,
+        "w": 68,
+        "h": 88
+      }
+    },
+    {
+      "id": "tree-03",
+      "file": "props/tree-03.png",
+      "width": 50,
+      "height": 90,
+      "atlasRect": {
+        "x": 372,
+        "y": 0,
+        "w": 50,
+        "h": 90
+      }
+    },
+    {
+      "id": "tree-04",
+      "file": "props/tree-04.png",
+      "width": 68,
+      "height": 88,
+      "atlasRect": {
+        "x": 426,
+        "y": 0,
+        "w": 68,
+        "h": 88
+      }
+    },
+    {
+      "id": "tree-05",
+      "file": "props/tree-05.png",
+      "width": 50,
+      "height": 90,
+      "atlasRect": {
+        "x": 72,
+        "y": 156,
+        "w": 50,
+        "h": 90
+      }
+    },
+    {
+      "id": "tree-06",
+      "file": "props/tree-06.png",
+      "width": 68,
+      "height": 88,
+      "atlasRect": {
+        "x": 180,
+        "y": 156,
+        "w": 68,
+        "h": 88
+      }
+    },
+    {
+      "id": "tree-07",
+      "file": "props/tree-07.png",
+      "width": 50,
+      "height": 90,
+      "atlasRect": {
+        "x": 324,
+        "y": 156,
+        "w": 50,
+        "h": 90
+      }
+    },
+    {
+      "id": "tree-08",
+      "file": "props/tree-08.png",
+      "width": 68,
+      "height": 88,
+      "atlasRect": {
+        "x": 378,
+        "y": 156,
+        "w": 68,
+        "h": 88
+      }
+    },
+    {
+      "id": "tree-09",
+      "file": "props/tree-09.png",
+      "width": 68,
+      "height": 88,
+      "atlasRect": {
+        "x": 72,
+        "y": 250,
+        "w": 68,
+        "h": 88
+      }
+    },
+    {
+      "id": "tree-10",
+      "file": "props/tree-10.png",
+      "width": 68,
+      "height": 88,
+      "atlasRect": {
+        "x": 270,
+        "y": 250,
+        "w": 68,
+        "h": 88
+      }
+    },
+    {
+      "id": "tree-11",
+      "file": "props/tree-11.png",
+      "width": 50,
+      "height": 90,
+      "atlasRect": {
+        "x": 342,
+        "y": 250,
+        "w": 50,
+        "h": 90
+      }
+    },
+    {
+      "id": "fence-01",
+      "file": "props/fence-01.png",
+      "width": 32,
+      "height": 26,
+      "atlasRect": {
+        "x": 396,
+        "y": 250,
+        "w": 32,
+        "h": 26
+      }
+    },
+    {
+      "id": "fence-02",
+      "file": "props/fence-02.png",
+      "width": 32,
+      "height": 26,
+      "atlasRect": {
+        "x": 72,
+        "y": 344,
+        "w": 32,
+        "h": 26
+      }
+    },
+    {
+      "id": "fence-03",
+      "file": "props/fence-03.png",
+      "width": 32,
+      "height": 38,
+      "atlasRect": {
+        "x": 108,
+        "y": 344,
+        "w": 32,
+        "h": 38
+      }
+    },
+    {
+      "id": "fence-04",
+      "file": "props/fence-04.png",
+      "width": 32,
+      "height": 38,
+      "atlasRect": {
+        "x": 180,
+        "y": 344,
+        "w": 32,
+        "h": 38
+      }
+    },
+    {
+      "id": "bush-01",
+      "file": "props/bush-01.png",
+      "width": 38,
+      "height": 28,
+      "atlasRect": {
+        "x": 324,
+        "y": 386,
+        "w": 38,
+        "h": 28
+      }
+    },
+    {
+      "id": "bench-01",
+      "file": "props/bench-01.png",
+      "width": 60,
+      "height": 40,
+      "atlasRect": {
+        "x": 0,
+        "y": 428,
+        "w": 60,
+        "h": 40
+      }
+    },
+    {
+      "id": "flowerbed-01",
+      "file": "props/flowerbed-01.png",
+      "width": 46,
+      "height": 44,
+      "atlasRect": {
+        "x": 128,
+        "y": 428,
+        "w": 46,
+        "h": 44
+      }
+    },
+    {
+      "id": "flowerbed-02",
+      "file": "props/flowerbed-02.png",
+      "width": 58,
+      "height": 48,
+      "atlasRect": {
+        "x": 178,
+        "y": 428,
+        "w": 58,
+        "h": 48
+      }
+    },
+    {
+      "id": "flowerbed-03",
+      "file": "props/flowerbed-03.png",
+      "width": 58,
+      "height": 48,
+      "atlasRect": {
+        "x": 240,
+        "y": 428,
+        "w": 58,
+        "h": 48
+      }
+    },
+    {
+      "id": "water-bowl-01",
+      "file": "props/water-bowl-01.png",
+      "width": 24,
+      "height": 16,
+      "atlasRect": {
+        "x": 302,
+        "y": 428,
+        "w": 24,
+        "h": 16
+      }
+    },
+    {
+      "id": "sign-01",
+      "file": "props/sign-01.png",
+      "width": 42,
+      "height": 54,
+      "atlasRect": {
+        "x": 386,
+        "y": 428,
+        "w": 42,
+        "h": 54
+      }
+    },
+    {
+      "id": "sign-02",
+      "file": "props/sign-02.png",
+      "width": 42,
+      "height": 54,
+      "atlasRect": {
+        "x": 432,
+        "y": 428,
+        "w": 42,
+        "h": 54
+      }
+    }
+  ],
+  "preview": "preview.html",
+  "originalAssetsOnly": true
+}
