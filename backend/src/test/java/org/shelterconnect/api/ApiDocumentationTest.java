@@ -39,10 +39,14 @@ class ApiDocumentationTest {
             for(String path:mapping.getPatternValues()) if(path.startsWith("/v1/"))
                 for(var method:mapping.getMethodsCondition().getMethods()) actual.add(method+" "+path.replace("{*file}","{file}"));
         });
-        assertThat(documented).containsExactlyElementsOf(actual).hasSize(111);
+        assertThat(documented).containsExactlyElementsOf(actual).hasSize(112);
         assertThat(root.at("/servers/0/url").asText()).isEqualTo("/");
         assertThat(root.at("/components/securitySchemes/supabaseBearer/scheme").asText()).isEqualTo("bearer");
         assertThat(root.path("paths").path("/v1/dogs/{dogId}/assets").path("get").path("security").size()).isZero();
+        var meetingScene=root.path("paths").path("/v1/meeting-scenes/{sceneId}/versions/{version}").path("get");
+        assertThat(meetingScene.path("security").size()).isZero();
+        assertThat(meetingScene.at("/responses/200/content/application~1json/schema/$ref").asText()).endsWith("MeetingSceneResponse");
+        for(var p:meetingScene.path("parameters")) assertThat(p.at("/schema/format").asText()).isNotEqualTo("uuid");
         var mapFile=root.path("paths").path("/v1/map-assets/{version}/{mapId}/{file}").path("get");
         assertThat(mapFile.path("security").size()).isZero();
         assertThat(mapFile.at("/responses/200/content").propertyNames()).contains("image/png","application/json");

@@ -3507,6 +3507,62 @@
     "MapJsonFile": {
       "type": "object",
       "additionalProperties": true
+    },
+    "MeetingSceneSummary": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "assetBaseUrl": {
+          "type": "string"
+        },
+        "manifestUrl": {
+          "type": "string"
+        },
+        "manifestSha256": {
+          "type": "string"
+        },
+        "sourceSha256": {
+          "type": "string"
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "id",
+        "version",
+        "title",
+        "assetBaseUrl",
+        "manifestUrl",
+        "manifestSha256",
+        "sourceSha256",
+        "width",
+        "height"
+      ]
+    },
+    "MeetingSceneResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "$ref": "#/components/schemas/MeetingSceneSummary"
+        }
+      },
+      "required": [
+        "data"
+      ]
     }
   },
   "operations": {
@@ -5528,6 +5584,23 @@
         "version": "맵 버전. 예: 1.0.0",
         "mapId": "맵 식별자. 예: 01-sunny-meadow",
         "file": "맵 안의 파일 경로. 예: map/ground.png"
+      }
+    },
+    "GET /v1/meeting-scenes/{sceneId}/versions/{version}": {
+      "summary": "독대 화면 에셋 조회",
+      "description": "DB에 등록된 독대 화면의 버전 고정 정적 배경·스프라이트 정보를 반환합니다. 보호소 탐색 맵과 별도이며 URL은 API 원점을 기준으로 해석합니다.",
+      "tag": "01. 공개 조회",
+      "public": true,
+      "success": [
+        200
+      ],
+      "errors": [
+        404
+      ],
+      "responseSchema": "MeetingSceneResponse",
+      "stringPathParameters": {
+        "sceneId": "독대 화면 식별자. 예: dog-meeting-courtyard",
+        "version": "에셋 버전. 예: 1.0.0"
       }
     }
   }
