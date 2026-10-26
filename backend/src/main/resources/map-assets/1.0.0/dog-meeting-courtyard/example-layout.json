@@ -1,0 +1,291 @@
+{
+  "width": 256,
+  "height": 384,
+  "tileSize": 32,
+  "terrain": [
+    [
+      "grass_detail",
+      "grass_plain",
+      "grass_plain",
+      "grass_plain",
+      "grass_plain",
+      "grass_plain",
+      "grass_plain",
+      "grass_detail"
+    ],
+    [
+      "grass_plain",
+      "grass_plain",
+      "grass_plain",
+      "grass_plain",
+      "grass_plain",
+      "grass_detail",
+      "grass_plain",
+      "grass_plain"
+    ],
+    [
+      "grass_plain",
+      "grass_plain",
+      "grass_plain",
+      "grass_detail",
+      "grass_plain",
+      "grass_plain",
+      "grass_plain",
+      "grass_plain"
+    ],
+    [
+      "grass_plain",
+      "grass_detail",
+      "grass_plain",
+      "grass_plain",
+      "grass_plain",
+      "grass_plain",
+      "grass_plain",
+      "grass_plain"
+    ],
+    [
+      "grass_plain",
+      "grass_plain",
+      "grass_plain",
+      "grass_plain",
+      "grass_plain",
+      "grass_plain",
+      "grass_detail",
+      "grass_plain"
+    ],
+    [
+      "grass_plain",
+      "grass_plain",
+      "grass_plain",
+      "grass_plain",
+      "grass_detail",
+      "grass_plain",
+      "grass_plain",
+      "grass_plain"
+    ],
+    [
+      "grass_plain",
+      "grass_plain",
+      "grass_detail",
+      "grass_plain",
+      "grass_plain",
+      "grass_plain",
+      "grass_plain",
+      "grass_plain"
+    ],
+    [
+      "grass_detail",
+      "grass_plain",
+      "grass_plain",
+      "grass_plain",
+      "grass_plain",
+      "grass_plain",
+      "grass_plain",
+      "grass_detail"
+    ],
+    [
+      "grass_plain",
+      "grass_plain",
+      "grass_plain",
+      "grass_plain",
+      "grass_plain",
+      "grass_detail",
+      "grass_plain",
+      "grass_plain"
+    ],
+    [
+      "grass_plain",
+      "grass_plain",
+      "paving_stone",
+      "paving_stone",
+      "paving_stone",
+      "paving_stone",
+      "grass_plain",
+      "grass_plain"
+    ],
+    [
+      "grass_plain",
+      "grass_detail",
+      "paving_stone",
+      "paving_stone",
+      "paving_stone",
+      "paving_stone",
+      "grass_plain",
+      "grass_plain"
+    ],
+    [
+      "grass_plain",
+      "grass_plain",
+      "paving_stone",
+      "paving_stone",
+      "paving_stone",
+      "paving_stone",
+      "grass_detail",
+      "grass_plain"
+    ]
+  ],
+  "objects": [
+    {
+      "sprite": "hedge",
+      "x": 121,
+      "y": 41
+    },
+    {
+      "sprite": "tree_fruit",
+      "x": 36,
+      "y": 76
+    },
+    {
+      "sprite": "tree_round",
+      "x": 222,
+      "y": 74
+    },
+    {
+      "sprite": "fence_horizontal",
+      "x": 105,
+      "y": 102
+    },
+    {
+      "sprite": "fence_horizontal",
+      "x": 146,
+      "y": 102
+    },
+    {
+      "sprite": "fence_vertical",
+      "x": 44,
+      "y": 184
+    },
+    {
+      "sprite": "fence_vertical",
+      "x": 44,
+      "y": 232
+    },
+    {
+      "sprite": "fence_vertical",
+      "x": 44,
+      "y": 280
+    },
+    {
+      "sprite": "fence_vertical",
+      "x": 212,
+      "y": 184
+    },
+    {
+      "sprite": "fence_vertical",
+      "x": 212,
+      "y": 232
+    },
+    {
+      "sprite": "fence_vertical",
+      "x": 212,
+      "y": 280
+    },
+    {
+      "sprite": "fence_corner_left",
+      "x": 64,
+      "y": 137
+    },
+    {
+      "sprite": "fence_corner_right",
+      "x": 192,
+      "y": 137
+    },
+    {
+      "sprite": "bush_pink",
+      "x": 22,
+      "y": 144
+    },
+    {
+      "sprite": "bush_cream",
+      "x": 235,
+      "y": 199
+    },
+    {
+      "sprite": "bush_pink",
+      "x": 30,
+      "y": 276
+    },
+    {
+      "sprite": "bush_cream",
+      "x": 232,
+      "y": 274
+    },
+    {
+      "sprite": "flowerpot",
+      "x": 77,
+      "y": 140
+    },
+    {
+      "sprite": "bench",
+      "x": 37,
+      "y": 329
+    },
+    {
+      "sprite": "tree_tall",
+      "x": 234,
+      "y": 357
+    },
+    {
+      "sprite": "flowers_pink",
+      "x": 19,
+      "y": 220
+    },
+    {
+      "sprite": "flowers_pink",
+      "x": 237,
+      "y": 124
+    },
+    {
+      "sprite": "flowers_pink",
+      "x": 186,
+      "y": 279
+    },
+    {
+      "sprite": "flowers_pink",
+      "x": 62,
+      "y": 354
+    },
+    {
+      "sprite": "flowers_cream",
+      "x": 29,
+      "y": 192
+    },
+    {
+      "sprite": "flowers_cream",
+      "x": 227,
+      "y": 237
+    },
+    {
+      "sprite": "flowers_cream",
+      "x": 179,
+      "y": 350
+    },
+    {
+      "sprite": "grass_tuft",
+      "x": 74,
+      "y": 182
+    },
+    {
+      "sprite": "grass_tuft",
+      "x": 181,
+      "y": 219
+    },
+    {
+      "sprite": "grass_tuft",
+      "x": 98,
+      "y": 247
+    },
+    {
+      "sprite": "stepping_square",
+      "x": 80,
+      "y": 210
+    },
+    {
+      "sprite": "stepping_round",
+      "x": 171,
+      "y": 263
+    }
+  ],
+  "coordinates": "object x,y is bottom-center anchor in native pixels",
+  "renderOrder": "terrain first, objects sorted by y"
+}

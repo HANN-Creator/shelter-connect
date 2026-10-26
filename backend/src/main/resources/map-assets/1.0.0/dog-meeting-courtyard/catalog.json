@@ -1,0 +1,574 @@
+{
+  "tileSize": 32,
+  "spriteCell": 64,
+  "sampling": "nearest",
+  "sprites": [
+    {
+      "id": "grass_plain",
+      "label": "잔디 · 기본",
+      "category": "terrain",
+      "file": "sprites/grass-plain.png",
+      "size": [
+        32,
+        32
+      ],
+      "contentBounds": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "anchorPx": [
+        16.0,
+        32
+      ],
+      "source": "generated"
+    },
+    {
+      "id": "grass_detail",
+      "label": "잔디 · 풀무늬",
+      "category": "terrain",
+      "file": "sprites/grass-detail.png",
+      "size": [
+        32,
+        32
+      ],
+      "contentBounds": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "anchorPx": [
+        16.0,
+        32
+      ],
+      "source": "generated"
+    },
+    {
+      "id": "path_sand",
+      "label": "모래 길",
+      "category": "terrain",
+      "file": "sprites/path-sand.png",
+      "size": [
+        32,
+        32
+      ],
+      "contentBounds": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "anchorPx": [
+        16.0,
+        32
+      ],
+      "source": "generated"
+    },
+    {
+      "id": "paving_stone",
+      "label": "돌바닥",
+      "category": "terrain",
+      "file": "sprites/paving-stone.png",
+      "size": [
+        32,
+        32
+      ],
+      "contentBounds": [
+        0,
+        0,
+        32,
+        32
+      ],
+      "anchorPx": [
+        16.0,
+        32
+      ],
+      "source": "generated"
+    },
+    {
+      "id": "stepping_square",
+      "label": "네모 디딤돌",
+      "category": "prop",
+      "file": "sprites/stepping-square.png",
+      "size": [
+        64,
+        64
+      ],
+      "contentBounds": [
+        20,
+        37,
+        43,
+        60
+      ],
+      "anchorPx": [
+        32.0,
+        60
+      ],
+      "source": "generated"
+    },
+    {
+      "id": "stepping_round",
+      "label": "둥근 디딤돌",
+      "category": "prop",
+      "file": "sprites/stepping-round.png",
+      "size": [
+        64,
+        64
+      ],
+      "contentBounds": [
+        16,
+        35,
+        48,
+        60
+      ],
+      "anchorPx": [
+        32.0,
+        60
+      ],
+      "source": "generated"
+    },
+    {
+      "id": "fence_horizontal",
+      "label": "가로 울타리",
+      "category": "fence",
+      "file": "sprites/fence-horizontal.png",
+      "size": [
+        64,
+        64
+      ],
+      "contentBounds": [
+        6,
+        34,
+        57,
+        60
+      ],
+      "anchorPx": [
+        32.0,
+        60
+      ],
+      "source": "generated"
+    },
+    {
+      "id": "fence_joint_post",
+      "label": "이음 기둥",
+      "category": "fence",
+      "file": "sprites/fence-joint-post.png",
+      "size": [
+        64,
+        64
+      ],
+      "contentBounds": [
+        23,
+        24,
+        40,
+        60
+      ],
+      "anchorPx": [
+        32.0,
+        60
+      ],
+      "source": "generated"
+    },
+    {
+      "id": "fence_end_left",
+      "label": "울타리 왼쪽 끝",
+      "category": "fence",
+      "file": "sprites/fence-end-left.png",
+      "size": [
+        64,
+        64
+      ],
+      "contentBounds": [
+        13,
+        26,
+        50,
+        60
+      ],
+      "anchorPx": [
+        32.0,
+        60
+      ],
+      "source": "generated"
+    },
+    {
+      "id": "fence_end_right",
+      "label": "울타리 오른쪽 끝",
+      "category": "fence",
+      "file": "sprites/fence-end-right.png",
+      "size": [
+        64,
+        64
+      ],
+      "contentBounds": [
+        14,
+        26,
+        50,
+        60
+      ],
+      "anchorPx": [
+        32.0,
+        60
+      ],
+      "source": "generated"
+    },
+    {
+      "id": "fence_entrance",
+      "label": "열린 입구",
+      "category": "fence",
+      "file": "sprites/fence-entrance.png",
+      "size": [
+        64,
+        64
+      ],
+      "contentBounds": [
+        9,
+        31,
+        55,
+        60
+      ],
+      "anchorPx": [
+        32.0,
+        60
+      ],
+      "source": "generated"
+    },
+    {
+      "id": "fence_post",
+      "label": "독립 기둥",
+      "category": "fence",
+      "file": "sprites/fence-post.png",
+      "size": [
+        64,
+        64
+      ],
+      "contentBounds": [
+        27,
+        31,
+        37,
+        60
+      ],
+      "anchorPx": [
+        32.0,
+        60
+      ],
+      "source": "generated"
+    },
+    {
+      "id": "tree_fruit",
+      "label": "열매 나무",
+      "category": "tree",
+      "file": "sprites/tree-fruit.png",
+      "size": [
+        64,
+        64
+      ],
+      "contentBounds": [
+        8,
+        8,
+        55,
+        60
+      ],
+      "anchorPx": [
+        32.0,
+        60
+      ],
+      "source": "generated"
+    },
+    {
+      "id": "tree_round",
+      "label": "둥근 나무",
+      "category": "tree",
+      "file": "sprites/tree-round.png",
+      "size": [
+        64,
+        64
+      ],
+      "contentBounds": [
+        9,
+        9,
+        54,
+        60
+      ],
+      "anchorPx": [
+        32.0,
+        60
+      ],
+      "source": "generated"
+    },
+    {
+      "id": "tree_tall",
+      "label": "키 큰 나무",
+      "category": "tree",
+      "file": "sprites/tree-tall.png",
+      "size": [
+        64,
+        64
+      ],
+      "contentBounds": [
+        19,
+        9,
+        45,
+        60
+      ],
+      "anchorPx": [
+        32.0,
+        60
+      ],
+      "source": "generated"
+    },
+    {
+      "id": "hedge",
+      "label": "낮은 생울타리",
+      "category": "plant",
+      "file": "sprites/hedge.png",
+      "size": [
+        64,
+        64
+      ],
+      "contentBounds": [
+        10,
+        30,
+        53,
+        60
+      ],
+      "anchorPx": [
+        32.0,
+        60
+      ],
+      "source": "generated"
+    },
+    {
+      "id": "bush_pink",
+      "label": "분홍 꽃 덤불",
+      "category": "plant",
+      "file": "sprites/bush-pink.png",
+      "size": [
+        64,
+        64
+      ],
+      "contentBounds": [
+        15,
+        31,
+        49,
+        60
+      ],
+      "anchorPx": [
+        32.0,
+        60
+      ],
+      "source": "generated"
+    },
+    {
+      "id": "bush_cream",
+      "label": "크림 꽃 덤불",
+      "category": "plant",
+      "file": "sprites/bush-cream.png",
+      "size": [
+        64,
+        64
+      ],
+      "contentBounds": [
+        15,
+        30,
+        49,
+        60
+      ],
+      "anchorPx": [
+        32.0,
+        60
+      ],
+      "source": "generated"
+    },
+    {
+      "id": "bench",
+      "label": "나무 벤치",
+      "category": "prop",
+      "file": "sprites/bench.png",
+      "size": [
+        64,
+        64
+      ],
+      "contentBounds": [
+        9,
+        31,
+        54,
+        60
+      ],
+      "anchorPx": [
+        32.0,
+        60
+      ],
+      "source": "generated"
+    },
+    {
+      "id": "flowerpot",
+      "label": "꽃 화분",
+      "category": "prop",
+      "file": "sprites/flowerpot.png",
+      "size": [
+        64,
+        64
+      ],
+      "contentBounds": [
+        21,
+        29,
+        43,
+        60
+      ],
+      "anchorPx": [
+        32.0,
+        60
+      ],
+      "source": "generated"
+    },
+    {
+      "id": "flowers_pink",
+      "label": "분홍 들꽃",
+      "category": "plant",
+      "file": "sprites/flowers-pink.png",
+      "size": [
+        64,
+        64
+      ],
+      "contentBounds": [
+        18,
+        36,
+        46,
+        60
+      ],
+      "anchorPx": [
+        32.0,
+        60
+      ],
+      "source": "generated"
+    },
+    {
+      "id": "flowers_cream",
+      "label": "크림 들꽃",
+      "category": "plant",
+      "file": "sprites/flowers-cream.png",
+      "size": [
+        64,
+        64
+      ],
+      "contentBounds": [
+        18,
+        37,
+        45,
+        60
+      ],
+      "anchorPx": [
+        32.0,
+        60
+      ],
+      "source": "generated"
+    },
+    {
+      "id": "grass_tuft",
+      "label": "풀 포기",
+      "category": "plant",
+      "file": "sprites/grass-tuft.png",
+      "size": [
+        64,
+        64
+      ],
+      "contentBounds": [
+        23,
+        48,
+        40,
+        60
+      ],
+      "anchorPx": [
+        32.0,
+        60
+      ],
+      "source": "generated"
+    },
+    {
+      "id": "small_stone",
+      "label": "작은 돌",
+      "category": "prop",
+      "file": "sprites/small-stone.png",
+      "size": [
+        64,
+        64
+      ],
+      "contentBounds": [
+        21,
+        45,
+        42,
+        60
+      ],
+      "anchorPx": [
+        32.0,
+        60
+      ],
+      "source": "generated"
+    },
+    {
+      "id": "fence_vertical",
+      "label": "세로 울타리",
+      "category": "fence",
+      "file": "sprites/fence-vertical.png",
+      "size": [
+        64,
+        64
+      ],
+      "contentBounds": [
+        27,
+        2,
+        37,
+        64
+      ],
+      "anchorPx": [
+        32.0,
+        64
+      ],
+      "source": "assembled-from-generated-fence-parts"
+    },
+    {
+      "id": "fence_corner_left",
+      "label": "왼쪽 모서리",
+      "category": "fence",
+      "file": "sprites/fence-corner-left.png",
+      "size": [
+        64,
+        64
+      ],
+      "contentBounds": [
+        6,
+        3,
+        57,
+        64
+      ],
+      "anchorPx": [
+        32.0,
+        64
+      ],
+      "source": "assembled-from-generated-fence-parts"
+    },
+    {
+      "id": "fence_corner_right",
+      "label": "오른쪽 모서리",
+      "category": "fence",
+      "file": "sprites/fence-corner-right.png",
+      "size": [
+        64,
+        64
+      ],
+      "contentBounds": [
+        7,
+        3,
+        58,
+        64
+      ],
+      "anchorPx": [
+        32.0,
+        64
+      ],
+      "source": "assembled-from-generated-fence-parts"
+    }
+  ]
+}

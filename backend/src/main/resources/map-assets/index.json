@@ -1018,5 +1018,185 @@
     "bytes": 165,
     "contentType": "image/png",
     "sha256": "fee22d7670ab2bef53733204885df73e195c483161ab5febbe13bbb86ad019e3"
+  },
+  "1.0.0/dog-meeting-courtyard/background.png": {
+    "bytes": 1637213,
+    "contentType": "image/png",
+    "sha256": "ca2b930a3b572efb5fab244f6e1aaf9c3750a43bb9a02d8807f3a76fa41c00e8"
+  },
+  "1.0.0/dog-meeting-courtyard/catalog.json": {
+    "bytes": 9714,
+    "contentType": "application/json",
+    "sha256": "de539db439efbe9157e840393eeb91fa0cac7bef8b837b3cbe29084b6e35d84f"
+  },
+  "1.0.0/dog-meeting-courtyard/example-courtyard.png": {
+    "bytes": 33258,
+    "contentType": "image/png",
+    "sha256": "52d595c0035f496f814a7e403f925797e644ab4687e5b29d7007d4a60dd30f93"
+  },
+  "1.0.0/dog-meeting-courtyard/example-layout.json": {
+    "bytes": 4816,
+    "contentType": "application/json",
+    "sha256": "9f0372f3e73892bc6438fb1622fecc854cd122fc011eb95a2eb7c6ec635509f4"
+  },
+  "1.0.0/dog-meeting-courtyard/manifest.json": {
+    "bytes": 821,
+    "contentType": "application/json",
+    "sha256": "8ae0316135a4407e493b36fbb239a5270410c966ffb872e1f94b8ae88a6aec92"
+  },
+  "1.0.0/dog-meeting-courtyard/sprites/bench.png": {
+    "bytes": 1259,
+    "contentType": "image/png",
+    "sha256": "37d88c60e3d5396d55886f4d86158b156f3bd1c2846946da04d9705438545e87"
+  },
+  "1.0.0/dog-meeting-courtyard/sprites/bush-cream.png": {
+    "bytes": 2066,
+    "contentType": "image/png",
+    "sha256": "054ef4f8a029246f62d25a0eb4150a4b69333d3f8614b57aa512219115a40e36"
+  },
+  "1.0.0/dog-meeting-courtyard/sprites/bush-pink.png": {
+    "bytes": 1962,
+    "contentType": "image/png",
+    "sha256": "55012aec3fbbde2ab819fe5be7d226b5f0d3497e93e60f986d99fe5b1f539b7c"
+  },
+  "1.0.0/dog-meeting-courtyard/sprites/fence-corner-left.png": {
+    "bytes": 1768,
+    "contentType": "image/png",
+    "sha256": "c3b02b095cad4de0ecc9749b9f7cb9ce95217de2c76fb4452b9737424e0a4b57"
+  },
+  "1.0.0/dog-meeting-courtyard/sprites/fence-corner-right.png": {
+    "bytes": 1805,
+    "contentType": "image/png",
+    "sha256": "bf89e9c1b87e9828e53db81a2990b66a1d66c01897b79c1596dec195bf4a4e11"
+  },
+  "1.0.0/dog-meeting-courtyard/sprites/fence-end-left.png": {
+    "bytes": 957,
+    "contentType": "image/png",
+    "sha256": "652e75c360b18bc4636b74344ac9dad2f3150ab161c7d254b234e56689bca827"
+  },
+  "1.0.0/dog-meeting-courtyard/sprites/fence-end-right.png": {
+    "bytes": 1020,
+    "contentType": "image/png",
+    "sha256": "858ca727dbdee1b331895c915371441e0cc923a53c48fb1f4cd2fe2fff81c5e6"
+  },
+  "1.0.0/dog-meeting-courtyard/sprites/fence-entrance.png": {
+    "bytes": 1334,
+    "contentType": "image/png",
+    "sha256": "2616d9495a2508ab6e32731997d2c46ea05d3ffea343c3247c4e1389c1d71ac9"
+  },
+  "1.0.0/dog-meeting-courtyard/sprites/fence-horizontal.png": {
+    "bytes": 1315,
+    "contentType": "image/png",
+    "sha256": "fa05f384f27e229306132c54a87710c45ea3131e080064e08776a9714b90251b"
+  },
+  "1.0.0/dog-meeting-courtyard/sprites/fence-joint-post.png": {
+    "bytes": 882,
+    "contentType": "image/png",
+    "sha256": "0cd8545dcfada209240d26e1792d2ccfb6e63b2ebb2272ca614445f4acecee29"
+  },
+  "1.0.0/dog-meeting-courtyard/sprites/fence-post.png": {
+    "bytes": 580,
+    "contentType": "image/png",
+    "sha256": "5331cfc8f07731bd7abab9cf7bca7976baf2a7d10ee39a4de22143b61cfddf3e"
+  },
+  "1.0.0/dog-meeting-courtyard/sprites/fence-vertical.png": {
+    "bytes": 674,
+    "contentType": "image/png",
+    "sha256": "1966e549284c92d80cefbf47ef518317f9086bb836be45838b948ade002fc631"
+  },
+  "1.0.0/dog-meeting-courtyard/sprites/flowerpot.png": {
+    "bytes": 1527,
+    "contentType": "image/png",
+    "sha256": "f9ed6ea31943e1f6f54d5a7a41639626b4f44010dc7b2061082df1eac152160a"
+  },
+  "1.0.0/dog-meeting-courtyard/sprites/flowers-cream.png": {
+    "bytes": 995,
+    "contentType": "image/png",
+    "sha256": "75dd2086224261320039f481350948af17698206eb66facb5c50147922fdb15b"
+  },
+  "1.0.0/dog-meeting-courtyard/sprites/flowers-pink.png": {
+    "bytes": 959,
+    "contentType": "image/png",
+    "sha256": "a8640f1b894c16a212974ffb9d3a08aad9ee601b0b7410c5052da16138932630"
+  },
+  "1.0.0/dog-meeting-courtyard/sprites/grass-detail.png": {
+    "bytes": 300,
+    "contentType": "image/png",
+    "sha256": "b28f443f0355114288a4e75cd1e5a00028ccb8895eb37e3ffe6fc934f053b44b"
+  },
+  "1.0.0/dog-meeting-courtyard/sprites/grass-plain.png": {
+    "bytes": 169,
+    "contentType": "image/png",
+    "sha256": "772419475753e5d138cc485a28a51ff0a71706cf0ab4ec617b2813818cc5557e"
+  },
+  "1.0.0/dog-meeting-courtyard/sprites/grass-tuft.png": {
+    "bytes": 443,
+    "contentType": "image/png",
+    "sha256": "2f17979eb42afd6de25ecfd90f4bbdcc3925b13678277c315f560b2a530d3777"
+  },
+  "1.0.0/dog-meeting-courtyard/sprites/hedge.png": {
+    "bytes": 2270,
+    "contentType": "image/png",
+    "sha256": "63e7abbc5d2aefc5c9c680b3bdbdd7ee69b6e40e9f6eb53d807807da44f8e7a1"
+  },
+  "1.0.0/dog-meeting-courtyard/sprites/path-sand.png": {
+    "bytes": 597,
+    "contentType": "image/png",
+    "sha256": "8e6e17a5854a038788644f405631f65711964a39c045d7e9c5d832346de3d48c"
+  },
+  "1.0.0/dog-meeting-courtyard/sprites/paving-stone.png": {
+    "bytes": 838,
+    "contentType": "image/png",
+    "sha256": "1539b1186f9d01ba4965f8c85ff71e2ea005f10c414efbfacecf4dc0e08a85ea"
+  },
+  "1.0.0/dog-meeting-courtyard/sprites/small-stone.png": {
+    "bytes": 559,
+    "contentType": "image/png",
+    "sha256": "f18e30d1e05a47de1c4165465f68597e2df99ce456f07a9d904a2ff4d16e5164"
+  },
+  "1.0.0/dog-meeting-courtyard/sprites/stepping-round.png": {
+    "bytes": 1103,
+    "contentType": "image/png",
+    "sha256": "54b1f5cd8f28a29b4e1d481812a40acd06bbbe5a3f553d1b883ad80c66298b54"
+  },
+  "1.0.0/dog-meeting-courtyard/sprites/stepping-square.png": {
+    "bytes": 747,
+    "contentType": "image/png",
+    "sha256": "12ca2c5dbafb9693d49d3c8e9189e1dcbcb0d3719ab9492cf1dbc3124ab0d33d"
+  },
+  "1.0.0/dog-meeting-courtyard/sprites/tree-fruit.png": {
+    "bytes": 2907,
+    "contentType": "image/png",
+    "sha256": "2d1284281b7e82afa4e1cf8103234c07d7c7dee65ff87ccd9a1c22adf06e2962"
+  },
+  "1.0.0/dog-meeting-courtyard/sprites/tree-round.png": {
+    "bytes": 2499,
+    "contentType": "image/png",
+    "sha256": "2be5f4193453faa354cde1d8d9e6b7a67a7a18ed290d961d3dbf7aec34dcbd87"
+  },
+  "1.0.0/dog-meeting-courtyard/sprites/tree-tall.png": {
+    "bytes": 2005,
+    "contentType": "image/png",
+    "sha256": "cfb1dd0b0b4a85fe01008c4ad50b0cdb99ff35f3624a2806c5e59267971f64a5"
+  },
+  "1.0.0/dog-meeting-courtyard/spritesheet-4x.json": {
+    "bytes": 11127,
+    "contentType": "application/json",
+    "sha256": "deb210dd9536a234370b2c347ed07215f39840bc0bc08adf102469877635865d"
+  },
+  "1.0.0/dog-meeting-courtyard/spritesheet-4x.png": {
+    "bytes": 49760,
+    "contentType": "image/png",
+    "sha256": "3fc4ad2990a81d3e87b57cc678713223c26b6f99a964786a94da75ad3d2f5a9b"
+  },
+  "1.0.0/dog-meeting-courtyard/spritesheet.json": {
+    "bytes": 10936,
+    "contentType": "application/json",
+    "sha256": "580de278400219be3f99f4d2acd8a0c988c10b24e01a5bcb659cdc0f10c6691e"
+  },
+  "1.0.0/dog-meeting-courtyard/spritesheet.png": {
+    "bytes": 29700,
+    "contentType": "image/png",
+    "sha256": "59bdac3a57278c1f0526e601a31e098ffd5f6acc5e09c1c3078b9903aa6d23c5"
   }
 }
