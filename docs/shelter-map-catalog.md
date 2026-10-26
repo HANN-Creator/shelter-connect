@@ -6,9 +6,9 @@
 
 ## 저장 구조
 
-- `shelter.map_templates`: 맵 ID·버전·이름·640×640 크기·원본 ZIP 해시·manifest·layout(시작 위치, 배치, 충돌 영역)·파일별 SHA-256/길이/유형. 현재 버전 `1.0.0`, 3행.
+- `shelter.map_templates`: 맵 ID·버전·이름·크기·원본 ZIP 해시·manifest·layout·파일별 SHA-256/길이/유형. 보호소용 맵은 `auto_assign=true` 3행이며 640×640이다. V30의 독대 정원은 `auto_assign=false`로 별도 등록한다.
 - `shelter.shelter_maps`: 보호소와 공용 맵의 연결, 표시 순서, 기본 맵. 기본은 햇살 운동장. 기존 보호소를 V29에서 연결하고 새 보호소 INSERT 시 트리거로 연결한다. 공공 API를 통한 보호소 생성에도 적용된다.
-- PNG와 원본 JSON 204개는 `backend/src/main/resources/map-assets/1.0.0/`에서 JAR에 포함한다. DB에 바이너리를 넣지 않는다. DB 백업과 해당 릴리스 JAR로 같은 버전의 맵을 복원할 수 있다.
+- 보호소 맵 PNG·JSON 204개와 독대 정원 36개는 `backend/src/main/resources/map-assets/1.0.0/`에서 JAR에 포함한다. DB에 바이너리를 넣지 않는다. DB 백업과 해당 릴리스 JAR로 같은 버전의 맵을 복원할 수 있다.
 - 기존 `shelters.map_key`와 조회 응답의 `mapKey`는 호환을 위해 그대로 유지한다. 신규 프론트는 아래 목록을 사용한다.
 - 런타임 계정은 맵 테이블 조회만 가능하다. 자동 연결은 고정 search_path의 트리거 함수로 제한하며 일반 클라이언트 DB 역할에는 접근을 허용하지 않는다.
 

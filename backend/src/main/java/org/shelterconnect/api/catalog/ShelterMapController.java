@@ -24,6 +24,16 @@ public class ShelterMapController {
     }
 
     public record MapList(List<ShelterMapRepository.MapSummary> data) {}
+    public record SceneResponse(ShelterMapRepository.MeetingScene data) {}
+
+    @Operation(summary = "독대 화면 에셋 조회", description = "버전 고정 정적 배경·스프라이트 정보. 보호소 맵 목록과 별도로 사용합니다.")
+    @GetMapping("/meeting-scenes/{sceneId}/versions/{version}")
+    public SceneResponse meetingScene(@PathVariable String sceneId, @PathVariable String version) {
+        if (!sceneId.matches("[a-z0-9-]{1,64}") || !version.matches("[0-9]+\\.[0-9]+\\.[0-9]+") || version.length() > 32) {
+            throw CatalogException.notFound();
+        }
+        return new SceneResponse(maps.meetingScene(sceneId, version).orElseThrow(CatalogException::notFound));
+    }
 
     @Operation(summary = "공개 보호소의 맵 3종 조회", description = "각 보호소는 세 공용 맵을 모두 사용합니다. URL은 API 원점을 기준으로 해석합니다.")
     @GetMapping("/shelters/{shelterId}/maps")

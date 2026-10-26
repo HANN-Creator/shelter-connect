@@ -45,7 +45,7 @@ class ShelterMapPostgresTest {
         mvc.perform(get("/v1/shelters/" + shelter)).andExpect(jsonPath("$.data.mapKey").value("legacy-map"));
         jdbc.update("UPDATE shelter.shelters SET is_public=false WHERE id=?", shelter);
         mvc.perform(get("/v1/shelters/" + shelter + "/maps")).andExpect(status().isNotFound());
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.map_templates", Integer.class)).isEqualTo(3);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.map_templates WHERE auto_assign", Integer.class)).isEqualTo(3);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.shelter_maps WHERE shelter_id=?", Integer.class, shelter)).isEqualTo(3);
     }
 
@@ -62,11 +62,27 @@ class ShelterMapPostgresTest {
                 assertThat(HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes)))
                         .isEqualTo(entry.getValue().path("sha256").asText());
                 if (entry.getKey().equals("manifest.json")) assertThat(json.readTree(bytes)).isEqualTo(json.readTree((String)row.get("manifest")));
-                if (entry.getKey().equals("map/layout.json")) assertThat(json.readTree(bytes)).isEqualTo(json.readTree((String)row.get("layout")));
+                if (entry.getKey().equals("map/layout.json") || entry.getKey().equals("example-layout.json"))
+                    assertThat(json.readTree(bytes)).isEqualTo(json.readTree((String)row.get("layout")));
                 count++;
             }
         }
-        assertThat(count).isEqualTo(204);
+        assertThat(count).isEqualTo(240);
+    }
+
+    @Test void courtyardIsReadFromDbAsSeparateSceneAndNeverAssignedToShelters() throws Exception {
+        String endpoint = "/v1/meeting-scenes/dog-meeting-courtyard/versions/1.0.0";
+        mvc.perform(get(endpoint)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.title").value("둘만의 정원"))
+                .andExpect(jsonPath("$.data.width").value(256))
+                .andExpect(jsonPath("$.data.height").value(384))
+                .andExpect(jsonPath("$.data.manifestUrl").value("/v1/map-assets/1.0.0/dog-meeting-courtyard/manifest.json"));
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.shelter_maps WHERE map_id='dog-meeting-courtyard'", Integer.class)).isZero();
+        mvc.perform(get("/v1/meeting-scenes/01-sunny-meadow/versions/1.0.0")).andExpect(status().isNotFound());
+        mvc.perform(get("/v1/meeting-scenes/dog-meeting-courtyard/versions/9.0.0")).andExpect(status().isNotFound());
+        // The public metadata endpoint must reflect DB registration, not just the bundled manifest.
+        jdbc.update("DELETE FROM shelter.map_templates WHERE id='dog-meeting-courtyard'");
+        mvc.perform(get(endpoint)).andExpect(status().isNotFound());
     }
 
     @Test void runtimeRegistrationTriggerWorksWithoutGivingRuntimeMapWritePermissions() {

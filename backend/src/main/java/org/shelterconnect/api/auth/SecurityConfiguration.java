@@ -22,6 +22,7 @@ public class SecurityConfiguration {
 	private static final String[] PUBLIC_READS = {"/v1/registration-policy", "/v1/shelter-discovery", "/actuator/health", "/actuator/health/liveness",
 			"/actuator/health/readiness", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml", "/v1/shelters", "/v1/shelters/{shelterId}",
 			"/v1/shelters/{shelterId}/maps", "/v1/map-assets/{version}/{mapId}/{*file}",
+			"/v1/meeting-scenes/{sceneId}/versions/{version}",
 			"/v1/shelters/{shelterId}/dogs", "/v1/dogs/{dogId}", "/v1/dogs/{dogId}/behavior", "/v1/dogs/{dogId}/assets"};
 
 	@Bean

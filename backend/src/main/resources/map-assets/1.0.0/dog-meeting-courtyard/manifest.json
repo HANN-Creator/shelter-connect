@@ -1,0 +1,29 @@
+{
+  "id": "dog-meeting-courtyard",
+  "version": "1.0.0",
+  "title": "둘만의 정원",
+  "purpose": "dog_meeting",
+  "assetType": "static_sprite_pack",
+  "mapWidth": 256,
+  "mapHeight": 384,
+  "tileSize": 32,
+  "spriteCount": 27,
+  "sampling": "nearest",
+  "atlas": "spritesheet.json",
+  "atlas4x": "spritesheet-4x.json",
+  "catalog": "catalog.json",
+  "layout": "example-layout.json",
+  "preview": "example-courtyard.png",
+  "background": {
+    "file": "background.png",
+    "width": 1024,
+    "height": 1792,
+    "usage": "approved_concept_background"
+  },
+  "animated": false,
+  "layoutUsage": "example_only",
+  "inAppTested": false,
+  "autoAssign": false,
+  "sourceSha256": "dea0f3f3ec9350070494a2b32c728debad5fc06ec0c2e05be93f1c0d26b2f590",
+  "notionUrl": "https://www.notion.so/4055b2d1a55f80f0bbcbe3d62623cb54"
+}

@@ -51,7 +51,7 @@ class ShelterMapUpgradePostgresTest {
                         sql.execute("ALTER DEFAULT PRIVILEGES IN SCHEMA shelter GRANT EXECUTE ON FUNCTIONS TO anon, authenticated");
                     }
                     var after = Flyway.configure().dataSource(url,user,password).schemas("shelter").defaultSchema("shelter").load();
-                    assertThat(after.migrate().migrationsExecuted).isEqualTo(1);
+                    assertThat(after.migrate().migrationsExecuted).isEqualTo(2);
                     assertThat(after.migrate().migrationsExecuted).isZero();
                     try (var rows = sql.executeQuery("""
                             SELECT (SELECT count(*) FROM shelter.map_templates),
@@ -62,7 +62,7 @@ class ShelterMapUpgradePostgresTest {
                                    (SELECT count(*) FROM shelter.dogs WHERE avatar_key='unchanged')
                             """)) {
                         rows.next();
-                        assertThat(rows.getInt(1)).isEqualTo(3); assertThat(rows.getInt(2)).isEqualTo(6);
+                        assertThat(rows.getInt(1)).isEqualTo(4); assertThat(rows.getInt(2)).isEqualTo(6);
                         assertThat(rows.getInt(3)).isEqualTo(2); assertThat(rows.getInt(4)).isEqualTo(1);
                         assertThat(rows.getInt(5)).isEqualTo(1); assertThat(rows.getInt(6)).isEqualTo(1);
                     }
