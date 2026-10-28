@@ -1,0 +1,1564 @@
+{
+  "sprites": [
+    {
+      "id": "terrain-00-00",
+      "label": "바닥 1행 1열",
+      "file": "sprites/terrain-00-00.png",
+      "x": 0,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-00-01",
+      "label": "바닥 1행 2열",
+      "file": "sprites/terrain-00-01.png",
+      "x": 128,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-00-02",
+      "label": "바닥 1행 3열",
+      "file": "sprites/terrain-00-02.png",
+      "x": 256,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-00-03",
+      "label": "바닥 1행 4열",
+      "file": "sprites/terrain-00-03.png",
+      "x": 384,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-00-04",
+      "label": "바닥 1행 5열",
+      "file": "sprites/terrain-00-04.png",
+      "x": 512,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-00-05",
+      "label": "바닥 1행 6열",
+      "file": "sprites/terrain-00-05.png",
+      "x": 640,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-00-06",
+      "label": "바닥 1행 7열",
+      "file": "sprites/terrain-00-06.png",
+      "x": 768,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-00-07",
+      "label": "바닥 1행 8열",
+      "file": "sprites/terrain-00-07.png",
+      "x": 896,
+      "y": 0,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-01-00",
+      "label": "바닥 2행 1열",
+      "file": "sprites/terrain-01-00.png",
+      "x": 0,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-01-01",
+      "label": "바닥 2행 2열",
+      "file": "sprites/terrain-01-01.png",
+      "x": 128,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-01-02",
+      "label": "바닥 2행 3열",
+      "file": "sprites/terrain-01-02.png",
+      "x": 256,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-01-03",
+      "label": "바닥 2행 4열",
+      "file": "sprites/terrain-01-03.png",
+      "x": 384,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-01-04",
+      "label": "바닥 2행 5열",
+      "file": "sprites/terrain-01-04.png",
+      "x": 512,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-01-05",
+      "label": "바닥 2행 6열",
+      "file": "sprites/terrain-01-05.png",
+      "x": 640,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-01-06",
+      "label": "바닥 2행 7열",
+      "file": "sprites/terrain-01-06.png",
+      "x": 768,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-01-07",
+      "label": "바닥 2행 8열",
+      "file": "sprites/terrain-01-07.png",
+      "x": 896,
+      "y": 128,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-02-00",
+      "label": "바닥 3행 1열",
+      "file": "sprites/terrain-02-00.png",
+      "x": 0,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-02-01",
+      "label": "바닥 3행 2열",
+      "file": "sprites/terrain-02-01.png",
+      "x": 128,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-02-02",
+      "label": "바닥 3행 3열",
+      "file": "sprites/terrain-02-02.png",
+      "x": 256,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-02-03",
+      "label": "바닥 3행 4열",
+      "file": "sprites/terrain-02-03.png",
+      "x": 384,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-02-04",
+      "label": "바닥 3행 5열",
+      "file": "sprites/terrain-02-04.png",
+      "x": 512,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-02-05",
+      "label": "바닥 3행 6열",
+      "file": "sprites/terrain-02-05.png",
+      "x": 640,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-02-06",
+      "label": "바닥 3행 7열",
+      "file": "sprites/terrain-02-06.png",
+      "x": 768,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-02-07",
+      "label": "바닥 3행 8열",
+      "file": "sprites/terrain-02-07.png",
+      "x": 896,
+      "y": 256,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-03-00",
+      "label": "바닥 4행 1열",
+      "file": "sprites/terrain-03-00.png",
+      "x": 0,
+      "y": 384,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-03-01",
+      "label": "바닥 4행 2열",
+      "file": "sprites/terrain-03-01.png",
+      "x": 128,
+      "y": 384,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-03-02",
+      "label": "바닥 4행 3열",
+      "file": "sprites/terrain-03-02.png",
+      "x": 256,
+      "y": 384,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-03-03",
+      "label": "바닥 4행 4열",
+      "file": "sprites/terrain-03-03.png",
+      "x": 384,
+      "y": 384,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-03-04",
+      "label": "바닥 4행 5열",
+      "file": "sprites/terrain-03-04.png",
+      "x": 512,
+      "y": 384,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-03-05",
+      "label": "바닥 4행 6열",
+      "file": "sprites/terrain-03-05.png",
+      "x": 640,
+      "y": 384,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-03-06",
+      "label": "바닥 4행 7열",
+      "file": "sprites/terrain-03-06.png",
+      "x": 768,
+      "y": 384,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-03-07",
+      "label": "바닥 4행 8열",
+      "file": "sprites/terrain-03-07.png",
+      "x": 896,
+      "y": 384,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-04-00",
+      "label": "바닥 5행 1열",
+      "file": "sprites/terrain-04-00.png",
+      "x": 0,
+      "y": 512,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-04-01",
+      "label": "바닥 5행 2열",
+      "file": "sprites/terrain-04-01.png",
+      "x": 128,
+      "y": 512,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-04-02",
+      "label": "바닥 5행 3열",
+      "file": "sprites/terrain-04-02.png",
+      "x": 256,
+      "y": 512,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-04-03",
+      "label": "바닥 5행 4열",
+      "file": "sprites/terrain-04-03.png",
+      "x": 384,
+      "y": 512,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-04-04",
+      "label": "바닥 5행 5열",
+      "file": "sprites/terrain-04-04.png",
+      "x": 512,
+      "y": 512,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-04-05",
+      "label": "바닥 5행 6열",
+      "file": "sprites/terrain-04-05.png",
+      "x": 640,
+      "y": 512,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-04-06",
+      "label": "바닥 5행 7열",
+      "file": "sprites/terrain-04-06.png",
+      "x": 768,
+      "y": 512,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-04-07",
+      "label": "바닥 5행 8열",
+      "file": "sprites/terrain-04-07.png",
+      "x": 896,
+      "y": 512,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-05-00",
+      "label": "바닥 6행 1열",
+      "file": "sprites/terrain-05-00.png",
+      "x": 0,
+      "y": 640,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-05-01",
+      "label": "바닥 6행 2열",
+      "file": "sprites/terrain-05-01.png",
+      "x": 128,
+      "y": 640,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-05-02",
+      "label": "바닥 6행 3열",
+      "file": "sprites/terrain-05-02.png",
+      "x": 256,
+      "y": 640,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-05-03",
+      "label": "바닥 6행 4열",
+      "file": "sprites/terrain-05-03.png",
+      "x": 384,
+      "y": 640,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-05-04",
+      "label": "바닥 6행 5열",
+      "file": "sprites/terrain-05-04.png",
+      "x": 512,
+      "y": 640,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-05-05",
+      "label": "바닥 6행 6열",
+      "file": "sprites/terrain-05-05.png",
+      "x": 640,
+      "y": 640,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-05-06",
+      "label": "바닥 6행 7열",
+      "file": "sprites/terrain-05-06.png",
+      "x": 768,
+      "y": 640,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-05-07",
+      "label": "바닥 6행 8열",
+      "file": "sprites/terrain-05-07.png",
+      "x": 896,
+      "y": 640,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-06-00",
+      "label": "바닥 7행 1열",
+      "file": "sprites/terrain-06-00.png",
+      "x": 0,
+      "y": 768,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-06-01",
+      "label": "바닥 7행 2열",
+      "file": "sprites/terrain-06-01.png",
+      "x": 128,
+      "y": 768,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-06-02",
+      "label": "바닥 7행 3열",
+      "file": "sprites/terrain-06-02.png",
+      "x": 256,
+      "y": 768,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-06-03",
+      "label": "바닥 7행 4열",
+      "file": "sprites/terrain-06-03.png",
+      "x": 384,
+      "y": 768,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-06-04",
+      "label": "바닥 7행 5열",
+      "file": "sprites/terrain-06-04.png",
+      "x": 512,
+      "y": 768,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-06-05",
+      "label": "바닥 7행 6열",
+      "file": "sprites/terrain-06-05.png",
+      "x": 640,
+      "y": 768,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-06-06",
+      "label": "바닥 7행 7열",
+      "file": "sprites/terrain-06-06.png",
+      "x": 768,
+      "y": 768,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-06-07",
+      "label": "바닥 7행 8열",
+      "file": "sprites/terrain-06-07.png",
+      "x": 896,
+      "y": 768,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-07-00",
+      "label": "바닥 8행 1열",
+      "file": "sprites/terrain-07-00.png",
+      "x": 0,
+      "y": 896,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-07-01",
+      "label": "바닥 8행 2열",
+      "file": "sprites/terrain-07-01.png",
+      "x": 128,
+      "y": 896,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-07-02",
+      "label": "바닥 8행 3열",
+      "file": "sprites/terrain-07-02.png",
+      "x": 256,
+      "y": 896,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-07-03",
+      "label": "바닥 8행 4열",
+      "file": "sprites/terrain-07-03.png",
+      "x": 384,
+      "y": 896,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-07-04",
+      "label": "바닥 8행 5열",
+      "file": "sprites/terrain-07-04.png",
+      "x": 512,
+      "y": 896,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-07-05",
+      "label": "바닥 8행 6열",
+      "file": "sprites/terrain-07-05.png",
+      "x": 640,
+      "y": 896,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-07-06",
+      "label": "바닥 8행 7열",
+      "file": "sprites/terrain-07-06.png",
+      "x": 768,
+      "y": 896,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-07-07",
+      "label": "바닥 8행 8열",
+      "file": "sprites/terrain-07-07.png",
+      "x": 896,
+      "y": 896,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-08-00",
+      "label": "바닥 9행 1열",
+      "file": "sprites/terrain-08-00.png",
+      "x": 0,
+      "y": 1024,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-08-01",
+      "label": "바닥 9행 2열",
+      "file": "sprites/terrain-08-01.png",
+      "x": 128,
+      "y": 1024,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-08-02",
+      "label": "바닥 9행 3열",
+      "file": "sprites/terrain-08-02.png",
+      "x": 256,
+      "y": 1024,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-08-03",
+      "label": "바닥 9행 4열",
+      "file": "sprites/terrain-08-03.png",
+      "x": 384,
+      "y": 1024,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-08-04",
+      "label": "바닥 9행 5열",
+      "file": "sprites/terrain-08-04.png",
+      "x": 512,
+      "y": 1024,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-08-05",
+      "label": "바닥 9행 6열",
+      "file": "sprites/terrain-08-05.png",
+      "x": 640,
+      "y": 1024,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-08-06",
+      "label": "바닥 9행 7열",
+      "file": "sprites/terrain-08-06.png",
+      "x": 768,
+      "y": 1024,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-08-07",
+      "label": "바닥 9행 8열",
+      "file": "sprites/terrain-08-07.png",
+      "x": 896,
+      "y": 1024,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-09-00",
+      "label": "바닥 10행 1열",
+      "file": "sprites/terrain-09-00.png",
+      "x": 0,
+      "y": 1152,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-09-01",
+      "label": "바닥 10행 2열",
+      "file": "sprites/terrain-09-01.png",
+      "x": 128,
+      "y": 1152,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-09-02",
+      "label": "바닥 10행 3열",
+      "file": "sprites/terrain-09-02.png",
+      "x": 256,
+      "y": 1152,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-09-03",
+      "label": "바닥 10행 4열",
+      "file": "sprites/terrain-09-03.png",
+      "x": 384,
+      "y": 1152,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-09-04",
+      "label": "바닥 10행 5열",
+      "file": "sprites/terrain-09-04.png",
+      "x": 512,
+      "y": 1152,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-09-05",
+      "label": "바닥 10행 6열",
+      "file": "sprites/terrain-09-05.png",
+      "x": 640,
+      "y": 1152,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-09-06",
+      "label": "바닥 10행 7열",
+      "file": "sprites/terrain-09-06.png",
+      "x": 768,
+      "y": 1152,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-09-07",
+      "label": "바닥 10행 8열",
+      "file": "sprites/terrain-09-07.png",
+      "x": 896,
+      "y": 1152,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-10-00",
+      "label": "바닥 11행 1열",
+      "file": "sprites/terrain-10-00.png",
+      "x": 0,
+      "y": 1280,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-10-01",
+      "label": "바닥 11행 2열",
+      "file": "sprites/terrain-10-01.png",
+      "x": 128,
+      "y": 1280,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-10-02",
+      "label": "바닥 11행 3열",
+      "file": "sprites/terrain-10-02.png",
+      "x": 256,
+      "y": 1280,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-10-03",
+      "label": "바닥 11행 4열",
+      "file": "sprites/terrain-10-03.png",
+      "x": 384,
+      "y": 1280,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-10-04",
+      "label": "바닥 11행 5열",
+      "file": "sprites/terrain-10-04.png",
+      "x": 512,
+      "y": 1280,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-10-05",
+      "label": "바닥 11행 6열",
+      "file": "sprites/terrain-10-05.png",
+      "x": 640,
+      "y": 1280,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-10-06",
+      "label": "바닥 11행 7열",
+      "file": "sprites/terrain-10-06.png",
+      "x": 768,
+      "y": 1280,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-10-07",
+      "label": "바닥 11행 8열",
+      "file": "sprites/terrain-10-07.png",
+      "x": 896,
+      "y": 1280,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-11-00",
+      "label": "바닥 12행 1열",
+      "file": "sprites/terrain-11-00.png",
+      "x": 0,
+      "y": 1408,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-11-01",
+      "label": "바닥 12행 2열",
+      "file": "sprites/terrain-11-01.png",
+      "x": 128,
+      "y": 1408,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-11-02",
+      "label": "바닥 12행 3열",
+      "file": "sprites/terrain-11-02.png",
+      "x": 256,
+      "y": 1408,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-11-03",
+      "label": "바닥 12행 4열",
+      "file": "sprites/terrain-11-03.png",
+      "x": 384,
+      "y": 1408,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-11-04",
+      "label": "바닥 12행 5열",
+      "file": "sprites/terrain-11-04.png",
+      "x": 512,
+      "y": 1408,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-11-05",
+      "label": "바닥 12행 6열",
+      "file": "sprites/terrain-11-05.png",
+      "x": 640,
+      "y": 1408,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-11-06",
+      "label": "바닥 12행 7열",
+      "file": "sprites/terrain-11-06.png",
+      "x": 768,
+      "y": 1408,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-11-07",
+      "label": "바닥 12행 8열",
+      "file": "sprites/terrain-11-07.png",
+      "x": 896,
+      "y": 1408,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-12-00",
+      "label": "바닥 13행 1열",
+      "file": "sprites/terrain-12-00.png",
+      "x": 0,
+      "y": 1536,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-12-01",
+      "label": "바닥 13행 2열",
+      "file": "sprites/terrain-12-01.png",
+      "x": 128,
+      "y": 1536,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-12-02",
+      "label": "바닥 13행 3열",
+      "file": "sprites/terrain-12-02.png",
+      "x": 256,
+      "y": 1536,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-12-03",
+      "label": "바닥 13행 4열",
+      "file": "sprites/terrain-12-03.png",
+      "x": 384,
+      "y": 1536,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-12-04",
+      "label": "바닥 13행 5열",
+      "file": "sprites/terrain-12-04.png",
+      "x": 512,
+      "y": 1536,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-12-05",
+      "label": "바닥 13행 6열",
+      "file": "sprites/terrain-12-05.png",
+      "x": 640,
+      "y": 1536,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-12-06",
+      "label": "바닥 13행 7열",
+      "file": "sprites/terrain-12-06.png",
+      "x": 768,
+      "y": 1536,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-12-07",
+      "label": "바닥 13행 8열",
+      "file": "sprites/terrain-12-07.png",
+      "x": 896,
+      "y": 1536,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-13-00",
+      "label": "바닥 14행 1열",
+      "file": "sprites/terrain-13-00.png",
+      "x": 0,
+      "y": 1664,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-13-01",
+      "label": "바닥 14행 2열",
+      "file": "sprites/terrain-13-01.png",
+      "x": 128,
+      "y": 1664,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-13-02",
+      "label": "바닥 14행 3열",
+      "file": "sprites/terrain-13-02.png",
+      "x": 256,
+      "y": 1664,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-13-03",
+      "label": "바닥 14행 4열",
+      "file": "sprites/terrain-13-03.png",
+      "x": 384,
+      "y": 1664,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-13-04",
+      "label": "바닥 14행 5열",
+      "file": "sprites/terrain-13-04.png",
+      "x": 512,
+      "y": 1664,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-13-05",
+      "label": "바닥 14행 6열",
+      "file": "sprites/terrain-13-05.png",
+      "x": 640,
+      "y": 1664,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-13-06",
+      "label": "바닥 14행 7열",
+      "file": "sprites/terrain-13-06.png",
+      "x": 768,
+      "y": 1664,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "terrain-13-07",
+      "label": "바닥 14행 8열",
+      "file": "sprites/terrain-13-07.png",
+      "x": 896,
+      "y": 1664,
+      "w": 128,
+      "h": 128,
+      "kind": "terrain"
+    },
+    {
+      "id": "prop-00",
+      "label": "왼쪽 사과나무",
+      "file": "sprites/prop-00.png",
+      "x": 0,
+      "y": 26,
+      "w": 311,
+      "h": 358,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-01",
+      "label": "오른쪽 사과나무",
+      "file": "sprites/prop-01.png",
+      "x": 684,
+      "y": 18,
+      "w": 332,
+      "h": 358,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-02",
+      "label": "위쪽 둥근 관목",
+      "file": "sprites/prop-02.png",
+      "x": 307,
+      "y": 77,
+      "w": 249,
+      "h": 200,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-03",
+      "label": "상단 중앙 나무",
+      "file": "sprites/prop-03.png",
+      "x": 346,
+      "y": 0,
+      "w": 191,
+      "h": 109,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-04",
+      "label": "분홍 꽃 화분",
+      "file": "sprites/prop-04.png",
+      "x": 272,
+      "y": 421,
+      "w": 93,
+      "h": 92,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-05",
+      "label": "울타리 안쪽 관목",
+      "file": "sprites/prop-05.png",
+      "x": 636,
+      "y": 421,
+      "w": 123,
+      "h": 86,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-06",
+      "label": "왼쪽 입구 관목",
+      "file": "sprites/prop-06.png",
+      "x": 204,
+      "y": 1135,
+      "w": 159,
+      "h": 164,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-07",
+      "label": "왼쪽 벤치",
+      "file": "sprites/prop-07.png",
+      "x": 4,
+      "y": 1156,
+      "w": 217,
+      "h": 202,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-08",
+      "label": "오른쪽 아래 관목",
+      "file": "sprites/prop-08.png",
+      "x": 787,
+      "y": 1220,
+      "w": 177,
+      "h": 159,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-09",
+      "label": "디딤돌 왼쪽 위",
+      "file": "sprites/prop-09.png",
+      "x": 182,
+      "y": 539,
+      "w": 106,
+      "h": 73,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-10",
+      "label": "디딤돌 왼쪽 가운데",
+      "file": "sprites/prop-10.png",
+      "x": 183,
+      "y": 702,
+      "w": 87,
+      "h": 71,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-11",
+      "label": "디딤돌 오른쪽 위",
+      "file": "sprites/prop-11.png",
+      "x": 731,
+      "y": 536,
+      "w": 99,
+      "h": 75,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-12",
+      "label": "디딤돌 오른쪽 가운데",
+      "file": "sprites/prop-12.png",
+      "x": 757,
+      "y": 912,
+      "w": 70,
+      "h": 59,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-13",
+      "label": "디딤돌 오른쪽 아래",
+      "file": "sprites/prop-13.png",
+      "x": 681,
+      "y": 1080,
+      "w": 102,
+      "h": 85,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-14",
+      "label": "꽃 왼쪽 윗줄",
+      "file": "sprites/prop-14.png",
+      "x": 297,
+      "y": 199,
+      "w": 107,
+      "h": 104,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-15",
+      "label": "꽃 오른쪽 윗줄",
+      "file": "sprites/prop-15.png",
+      "x": 567,
+      "y": 124,
+      "w": 130,
+      "h": 175,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-16",
+      "label": "꽃 정원 왼쪽 가운데",
+      "file": "sprites/prop-16.png",
+      "x": 227,
+      "y": 815,
+      "w": 54,
+      "h": 83,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-17",
+      "label": "꽃 정원 오른쪽 가운데",
+      "file": "sprites/prop-17.png",
+      "x": 756,
+      "y": 813,
+      "w": 45,
+      "h": 67,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-18",
+      "label": "꽃 정원 아래",
+      "file": "sprites/prop-18.png",
+      "x": 283,
+      "y": 1020,
+      "w": 83,
+      "h": 94,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-19",
+      "label": "울타리 상단 가로대",
+      "file": "sprites/prop-19.png",
+      "x": 185,
+      "y": 333,
+      "w": 649,
+      "h": 88,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-20",
+      "label": "울타리 위 기둥 1",
+      "file": "sprites/prop-20.png",
+      "x": 216,
+      "y": 306,
+      "w": 53,
+      "h": 146,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-21",
+      "label": "울타리 위 기둥 2",
+      "file": "sprites/prop-21.png",
+      "x": 289,
+      "y": 311,
+      "w": 50,
+      "h": 132,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-22",
+      "label": "울타리 위 기둥 3",
+      "file": "sprites/prop-22.png",
+      "x": 360,
+      "y": 306,
+      "w": 50,
+      "h": 132,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-23",
+      "label": "울타리 위 기둥 4",
+      "file": "sprites/prop-23.png",
+      "x": 430,
+      "y": 305,
+      "w": 50,
+      "h": 134,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-24",
+      "label": "울타리 위 기둥 5",
+      "file": "sprites/prop-24.png",
+      "x": 505,
+      "y": 307,
+      "w": 54,
+      "h": 138,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-25",
+      "label": "울타리 위 기둥 6",
+      "file": "sprites/prop-25.png",
+      "x": 577,
+      "y": 302,
+      "w": 52,
+      "h": 142,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-26",
+      "label": "울타리 위 기둥 7",
+      "file": "sprites/prop-26.png",
+      "x": 650,
+      "y": 311,
+      "w": 52,
+      "h": 133,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-27",
+      "label": "울타리 위 기둥 8",
+      "file": "sprites/prop-27.png",
+      "x": 727,
+      "y": 303,
+      "w": 52,
+      "h": 144,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-28",
+      "label": "울타리 왼쪽 세로대",
+      "file": "sprites/prop-28.png",
+      "x": 60,
+      "y": 431,
+      "w": 77,
+      "h": 556,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-29",
+      "label": "울타리 오른쪽 세로대",
+      "file": "sprites/prop-29.png",
+      "x": 860,
+      "y": 426,
+      "w": 107,
+      "h": 556,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-30",
+      "label": "울타리 왼쪽 입구 가로대",
+      "file": "sprites/prop-30.png",
+      "x": 103,
+      "y": 984,
+      "w": 63,
+      "h": 143,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-31",
+      "label": "울타리 오른쪽 입구 가로대",
+      "file": "sprites/prop-31.png",
+      "x": 860,
+      "y": 986,
+      "w": 57,
+      "h": 144,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-32",
+      "label": "울타리 왼쪽 기둥 1",
+      "file": "sprites/prop-32.png",
+      "x": 126,
+      "y": 389,
+      "w": 53,
+      "h": 129,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-33",
+      "label": "울타리 왼쪽 기둥 2",
+      "file": "sprites/prop-33.png",
+      "x": 103,
+      "y": 511,
+      "w": 48,
+      "h": 134,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-34",
+      "label": "울타리 왼쪽 기둥 3",
+      "file": "sprites/prop-34.png",
+      "x": 81,
+      "y": 654,
+      "w": 50,
+      "h": 134,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-35",
+      "label": "울타리 왼쪽 기둥 4",
+      "file": "sprites/prop-35.png",
+      "x": 72,
+      "y": 796,
+      "w": 52,
+      "h": 125,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-36",
+      "label": "울타리 왼쪽 기둥 5",
+      "file": "sprites/prop-36.png",
+      "x": 49,
+      "y": 942,
+      "w": 54,
+      "h": 140,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-37",
+      "label": "울타리 왼쪽 기둥 6",
+      "file": "sprites/prop-37.png",
+      "x": 166,
+      "y": 1011,
+      "w": 52,
+      "h": 152,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-38",
+      "label": "울타리 오른쪽 기둥 1",
+      "file": "sprites/prop-38.png",
+      "x": 847,
+      "y": 390,
+      "w": 57,
+      "h": 135,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-39",
+      "label": "울타리 오른쪽 기둥 2",
+      "file": "sprites/prop-39.png",
+      "x": 877,
+      "y": 519,
+      "w": 53,
+      "h": 132,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-40",
+      "label": "울타리 오른쪽 기둥 3",
+      "file": "sprites/prop-40.png",
+      "x": 892,
+      "y": 654,
+      "w": 52,
+      "h": 144,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-41",
+      "label": "울타리 오른쪽 기둥 4",
+      "file": "sprites/prop-41.png",
+      "x": 908,
+      "y": 797,
+      "w": 55,
+      "h": 131,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-42",
+      "label": "울타리 오른쪽 기둥 5",
+      "file": "sprites/prop-42.png",
+      "x": 917,
+      "y": 942,
+      "w": 58,
+      "h": 142,
+      "kind": "prop"
+    },
+    {
+      "id": "prop-43",
+      "label": "울타리 오른쪽 기둥 6",
+      "file": "sprites/prop-43.png",
+      "x": 808,
+      "y": 1010,
+      "w": 52,
+      "h": 153,
+      "kind": "prop"
+    }
+  ]
+}

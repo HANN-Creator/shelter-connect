@@ -6,15 +6,15 @@ import java.util.UUID;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.shelterconnect.sample.SampleDataLoader;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag("postgres")
 class ShelterMapUpgradePostgresTest {
-    @ParameterizedTest(name = "V28 upgrade with Supabase client roles present={0}")
-    @ValueSource(booleans = {true, false})
-    void v28ExistingSheltersAreLinkedOnceWithoutChangingPublicationDogsOrLegacyMap(boolean supabaseRoles) throws Exception {
+    @ParameterizedTest(name = "V{0} upgrade with Supabase client roles present={1}")
+    @CsvSource({"28,true", "28,false", "30,false"})
+    void existingSheltersAreLinkedOnceWithoutChangingPublicationDogsOrLegacyMap(int fromVersion, boolean supabaseRoles) throws Exception {
         SchemaMigrationTest.migratePostgres();
         String base = System.getenv("TEST_DB_URL");
         SampleDataLoader.validateTarget(base);
@@ -26,7 +26,7 @@ class ShelterMapUpgradePostgresTest {
             ddl.execute("CREATE DATABASE " + db);
             var renamedRoles = new LinkedHashMap<String, String>();
             try {
-                var before = Flyway.configure().dataSource(url,user,password).schemas("shelter").defaultSchema("shelter").target("28").load();
+                var before = Flyway.configure().dataSource(url,user,password).schemas("shelter").defaultSchema("shelter").target(String.valueOf(fromVersion)).load();
                 before.migrate();
                 try (var conn = DriverManager.getConnection(url,user,password); var sql = conn.createStatement()) {
                     sql.execute("INSERT INTO shelter.app_users(id,display_name) VALUES ('11111111-1111-4111-8111-111111111111','테스트')");
@@ -51,7 +51,7 @@ class ShelterMapUpgradePostgresTest {
                         sql.execute("ALTER DEFAULT PRIVILEGES IN SCHEMA shelter GRANT EXECUTE ON FUNCTIONS TO anon, authenticated");
                     }
                     var after = Flyway.configure().dataSource(url,user,password).schemas("shelter").defaultSchema("shelter").load();
-                    assertThat(after.migrate().migrationsExecuted).isEqualTo(2);
+                    assertThat(after.migrate().migrationsExecuted).isEqualTo(31 - fromVersion);
                     assertThat(after.migrate().migrationsExecuted).isZero();
                     try (var rows = sql.executeQuery("""
                             SELECT (SELECT count(*) FROM shelter.map_templates),
@@ -62,7 +62,7 @@ class ShelterMapUpgradePostgresTest {
                                    (SELECT count(*) FROM shelter.dogs WHERE avatar_key='unchanged')
                             """)) {
                         rows.next();
-                        assertThat(rows.getInt(1)).isEqualTo(4); assertThat(rows.getInt(2)).isEqualTo(6);
+                        assertThat(rows.getInt(1)).isEqualTo(6); assertThat(rows.getInt(2)).isEqualTo(6);
                         assertThat(rows.getInt(3)).isEqualTo(2); assertThat(rows.getInt(4)).isEqualTo(1);
                         assertThat(rows.getInt(5)).isEqualTo(1); assertThat(rows.getInt(6)).isEqualTo(1);
                     }

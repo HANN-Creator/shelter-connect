@@ -26,6 +26,13 @@ public class ShelterMapController {
     public record MapList(List<ShelterMapRepository.MapSummary> data) {}
     public record SceneResponse(ShelterMapRepository.MeetingScene data) {}
 
+    @Operation(summary = "최신 독대 화면 에셋 조회", description = "정원·로딩 화면의 최신 등록 버전. 반환된 manifestUrl은 버전 고정 주소입니다.")
+    @GetMapping("/meeting-scenes/{sceneId}")
+    public SceneResponse latestMeetingScene(@PathVariable String sceneId) {
+        if (!sceneId.matches("[a-z0-9-]{1,64}")) throw CatalogException.notFound();
+        return new SceneResponse(maps.latestMeetingScene(sceneId).orElseThrow(CatalogException::notFound));
+    }
+
     @Operation(summary = "독대 화면 에셋 조회", description = "버전 고정 정적 배경·스프라이트 정보. 보호소 맵 목록과 별도로 사용합니다.")
     @GetMapping("/meeting-scenes/{sceneId}/versions/{version}")
     public SceneResponse meetingScene(@PathVariable String sceneId, @PathVariable String version) {

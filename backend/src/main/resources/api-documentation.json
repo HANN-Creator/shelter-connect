@@ -5602,6 +5602,22 @@
         "sceneId": "독대 화면 식별자. 예: dog-meeting-courtyard",
         "version": "에셋 버전. 예: 1.0.0"
       }
+    },
+    "GET /v1/meeting-scenes/{sceneId}": {
+      "summary": "최신 독대 화면 에셋 조회",
+      "description": "DB에 등록된 최신 정원·로딩 버전을 반환합니다. 메타데이터는 no-store, 반환된 버전 고정 PNG·JSON 주소는 공개 immutable 캐시입니다. 특정 강아지는 포함하지 않으며 선택된 dogId의 assets를 별도로 합성합니다.",
+      "tag": "01. 공개 조회",
+      "public": true,
+      "success": [
+        200
+      ],
+      "errors": [
+        404
+      ],
+      "responseSchema": "MeetingSceneResponse",
+      "stringPathParameters": {
+        "sceneId": "dog-meeting-courtyard 또는 dog-meeting-loading"
+      }
     }
   }
 }

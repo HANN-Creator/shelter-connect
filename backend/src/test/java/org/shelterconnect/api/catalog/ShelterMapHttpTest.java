@@ -27,6 +27,16 @@ class ShelterMapHttpTest {
     @MockitoBean ShelterMapRepository maps;
     @MockitoBean JwtDecoder jwtDecoder;
 
+    @Test void latestSceneLookupIsPublicButWritesAndInvalidIdsAreRejected() throws Exception {
+        when(maps.latestMeetingScene("dog-meeting-loading")).thenReturn(Optional.empty());
+        mvc.perform(get("/v1/meeting-scenes/dog-meeting-loading")).andExpect(status().isNotFound());
+        mvc.perform(get("/v1/meeting-scenes/INVALID")).andExpect(status().isNotFound());
+        mvc.perform(post("/v1/meeting-scenes/dog-meeting-loading")).andExpect(status().isUnauthorized());
+        verify(maps).latestMeetingScene("dog-meeting-loading");
+        verifyNoMoreInteractions(maps);
+        verifyNoInteractions(catalog);
+    }
+
     @Test void meetingSceneLookupIsPublicReadOnlyAndRejectsMalformedKeysBeforeDb() throws Exception {
         String path = "/v1/meeting-scenes/dog-meeting-courtyard/versions/1.0.0";
         when(maps.meetingScene("dog-meeting-courtyard", "1.0.0")).thenReturn(Optional.empty());
