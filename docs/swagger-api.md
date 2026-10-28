@@ -1,13 +1,13 @@
 # Swagger API 명세서
 
-개발 서버: **https://shelter-connect-dev.onrender.com**
+개발 서버: **https://api.shelterconnect.win**
 
-- [Swagger UI](https://shelter-connect-dev.onrender.com/swagger-ui/index.html)
-- [OpenAPI JSON](https://shelter-connect-dev.onrender.com/v3/api-docs)
-- [OpenAPI YAML](https://shelter-connect-dev.onrender.com/v3/api-docs.yaml)
-- [서버 상태](https://shelter-connect-dev.onrender.com/actuator/health/readiness)
+- [Swagger UI](https://api.shelterconnect.win/swagger-ui/index.html)
+- [OpenAPI JSON](https://api.shelterconnect.win/v3/api-docs)
+- [OpenAPI YAML](https://api.shelterconnect.win/v3/api-docs.yaml)
+- [서버 상태](https://api.shelterconnect.win/actuator/health/readiness)
 
-실제 배포 결과는 [B-20 카드](https://app.notion.com/p/Swagger-API-3e45b2d1a55f80c28871d93557dfb002)와 PR에서 확인해줘. Render Free가 쉬고 있으면 첫 화면이 늦게 열릴 수 있어.
+최초 구현 이력은 [B-20 카드](https://app.notion.com/p/Swagger-API-3e45b2d1a55f80c28871d93557dfb002), 현재 우분투 로컬 저장소 문서 검증은 [B-111 카드](https://www.notion.so/4075b2d1a55f804eb5e5e47aa943b6fc)와 연결된 PR에서 확인할 수 있어.
 
 ## 처음 호출해보기
 
@@ -30,6 +30,10 @@ Spring Boot 4.1.1에 [springdoc-openapi 3.1.1](https://springdoc.org/getting-sta
 
 로컬에서도 `/swagger-ui/index.html`, `/v3/api-docs` 주소가 같아. 서버 주소는 상대 경로 `/`를 사용하므로 로컬 화면에서 개발 서버로 토큰이 넘어가지 않아. 문서 화면은 로그인 없이 볼 수 있고 실제 관리 API의 인증·소속 검사는 그대로야. `API_DOCS_ENABLED=false`로 문서 UI와 OpenAPI 제공을 함께 끌 수 있어.
 
-검증은 런타임 46개 API와 문서의 일치, 스키마 참조, multipart 설정, 서로 다른 작업 응답 모델, 공개 문서 접근과 기존 보호 API의 401을 확인해. 실제 배포 후 공개 조회와 인증 차단도 다시 확인해.
+검증은 기본 모드의 런타임 113개 API와 문서의 일치, 로컬 저장소의 추가 다운로드 경로, 스키마 참조, multipart 설정, 서로 다른 작업 응답 모델, 공개 문서 접근과 기존 보호 API의 401을 확인해. 실제 배포 후 공개 조회와 인증 차단도 다시 확인해.
 
 일반 본문 64KiB, 사진 5MiB와 공통 413·429·415 처리는 [API 요청 보안 기준](api-request-security.md)을 따른다. 429 응답의 Retry-After 초 동안 재시도를 멈춘다.
+
+## 로컬 저장소 모드
+
+`STORAGE_BACKEND=local`에서는 `GET /v1/storage/objects/{objectId}`도 문서에 포함됩니다. 이 경로는 Bearer 토큰 대신 URL의 `expires`·`signature`를 검증합니다. 기존 사진·에셋 API가 발급한 전체 URL을 사용하며, 문서 등록은 파일 접근 권한이나 만료 정책을 변경하지 않습니다. Supabase 저장소 모드에서는 이 조건부 경로가 노출되지 않습니다. 두 모드의 OpenAPI JSON/YAML 생성을 회귀 검사합니다.

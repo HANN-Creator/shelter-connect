@@ -40,6 +40,7 @@ class ApiDocumentationTest {
                 for(var method:mapping.getMethodsCondition().getMethods()) actual.add(method+" "+path.replace("{*file}","{file}"));
         });
         assertThat(documented).containsExactlyElementsOf(actual).hasSize(113);
+        assertThat(root.path("paths").has("/v1/storage/objects/{objectId}")).isFalse();
         assertThat(root.at("/servers/0/url").asText()).isEqualTo("/");
         assertThat(root.at("/components/securitySchemes/supabaseBearer/scheme").asText()).isEqualTo("bearer");
         assertThat(root.path("paths").path("/v1/dogs/{dogId}/assets").path("get").path("security").size()).isZero();
