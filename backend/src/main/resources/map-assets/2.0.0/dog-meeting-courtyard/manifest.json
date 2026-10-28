@@ -1,0 +1,34 @@
+{
+  "layout": "scene.json",
+  "catalog": "catalog.json",
+  "atlas": "spritesheet.png",
+  "atlasMetadata": "spritesheet.json",
+  "spriteCount": 156,
+  "assetType": "static_sprite_pack",
+  "selectedDog": {
+    "source": "/v1/dogs/{dogId}/assets",
+    "direction": "DOWN",
+    "preferredActions": [
+      "IDLE"
+    ],
+    "fallbackImage": "baseUrl",
+    "placement": {
+      "coordinateSpace": "scene pixels",
+      "anchorX": 512,
+      "anchorY": 914.49,
+      "maxWidth": 149.05,
+      "maxHeight": 208.21
+    },
+    "anchor": "use selected asset anchorPixels; preserve aspect ratio",
+    "missingAsset": "environment only; never substitute another dog"
+  },
+  "id": "dog-meeting-courtyard",
+  "version": "2.0.0",
+  "title": "둘만의 정원",
+  "purpose": "dog_meeting",
+  "width": 1024,
+  "height": 1792,
+  "sampling": "nearest",
+  "containsBakedDog": false,
+  "sourceSha256": "4a0b4d2f2527abf1fd9104615807406f0d0055b08f86ee2ea5adecb518a12b0f"
+}

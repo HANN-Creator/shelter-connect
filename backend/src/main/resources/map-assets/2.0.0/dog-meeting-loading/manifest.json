@@ -1,0 +1,26 @@
+{
+  "layout": "animation.json",
+  "assetType": "layered_animation",
+  "frameCount": 120,
+  "fps": 20,
+  "loopDurationMs": 6000,
+  "selectedDog": {
+    "source": "/v1/dogs/{dogId}/assets",
+    "direction": "RIGHT",
+    "preferredActions": [
+      "RUN",
+      "WALK"
+    ],
+    "anchor": "use selected asset anchorPixels",
+    "missingAsset": "environment only; never substitute another dog"
+  },
+  "id": "dog-meeting-loading",
+  "version": "2.0.0",
+  "title": "둘만의 정원 · 로딩",
+  "purpose": "dog_meeting",
+  "width": 720,
+  "height": 1280,
+  "sampling": "nearest",
+  "containsBakedDog": false,
+  "sourceSha256": "055e75e99b5aef234d2a5b731fd43c4ef61c7ff2d5d1121cb8f95d985dd7f993"
+}

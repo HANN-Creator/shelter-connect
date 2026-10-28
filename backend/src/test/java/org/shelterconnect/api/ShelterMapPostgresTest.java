@@ -62,12 +62,35 @@ class ShelterMapPostgresTest {
                 assertThat(HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes)))
                         .isEqualTo(entry.getValue().path("sha256").asText());
                 if (entry.getKey().equals("manifest.json")) assertThat(json.readTree(bytes)).isEqualTo(json.readTree((String)row.get("manifest")));
-                if (entry.getKey().equals("map/layout.json") || entry.getKey().equals("example-layout.json"))
+                if (entry.getKey().equals("map/layout.json") || entry.getKey().equals("example-layout.json")
+                        || entry.getKey().equals("scene.json") || entry.getKey().equals("animation.json"))
                     assertThat(json.readTree(bytes)).isEqualTo(json.readTree((String)row.get("layout")));
                 count++;
             }
         }
-        assertThat(count).isEqualTo(240);
+        assertThat(count).isEqualTo(410);
+    }
+
+    @Test void latestSceneChoosesNumericVersionAndKeepsFixedVersionAvailable() throws Exception {
+        String path = "/v1/meeting-scenes/dog-meeting-courtyard";
+        mvc.perform(get(path)).andExpect(status().isOk())
+                .andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(jsonPath("$.data.version").value("2.0.0"))
+                .andExpect(jsonPath("$.data.width").value(1024));
+        mvc.perform(get(path + "/versions/1.0.0")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.width").value(256));
+        mvc.perform(get("/v1/meeting-scenes/dog-meeting-loading")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.version").value("2.0.0"));
+        mvc.perform(get("/v1/meeting-scenes/01-sunny-meadow")).andExpect(status().isNotFound());
+        mvc.perform(get("/v1/meeting-scenes/unknown")).andExpect(status().isNotFound());
+        for (String version : new String[]{"2.9.0", "2.10.0"}) {
+            jdbc.update("""
+                    INSERT INTO shelter.map_templates(id,version,title,width,height,default_order,auto_assign,source_sha256,manifest,layout,files)
+                    SELECT id,?,title,width,height,default_order,false,source_sha256,manifest,layout,files
+                    FROM shelter.map_templates WHERE id='dog-meeting-courtyard' AND version='2.0.0'
+                    """, version);
+        }
+        mvc.perform(get(path)).andExpect(jsonPath("$.data.version").value("2.10.0"));
     }
 
     @Test void courtyardIsReadFromDbAsSeparateSceneAndNeverAssignedToShelters() throws Exception {

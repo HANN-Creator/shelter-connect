@@ -22,14 +22,14 @@ public class ApiDocumentation {
     @Bean OpenAPI shelterOpenApi() {
         return new OpenAPI().info(new Info().title("보호소 커넥트 API 명세서").version("v1")
             .description("""
-                개발 서버: https://shelter-connect-dev.onrender.com
+                API 서버: https://api.shelterconnect.win
 
                 Supabase 로그인 후 받은 **access token**을 Authorize에 입력하세요(Bearer 접두어 제외).
                 로그인 자체는 Supabase Auth에서 처리합니다. 계정 최초 연결은 POST /v1/me입니다.
                 보호소 API는 승인된 보호소의 활성 소속, 운영 API는 OPERATOR 권한이 필요합니다.
 
                 Try it out은 현재 서버에 실제 요청을 보냅니다. 저장·AI·생성 요청은 데이터를 바꾸거나 사용량을 소모합니다.
-                AI와 에셋 생성은 서버 설정이 활성화된 경우에만 가능합니다. Free 서버 첫 응답은 늦을 수 있습니다.
+                AI와 에셋 생성은 서버 설정이 활성화된 경우에만 가능합니다.
                 일반 요청 본문은 64KiB, 사진은 원본·변환본 모두 5MiB 이하입니다. 요청 제한 시 429와 Retry-After(초)를 반환합니다.
                 목록은 nextCursor를 그대로 보내 이어 읽습니다. 오류는 code/message/requestId를 확인하세요.
 

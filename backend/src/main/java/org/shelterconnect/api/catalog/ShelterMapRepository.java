@@ -19,6 +19,20 @@ public class ShelterMapRepository {
     public record MeetingScene(String id, String version, String title, int width, int height,
             String assetBaseUrl, String manifestUrl, String manifestSha256, String sourceSha256) {}
 
+    Optional<MeetingScene> latestMeetingScene(String id) {
+        // Numeric components avoid 2.9.0 sorting ahead of 2.10.0. NUMERIC also
+        // covers the full varchar(32) version constraint without integer overflow.
+        var version = jdbc.sql("""
+                SELECT version FROM shelter.map_templates
+                WHERE id=:id AND NOT auto_assign AND manifest->>'purpose'='dog_meeting'
+                ORDER BY split_part(version,'.',1)::numeric DESC,
+                         split_part(version,'.',2)::numeric DESC,
+                         split_part(version,'.',3)::numeric DESC, version DESC
+                LIMIT 1
+                """).param("id", id).query(String.class).optional();
+        return version.flatMap(value -> meetingScene(id, value));
+    }
+
     Optional<MeetingScene> meetingScene(String id, String version) {
         return jdbc.sql("""
                 SELECT id,version,title,width,height,source_sha256,
