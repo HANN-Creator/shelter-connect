@@ -3563,6 +3563,11 @@
       "required": [
         "data"
       ]
+    },
+    "StorageObjectFile": {
+      "type": "string",
+      "format": "binary",
+      "description": "서버가 발급한 유효한 서명 URL로만 읽는 저장소 원본 바이트"
     }
   },
   "operations": {
@@ -5617,6 +5622,31 @@
       "responseSchema": "MeetingSceneResponse",
       "stringPathParameters": {
         "sceneId": "dog-meeting-courtyard 또는 dog-meeting-loading"
+      }
+    },
+    "GET /v1/storage/objects/{objectId}": {
+      "summary": "서명 URL로 로컬 이미지 다운로드",
+      "description": "로컬 저장소를 사용하는 서버에서만 제공됩니다. 사진·에셋 API가 반환한 URL을 그대로 사용하며 expires(Unix 초)와 signature가 모두 필요합니다. Bearer 로그인 대신 서버 서명을 검사하고 만료되거나 잘못된 링크는 403을 반환합니다. URL을 직접 조합하거나 영구 저장하지 말고, 만료되면 기존 사진·에셋 API에서 다시 발급받으세요. 응답은 Cache-Control: no-store입니다.",
+      "tag": "01. 공개 조회",
+      "public": true,
+      "success": [
+        200
+      ],
+      "errors": [
+        400,
+        403,
+        404,
+        503
+      ],
+      "responseContent": {
+        "image/png": "StorageObjectFile",
+        "image/jpeg": "StorageObjectFile",
+        "image/gif": "StorageObjectFile",
+        "image/webp": "StorageObjectFile",
+        "application/octet-stream": "StorageObjectFile"
+      },
+      "stringPathParameters": {
+        "objectId": "서버가 반환한 불투명한 64자리 소문자 16진수 ID. UUID나 파일 경로가 아닙니다."
       }
     }
   }
