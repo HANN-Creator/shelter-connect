@@ -18,8 +18,9 @@ public class AssetManifestService {
         var result=manifest(store.read(subject,dog,id));
         store.checkPreview(subject,dog,id);return result;
     }
-    public Map<String,Object> published(UUID dog) {
-        var before=store.available(dog);var result=styled!=null && styled.handles(before.id())?styled.published(before.id()):manifest(before);
+    public Map<String,Object> published(UUID dog) { return published(dog,true); }
+    public Map<String,Object> published(UUID dog,boolean packed) {
+        var before=store.available(dog);var result=styled!=null && styled.handles(before.id())?styled.published(before.id(),packed):manifest(before);
         if(!store.available(dog).id().equals(before.id())) throw new AssetException(409,"ASSET_CHANGED");
         return result;
     }
