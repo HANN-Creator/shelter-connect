@@ -39,6 +39,8 @@ public class AssetController {
     @GetMapping("/shelter-admin/dogs/{dogId}/assets/{jobId}/preview")
     public Item<Map<String,Object>> preview(@AuthenticationPrincipal Jwt jwt,@PathVariable String dogId,@PathVariable String jobId) { return new Item<>(manifests.preview(subject(jwt),AssetInput.id(dogId),AssetInput.id(jobId))); }
     @GetMapping("/dogs/{dogId}/assets")
-    public Item<Map<String,Object>> published(@PathVariable String dogId) { return new Item<>(manifests.published(AssetInput.id(dogId))); }
+    public Item<Map<String,Object>> published(@PathVariable String dogId,@RequestParam(defaultValue="true") boolean atlas) {
+        return new Item<>(manifests.published(AssetInput.id(dogId),atlas));
+    }
     private static UUID subject(Jwt jwt) { return UUID.fromString(jwt.getSubject()); }
 }

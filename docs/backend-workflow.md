@@ -318,3 +318,7 @@ B-110: [정원·로딩 화면 에셋과 API 연결 보완](https://www.notion.so
 ## 2026-10-28 운영 문서 오류 보완
 
 B-111: [로컬 저장소 환경의 Swagger 문서 오류 수정](https://www.notion.so/4075b2d1a55f804eb5e5e47aa943b6fc). B-110 운영 검증에서 발견한 조건부 저장소 다운로드 경로의 문서 계약 누락을 보완한다. 브랜치 `backend/b-111-local-storage-openapi`. 완료 기준: 두 저장소 모드의 OpenAPI JSON/YAML·권한 회귀 검사, CI, 자동 배포 후 공개 문서와 기존 강아지 이미지 조회 확인. DB 변경 없음.
+
+## B-112 강아지별 스프라이트 아틀라스
+
+[노션 작업 카드](https://app.notion.com/p/40c5b2d1a55f809987aef2fdfd2838ea). 사용자의 다운로드 지연 개선 요청. [API·저장·호환 계약](dog-sprite-atlas.md)에 따라 승인된 styled 강아지의 행동·방향 시트를 비공개 PNG 한 장으로 합친다. 기존 프레임 좌표 재생기를 그대로 사용하며 `?atlas=false`로 이전 응답을 확인할 수 있다. DB 마이그레이션과 유료 생성 요청은 없다.

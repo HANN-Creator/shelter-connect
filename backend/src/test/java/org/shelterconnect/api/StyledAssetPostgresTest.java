@@ -194,6 +194,14 @@ class StyledAssetPostgresTest {
         review(id,true,"APPROVE",200);finish(id);publicStatus(404);
         assertThat(read(id).path("status").asText()).isEqualTo("REVIEW");review(id,false,"APPROVE",200);
         var manifest=get(null,"/v1/dogs/"+dog+"/assets",200).path("data");
+        assertThat(manifest.path("spriteAtlas").isObject()).isTrue();
+        assertThat(manifest.at("/mapDirections/LEFT/WALK/spritesheetUrl").asText())
+            .isEqualTo(manifest.at("/mapDirections/UP/SIT/spritesheetUrl").asText());
+        assertThat(manifest.at("/mapDirections/LEFT/WALK/frames/0/y").asInt()).isGreaterThan(0);
+        var individual=get(null,"/v1/dogs/"+dog+"/assets?atlas=false",200).path("data");
+        assertThat(individual.path("spriteAtlas").isMissingNode()).isTrue();
+        assertThat(individual.at("/mapDirections/LEFT/WALK/spritesheetUrl").asText())
+            .isNotEqualTo(individual.at("/mapDirections/UP/SIT/spritesheetUrl").asText());
         assertThat(manifest.at("/mapDirections/LEFT/WALK/frames").size()).isEqualTo(9);
         assertThat(manifest.at("/mapDirections/UP/SIT/returnToIdle").asText()).isEqualTo("REVERSE_FRAMES");
         assertThat(manifest.at("/mapDirections/LEFT/BACK_OFF").isMissingNode()).isTrue();
@@ -201,7 +209,7 @@ class StyledAssetPostgresTest {
         assertThat(manifest.at("/behavior/interactions/PERSON_GREETING/enabled").asBoolean()).isFalse();
         assertThat(manifest.at("/frameSize/width").asInt()).isEqualTo(32);
         assertThat(manifest.toString()).doesNotContain("sourcePhoto","reviewedBy","photoId","provider_job_id","test-key");
-        assertThat(objects).hasSize(16);verify(provider,times(13)).submit(anyBoolean(),any());
+        assertThat(objects).hasSize(17);verify(provider,times(13)).submit(anyBoolean(),any());
         assertThat(jdbc.queryForObject("SELECT count(*) FROM shelter.styled_asset_steps WHERE job_id=? AND provider_result IS NOT NULL",Integer.class,id)).isZero();
         for(int i=0;i<3;i++) {publicStatus(200);tick();}
         assertThat(request()).isEqualTo(id);verify(provider,times(13)).submit(anyBoolean(),any());
@@ -344,8 +352,9 @@ class StyledAssetPostgresTest {
         tick();tick();review(id,true,"APPROVE",200);finish(id);review(id,false,"APPROVE",200);
         var manifest=get(null,"/v1/dogs/"+dog+"/assets",200).path("data");
         assertThat(manifest.path("availableActions").size()).isEqualTo(8);
+        assertThat(manifest.path("spriteAtlas").isObject()).isTrue();
         assertThat(manifest.at("/mapDirections/LEFT/BACK_OFF/worldMotion/unitVector/x").asInt()).isEqualTo(1);
-        assertThat(request()).isEqualTo(id);assertThat(objects).hasSize(36);verify(provider,times(33)).submit(anyBoolean(),any());
+        assertThat(request()).isEqualTo(id);assertThat(objects).hasSize(37);verify(provider,times(33)).submit(anyBoolean(),any());
     }
     @Test void warningActionsPersistGenerateFourDirectionsAndPublishStationaryClips() throws Exception {
         UUID evidence=UUID.randomUUID();

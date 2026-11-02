@@ -2,17 +2,28 @@ package org.shelterconnect.api.asset;
 
 import java.time.Instant;
 import java.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.JsonNode;
 import org.shelterconnect.api.behavior.*;
 
 @Service
 public class StyledAssetManifest {
-    private final StyledAssetStore store;private final AssetStorage storage;private final BehaviorService behaviors;
-    public StyledAssetManifest(StyledAssetStore store,AssetStorage storage,BehaviorService behaviors) { this.store=store;this.storage=storage;this.behaviors=behaviors; }
+    private static final Logger LOG=LoggerFactory.getLogger(StyledAssetManifest.class);
+    private final StyledAssetStore store;private final AssetStorage storage;private final BehaviorService behaviors;private final StyledSpriteAtlas atlas;
+    public StyledAssetManifest(StyledAssetStore store,AssetStorage storage,BehaviorService behaviors) { this.store=store;this.storage=storage;this.behaviors=behaviors;this.atlas=new StyledSpriteAtlas(storage); }
     public boolean handles(UUID id) { return store.isStyled(id); }
-    public Map<String,Object> published(UUID id) {
-        var job=store.forManifest(id);var result=manifest(job,false);
+    public Map<String,Object> published(UUID id) { return published(id,true); }
+    public Map<String,Object> published(UUID id,boolean packed) {
+        var job=store.forManifest(id);Map<String,Object> result;
+        try { result=manifest(job,false,packed); }
+        catch(AssetException e) {
+            if(!packed)throw e;
+            // Atlas packaging must never hide an otherwise approved dog.
+            LOG.warn("Styled sprite atlas unavailable for job {}: {}",job.id(),e.code);
+            result=manifest(job,false,false);
+        }
         // Generation is a historical snapshot; revoked evidence must not keep old interactions alive.
         if(job.generationPlan()!=null) {
             var metadata=new LinkedHashMap<String,Object>();
@@ -27,7 +38,7 @@ public class StyledAssetManifest {
         return result;
     }
     public Map<String,Object> preview(UUID subject,UUID dog,UUID id) {
-        var j=store.preview(subject,dog,id);var result=manifest(j,j.status().equals("SEED_REVIEW") || (j.qualityPolicy()!=null && j.qualityPolicy().path("referenceOnly").asBoolean()));
+        var j=store.preview(subject,dog,id);var result=manifest(j,j.status().equals("SEED_REVIEW") || (j.qualityPolicy()!=null && j.qualityPolicy().path("referenceOnly").asBoolean()),false);
         if(j.qualityPolicy()!=null)result.put("quality",quality(j));
         if(!store.preview(subject,dog,id).status().equals(j.status()))throw new AssetException(409,"ASSET_CHANGED");return result;
     }
@@ -68,18 +79,23 @@ public class StyledAssetManifest {
             "passed",clear,"reviewStatus",unavailable?"UNAVAILABLE":!warnings.isEmpty()?"WARNING":clear?"CLEAR":"PENDING",
             "warnings",warnings,"repairCount",job.steps().stream().mapToInt(StyledAssetStore.Step::repairCount).sum());
     }
-    private Map<String,Object> manifest(StyledAssetStore.Job job,boolean seedsOnly) {
+    Map<String,Object> manifest(StyledAssetStore.Job job,boolean seedsOnly,boolean packed) {
         if(job.steps().isEmpty() || (!seedsOnly && !job.complete()))
             throw new AssetException(409,"ASSET_NOT_READY");
         var base=job.steps().getFirst().result();if(base==null)throw new AssetException(409,"ASSET_NOT_READY");
-        var keys=new ArrayList<String>();StyledSpriteCodec.DIRECTIONS.forEach(d->keys.add(base.path("keys").path(d).asText()));
-        if(!seedsOnly)job.steps().stream().skip(1).forEach(s->keys.add(s.result().path("key").asText()));
+        int motionSize=StyledRecovery.size(job.qualityPolicy());
+        var packedAtlas=packed?atlas.ensure(job,motionSize):null;
+        var keys=new ArrayList<String>();
+        if(packedAtlas!=null) { keys.add(base.path("keys").path("south").asText());keys.add(packedAtlas.key()); }
+        else { StyledSpriteCodec.DIRECTIONS.forEach(d->keys.add(base.path("keys").path(d).asText()));
+            if(!seedsOnly)job.steps().stream().skip(1).forEach(s->keys.add(s.result().path("key").asText())); }
         var urls=storage.sign(keys);
-        Map<String,String> directions=new LinkedHashMap<>();StyledSpriteCodec.DIRECTIONS.forEach(d->directions.put(d,url(urls,base.path("keys").path(d).asText())));
+        Map<String,String> directions=new LinkedHashMap<>();
+        if(packedAtlas!=null)directions.put("south",url(urls,base.path("keys").path("south").asText()));
+        else StyledSpriteCodec.DIRECTIONS.forEach(d->directions.put(d,url(urls,base.path("keys").path(d).asText())));
         var result=new LinkedHashMap<String,Object>(Map.of("schemaVersion",1,"id",job.id(),"status",job.status(),"provider","PixelLab Pro + PixMiniMax",
             "generatorVersion",StyledSpriteCodec.VERSION,"frameSize",Map.of("width",32,"height",32),"anchorPixels",Map.of("x",16,"y",30),
             "expiresAt",Instant.now().plusSeconds(60),"baseUrl",directions.get("south"),"sampling","nearest"));
-        int motionSize=StyledRecovery.size(job.qualityPolicy());
         if(motionSize==40 && !seedsOnly){result.put("frameSize",Map.of("width",40,"height",40));result.put("anchorPixels",Map.of("x",20,"y",34));
             result.put("baseFrameSize",Map.of("width",32,"height",32));result.put("baseAnchorPixels",Map.of("x",16,"y",30));
             result.put("contentPaddingPixels",4);result.put("nativeContentSize",32);}
@@ -92,17 +108,27 @@ public class StyledAssetManifest {
             result.put("referenceOnly",true);result.put("provider","Imported seed reference");
         }
         if(seedsOnly) { result.put("directions",directions);result.put("seedHashes",base.path("hashes"));return result; }
+        if(packedAtlas!=null) {
+            var baseFrames=new LinkedHashMap<String,Object>();
+            for(String direction:StyledSpriteCodec.DIRECTIONS)
+                baseFrames.put(direction,Map.of("x",0,"y",packedAtlas.y("BASE:"+direction),"width",32,"height",32));
+            result.put("spriteAtlas",Map.of("url",url(urls,packedAtlas.key()),"width",packedAtlas.width(),
+                "height",packedAtlas.height(),"sha256",packedAtlas.sha256(),
+                "sourceFingerprint",packedAtlas.sourceFingerprint(),"baseFrames",baseFrames));
+        }
         var clips=new LinkedHashMap<String,Map<String,Object>>();
         var names=Map.of("south","DOWN","north","UP","west","LEFT","east","RIGHT");
         for(String direction:names.values())clips.put(direction,new LinkedHashMap<>());
         for(var step:job.steps().subList(1,job.steps().size())) {
             JsonNode m=step.result();int duration=m.path("durationMs").asInt();boolean loop=m.path("loop").asBoolean();
-            var frames=new ArrayList<Map<String,Integer>>();for(int i=0;i<9;i++)frames.add(Map.of("x",i*motionSize,"y",0,"width",motionSize,"height",motionSize,"durationMs",duration));
+            var frames=new ArrayList<Map<String,Integer>>();for(int i=0;i<9;i++)frames.add(Map.of("x",i*motionSize,"y",packedAtlas==null?0:packedAtlas.y(step.label()),"width",motionSize,"height",motionSize,"durationMs",duration));
             var unit=switch(step.direction()) { case "south"->new int[]{0,1};case "north"->new int[]{0,-1};case "west"->new int[]{-1,0};default->new int[]{1,0}; };
             boolean moving=Set.of("WALK","RUN","BACK_OFF").contains(step.action());int sign=step.action().equals("BACK_OFF")?-1:1;
-            clips.get(names.get(step.direction())).put(step.action(),Map.of("spritesheetUrl",url(urls,m.path("key").asText()),"frameCount",9,"frames",frames,
-                "motionKind",StyledIdleHold.derived(m)?"STATIC_IDLE":"ANIMATED","loop",loop,"holdLastFrame",!loop,"returnToIdle",loop?"DIRECT":"REVERSE_FRAMES","sha256",m.path("sha256").asText(),
+            var clip=new LinkedHashMap<String,Object>(Map.of("spritesheetUrl",url(urls,packedAtlas==null?m.path("key").asText():packedAtlas.key()),"frameCount",9,"frames",frames,
+                "motionKind",StyledIdleHold.derived(m)?"STATIC_IDLE":"ANIMATED","loop",loop,"holdLastFrame",!loop,"returnToIdle",loop?"DIRECT":"REVERSE_FRAMES","sha256",packedAtlas==null?m.path("sha256").asText():packedAtlas.sha256(),
                 "worldMotion",Map.of("unitVector",Map.of("x",moving?sign*unit[0]:0,"y",moving?sign*unit[1]:0),"speedControlledByFrontend",true)));
+            if(packedAtlas!=null)clip.put("sourceSha256",m.path("sha256").asText());
+            clips.get(names.get(step.direction())).put(step.action(),clip);
         }
         result.put("mapDirections",clips);result.put("animations",clips.get("RIGHT"));
         result.put("fallbackAction","IDLE");result.put("facing","four-directions");result.put("variants",Map.of());return result;
