@@ -2,12 +2,15 @@ package org.shelterconnect.api.asset;
 
 import java.time.Instant;
 import java.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.JsonNode;
 import org.shelterconnect.api.behavior.*;
 
 @Service
 public class StyledAssetManifest {
+    private static final Logger LOG=LoggerFactory.getLogger(StyledAssetManifest.class);
     private final StyledAssetStore store;private final AssetStorage storage;private final BehaviorService behaviors;private final StyledSpriteAtlas atlas;
     public StyledAssetManifest(StyledAssetStore store,AssetStorage storage,BehaviorService behaviors) { this.store=store;this.storage=storage;this.behaviors=behaviors;this.atlas=new StyledSpriteAtlas(storage); }
     public boolean handles(UUID id) { return store.isStyled(id); }
@@ -18,6 +21,7 @@ public class StyledAssetManifest {
         catch(AssetException e) {
             if(!packed)throw e;
             // Atlas packaging must never hide an otherwise approved dog.
+            LOG.warn("Styled sprite atlas unavailable for job {}: {}",job.id(),e.code);
             result=manifest(job,false,false);
         }
         // Generation is a historical snapshot; revoked evidence must not keep old interactions alive.
