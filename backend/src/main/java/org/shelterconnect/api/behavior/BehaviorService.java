@@ -25,7 +25,7 @@ public class BehaviorService {
 		var profile=repository.profile(id).orElse(null);
 		if(profile!=null && "CONFIRMED".equals(profile.status()) && profile.schemaVersion()==1
 				&& repository.evidenceValid(id,profile.evidenceObservationIds(),false)) {
-			try { return new Playback(id,1,"CONFIRMED",profile.revision(),BehaviorInput.settings(profile.settings())); }
+			try { return new Playback(id,1,"CONFIRMED",profile.revision(),BehaviorGenerationPlan.withoutTailWag(BehaviorInput.settings(profile.settings()))); }
 			catch(BehaviorException ex) { /* Legacy or manually edited invalid settings must never become executable. */ }
 		}
 		return new Playback(id,1,"DEFAULT",null,BehaviorInput.defaults());

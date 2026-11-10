@@ -5,7 +5,7 @@
 | 제공 특징 | 기본 IDLE/WALK/SIT 외 추가 | 앱 연출 |
 | --- | --- | --- |
 | 없음/불명확/미확인 | 없음 | 가만히 쉬기·걷기·앉기 |
-| 사람을 좋아함 | TAIL_WAG, SNIFF | 사용자로 걷기 → 꼬리 → 냄새 → 대기 |
+| 사람을 좋아함 | SNIFF | 사용자로 걷기 → 냄새 맡기 → 대기 |
 | 누워서/엎드려 쉬기 선호 | LIE_DOWN | 눕고 마지막 프레임 유지, 역순으로 일어서기 |
 | 냄새 맡기 선호 | SNIFF | 주변 냄새 탐색 |
 | 공놀이 선호 | RUN, SNIFF | 공 추적 → 가까이 걷기 → 냄새 → 대기 |
@@ -23,7 +23,7 @@
 5. 4방향 기준 이미지를 검토한 뒤 선택된 동작만 PixMiniMax로 생성하고, 최종 검토 후 공개한다.
 6. 방문자는 GET `/v1/dogs/{dogId}/assets`만 사용한다. 조회/화면 입장/새로고침으로 AI나 PixelLab을 호출하지 않는다.
 
-기본3개면 기준이미지1회 + 3×4 = **13회 생성 POST**, 사람 선호5개면 **21회**, 전체8개면 **33회**다. 요청 수는 공급자의 청구 Generations와 다르다. 기존 PixelLab 일일10회 제한은 제거된 상태다. Luna 행동 초안의 `BEHAVIOR_AI_DAILY_LIMIT` 기본값도 0(무제한)이다. 명시적으로 1~100을 지정하면 일일 한도를 적용한다.
+기본3개면 기준이미지1회 + 3×4 = **13회 생성 POST**, 사람 선호4개면 **17회**다. 꼬리 흔들기 행동은 새 생성 계획에서 제외한다. 꼬리의 정적인 외형은 기준 이미지와 다른 행동에서 유지한다. 요청 수는 공급자의 청구 Generations와 다르다. 기존 PixelLab 일일10회 제한은 제거된 상태다. Luna 행동 초안의 `BEHAVIOR_AI_DAILY_LIMIT` 기본값도 0(무제한)이다. 명시적으로 1~100을 지정하면 일일 한도를 적용한다.
 
 외형·seed·확인된 행동 버전을 바꾸고 새 생성 요청을 보내면 새 팩 비용이 발생할 수 있다. 기존 팩은 자동으로 재생성하지 않는다. 동일 입력·버전 재요청은 같은 작업이다. 선택 목록은 생성 도중 변경되지 않는다. 이전 전체33단계 작업은 그대로 재개·조회할 수 있다. 이전 버전에서 보낸 동일 사진외형 입력의 재전송도 기존 팩을 반환해 업그레이드 직후 재결제를 방지한다.
 
@@ -32,7 +32,7 @@
 - `availableActions` 및 방향별 실제 clip을 기준으로 UI/랜덤 행동을 선택한다. 존재하지 않는 시트 URL을 조합하지 않는다.
 - 공개 manifest의 `generationPlan`은 **생성 당시** 선택 메타데이터다. 개인정보/관찰 인용/관찰 ID는 포함하지 않는다.
 - `behavior`는 **현재** 유효한 설정을 실제 팩과 교차 검사한 결과다. 여기의 settings/weight/speed와 interactions를 사용한다. 근거 철회 시 DEFAULT로 돌아가고, 작은 기존 팩에 없는 동작 비중은0, 필요한 시트가 빠진 상호작용은 꺼진다.
-- `behavior.interactions.PERSON_GREETING.enabled`이면 triggerDistanceTiles 내 사용자로 WALK. arrivalDistanceTiles에서 멈춘 뒤 TAIL_WAG(wagDurationMs), SNIFF(sniffDurationMs), IDLE. 타겟 이탈/소실 또는 maxDurationMs 초과 시 IDLE. 종료 후 cooldownMs 적용. BACK_OFF가 있는 조심스러운 설정에서는 먼저 접근하지 않는다.
+- `behavior.interactions.PERSON_GREETING.enabled`이면 triggerDistanceTiles 내 사용자로 WALK. arrivalDistanceTiles에서 멈춘 뒤 SNIFF(sniffDurationMs), IDLE. 타겟 이탈/소실 또는 maxDurationMs 초과 시 IDLE. 종료 후 cooldownMs 적용. BACK_OFF가 있는 조심스러운 설정에서는 먼저 접근하지 않는다. 기존 응답 형식의 wagDurationMs는 호환을 위해 0으로 유지한다.
 - `BALL_CHASE.enabled`이면 공을 표시하고 CHASE(RUN/WALK) → APPROACH(WALK) → INSPECT(SNIFF/IDLE) → RETURN(명시적 returnEnabled만) → FINISH(IDLE). 공·사용자 좌표, 경로, 충돌, 타일→화면 좌표, 단계 시간은 프론트가 구현한다. 공을 물고 있는 별도 9번째 이미지 동작을 생성하지 않는다.
 - 비활성 레시피는 실행하지 않는다. preferredActions는 실제 availableActions 안에서만 선택하고 없으면 IDLE로 돌아간다. 한 번에 하나의 상호작용만 실행한다.
 - 사진용 traits와 행동용 traits는 별개다. 기존 스타일/32px 픽셀/4방향 기준 프레임 규칙은 바꾸지 않았다.
