@@ -25,7 +25,7 @@ public final class BehaviorInteractions {
     public static Map<String,Object> forAvailable(Settings settings,Collection<String> available) {
         // Evaluate caution before masking missing clips: no BACK_OFF sprite does not mean the dog is friendly.
         return Map.of("BALL_CHASE",ballChase(settings,available.containsAll(List.of("RUN","WALK","SNIFF","IDLE"))),
-            "PERSON_GREETING",personGreeting(settings,available.containsAll(List.of("WALK","TAIL_WAG","SNIFF","IDLE"))),
+            "PERSON_GREETING",personGreeting(settings,available.containsAll(List.of("WALK","SNIFF","IDLE"))),
             "PERSON_WARNING",personWarning(settings,available));
     }
     private static boolean warningConfigured(Settings settings) {
@@ -48,12 +48,11 @@ public final class BehaviorInteractions {
     private static PersonGreeting personGreeting(Settings settings,boolean available) {
         boolean enabled=available && settings.approachDistanceTiles().signum()>0 && settings.actions().get(Action.BACK_OFF).weight()==0
             && !warningConfigured(settings)
-            && settings.actions().get(Action.TAIL_WAG).weight()>0 && settings.actions().get(Action.SNIFF).weight()>0;
+            && settings.actions().get(Action.SNIFF).weight()>0;
         return new PersonGreeting(1,enabled,settings.approachDistanceTiles().doubleValue(),
-            Math.max(.5,settings.personalSpaceTiles().doubleValue()),settings.reactionDelayMs(),1800,1200,12000,15000,
+            Math.max(.5,settings.personalSpaceTiles().doubleValue()),settings.reactionDelayMs(),0,1200,12000,15000,
             "TARGET_GONE_OR_OUTSIDE_TRIGGER_DISTANCE",Action.IDLE,enabled?List.of(
                 new Phase("APPROACH",List.of(Action.WALK),"WITHIN_ARRIVAL_DISTANCE"),
-                new Phase("GREET",List.of(Action.TAIL_WAG),"WAG_DURATION_ELAPSED"),
                 new Phase("INSPECT",List.of(Action.SNIFF),"SNIFF_DURATION_ELAPSED"),
                 new Phase("FINISH",List.of(Action.IDLE),"IMMEDIATE")):List.of());
     }

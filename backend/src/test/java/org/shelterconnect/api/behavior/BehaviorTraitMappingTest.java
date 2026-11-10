@@ -26,7 +26,7 @@ class BehaviorTraitMappingTest {
             assertThatThrownBy(()->BehaviorTraitMapping.map(json.valueToTree(Map.of("traits",List.of(item))),List.of(observation))).hasMessage("AI_INVALID_RESPONSE");
     }
     @Test void preferenceMappingsSelectOnlyTheNecessaryAdditionalClips() {
-        var expected=Map.of("FRIENDLY",List.of("SNIFF","TAIL_WAG"),"WALK_LOVER",List.of("RUN"),
+        var expected=Map.of("FRIENDLY",List.of("SNIFF"),"WALK_LOVER",List.of("RUN"),
             "RESTFUL",List.of("LIE_DOWN"),"SNIFFER",List.of("SNIFF"),"CAUTIOUS",List.of("BACK_OFF"),"BALL_CHASER",List.of("RUN","SNIFF"));
         expected.forEach((trait,actions)-> {
             var result=mapped(trait);BehaviorInput.settings(json.valueToTree(result.settings()));var plan=BehaviorGenerationPlan.from(result.settings(),"AI_DRAFT",1);
@@ -36,7 +36,8 @@ class BehaviorTraitMappingTest {
         });
         var greeting=BehaviorInteractions.personGreeting(mapped("FRIENDLY").settings());
         assertThat(greeting.enabled()).isTrue();
-        assertThat(greeting.phases().stream().map(BehaviorInteractions.Phase::phase)).containsExactly("APPROACH","GREET","INSPECT","FINISH");
+        assertThat(greeting.phases().stream().map(BehaviorInteractions.Phase::phase)).containsExactly("APPROACH","INSPECT","FINISH");
+        assertThat(greeting.wagDurationMs()).isZero();
     }
     @Test void explicitRestrictionsOverridePositivePreferencesWithoutChangingBasicActions() {
         var result=mapped("FRIENDLY","CAUTIOUS","RUNNER","WALK_LOVER","BALL_RETURNER","RUN_RESTRICTED");
@@ -49,7 +50,8 @@ class BehaviorTraitMappingTest {
     @Test void allSupportedOptionalActionsAreKeptAndMissingSpritesDisableInteractions() {
         var result=mapped("RUNNER","SNIFFER","FRIENDLY","CAUTIOUS","RESTFUL","BALL_RETURNER");
         var plan=BehaviorGenerationPlan.from(result.settings(),"AI_DRAFT",1);
-        assertThat(plan.selectedActions()).hasSize(8);assertThat(plan.expectedProviderRequests()).isEqualTo(33);
+        assertThat(plan.selectedActions()).hasSize(7);assertThat(plan.expectedProviderRequests()).isEqualTo(29);
+        assertThat(plan.selectedActions()).doesNotContain("TAIL_WAG");
         var compatible=BehaviorGenerationPlan.compatible(mapped("FRIENDLY","BALL_RETURNER").settings(),List.of("IDLE","WALK","SIT"));
         assertThat(BehaviorInteractions.personGreeting(compatible).enabled()).isFalse();assertThat(compatible.ballPlay().chaseEnabled()).isFalse();
     }
@@ -62,9 +64,9 @@ class BehaviorTraitMappingTest {
     @Test void aggressionGrowlsAndOnlyExplicitWarningBarksAddBarking() {
         var growl=warningMapped("사납고 공격적임. 사람 접근에 으르렁거림.","AGGRESSIVE");
         var plan=BehaviorGenerationPlan.from(growl.settings(),"AI_DRAFT",1);
-        assertThat(plan.policyVersion()).isEqualTo("traits-v3");
-        assertThat(BehaviorGenerationPlan.defaults().policyVersion()).isEqualTo("traits-v2");
-        assertThat(BehaviorGenerationPlan.from(mapped("FRIENDLY").settings(),"CONFIRMED",2).policyVersion()).isEqualTo("traits-v2");
+        assertThat(plan.policyVersion()).isEqualTo(BehaviorGenerationPlan.POLICY);
+        assertThat(BehaviorGenerationPlan.defaults().policyVersion()).isEqualTo(BehaviorGenerationPlan.POLICY);
+        assertThat(BehaviorGenerationPlan.from(mapped("FRIENDLY").settings(),"CONFIRMED",2).policyVersion()).isEqualTo(BehaviorGenerationPlan.POLICY);
         assertThat(plan.optionalActions()).containsExactly("GROWL");
         assertThat(plan.expectedProviderRequests()).isEqualTo(17);
         assertThat(growl.settings().actions().get(Action.GROWL).speedTilesPerSecond()).isZero();
@@ -86,6 +88,17 @@ class BehaviorTraitMappingTest {
         assertThat(((BehaviorInteractions.PersonWarning)rules.get("PERSON_WARNING")).phases()).isEmpty();
         var partial=BehaviorInteractions.personWarning(warningMapped("사납고 경고하며 짖음.","AGGRESSIVE","WARNING_BARKER").settings(),List.of("IDLE","WARNING_BARK"));
         assertThat(partial.phases().getFirst().preferredActions()).containsExactly(Action.WARNING_BARK);
+    }
+    @Test void legacyConfirmedTailWagCannotEnterNewGenerationOrPlayback() {
+        var friendly=mapped("FRIENDLY").settings();
+        var legacy=new EnumMap<Action,BehaviorTypes.Motion>(friendly.actions());
+        var wag=legacy.get(Action.TAIL_WAG);
+        legacy.put(Action.TAIL_WAG,new BehaviorTypes.Motion(30,wag.speedTilesPerSecond(),wag.minDurationMs(),wag.maxDurationMs(),wag.cooldownMs()));
+        var old=new BehaviorTypes.Settings(legacy,friendly.approachDistanceTiles(),friendly.personalSpaceTiles(),friendly.reactionDelayMs(),friendly.ballPlay());
+        var plan=BehaviorGenerationPlan.from(old,"CONFIRMED",1);
+        assertThat(plan.selectedActions()).containsExactly("IDLE","WALK","SIT","SNIFF");
+        assertThat(plan.settings().actions().get(Action.TAIL_WAG).weight()).isZero();
+        assertThat(BehaviorGenerationPlan.compatible(old,List.of("IDLE","WALK","SIT","SNIFF","TAIL_WAG")).actions().get(Action.TAIL_WAG).weight()).isZero();
     }
     BehaviorTraitMapping.Result warningMapped(String content,String... traits) {
         var evidence=new BehaviorSuggestionProvider.Observation(UUID.randomUUID(),"PEOPLE",content,Instant.now(),Instant.now());

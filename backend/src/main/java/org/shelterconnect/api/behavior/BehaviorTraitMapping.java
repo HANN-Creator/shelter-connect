@@ -26,7 +26,7 @@ final class BehaviorTraitMapping {
         for(var trait:seen) switch(trait) {
             case RUNNER,WALK_LOVER -> weight(actions,Action.RUN,30);
             case SNIFFER -> weight(actions,Action.SNIFF,30);
-            case FRIENDLY -> { weight(actions,Action.TAIL_WAG,30);weight(actions,Action.SNIFF,30); }
+            case FRIENDLY -> weight(actions,Action.SNIFF,30);
             case CAUTIOUS -> weight(actions,Action.BACK_OFF,30);
             case RESTFUL -> weight(actions,Action.LIE_DOWN,30);
             case AGGRESSIVE -> weight(actions,Action.GROWL,30);

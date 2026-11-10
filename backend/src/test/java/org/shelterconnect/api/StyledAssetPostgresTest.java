@@ -314,7 +314,7 @@ class StyledAssetPostgresTest {
         var body=Map.of("clientRequestId",UUID.randomUUID(),"expectedRevision",0,"evidenceObservationIds",List.of(evidence));
         String behavior="/v1/shelter-admin/dogs/"+dog+"/behavior";
         var draft=post(subject,behavior+"/suggestions",body,200).at("/data/result");
-        assertThat(draft.at("/generationPlan/expectedProviderRequests").asInt()).isEqualTo(29);
+        assertThat(draft.at("/generationPlan/expectedProviderRequests").asInt()).isEqualTo(25);
         assertThat(draft.at("/generationPlan/interactions/PERSON_GREETING/enabled").asBoolean()).isTrue();
         post(subject,behavior+"/suggestions",body,200);verify(suggestions,times(1)).suggest(anyList());
         UUID basic=request();assertThat(read(basic).path("steps").size()).isEqualTo(13);
@@ -325,8 +325,8 @@ class StyledAssetPostgresTest {
         assertThat(oldManifest.at("/behavior/settings/actions/RUN/weight").asInt()).isZero();
         assertThat(oldManifest.at("/behavior/interactions/PERSON_GREETING/enabled").asBoolean()).isFalse();
         UUID selected=request();assertThat(selected).isNotEqualTo(basic);assertThat(request()).isEqualTo(selected);
-        assertThat(read(selected).path("steps").size()).isEqualTo(29);
-        assertThat(read(selected).path("actionPlan").valueStream().map(JsonNode::asText)).containsExactly("BASE","IDLE","WALK","SIT","RUN","SNIFF","TAIL_WAG","LIE_DOWN");
+        assertThat(read(selected).path("steps").size()).isEqualTo(25);
+        assertThat(read(selected).path("actionPlan").valueStream().map(JsonNode::asText)).containsExactly("BASE","IDLE","WALK","SIT","RUN","SNIFF","LIE_DOWN");
         tick();tick();review(selected,true,"APPROVE",200);finish(selected);review(selected,false,"APPROVE",200);
         var manifest=get(null,"/v1/dogs/"+dog+"/assets",200).path("data");
         assertThat(manifest.at("/behavior/interactions/PERSON_GREETING/enabled").asBoolean()).isTrue();
@@ -337,7 +337,7 @@ class StyledAssetPostgresTest {
         var revoked=get(null,"/v1/dogs/"+dog+"/assets",200).path("data");
         assertThat(revoked.at("/behavior/basis").asText()).isEqualTo("DEFAULT");
         assertThat(revoked.at("/behavior/interactions/PERSON_GREETING/enabled").asBoolean()).isFalse();
-        verify(suggestions,times(1)).suggest(anyList());verify(provider,times(42)).submit(anyBoolean(),any());
+        verify(suggestions,times(1)).suggest(anyList());verify(provider,times(38)).submit(anyBoolean(),any());
     }
     @Test void oldFullPacksWithoutBehaviorSnapshotStillResumeAndPublishAllDirections() throws Exception {
         UUID id=request();var all=List.of("IDLE","WALK","RUN","SNIFF","TAIL_WAG","BACK_OFF","SIT","LIE_DOWN");
